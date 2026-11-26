@@ -10,6 +10,7 @@ Every third-party asset gets a row before it is committed. Check the license on 
 | Impact Sounds | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | `assets/audio/sfx/step_*`, `gather_*`, `place_lantern.ogg`, `pickup_lantern.ogg` | 2026-11-26 |
 | Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | `assets/audio/sfx/ui_*`, `relight.ogg`, `unlock.ogg` | 2026-11-26 |
 | RPG Audio | Kenney | https://kenney.nl/assets/rpg-audio | CC0 1.0 | `assets/audio/sfx/refuel.ogg`, `note_open.ogg`, `note_close.ogg` | 2026-11-26 |
+| Puny Characters (Mage, red) | Shade (Kurt Gabriel Sotelo) | https://opengameart.org/content/puny-characters (also https://merchant-shade.itch.io/16x16-puny-characters) | CC0 1.0 (OGA license field; itch.io asset license) | `assets/art/puny/keeper.png` (recoloured); original in `source/vendor/puny-characters/` | 2026-11-26 |
 
 Downloaded but not yet used (not in the repo): Kenney 1-Bit Pack (CC0), https://kenney.nl/assets/1-bit-pack.
 

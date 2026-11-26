@@ -11,6 +11,8 @@ var fuel_poured := 0.0
 var _gather_target: ResourceNode = null
 var _gather_acc := 0.0
 var _facing_left := false
+var _dir_row := 0          # Puny sheet row: 0 S, 1 SE, 2 E, 3 NE, 4 N, 5 NW, 6 W, 7 SW
+var _idle_t := 0.0
 var _step_t := 0.0
 var _walk_t := 0.0
 
@@ -91,6 +93,10 @@ func _physics_delta() -> float:
 func _footsteps(dir: Vector2, delta: float, fog: FogGrid) -> void:
 	if dir.x != 0.0:
 		_facing_left = dir.x < 0.0
+	if dir != Vector2.ZERO:
+		var oct := posmod(int(round(dir.angle() / (PI / 4.0))), 8)   # 0 E, 1 SE, 2 S ...
+		_dir_row = posmod(2 - oct, 8)
+	_idle_t += delta
 	if dir == Vector2.ZERO:
 		_step_t = 0.0
 		_walk_t = 0.0
@@ -247,8 +253,10 @@ func pick_up_nearest() -> void:
 # --- Drawing ---------------------------------------------------------------
 
 func _draw() -> void:
-	var bob := -roundf(absf(sin(_walk_t * 9.0)))   # 0 or -1 px, smooth cadence
-	Art.cell_at_foot(self, Art.DUNGEON, Art.KEEPER, Vector2(0, 10 + bob), Color.WHITE, _facing_left)
+	# Puny Characters: columns 0-1 idle, 2-3 walk.
+	var frame := 2 + int(_walk_t / 0.16) % 2 if _walk_t > 0.0 else int(_idle_t / 0.6) % 2
+	var f := Art.KEEPER_FRAME
+	draw_texture_rect_region(Art.KEEPER_SHEET, Rect2(-f, -f - 10, f * 2, f * 2), Rect2(frame * f, _dir_row * f, f, f))
 	var fog := _fog()
 	if fog == null:
 		return

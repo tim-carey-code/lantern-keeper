@@ -26,7 +26,9 @@ const PUMP_WALL := [Vector2i(4, 7), Vector2i(5, 7), Vector2i(4, 7)]
 const PLANKS := Vector2i(0, 3)
 const STONE_WALL := Vector2i(4, 2)
 const GRAVESTONE := Vector2i(5, 5)
-const KEEPER := Vector2i(3, 9)
+const KEEPER := Vector2i(3, 9)          # old single-frame keeper (unused)
+const KEEPER_SHEET := preload("res://assets/art/puny/keeper.png")   # Puny Characters (CC0): 24x8 frames of 32x32
+const KEEPER_FRAME := 32
 
 static var _ph := {}
 
