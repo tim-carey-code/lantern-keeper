@@ -4,6 +4,8 @@ extends Node
 ## During a gust, lanterns with no rock 1-2 tiles upwind burn faster and shrink,
 ## and fog creeps back faster. `direction` is where the wind blows TO.
 
+signal state_changed(state: State)
+
 enum State { CALM, WARNING, GUST }
 
 const DIRS := [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]
@@ -23,6 +25,10 @@ func _process(delta: float) -> void:
 	timer -= delta
 	if timer > 0.0:
 		return
+	_advance()
+	state_changed.emit(state)
+
+func _advance() -> void:
 	match state:
 		State.CALM:
 			state = State.WARNING
@@ -63,3 +69,4 @@ func force(s: State, dir: Vector2i = Vector2i.RIGHT, secs: float = 999.0) -> voi
 	state = s
 	direction = dir
 	timer = secs
+	state_changed.emit(state)

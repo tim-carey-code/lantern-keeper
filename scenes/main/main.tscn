@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://systems/audio/ambience.gd" id="8_amb"]
 [ext_resource type="Script" path="res://scripts/ui/note_reader.gd" id="9_note"]
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id="10_map"]
+[ext_resource type="Script" path="res://systems/wind/wind_streaks.gd" id="11_streaks"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -40,6 +41,9 @@ follow_viewport_enabled = true
 
 [node name="FogGrid" type="Node2D" parent="FogLayer"]
 script = ExtResource("3_fog")
+
+[node name="WindStreaks" type="Node2D" parent="FogLayer"]
+script = ExtResource("11_streaks")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("4_hud")

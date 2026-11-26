@@ -25,9 +25,22 @@ func _ready() -> void:
 	Progress.region_revealed.connect(func(n: String) -> void:
 		banner.text = n
 		_banner_t = 4.0)
+	var wind := get_tree().get_first_node_in_group("wind") as Wind
+	if wind:
+		wind.state_changed.connect(func(s) -> void:
+			if s == Wind.State.WARNING:
+				_show_toast("The wind is rising from the %s..." % wind.from_name(), 4.0)
+			elif s == Wind.State.GUST:
+				_show_toast("Gust from the %s! Exposed lanterns burn faster." % wind.from_name(), 5.0))
+	Progress.landmark_spotted.connect(func(title: String) -> void:
+		_show_toast("Something catches the light: %s" % title, 4.0))
 	Progress.lantern_unlocked.connect(func(k: String) -> void:
 		toast.text = "New lantern unlocked: %s" % Lantern.display(k)
 		_toast_t = 5.0)
+
+func _show_toast(text: String, secs: float) -> void:
+	toast.text = text
+	_toast_t = secs
 
 func _make_label(font_size: int, pos: Vector2) -> Label:
 	var l := Label.new()

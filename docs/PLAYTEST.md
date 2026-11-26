@@ -21,6 +21,22 @@ Questions (roadmap "done when" in brackets):
 6. Did the landmark texts make you curious about the valley?
 7. Sound: pleasant, too loud, or irritating? (It is placeholder.)
 
+### M3 results: 2026-11-26, owner, build 944201d/45c2853
+1. Found the way into the Reedmarsh without help: **yes**.
+2. Found the pumphouse and unlocked the Reservoir Lamp: **yes**.
+3. Used the Reservoir Lamp on purpose: **yes, it cut back on refuelling**.
+4. Boardwalk-only placement: **more interesting**.
+5. Gusts: **barely noticed them**.
+6. Landmarks: **"kind of", not obvious what was a landmark**.
+7. Sound: **OK for now, not great**.
+
+Gate: **passed** (1-3). Also from screenshots: tuning panel overlapped the HUD and the lantern list was cut off (fixed in 45c2853); fullscreen requested (added, F11).
+
+Follow-up fixes for 5 and 6:
+- Gusts: wind streaks blow across the screen (faint while building, many during the gust), a centre-screen message on warning and gust, lantern flames lean downwind and the fuel bar flashes red on exposed lanterns.
+- Landmarks: unread ones glow and have a pulsing amber marker; a centre-screen "Something catches the light: ..." message when the light first finds one.
+- Sound: replaced with real sounds in M4.
+
 ---
 
 ## Previous build: M2 (gathering)

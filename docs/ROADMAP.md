@@ -7,7 +7,7 @@
 
 ## Status
 
-- M0 done (b9dab77). M1 done, playtest gate passed (2798574, 62f7612). M2 done, playtest gate passed; scrap rebalanced. M3 built (Reedmarsh, Reservoir Lamp, wind gusts moved up from M5, landmarks, map), awaiting owner playtest.
+- M0 done (b9dab77). M1 done, playtest gate passed (2798574, 62f7612). M2 done, playtest gate passed; scrap rebalanced. M3 done, playtest gate passed; gust and landmark readability improved after the playtest. Next: M4 atmosphere pass.
 - Second-tester playtest for M1 still to do.
 
 ---

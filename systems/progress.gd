@@ -5,6 +5,7 @@ extends Node
 signal region_revealed(region_name: String)
 signal lantern_unlocked(kind: String)
 signal note_opened(title: String, text: String)
+signal landmark_spotted(title: String)
 
 const LANTERN_ORDER := ["post", "reservoir", "hooded", "mirror"]
 

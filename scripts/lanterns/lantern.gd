@@ -128,17 +128,25 @@ func _feed(delta: float) -> void:
 
 func _draw() -> void:
 	var wood := Color(0.4, 0.34, 0.28)
+	var gust := in_gust()
+	var lean := Vector2.ZERO
+	if gust:
+		var w := _wind()
+		lean = Vector2(w.direction) * (3.0 + sin(Time.get_ticks_msec() * 0.03) * 1.5)
 	if kind == "reservoir":
 		draw_line(Vector2(-6, 8), Vector2(-6, -10), wood, 3.0)
 		draw_line(Vector2(6, 8), Vector2(6, -10), wood, 3.0)
 		draw_rect(Rect2(-10, -26, 20, 16), Color(0.42, 0.46, 0.48))
 		draw_rect(Rect2(-10, -26 + 16 * (1.0 - fuel_frac()), 20, 16 * fuel_frac()), Color(0.55, 0.45, 0.25, 0.8))
 		if is_lit():
-			draw_circle(Vector2(0, -30), 3.5, Color(0.95, 0.9, 0.65))
+			draw_circle(Vector2(0, -30) + lean, 3.5, Color(0.95, 0.9, 0.65))
 	else:
 		draw_line(Vector2(0, 8), Vector2(0, -12), wood, 3.0)
 		draw_rect(Rect2(-6, -24, 12, 12), Color(0.5, 0.44, 0.36))
 		if is_lit():
-			draw_circle(Vector2(0, -18), 3.5, Color(1.0, 0.88, 0.55))
+			draw_circle(Vector2(0, -18) + lean, 3.5, Color(1.0, 0.88, 0.55))
 	draw_rect(Rect2(-12, 12, 24, 4), Color(0, 0, 0, 0.7))
-	draw_rect(Rect2(-12, 12, 24 * fuel_frac(), 4), Color(1.0, 0.7, 0.3))
+	var bar := Color(1.0, 0.7, 0.3)
+	if gust and int(Time.get_ticks_msec() / 250) % 2 == 0:
+		bar = Color(1.0, 0.35, 0.25)   # flashing: burning fast in the wind
+	draw_rect(Rect2(-12, 12, 24 * fuel_frac(), 4), bar)

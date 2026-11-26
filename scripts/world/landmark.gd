@@ -10,10 +10,19 @@ var title := ""
 var text := ""
 var look := "stone"        # stone, ledger, frames, chalk, pumphouse
 var unlock_kind := ""
+var glow: PointLight2D
+var _spotted := false
 
 func _ready() -> void:
 	add_to_group("landmark")
 	z_index = 15
+	glow = PointLight2D.new()
+	glow.texture = LightTex.radial()
+	glow.texture_scale = LightTex.scale_for(56.0)
+	glow.color = Color(1.0, 0.8, 0.45)
+	glow.energy = 0.7
+	glow.enabled = false
+	add_child(glow)
 
 func _fog() -> FogGrid:
 	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
@@ -41,6 +50,14 @@ func _process(_delta: float) -> void:
 	var v := is_revealed()
 	if v != visible:
 		visible = v
+	if v and not _spotted:
+		_spotted = true
+		Progress.landmark_spotted.emit(title)
+	# Unread landmarks glow and pulse so they stand out from the scenery.
+	glow.enabled = v and not is_read()
+	if glow.enabled:
+		glow.energy = 0.55 + 0.25 * sin(Time.get_ticks_msec() * 0.004)
+	if v:
 		queue_redraw()
 
 func _draw() -> void:
@@ -66,4 +83,7 @@ func _draw() -> void:
 			draw_colored_polygon(PackedVector2Array([Vector2(-8, 8), Vector2(-6, -14), Vector2(6, -16), Vector2(8, 8)]), Color(0.5, 0.5, 0.52))
 			draw_line(Vector2(-3, -6), Vector2(3, -6), Color(0.25, 0.25, 0.28), 1.0)
 	if not is_read():
-		draw_circle(Vector2(0, -36 if look == "pumphouse" else -24) + Vector2(0, -16 if look == "pumphouse" else 0), 3.0, Color(1.0, 0.85, 0.4))
+		var top := Vector2(0, -56 if look == "pumphouse" else -30)
+		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.004)
+		draw_circle(top, 4.0, Color(1.0, 0.85, 0.4))
+		draw_arc(top, 7.0 + pulse * 4.0, 0.0, TAU, 20, Color(1.0, 0.85, 0.4, 0.8 - pulse * 0.6), 1.5)

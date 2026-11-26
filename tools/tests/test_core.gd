@@ -113,10 +113,20 @@ func _process(_delta: float) -> void:
 			Inventory.counts["fuel"] = 0
 			check(Inventory.add("fuel", 100) == Inventory.carry_limit, "carry limit caps gathering")
 			_m3_checks()
+		500:
+			var streaks = main.get_node("FogLayer/WindStreaks")
+			check(streaks.active_count() == 0, "no wind streaks when calm")
 		530:
+			check(_landmark("stone_way")._spotted, "a landmark is announced when the light first finds it")
+			check(main.get_node("HUD").toast.text.contains("Carved stone") or _landmark("stone_way").glow.enabled, "unread landmark glows")
 			check(fed.fuel > 10.0, "Reservoir Lamp tops up a lantern in its light (%.2f)" % fed.fuel)
 			check(reservoir.fuel < Tuning.reservoir_max_fuel - Tuning.reservoir_burn_per_sec * 1.0, "Reservoir spends its own tank feeding others")
 			_wind_checks()
+		540:
+			check(main.get_node("FogLayer/WindStreaks").active_count() > 40, "wind streaks blow across the screen in a gust")
+			check(main.get_node("HUD").toast.text != "" , "HUD toast active")
+			wind.force(Wind.State.CALM)
+		541:
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)
 
@@ -185,6 +195,8 @@ func _m3_checks() -> void:
 	fed.position = reservoir.position + Vector2(64, 0)
 	fed.fuel = 10.0
 	main.get_node("Lanterns").add_child(fed)
+	# Walk the keeper to the carved stone so its tile gets lit (checked at frame 530).
+	player.position = _landmark("stone_way").global_position + Vector2(0, 20)
 	# Map screen.
 	var map = main.get_node("MapScreen")
 	map.toggle()
@@ -206,5 +218,6 @@ func _wind_checks() -> void:
 	check(exposed.get_light_radius() < Tuning.lantern_max_radius, "gust shrinks an exposed lantern's light")
 	check(not sheltered.in_gust() and is_equal_approx(sheltered.burn_rate(), Tuning.lantern_burn_per_sec), "rock upwind shelters a lantern")
 	check(wind.status_text().contains("west"), "HUD names the wind direction")
-	wind.force(Wind.State.CALM)
-	check(not exposed.in_gust(), "calm wind: no gust effect")
+	var hud = main.get_node("HUD")
+	check(hud.toast.text.contains("Gust from the west"), "a gust is announced in the middle of the screen")
+	check(exposed.in_gust() and wind.is_gusting(), "gust stays on for the streak check")
