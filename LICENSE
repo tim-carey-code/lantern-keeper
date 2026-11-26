@@ -1,13 +1,6 @@
-MIT License (code only)
+MIT License
 
 Copyright (c) 2026 tim-carey-code
-
-This license covers the source code of Lantern Keeper: GDScript (*.gd),
-shaders (*.gdshader), Godot scene and resource files (*.tscn, *.tres),
-project configuration (project.godot), and the tools/ folder.
-
-It does NOT cover the game's art, audio, writing, story, design documents,
-name, or logo. Those are all rights reserved; see LICENSE-ASSETS.md.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

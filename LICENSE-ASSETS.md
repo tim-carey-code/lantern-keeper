@@ -2,7 +2,7 @@
 
 Copyright (c) 2026 tim-carey-code. **All rights reserved.**
 
-The code in this repository is MIT licensed (see `LICENSE`). Everything below is **not**
+The code in this repository (GDScript, shaders, Godot scene/resource files, `project.godot`, and `tools/`) is MIT licensed (see `LICENSE`). Everything below is **not**
 covered by that license and may not be copied, redistributed, sold, or reused in other
 projects without written permission:
 
