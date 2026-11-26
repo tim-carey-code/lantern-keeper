@@ -1,6 +1,6 @@
 # Lantern Keeper — Story Outline (draft for owner markup)
 
-> **Draft, awaiting owner review** (milestone M5a). Lines starting with **OWNER:** are places to decide or rewrite.
+> **Owner-reviewed 2026-11-26** (milestone M5a). **DECIDED** lines are owner decisions. **DEFAULT** lines keep the draft until the owner says otherwise.
 > Sources: DESIGN.md, DECISIONS.md, ROADMAP.md, landmark texts in `scripts/main/main.gd`.
 > Voice for all in-game text: short, plain sentences. Calm, a little sad, a little eerie. Never horror. No dialogue.
 
@@ -16,7 +16,7 @@
 - **Quietly uneasy.** The dark is not empty, but never cruel. Fainting is a rest, not a punishment.
 - **Relief.** When the great lamp relights and the fog lifts, it feels like a long breath out.
 
-OWNER: Keep "the new keeper answers a letter", or choose another way in (e.g. the keeper simply wakes in the hut)?
+DECIDED: keep "the new keeper answers a letter".
 
 ---
 
@@ -24,11 +24,11 @@ OWNER: Keep "the new keeper answers a letter", or choose another way in (e.g. th
 
 **The new keeper (player).** No name, face or voice by default. New to the valley; knows only what the player knows. Writes the journal.
 
-OWNER: Keep the keeper unnamed, or let the player type a name that signs the journal?
+DECIDED: the player types a name at a new game; it signs the journal.
 
 **The last keeper.** Suggested name **Hester Vane**; alternatives **Tobin Ash**, **Nell Corrie**, **Oswin Reed**. Signs every note "— H.", so the full name can change cheaply. Kept the valley alone after the others left: tired, stubborn, kind. Went ahead to the Lake, lost their coat on the Ridge, left a half-built mirror on the shore. Fate not confirmed. This draft avoids pronouns for them where it can.
 
-OWNER: Pick the name (or keep only "H.") and the pronouns.
+DECIDED: Hester Vane, who signs notes "— H.". Pronouns: not chosen yet, so texts avoid them (DEFAULT).
 
 **The Soul of the Wick.**
 - A living darkness that feeds on flame. It rose out of the Still Lake, coiled around the great lamp and drank its light.
@@ -36,13 +36,13 @@ OWNER: Pick the name (or keep only "H.") and the pronouns.
 - THE WICK REMEMBERS EVERY FLAME hints that it was once part of the light, or made from it.
 - **Left unexplained:** why it rose, whether it was always there, whether the keepers woke it, where it goes when driven off.
 
-OWNER: DECISIONS calls it "he"; this draft uses "it" to keep it strange. Which?
+DECIDED: "it". In-world texts say "it", "the dark" or "the Soul of the Wick"; never a name or a face.
 
 **The Wicklings.** Small pieces of the Soul of the Wick that wander the dark. They crawl toward warmth, drain lanterns and chill the keeper. Hungry, not cruel: moths turned inside out. More and bolder the farther you go from the hut.
 
 **The old keepers' order.** Suggested name **the Keepers of the Long Light** (alternatives: **the Lampwardens**, **the Valley Watch**; in the world mostly "the keepers"). They tended the posts, ran the pump, cut glass on the Ridge and passed light by mirror to the great lamp. When it went cold, the other lamps failed one by one and the keepers left. One stayed.
 
-OWNER: Name the order, or keep it nameless.
+DEFAULT: nameless ("the old keepers").
 
 ---
 
@@ -68,7 +68,7 @@ OWNER: Name the order, or keep it nameless.
 >
 > — H., the last keeper
 
-OWNER: Rewrite the letter in your words if you like (under ~90 words).
+DEFAULT: the letter as drafted.
 
 ---
 
@@ -83,7 +83,7 @@ OWNER: Rewrite the letter in your words if you like (under ~90 words).
 | **5. Finale** | Who took the light: the Soul of the Wick. Light drives it off. | A quiet confrontation, not a battle. Tension, then release. | The fog lifts over the whole valley. |
 | **6. After** | Nothing more is required. | Rest. The valley is lit and open; the dark is thinner, not gone. | Optional goals. Far past the lake, one small light that was not there before (hook for later). |
 
-OWNER: Is the after-game "far light" (a hint that H. is alive) right, too much, or too little?
+DEFAULT: keep the far light.
 
 ---
 
@@ -122,8 +122,8 @@ Optional after-game goals (journal only): `all_notes` "Find every note H. left";
 
 Lens comes before coat because it sits west of the coat (`_ridge_spot(30, 9)` vs `(42, 22)`), so the trail runs west to east: glazier, lens, coat, station.
 
-OWNER: Too fine-grained? The build goals (4, 10, 13, 17) could merge into the unlock goals.
-OWNER: Turn the pointer off on entering the marsh (draft), or later?
+DEFAULT: keep the goals as listed; tune after playtest.
+DECIDED: the pointer turns off on reaching the Reedmarsh (a setting turns it back on).
 
 ---
 
@@ -175,7 +175,7 @@ Each quoted line is one line on screen.
 > Someone has turned the mirror down, toward the water.
 > Old steps beside it go down into the fog.
 
-OWNER: The coat note now belongs to H. (it was an unnamed keeper). Keep that link?
+DEFAULT: the coat is H.'s.
 
 ### New landmarks (12)
 In the Text column, " / " marks a line break.
@@ -197,8 +197,8 @@ In the Text column, " / " marks a line break.
 
 Total: 21 landmarks (inside the 15-25 target).
 
-OWNER: `camp` gives a ready-made Mirror Post as a teaching aid. Keep, or have the player build every mirror?
-OWNER: The `great_lamp` plate is the only hint at "why". Keep, soften, or cut?
+DECIDED: the player builds every mirror. H.'s camp holds a half-built mirror frame (story only) and a crate of glass instead, so the Lake can be started.
+DECIDED: keep the plate.
 
 ---
 
@@ -219,7 +219,7 @@ One entry after each beat, written by the keeper. Notes read are listed under ea
 11. **The light returns** (23): *It let go. The great lamp caught, and the fog lifted. I could see the hut from the island.*
 12. **After** (`hand_lamp` read): *H. left their lamp for me. Past the far shore there is a small light. I will keep this one lit.*
 
-OWNER: First person (draft), or a neutral log ("The keeper found...")?
+DEFAULT: first person.
 
 ---
 
@@ -242,7 +242,7 @@ Shown once each, at the bottom of the screen, for a few seconds. The ward tip sh
 | First Mirror Post placed | A mirror needs light. Stand it inside a burning lantern's glow. |
 | First lit mirror | Interact to turn the beam. Beams pass from mirror to mirror. |
 
-OWNER: Add a "show tips again" option in settings?
+DEFAULT: yes, a "show tips again" option.
 
 ---
 
@@ -260,7 +260,7 @@ OWNER: Add a "show tips again" option in settings?
 
 Fainting here works as everywhere: wake at the nearest lit lantern; the coil grows back to where it was, never further.
 
-OWNER: Calm puzzle (light every side, no clock), or some pressure (the coil drains the lanterns feeding the mirrors)?
+DECIDED: some pressure (the coil drains the lanterns feeding the mirrors, and Wicklings rise from the water).
 
 ### Ending text (~65 words)
 
@@ -278,7 +278,7 @@ OWNER: Calm puzzle (light every side, no clock), or some pressure (the coil drai
 HUD goal: **The valley is yours to keep.**
 One-time line: *Far past the lake, one small light is burning. It was not there before.*
 
-OWNER: Rewrite the ending in your words if you like (under ~80 words).
+DEFAULT: the ending as drafted.
 
 ---
 

@@ -2,6 +2,16 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (story markup)
+- Keep the premise: the new keeper answers a letter from the last keeper, **Hester Vane ("H.")**. Pronouns for H. not chosen; texts avoid them.
+- The player **types a name** at a new game; it signs the journal.
+- The Soul of the Wick is **"it"**: no name, no face.
+- The goal pointer turns **off on reaching the Reedmarsh**.
+- The player **builds every mirror** (H.'s camp holds a crate of glass instead of a free mirror).
+- **Keep** the great lamp plate ("IT WAS NEVER MEANT TO BE KEPT BY ONE.").
+- The finale has **some pressure**: the coil drains the lanterns feeding the mirrors; Wicklings rise from the water.
+- Other draft choices stand as defaults (see STORY.md DEFAULT lines).
+
 ## 2026-11-26 (guidance and story before the Lake)
 - Owner: before adding regions, the game needs story and direction (no goals, no journal). Agreed: a guidance-and-story milestone comes **before** the Still Lake, so new regions are built with it.
 - Direction style **(b)**: a goal line + keeper's journal **plus a soft pointer** (amber arrow toward the current goal) that is **on in the first region and off by default after it** (can be turned back on in settings).
