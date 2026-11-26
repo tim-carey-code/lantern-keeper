@@ -5,6 +5,13 @@
 
 ---
 
+## Status
+
+- M0 done (b9dab77). M1 done, playtest gate passed (2798574, 62f7612). M2 built, awaiting owner playtest.
+- Second-tester playtest for M1 still to do.
+
+---
+
 ## M0 — Setup
 
 **Goal:** an empty project that runs, is tracked in git, and has a structure we won't need to rework.

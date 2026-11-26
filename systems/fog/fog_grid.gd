@@ -1,29 +1,37 @@
 class_name FogGrid
 extends Node2D
-## Per-tile fog density (0 = clear, 1 = full fog), creep-back, and memory.
+## Per-tile fog density (0 = clear, 1 = full fog), creep-back, memory, and solid rock.
 ## Light sources are nodes in group "light_source" with get_light_radius() -> float.
+## Lives on its own CanvasLayer so the scene darkness does not tint it:
+## never-seen fog is near black, seen-before fog is a dim blue haze with outlines.
 
 const TILE := 32
 const TICK := 0.1                  # simulation step (s)
 const REMEMBER_BELOW := 0.3        # a tile this clear counts as "seen"
 const PLACE_MAX_DENSITY := 0.6     # lanterns need lit or edge-of-light ground
 
+const UNSEEN := Color(0.02, 0.025, 0.04)
+const SEEN := Color(0.09, 0.11, 0.15)
+const SEEN_OUTLINE := Color(0.32, 0.38, 0.5)
+
 @export var cols := 64
 @export var rows := 48
 
 var density := PackedFloat32Array()
 var remembered := PackedByteArray()
+var solid := PackedByteArray()     # rock: no walking, no building
 var _light := PackedFloat32Array()
 var _acc := 0.0
 
 func _ready() -> void:
 	add_to_group("fog_grid")
-	z_index = 10
 	var n := cols * rows
 	density.resize(n)
 	density.fill(1.0)
 	remembered.resize(n)
 	remembered.fill(0)
+	solid.resize(n)
+	solid.fill(0)
 	_light.resize(n)
 
 func world_size() -> Vector2:
@@ -44,8 +52,21 @@ func density_at(p: Vector2) -> float:
 		return 1.0
 	return density[t.y * cols + t.x]
 
+func is_solid_at(p: Vector2) -> bool:
+	var t := tile_of(p)
+	if not in_bounds(t):
+		return true
+	return solid[t.y * cols + t.x] == 1
+
 func revealed_fraction() -> float:
-	return float(remembered.count(1)) / float(remembered.size())
+	var open := solid.count(0)
+	if open == 0:
+		return 0.0
+	var seen := 0
+	for i in remembered.size():
+		if remembered[i] == 1 and solid[i] == 0:
+			seen += 1
+	return float(seen) / float(open)
 
 func _process(delta: float) -> void:
 	_acc += delta
@@ -105,9 +126,8 @@ func _draw() -> void:
 				continue
 			var rect := Rect2(x * TILE, y * TILE, TILE, TILE)
 			if remembered[i] == 1:
-				# Seen before: fog never fully hides it again, and an outline stays.
-				draw_rect(rect, Color(0.6, 0.64, 0.7, v * 0.8))
-				if v > 0.6:
-					draw_rect(rect.grow(-3), Color(0.75, 0.8, 0.9, 0.35), false, 1.0)
+				draw_rect(rect, Color(SEEN, v * 0.8))
+				if v > 0.5 and solid[i] == 0:
+					draw_rect(rect.grow(-4), Color(SEEN_OUTLINE, 0.35 * v), false, 1.0)
 			else:
-				draw_rect(rect, Color(0.6, 0.64, 0.7, v))
+				draw_rect(rect, Color(UNSEEN, v))

@@ -18,10 +18,10 @@ Command line: `godot --path ~/Projects/lantern-keeper`
 | Action | Keyboard / mouse | Gamepad |
 |---|---|---|
 | Move | WASD / arrows | Left stick / D-pad |
-| Interact (gather, refuel, relight) | E | A (bottom) |
-| Place lantern | Space / left click | X (left) |
-| Cancel | Q / right click | B (right) |
-| Build menu | Tab | Y (top) |
+| Refuel / relight (tap), gather (hold) | E | A (bottom) |
+| Build Post Lamp (5 scrap) | Space / left click | X (left) |
+| Pick up lantern | Q / right click | B (right) |
+| Lantern list | Tab | Y (top) |
 | Pause | Esc | Start |
 | Tuning panel | F1 | Select / Back |
 

@@ -1,3 +1,24 @@
+# Playtests
+
+## Current build: M2 (gathering)
+
+Start with nothing in The Hollow and grow a lit area that keeps itself going.
+
+- Hold **E / A** next to a dead tree (resin = fuel) or a ruin (scrap) to gather. Resources only show on lit ground.
+- **Space / X** builds a Post Lamp for 5 scrap. **E / A** on a lantern pours in carried fuel (1 carried fuel = 10 lantern fuel). **Q / B** picks a lantern up: half the scrap back, plus its fuel.
+- Your hand lamp dims in the dark and burns a carried fuel when low. It never goes out. It refills for free in lantern light.
+- The woodpile by the hut always regrows, so you can never get stuck.
+- Fog you have seen stays as a dim blue haze with tile outlines; never-seen fog is black.
+- You can carry 30 of each resource.
+
+Questions:
+1. Did gathering feel worth it, or like busywork?
+2. Did each new lantern feel like a real choice?
+3. Did you ever feel stuck or short of something? Where?
+4. Is "seen" fog clearly different from never-seen dark?
+
+---
+
 # M1 playtest: "Is tending light fun?"
 
 Play for about 10 minutes. Grey-box only: circles and squares, no real art or sound yet.

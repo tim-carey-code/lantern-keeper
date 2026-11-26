@@ -6,9 +6,13 @@ const ROWS := [
 	["lantern_burn_per_sec", "Burn rate (fuel/s)", 0.05, 5.0, 0.05],
 	["lantern_max_radius", "Lantern radius (px)", 64.0, 512.0, 8.0],
 	["lantern_min_radius_frac", "Radius when nearly empty", 0.1, 1.0, 0.05],
+	["fuel_per_unit", "Lantern fuel per carried fuel", 1.0, 50.0, 1.0],
+	["gather_interval", "Gather time per unit (s)", 0.05, 2.0, 0.05],
 	["fog_creep_per_sec", "Fog creep (/s)", 0.0, 0.5, 0.01],
 	["fog_clear_per_sec", "Fog clear (/s)", 0.1, 3.0, 0.05],
-	["hand_lamp_radius", "Hand lamp radius (px)", 24.0, 256.0, 4.0],
+	["fog_slow_min", "Walk speed in full fog", 0.2, 1.0, 0.05],
+	["hand_lamp_max_radius", "Hand lamp radius (px)", 48.0, 256.0, 4.0],
+	["hand_lamp_drain_per_sec", "Hand lamp drain (/s)", 0.0, 0.2, 0.005],
 ]
 
 var panel: PanelContainer
