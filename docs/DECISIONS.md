@@ -2,6 +2,9 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (art style)
+- **Art style: moody pixel art.** Small crisp pixel art on 16x16 tiles drawn at 2x (32 px on screen, matching the fog grid), limited palette of deep blues and warm ambers, nearest-neighbour filtering. Chosen because it is simple and the owner can draw his own in Pixelorama. Free CC0 packs may be used and recoloured to the palette; every pack goes in assets/CREDITS.md.
+
 ## 2026-11-26 (after M3 playtest)
 - Cold lanterns stay findable, as DESIGN 3.1/4 intended ("keeps its frame"): their frame and a pulse are drawn above fog and darkness. Lanterns below 25% fuel get an amber pulse. Off-screen cold/low lanterns get an arrow at the screen edge. The HUD counts them and the map colours them (red cold, yellow low).
 
