@@ -9,6 +9,7 @@ var index := 0
 
 func _ready() -> void:
 	layer = 6
+	process_mode = Node.PROCESS_MODE_ALWAYS   # works while the world is paused
 	panel = PanelContainer.new()
 	panel.position = Vector2(1280 - 16 - 560, 16)
 	panel.custom_minimum_size = Vector2(560, 0)
@@ -30,6 +31,7 @@ func is_open() -> bool:
 func open() -> void:
 	panel.visible = true
 	Tuning.ui_open = true
+	get_tree().paused = true   # reading or choosing never costs you anything
 	Sfx.play("ui_open", -14.0)
 	index = maxi(0, Progress.LANTERN_ORDER.find(Progress.selected))
 
@@ -37,6 +39,7 @@ func close() -> void:
 	Sfx.play("ui_close", -14.0)
 	panel.visible = false
 	Tuning.ui_open = false
+	get_tree().paused = false
 	Progress.block_input()
 
 func _unhandled_input(event: InputEvent) -> void:

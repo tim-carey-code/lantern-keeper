@@ -31,6 +31,7 @@ func strip_real_input() -> void:
 				InputMap.action_erase_event(action, e)
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # keep counting frames when a note or menu pauses the world
 	strip_real_input()
 	Story.skip_opening = true
 	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save

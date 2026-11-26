@@ -8,6 +8,7 @@ var body_label: Label
 
 func _ready() -> void:
 	layer = 8
+	process_mode = Node.PROCESS_MODE_ALWAYS   # works while the world is paused
 	panel = PanelContainer.new()
 	panel.position = Vector2(240, 220)
 	panel.custom_minimum_size = Vector2(800, 0)
@@ -37,6 +38,7 @@ func _open(title: String, text: String) -> void:
 	body_label.text = text + "\n\n[E / A] close"
 	panel.visible = true
 	Tuning.ui_open = true
+	get_tree().paused = true   # reading or choosing never costs you anything
 	Sfx.play("note_open", -10.0)
 
 func close() -> void:
@@ -44,6 +46,7 @@ func close() -> void:
 		Sfx.play("note_close", -12.0)
 	panel.visible = false
 	Tuning.ui_open = false
+	get_tree().paused = false
 	Progress.block_input()
 
 func _unhandled_input(event: InputEvent) -> void:

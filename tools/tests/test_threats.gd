@@ -27,6 +27,7 @@ func strip_real_input() -> void:
 				InputMap.action_erase_event(action, e)
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # keep counting frames when a note or menu pauses the world
 	strip_real_input()
 	Story.skip_opening = true
 	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
@@ -114,6 +115,8 @@ func _process(_delta: float) -> void:
 			check(player.warmth < Tuning.warmth_max, "a Wickling's touch drains warmth (%.0f)" % player.warmth)
 			player.warmth = 1.0
 		500:
+			check(get_tree().paused, "the fainting note pauses the world")
+			main.get_node("NoteReader").close()
 			check(player.faints == 1, "out of warmth: the keeper faints (no game over)")
 			check(player.global_position.distance_to(lamp.global_position) < 60.0, "and wakes beside the nearest lit lantern")
 			check(Inventory.get_count("fuel") == 5 and Inventory.get_count("scrap") == 5, "half of what was carried is dropped")

@@ -15,6 +15,7 @@ var _view := Rect2i()
 
 func _ready() -> void:
 	layer = 9
+	process_mode = Node.PROCESS_MODE_ALWAYS   # works while the world is paused
 	root = Control.new()
 	root.size = Vector2(1280, 720)
 	add_child(root)
@@ -40,11 +41,13 @@ func toggle() -> void:
 		Sfx.play("ui_close", -14.0)
 		root.visible = false
 		Tuning.ui_open = false
+		get_tree().paused = false
 		Progress.block_input()
 	elif not Tuning.ui_open:
 		Sfx.play("ui_open", -14.0)
 		root.visible = true
 		Tuning.ui_open = true
+		get_tree().paused = true   # reading or choosing never costs you anything
 		_refresh = 0.0
 
 func _unhandled_input(event: InputEvent) -> void:

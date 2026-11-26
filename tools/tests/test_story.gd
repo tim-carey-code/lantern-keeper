@@ -20,6 +20,7 @@ func strip_real_input() -> void:
 				InputMap.action_erase_event(action, e)
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # keep counting frames when a note or menu pauses the world
 	strip_real_input()
 	Story.skip_opening = true
 	Tuning.wick_enabled = false
@@ -36,7 +37,11 @@ func _landmark(id: String) -> Landmark:
 
 func _read(id: String) -> void:
 	_landmark(id).activate()
+	if id == "ledger":
+		check(get_tree().paused, "reading a note pauses the world (no Wickling can hurt you)")
 	main.get_node("NoteReader").close()
+	if id == "ledger":
+		check(not get_tree().paused, "closing the note resumes the world")
 
 func _process(_delta: float) -> void:
 	frame += 1
@@ -79,6 +84,16 @@ func _process(_delta: float) -> void:
 			_read("pumphouse")
 			Story.update(main)
 			check(Story.done.has("chalk_lake") and Story.done.has("pumphouse") and Story.current == "build_reservoir", "finishing a goal early skips to the next unfinished one (%s)" % Story.current)
+			# The lantern list and the map pause too.
+			var bm = main.get_node("BuildMenu")
+			bm.open()
+			check(get_tree().paused, "the lantern list pauses the world")
+			bm.close()
+			var mp = main.get_node("MapScreen")
+			mp.toggle()
+			check(get_tree().paused, "the map pauses the world")
+			mp.toggle()
+			check(not get_tree().paused, "closing them resumes")
 			# Journal.
 			var j = main.get_node("Journal")
 			j.toggle()

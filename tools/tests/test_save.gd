@@ -26,6 +26,7 @@ func _new_main() -> void:
 	add_child(main)
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # keep counting frames when a note or menu pauses the world
 	strip_real_input()
 	Tuning.wick_enabled = false
 	Story.skip_opening = true
