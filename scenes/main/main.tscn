@@ -6,33 +6,52 @@
 [ext_resource type="Script" uid="uid://bbsjxrt06a6xw" path="res://scripts/ui/hud.gd" id="4_hud"]
 [ext_resource type="Script" uid="uid://byt3rab1w8kn6" path="res://scripts/ui/debug_panel.gd" id="5_debug"]
 [ext_resource type="Script" uid="uid://dy452juy2jht4" path="res://scripts/ui/build_menu.gd" id="6_build"]
+[ext_resource type="Script" path="res://systems/wind/wind.gd" id="7_wind"]
+[ext_resource type="Script" path="res://systems/audio/ambience.gd" id="8_amb"]
+[ext_resource type="Script" path="res://scripts/ui/note_reader.gd" id="9_note"]
+[ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id="10_map"]
 
-[node name="Main" type="Node2D" unique_id=36395756]
+[node name="Main" type="Node2D"]
 script = ExtResource("1_main")
 
-[node name="Darkness" type="CanvasModulate" parent="." unique_id=1045312790]
+[node name="Darkness" type="CanvasModulate" parent="."]
 color = Color(0.06, 0.07, 0.1, 1)
 
-[node name="Resources" type="Node2D" parent="." unique_id=1430927412]
+[node name="Wind" type="Node" parent="."]
+script = ExtResource("7_wind")
 
-[node name="Lanterns" type="Node2D" parent="." unique_id=230755572 groups=["lantern_root"]]
+[node name="Ambience" type="Node" parent="."]
+script = ExtResource("8_amb")
 
-[node name="Player" type="CharacterBody2D" parent="." unique_id=235534133]
+[node name="Resources" type="Node2D" parent="."]
+
+[node name="Landmarks" type="Node2D" parent="."]
+
+[node name="Lanterns" type="Node2D" parent="." groups=["lantern_root"]]
+
+[node name="Player" type="CharacterBody2D" parent="."]
 script = ExtResource("2_player")
 
-[node name="Camera2D" type="Camera2D" parent="Player" unique_id=909088603]
+[node name="Camera2D" type="Camera2D" parent="Player"]
 
-[node name="FogLayer" type="CanvasLayer" parent="." unique_id=30022223]
+[node name="FogLayer" type="CanvasLayer" parent="."]
+layer = 1
 follow_viewport_enabled = true
 
-[node name="FogGrid" type="Node2D" parent="FogLayer" unique_id=1619641892]
+[node name="FogGrid" type="Node2D" parent="FogLayer"]
 script = ExtResource("3_fog")
 
-[node name="HUD" type="CanvasLayer" parent="." unique_id=842193540]
+[node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("4_hud")
 
-[node name="BuildMenu" type="CanvasLayer" parent="." unique_id=1279075410]
+[node name="BuildMenu" type="CanvasLayer" parent="."]
 script = ExtResource("6_build")
 
-[node name="DebugPanel" type="CanvasLayer" parent="." unique_id=2021962811]
+[node name="NoteReader" type="CanvasLayer" parent="."]
+script = ExtResource("9_note")
+
+[node name="MapScreen" type="CanvasLayer" parent="."]
+script = ExtResource("10_map")
+
+[node name="DebugPanel" type="CanvasLayer" parent="."]
 script = ExtResource("5_debug")

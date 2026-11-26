@@ -60,10 +60,15 @@ func _physics_process(delta: float) -> void:
 	var slow := 1.0
 	if fog and dir != Vector2.ZERO:
 		slow = lerpf(1.0, Tuning.fog_slow_min, fog.density_at(global_position + dir * 24.0))
+	if fog and fog.terrain_at(global_position) == FogGrid.T_MARSH:
+		slow *= 0.85   # wading through the marsh
 	velocity = dir * speed * slow
 	move_and_slide()
 	if fog:
 		position = position.clamp(Vector2.ZERO, fog.world_size())
+	if Progress.input_blocked():
+		_gather_target = null
+		return
 	if Input.is_action_just_pressed("place_lantern"):
 		try_place()
 	elif Input.is_action_just_pressed("cancel"):
@@ -80,10 +85,17 @@ func _fog() -> FogGrid:
 
 # --- Interact: refuel or gather -------------------------------------------
 
-## Nearest lantern or gatherable resource within reach (or null).
+## Nearest lantern, gatherable resource or revealed landmark within reach (or null).
 func nearest_target() -> Node2D:
 	var best: Node2D = null
 	var best_d := REACH
+	for m in get_tree().get_nodes_in_group("landmark"):
+		if not m.is_revealed():
+			continue
+		var d: float = m.global_position.distance_to(global_position)
+		if d < best_d:
+			best = m
+			best_d = d
 	for l in get_tree().get_nodes_in_group("lantern"):
 		var d: float = l.global_position.distance_to(global_position)
 		if d < best_d:
@@ -98,8 +110,8 @@ func nearest_target() -> Node2D:
 			best_d = d
 	return best
 
-func nearest_lantern() -> PostLamp:
-	var best: PostLamp = null
+func nearest_lantern() -> Lantern:
+	var best: Lantern = null
 	var best_d := REACH
 	for l in get_tree().get_nodes_in_group("lantern"):
 		var d: float = l.global_position.distance_to(global_position)
@@ -113,7 +125,9 @@ func is_gathering() -> bool:
 
 func begin_interact() -> void:
 	var t := nearest_target()
-	if t is PostLamp:
+	if t is Landmark:
+		t.activate()
+	elif t is Lantern:
 		refuel(t)
 	elif t is ResourceNode:
 		_gather_target = t
@@ -136,7 +150,7 @@ func continue_gather(delta: float) -> void:
 		Inventory.add(target.kind, 1)
 
 ## Pours carried fuel into a lantern (relights it if cold). Returns units used.
-func refuel(l: PostLamp) -> int:
+func refuel(l: Lantern) -> int:
 	var missing := Tuning.lantern_max_fuel - l.fuel
 	var units := mini(ceili(missing / Tuning.fuel_per_unit), Inventory.get_count("fuel"))
 	if units <= 0:
@@ -151,31 +165,34 @@ func place_pos() -> Vector2:
 	var fog := _fog()
 	return fog.tile_center(fog.tile_of(global_position))
 
-## "" if a Post Lamp can be built at p, otherwise a short reason.
+## "" if the selected lantern can be built at p, otherwise a short reason.
 func place_block_reason(p: Vector2) -> String:
 	var fog := _fog()
 	if fog == null:
 		return "no map"
-	if fog.is_solid_at(p):
-		return "rock"
+	var ground := fog.build_block(p)
+	if ground != "":
+		return ground
 	if fog.density_at(p) > FogGrid.PLACE_MAX_DENSITY:
 		return "too dark"
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if l.global_position.distance_to(p) < FogGrid.TILE * 1.5:
 			return "too close to a lantern"
-	if Inventory.get_count("scrap") < Tuning.post_lamp_cost_scrap:
-		return "needs %d scrap" % Tuning.post_lamp_cost_scrap
+	var cost := Lantern.cost(Progress.selected)
+	if Inventory.get_count("scrap") < cost:
+		return "needs %d scrap" % cost
 	return ""
 
 func can_place(p: Vector2) -> bool:
 	return place_block_reason(p) == ""
 
-func try_place() -> PostLamp:
+func try_place() -> Lantern:
 	var p := place_pos()
 	if not can_place(p):
 		return null
-	Inventory.spend("scrap", Tuning.post_lamp_cost_scrap)
-	var lamp_node := PostLamp.new()
+	Inventory.spend("scrap", Lantern.cost(Progress.selected))
+	var lamp_node := Lantern.new()
+	lamp_node.kind = Progress.selected
 	lamp_node.position = p   # lantern root sits at the origin
 	get_tree().get_first_node_in_group("lantern_root").add_child(lamp_node)
 	return lamp_node
@@ -185,7 +202,7 @@ func pick_up_nearest() -> void:
 	var l := nearest_lantern()
 	if l == null:
 		return
-	Inventory.add("scrap", floori(Tuning.post_lamp_cost_scrap * Tuning.pickup_refund))
+	Inventory.add("scrap", floori(Lantern.cost(l.kind) * Tuning.pickup_refund))
 	Inventory.add("fuel", floori(l.fuel / Tuning.fuel_per_unit))
 	l.remove_from_group("lantern")
 	l.remove_from_group("light_source")
@@ -205,7 +222,8 @@ func _draw() -> void:
 	var col := Color(0.6, 1.0, 0.6, 0.6) if ok else Color(1.0, 0.45, 0.4, 0.45)
 	draw_rect(Rect2(lp - Vector2(16, 16), Vector2(32, 32)), col, false, 1.5)
 	if ok:
-		draw_arc(lp, Tuning.lantern_max_radius, 0.0, TAU, 72, Color(col, 0.35), 1.5)
+		var preview := Tuning.reservoir_radius if Progress.selected == "reservoir" else Tuning.lantern_max_radius
+		draw_arc(lp, preview, 0.0, TAU, 72, Color(col, 0.35), 1.5)
 	# Gathering progress ring.
 	if is_gathering():
 		var t := to_local(_gather_target.global_position)

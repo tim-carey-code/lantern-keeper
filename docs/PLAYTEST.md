@@ -1,6 +1,29 @@
 # Playtests
 
-## Current build: M2 (gathering)
+## Current build: M3 (The Reedmarsh)
+
+The valley is bigger. East of the Hollow, through a rocky passage, is **The Reedmarsh**.
+
+- Marsh ground is soft: you can wade through it (a bit slower) but lanterns only stand on **boardwalks** and **islands**. Fog creeps back faster here. Lots of **peat** (fuel) along the boardwalks.
+- **Landmarks** glow with a small amber dot until read. Press **E / A** to look closer. There are five: two in the Hollow, three in the marsh.
+- The **pumphouse** on the far eastern island unlocks the **Reservoir Lamp** (8 scrap): big tank, wide dim light, slowly refuels other lanterns in its light (even cold ones).
+- **Tab / Y** opens the lantern list; up/down picks a lantern, any action button closes it.
+- **Wind gusts** every 30-55 s from one direction, announced 5 s ahead. During a gust, lanterns with no rock 1-2 tiles upwind burn twice as fast and shrink. Rock upwind shelters them.
+- **M / LB** opens the map: bright = lit now, dim = remembered, black = never seen.
+- Region names fade in the first time you light them. Placeholder ambient sound: a low hush, reed hiss in the marsh, a rush during gusts.
+
+Questions (roadmap "done when" in brackets):
+1. Did you find your way into the Reedmarsh without help? [required]
+2. Did you find the pumphouse and unlock the Reservoir Lamp? [required]
+3. Did you use the Reservoir Lamp on purpose to cut down upkeep? [required]
+4. Did the boardwalk-only rule make placement more interesting, or just annoying?
+5. Did gusts feel like weather you plan around, or like random punishment?
+6. Did the landmark texts make you curious about the valley?
+7. Sound: pleasant, too loud, or irritating? (It is placeholder.)
+
+---
+
+## Previous build: M2 (gathering)
 
 Start with nothing in The Hollow and grow a lit area that keeps itself going.
 

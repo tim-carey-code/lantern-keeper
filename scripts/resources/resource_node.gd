@@ -11,6 +11,7 @@ var amount := 4
 var max_amount := 6
 var regrow_sec := 60.0
 var always_regrow := false
+var label := ""            # display name override, e.g. "Peat"
 var _regrow_acc := 0.0
 
 func _ready() -> void:
@@ -37,6 +38,8 @@ func take() -> bool:
 func display_name() -> String:
 	if always_regrow:
 		return "Woodpile"
+	if label != "":
+		return label
 	return "Dead tree (resin)" if kind == "fuel" else "Ruin (scrap)"
 
 func _process(delta: float) -> void:
@@ -58,6 +61,10 @@ func _draw() -> void:
 			draw_rect(Rect2(-14, 4 - i * 6, 28, 5), Color(0.45, 0.32, 0.2, fade))
 		for i in amount:
 			draw_circle(Vector2(-10 + i * 5, -14), 2.0, Color(1.0, 0.7, 0.3))
+	elif kind == "fuel" and label == "Peat":
+		draw_colored_polygon(PackedVector2Array([Vector2(-12, 6), Vector2(-8, -4), Vector2(8, -6), Vector2(13, 6)]), Color(0.3, 0.22, 0.16, fade))
+		for i in amount:
+			draw_circle(Vector2(-8 + (i % 5) * 4, 2 - (i / 5) * 4), 2.0, Color(0.95, 0.62, 0.28))
 	elif kind == "fuel":
 		var bark := Color(0.38, 0.3, 0.24, fade)
 		draw_line(Vector2(0, 10), Vector2(0, -20), bark, 4.0)

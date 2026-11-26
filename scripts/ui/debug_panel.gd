@@ -13,6 +13,9 @@ const ROWS := [
 	["fog_slow_min", "Walk speed in full fog", 0.2, 1.0, 0.05],
 	["hand_lamp_max_radius", "Hand lamp radius (px)", 48.0, 256.0, 4.0],
 	["hand_lamp_drain_per_sec", "Hand lamp drain (/s)", 0.0, 0.2, 0.005],
+	["marsh_creep_mult", "Marsh fog creep x", 1.0, 4.0, 0.1],
+	["reservoir_feed_per_sec", "Reservoir feed (fuel/s)", 0.0, 3.0, 0.1],
+	["wind_burn_mult", "Gust burn x (exposed)", 1.0, 5.0, 0.25],
 ]
 
 var panel: PanelContainer

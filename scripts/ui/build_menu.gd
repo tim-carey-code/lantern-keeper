@@ -1,40 +1,67 @@
 extends CanvasLayer
-## Lantern list with costs. Tab / gamepad Y toggles. Only the Post Lamp exists in M2;
-## the others are shown locked so the player knows more are out there.
+## Lantern list. Tab / gamepad Y opens it (the keeper stops). Up/down picks a
+## lantern you have unlocked; Tab / Y, E / A, Space / X or Q / B closes it.
+## Locked lanterns show as ??? so the player knows more are out there.
 
 var panel: PanelContainer
 var body: Label
+var index := 0
 
 func _ready() -> void:
 	layer = 6
 	panel = PanelContainer.new()
-	panel.anchor_left = 1.0
-	panel.anchor_right = 1.0
-	panel.offset_left = -330
-	panel.offset_top = 16
-	panel.offset_right = -16
+	panel.position = Vector2(1280 - 470, 16)
+	panel.custom_minimum_size = Vector2(450, 0)
 	add_child(panel)
 	body = Label.new()
 	panel.add_child(body)
 	panel.visible = false
 
-func _process(_delta: float) -> void:
-	if not panel.visible:
-		return
-	var scrap := Inventory.get_count("scrap")
-	body.text = "\n".join([
-		"Lanterns   (Tab / Y to close)",
-		"",
-		"> Post Lamp     %d scrap   %s" % [Tuning.post_lamp_cost_scrap, "ready" if scrap >= Tuning.post_lamp_cost_scrap else "need more scrap"],
-		"   Burns fuel. Light shrinks as it runs low.",
-		"   Pick up returns half the scrap and its fuel.",
-		"",
-		"  ???   found somewhere in the valley",
-		"  ???   found somewhere in the valley",
-		"  ???   found somewhere in the valley",
-	])
+func is_open() -> bool:
+	return panel.visible
+
+func open() -> void:
+	panel.visible = true
+	Tuning.ui_open = true
+	index = maxi(0, Progress.LANTERN_ORDER.find(Progress.selected))
+
+func close() -> void:
+	panel.visible = false
+	Tuning.ui_open = false
+	Progress.block_input()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("build_menu"):
-		panel.visible = not panel.visible
+		if panel.visible:
+			close()
+		elif not Tuning.ui_open:
+			open()
 		get_viewport().set_input_as_handled()
+	elif panel.visible and (event.is_action_pressed("interact") or event.is_action_pressed("place_lantern") or event.is_action_pressed("cancel")):
+		close()
+		get_viewport().set_input_as_handled()
+
+func _process(_delta: float) -> void:
+	if not panel.visible:
+		return
+	# Just-pressed works for D-pad, stick and keys without repeat spam.
+	if Input.is_action_just_pressed("move_up"):
+		index = maxi(0, index - 1)
+	elif Input.is_action_just_pressed("move_down"):
+		index = mini(Progress.LANTERN_ORDER.size() - 1, index + 1)
+	var kind: String = Progress.LANTERN_ORDER[index]
+	if Progress.is_unlocked(kind):
+		Progress.selected = kind
+	var scrap := Inventory.get_count("scrap")
+	var lines: Array[String] = ["Lanterns   (up/down to choose, Tab / Y to close)", ""]
+	for i in Progress.LANTERN_ORDER.size():
+		var k: String = Progress.LANTERN_ORDER[i]
+		var cursor := ">" if i == index else " "
+		if Progress.is_unlocked(k):
+			var tag := "  [selected]" if k == Progress.selected else ""
+			var afford := "ready" if scrap >= Lantern.cost(k) else "need more scrap"
+			lines.append("%s %s   %d scrap   %s%s" % [cursor, Lantern.display(k), Lantern.cost(k), afford, tag])
+			lines.append("     %s" % Lantern.blurb(k))
+		else:
+			lines.append("%s ???   found somewhere in the valley" % cursor)
+	body.text = "\n".join(lines)

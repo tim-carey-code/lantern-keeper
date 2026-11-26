@@ -2,6 +2,12 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (M3 build choices, coordinator)
+- Wind gusts are valley-wide from M3 (not only the Windward Ridge), as the one weather effect. Shelter = rock 1-2 tiles upwind. The Ridge will get stronger, more frequent gusts later.
+- The Reservoir Lamp also refuels cold lanterns in its light (relights them), not only lit ones.
+- Ambience is synthesized live as a placeholder; real CC0/REAPER sounds arrive in M4.
+- Five landmarks in M3: ledger, carved stone, eastward frames, chalk lake drawings, pumphouse.
+
 ## 2026-11-26 (answers to DESIGN §10)
 1. **Sandbox after the finale: yes.** After the great lamp is relit the valley stays open; the player can keep building, tending and finishing the map.
 2. **Hand lamp uses fuel: yes.** It burns fuel and dims as it runs low, but it never fully goes out: when empty it keeps a small ember glow (enough to walk home safely, too dim to reveal resources). This keeps the "no game over" rule.
