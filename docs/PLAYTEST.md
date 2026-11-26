@@ -37,6 +37,9 @@ Follow-up fixes for 5 and 6:
 - Landmarks: unread ones glow and have a pulsing amber marker; a centre-screen "Something catches the light: ..." message when the light first finds one.
 - Sound: replaced with real sounds in M4.
 
+Follow-up screenshots (owner): gust streaks + centre message + HUD line all visible; cold-lantern arrows and "Needs fuel: 3 cold" HUD line working; map readable.
+Polish list for M4: arrows for lanterns in the same direction stack on one spot (add a count or spread them); streaks also draw over never-seen black (consider only over seen ground); map should zoom to the explored area; region labels can sit on paths; seen-fog tile outlines read as a heavy grid.
+
 ---
 
 ## Previous build: M2 (gathering)
