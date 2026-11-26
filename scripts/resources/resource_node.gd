@@ -40,6 +40,8 @@ func display_name() -> String:
 		return "Woodpile"
 	if label != "":
 		return label
+	if kind == "glass":
+		return "Glass shards"
 	return "Dead tree (resin)" if kind == "fuel" else "Ruin (scrap)"
 
 func _process(delta: float) -> void:
@@ -62,6 +64,8 @@ func _draw() -> void:
 		Art.sprite(self, Art.placeholder("peat.png"), Vector2(0, 14), mod)
 	elif kind == "fuel":
 		Art.sprite(self, Art.placeholder("dead_tree.png"), Vector2(0, 16), mod)
+	elif kind == "glass":
+		Art.sprite(self, Art.placeholder("glass.png"), Vector2(0, 14), mod)
 	else:
 		Art.sprite(self, Art.placeholder("scrap_pile.png"), Vector2(0, 14), mod)
 	# How much is left: little amber pips.

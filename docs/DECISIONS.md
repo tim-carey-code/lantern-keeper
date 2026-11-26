@@ -2,6 +2,14 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (M5: the Windward Ridge)
+- The map grows north (112x100 tiles): the Ridge sits above the Hollow, reached by a narrow climb from the top of the Hollow. Old saves (version 1) start fresh.
+- **Constant west wind** on the Ridge: exposed fuel lanterns burn 1.6x and shrink to 85%, on top of gusts (which come every 12-22 s while you are there). Rock outcrops 1-2 tiles to the west shelter a lantern. Wind streaks never stop on the Ridge.
+- **Glass**: third resource, only on the Ridge (14 spots).
+- **Hooded Lamp** (glazier's workshop): 5 scrap + 2 glass, 180 px light, wind never touches it.
+- **Mirror Post** (signal station): 4 scrap + 3 glass, no fuel. Catches light when it stands inside 90% of a burning lantern's light or in another lit mirror's beam (chains work). Throws an 11-tile beam (blocked by rock) in one of 8 directions; interact turns it. Beams clear fog and burn Wicklings. This is the tool for the Still Lake.
+- Two story landmarks on the Ridge hint at the Soul of the Wick (a keeper's coat with a note; a broken lens: THE WICK REMEMBERS EVERY FLAME).
+
 ## 2026-11-26 (ward playtest)
 - Owner: the ward on lamp charge works; push-and-pull is fun ("explore while killing Wicklings, collecting fuel and scrap").
 - Embers looked like a flower on the ground. Now drawn on the fog layer so they glow through the dark: a flickering flame with a pulsing ring and sparks, a magnet pull when you are close, and a floating "+1 fuel".

@@ -112,7 +112,9 @@ func render() -> void:
 		var t := fog.tile_of(l.global_position)
 		if fog.in_bounds(t):
 			var c := Color(1.0, 0.75, 0.3)
-			if not l.is_lit():
+			if l.kind == "mirror":
+				c = Color(0.9, 0.95, 1.0) if l.is_lit() else Color(0.45, 0.55, 0.7)
+			elif not l.is_lit():
 				c = Color(0.95, 0.3, 0.25)
 			elif l.fuel_frac() < 0.25:
 				c = Color(1.0, 0.95, 0.4)

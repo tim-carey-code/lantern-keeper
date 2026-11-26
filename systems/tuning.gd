@@ -10,6 +10,25 @@ var lantern_min_radius_frac := 0.4      # radius just before it goes cold
 var post_lamp_cost_scrap := 5
 var pickup_refund := 0.5                # share of build cost returned on pick-up
 
+# Hooded Lamp (unlocked at the glazier's workshop): wind-proof, smaller light
+var hooded_cost_scrap := 5
+var hooded_cost_glass := 2
+var hooded_radius := 180.0
+
+# Mirror Post (unlocked at the signal station): no fuel, throws a beam when lit by another light
+var mirror_cost_scrap := 4
+var mirror_cost_glass := 3
+var mirror_beam_length := 352.0         # px (11 tiles)
+var mirror_beam_width := 48.0           # px
+var mirror_catch := 0.9                 # must stand within this share of a lantern's light radius
+var mirror_glow_radius := 40.0
+
+# The Windward Ridge: constant west wind on top of the gusts
+var ridge_burn_mult := 1.6              # exposed lanterns on the Ridge
+var ridge_radius_mult := 0.85
+var ridge_calm_min := 12.0              # gusts come much more often on the Ridge
+var ridge_calm_max := 22.0
+
 # Reservoir Lamp (unlocked at the pumphouse)
 var reservoir_cost_scrap := 8
 var reservoir_max_fuel := 200.0

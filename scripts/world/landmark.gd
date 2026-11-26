@@ -79,10 +79,31 @@ func _draw() -> void:
 				Art.cell(self, Art.TOWN, Art.PUMP_WALL[i], origin + Vector2(i * t, t))
 			draw_arc(Vector2(1.9 * t, 0), 11.0, 0.0, TAU, 20, Color(0.42, 0.56, 0.7), 3.0)
 			draw_line(Vector2(1.9 * t - 11, 0), Vector2(1.9 * t + 11, 0), Color(0.42, 0.56, 0.7), 2.0)
+		"workshop":
+			var o := Vector2(-1.5 * t, -1.5 * t)
+			for i in 3:
+				Art.cell(self, Art.TOWN, Art.PUMP_ROOF[i], o + Vector2(i * t, 0))
+				Art.cell(self, Art.TOWN, Art.HUT_WALL[i], o + Vector2(i * t, t))
+			# A kiln glowing faintly beside it.
+			draw_rect(Rect2(1.6 * t, -10, 14, 22), Color(0.29, 0.42, 0.58))
+			draw_rect(Rect2(1.6 * t + 4, 0, 6, 6), Color(0.85, 0.47, 0.17, 0.8))
+		"station":
+			# A tall stone post with a mirror on top.
+			Art.cell_at_foot(self, Art.DUNGEON, Art.STONE_WALL, Vector2(0, 16))
+			Art.cell_at_foot(self, Art.DUNGEON, Art.STONE_WALL, Vector2(0, -16))
+			draw_colored_polygon(PackedVector2Array([Vector2(-10, -50), Vector2(-4, -64), Vector2(12, -58), Vector2(6, -44)]), Color(0.64, 0.74, 0.83))
+			draw_line(Vector2(-2, -60), Vector2(6, -50), Color(0.08, 0.1, 0.18), 1.0)   # the crack
+		"coat":
+			draw_colored_polygon(PackedVector2Array([Vector2(-10, 10), Vector2(-7, -8), Vector2(0, -12), Vector2(7, -8), Vector2(10, 10)]), Color(0.36, 0.2, 0.14))
+			draw_rect(Rect2(-2, -6, 4, 14), Color(0.21, 0.31, 0.47))
+		"lens":
+			draw_arc(Vector2(-3, 0), 11.0, PI * 0.6, PI * 1.45, 16, Color(0.64, 0.74, 0.83), 3.0)
+			draw_arc(Vector2(3, 2), 11.0, -PI * 0.45, PI * 0.4, 16, Color(0.64, 0.74, 0.83), 3.0)
+			draw_rect(Rect2(-12, 10, 24, 4), Color(0.36, 0.2, 0.14))
 		_:
 			Art.cell_at_foot(self, Art.DUNGEON, Art.GRAVESTONE, Vector2(0, 14))
 	if not is_read():
-		var top := Vector2(0, -66 if look == "pumphouse" else -40)
+		var top := Vector2(0, -66 if look in ["pumphouse", "workshop"] else (-74 if look == "station" else -40))
 		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.004)
 		draw_circle(top, 4.0, Color(1.0, 0.85, 0.4))
 		draw_arc(top, 7.0 + pulse * 4.0, 0.0, TAU, 20, Color(1.0, 0.85, 0.4, 0.8 - pulse * 0.6), 1.5)

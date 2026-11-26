@@ -39,7 +39,15 @@ func _advance() -> void:
 			timer = Tuning.wind_gust_sec
 		State.GUST:
 			state = State.CALM
-			timer = rng.randf_range(Tuning.wind_calm_min, Tuning.wind_calm_max)
+			if keeper_on_ridge():
+				timer = rng.randf_range(Tuning.ridge_calm_min, Tuning.ridge_calm_max)
+			else:
+				timer = rng.randf_range(Tuning.wind_calm_min, Tuning.wind_calm_max)
+
+func keeper_on_ridge() -> bool:
+	var fog := get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	var p := get_tree().get_first_node_in_group("player") as Node2D
+	return fog != null and p != null and fog.region_at(p.global_position) == FogGrid.R_RIDGE
 
 func is_gusting() -> bool:
 	return state == State.GUST

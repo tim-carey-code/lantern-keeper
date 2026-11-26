@@ -22,15 +22,24 @@ func _view() -> Rect2:
 	var half := size / cam.zoom / 2.0
 	return Rect2(cam.get_screen_center_position() - half, half * 2.0)
 
+func _dir(wind: Wind) -> Vector2:
+	if wind == null:
+		return Vector2.RIGHT
+	if wind.state == Wind.State.CALM:
+		return Vector2.RIGHT   # the Ridge's prevailing west wind
+	return Vector2(wind.direction)
+
 func active_count() -> int:
 	return _streaks.size()
 
 func _process(delta: float) -> void:
 	var wind := _wind()
 	var level := wind.gust_level() if wind else 0.0
+	if wind and level < 0.3 and wind.keeper_on_ridge():
+		level = 0.3   # the Ridge is never still
 	var want := int(MAX * level)
 	var view := _view()
-	var dir := Vector2(wind.direction) if wind else Vector2.RIGHT
+	var dir := _dir(wind)
 	while _streaks.size() < want:
 		_streaks.append([Vector2(rng.randf_range(view.position.x, view.end.x), rng.randf_range(view.position.y, view.end.y)),
 			rng.randf_range(18.0, 46.0), rng.randf_range(380.0, 620.0), rng.randf_range(0.15, 0.45)])
@@ -48,7 +57,7 @@ func _draw() -> void:
 	var wind := _wind()
 	if wind == null:
 		return
-	var dir := Vector2(wind.direction)
+	var dir := _dir(wind)
 	var fog := get_tree().get_first_node_in_group("fog_grid") as FogGrid
 	for s in _streaks:
 		if fog:

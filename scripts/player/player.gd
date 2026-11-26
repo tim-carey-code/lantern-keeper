@@ -232,7 +232,11 @@ func begin_interact() -> void:
 	if t is Landmark:
 		t.activate()
 	elif t is Lantern:
-		refuel(t)
+		if t.kind == "mirror":
+			t.turn()
+			Sfx.play("ui_tick", -10.0)
+		else:
+			refuel(t)
 	elif t is ResourceNode:
 		_gather_target = t
 		_gather_acc = 0.0
@@ -252,7 +256,7 @@ func continue_gather(delta: float) -> void:
 			return
 		target.take()
 		Inventory.add(target.kind, 1)
-		Sfx.play("gather_scrap" if target.kind == "scrap" else "gather_fuel", -12.0)
+		Sfx.play("gather_fuel" if target.kind == "fuel" else "gather_scrap", -12.0)
 
 ## Pours carried fuel into a lantern (relights it if cold). Returns units used.
 func refuel(l: Lantern) -> int:
@@ -287,9 +291,9 @@ func place_block_reason(p: Vector2) -> String:
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if l.global_position.distance_to(p) < FogGrid.TILE * 1.5:
 			return "too close to a lantern"
-	var cost := Lantern.cost(Progress.selected)
-	if Inventory.get_count("scrap") < cost:
-		return "needs %d scrap" % cost
+	var k := Progress.selected
+	if Inventory.get_count("scrap") < Lantern.cost(k) or Inventory.get_count("glass") < Lantern.glass_cost(k):
+		return "needs " + Lantern.cost_text(k)
 	return ""
 
 func can_place(p: Vector2) -> bool:
@@ -301,6 +305,7 @@ func try_place() -> Lantern:
 		Sfx.play("ui_error", -16.0)
 		return null
 	Inventory.spend("scrap", Lantern.cost(Progress.selected))
+	Inventory.spend("glass", Lantern.glass_cost(Progress.selected))
 	var lamp_node := Lantern.new()
 	lamp_node.kind = Progress.selected
 	lamp_node.position = p   # lantern root sits at the origin
@@ -314,7 +319,9 @@ func pick_up_nearest() -> void:
 	if l == null:
 		return
 	Inventory.add("scrap", floori(Lantern.cost(l.kind) * Tuning.pickup_refund))
-	Inventory.add("fuel", floori(l.fuel / Tuning.fuel_per_unit))
+	Inventory.add("glass", floori(Lantern.glass_cost(l.kind) * Tuning.pickup_refund))
+	if l.needs_fuel():
+		Inventory.add("fuel", floori(l.fuel / Tuning.fuel_per_unit))
 	Sfx.play("pickup_lantern", -10.0)
 	l.remove_from_group("lantern")
 	l.remove_from_group("light_source")
@@ -342,7 +349,14 @@ func _draw() -> void:
 	var col := Color(0.6, 1.0, 0.6, 0.6) if ok else Color(1.0, 0.45, 0.4, 0.45)
 	draw_rect(Rect2(lp - Vector2(16, 16), Vector2(32, 32)), col, false, 1.5)
 	if ok:
-		var preview := Tuning.reservoir_radius if Progress.selected == "reservoir" else Tuning.lantern_max_radius
+		var preview := Tuning.lantern_max_radius
+		match Progress.selected:
+			"reservoir":
+				preview = Tuning.reservoir_radius
+			"hooded":
+				preview = Tuning.hooded_radius
+			"mirror":
+				preview = 24.0
 		draw_arc(lp, preview, 0.0, TAU, 72, Color(col, 0.35), 1.5)
 	# Gathering progress ring.
 	if is_gathering():

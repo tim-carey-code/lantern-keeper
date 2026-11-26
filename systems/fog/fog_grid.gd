@@ -16,16 +16,17 @@ const T_ROCK := 1
 const T_MARSH := 2       # soft: walkable, can't build
 const T_BOARDWALK := 3   # buildable path through the marsh
 
-const REGION_NAMES := ["", "The Hollow", "The Reedmarsh"]
+const REGION_NAMES := ["", "The Hollow", "The Reedmarsh", "The Windward Ridge"]
 const R_HOLLOW := 1
 const R_MARSH := 2
+const R_RIDGE := 3
 
 const UNSEEN := Color(0.02, 0.025, 0.04)
 const SEEN := Color(0.09, 0.11, 0.15)
 const SEEN_OUTLINE := Color(0.32, 0.38, 0.5)
 
 @export var cols := 112
-@export var rows := 64
+@export var rows := 100
 
 var density := PackedFloat32Array()
 var remembered := PackedByteArray()
@@ -143,9 +144,31 @@ func step(dt: float) -> void:
 					var i := y * cols + x
 					_light[i] = maxf(_light[i], s)
 
+	_update_mirrors()
+	for m in get_tree().get_nodes_in_group("mirror"):
+		var seg: Array = m.beam_segment()
+		if seg.is_empty():
+			continue
+		var length: float = seg[0].distance_to(seg[1])
+		var dir: Vector2 = (seg[1] - seg[0]).normalized()
+		var half := Tuning.mirror_beam_width * 0.5
+		var d := 0.0
+		while d <= length:
+			var p: Vector2 = seg[0] + dir * d
+			var t0 := tile_of(p - Vector2(half, half))
+			var t1 := tile_of(p + Vector2(half, half))
+			for y in range(maxi(t0.y, 0), mini(t1.y, rows - 1) + 1):
+				for x in range(maxi(t0.x, 0), mini(t1.x, cols - 1) + 1):
+					var c := tile_center(Vector2i(x, y))
+					var off := Geometry2D.get_closest_point_to_segment(c, seg[0], seg[1]).distance_to(c)
+					if off <= half:
+						var i := y * cols + x
+						_light[i] = maxf(_light[i], 1.0)
+			d += TILE * 0.5
+
 	var wind := get_tree().get_first_node_in_group("wind") as Wind
 	var gust := Tuning.wind_creep_mult if wind != null and wind.is_gusting() else 1.0
-	var creep_by_region := [Tuning.fog_creep_per_sec, Tuning.fog_creep_per_sec, Tuning.fog_creep_per_sec * Tuning.marsh_creep_mult]
+	var creep_by_region := [Tuning.fog_creep_per_sec, Tuning.fog_creep_per_sec, Tuning.fog_creep_per_sec * Tuning.marsh_creep_mult, Tuning.fog_creep_per_sec]
 	var clear := Tuning.fog_clear_per_sec
 	var next := density.duplicate()
 	for y in rows:
@@ -168,6 +191,39 @@ func step(dt: float) -> void:
 				if region[i] > 0 and region[i] < REGION_NAMES.size():
 					Progress.reveal_region(region[i], REGION_NAMES[region[i]])
 	density = next
+
+## A mirror catches light when it stands well inside a burning lantern's light, or in
+## another catching mirror's beam. Repeats so chains of mirrors pass light along.
+func _update_mirrors() -> void:
+	var mirrors := get_tree().get_nodes_in_group("mirror")
+	if mirrors.is_empty():
+		return
+	for m in mirrors:
+		m.catching = false
+	var burning := []
+	for l in get_tree().get_nodes_in_group("lantern"):
+		if l.kind != "mirror" and l.is_lit():
+			burning.append(l)
+	for pass_i in mirrors.size() + 1:
+		var changed := false
+		for m in mirrors:
+			if m.catching:
+				continue
+			var lit := false
+			for l in burning:
+				if l.global_position.distance_to(m.global_position) <= l.get_light_radius() * Tuning.mirror_catch:
+					lit = true
+					break
+			if not lit:
+				for other in mirrors:
+					if other != m and other.catching and other.beam_level_at(m.global_position) > 0.0:
+						lit = true
+						break
+			if lit:
+				m.catching = true
+				changed = true
+		if not changed:
+			break
 
 # --- Drawing ------------------------------------------------------------------
 # One pixel per tile in a small image, stretched over the world with linear

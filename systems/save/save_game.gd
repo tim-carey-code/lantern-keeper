@@ -6,7 +6,7 @@ extends Node
 ## what has been seen). Not saved: Wicklings, embers and wind (they come back on their own).
 ## File: user://save.json  (on Linux: ~/.local/share/godot/app_userdata/Lantern Keeper/)
 
-const VERSION := 1
+const VERSION := 2   # 2: the map grew north for the Windward Ridge; older saves start fresh
 const AUTOSAVE_SEC := 60.0
 
 var path := "user://save.json"
@@ -51,7 +51,7 @@ func save(main: Node) -> bool:
 			"remembered": Marshalls.raw_to_base64(fog.remembered)},
 	}
 	for l in get_tree().get_nodes_in_group("lantern"):
-		data["lanterns"].append({"kind": l.kind, "x": l.position.x, "y": l.position.y, "fuel": l.fuel})
+		data["lanterns"].append({"kind": l.kind, "x": l.position.x, "y": l.position.y, "fuel": l.fuel, "dir": l.mirror_dir})
 	for r in get_tree().get_nodes_in_group("resource"):
 		data["resources"].append({"kind": r.kind, "label": r.label, "x": r.position.x, "y": r.position.y,
 			"amount": r.amount, "max": r.max_amount, "regrow": r.regrow_sec, "always": r.always_regrow})
@@ -122,6 +122,7 @@ func load_into(main: Node) -> bool:
 		var lamp := Lantern.new()
 		lamp.kind = l["kind"]
 		lamp.fuel = float(l["fuel"])
+		lamp.mirror_dir = int(l.get("dir", 0))
 		lamp.position = Vector2(l["x"], l["y"])
 		lroot.add_child(lamp)
 	# Resources: replace the generated ones (keeps amounts and dropped piles).

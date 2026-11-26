@@ -13,3 +13,6 @@ Replace any of these by saving a PNG with the **same file name and size**. The g
 | reeds.png | 16x16 | tile | marsh overlay |
 
 Art is drawn at 1x and shown at 2x with nearest-neighbour filtering. Keep transparent backgrounds.
+| hooded_lamp_lit.png / hooded_lamp_cold.png | 16x32 | bottom centre | the Hooded Lamp (wind-proof) |
+| mirror_post_lit.png / mirror_post_dark.png | 16x32 | bottom centre | the Mirror Post (lit = catching light) |
+| glass.png | 16x16 | centre | glass node (Windward Ridge) |

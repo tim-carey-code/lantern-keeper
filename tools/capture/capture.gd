@@ -4,7 +4,7 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): start, marsh, cold, edge, wick, drops, map. The last frame is the one to look at.
+## Views (after "--"): start, marsh, cold, edge, wick, drops, ridge, map. The last frame is the one to look at.
 
 var main: Node
 var frame := 0
@@ -40,18 +40,18 @@ func _process(_delta: float) -> void:
 		var s: Vector2 = main.start
 		match view:
 			"marsh":
-				var pump: Vector2 = main.fog.tile_center(Vector2i(100, 32))
+				var pump: Vector2 = main.fog.tile_center(Vector2i(100, 68))
 				main.player.position = pump + Vector2(-40, 40)
-				_lantern(main.fog.tile_center(Vector2i(92, 32)))
-				_lantern(main.fog.tile_center(Vector2i(97, 32)), "reservoir")
-				_lantern(main.fog.tile_center(Vector2i(88, 36)))
+				_lantern(main.fog.tile_center(Vector2i(92, 68)))
+				_lantern(main.fog.tile_center(Vector2i(97, 68)), "reservoir")
+				_lantern(main.fog.tile_center(Vector2i(88, 72)))
 			"cold":
 				_lantern(s + Vector2(-160, 64), "post", 0.0)
 				_lantern(s + Vector2(200, 120), "post", 10.0)
 				main.player.position = s + Vector2(-40, 60)
 			"edge":
-				main.player.position = main.fog.tile_center(Vector2i(8, 32))
-				_lantern(main.fog.tile_center(Vector2i(9, 30)))
+				main.player.position = main.fog.tile_center(Vector2i(8, 68))
+				_lantern(main.fog.tile_center(Vector2i(9, 66)))
 			"wick":
 				var l := _lantern(s + Vector2(-200, 40))
 				var sp = main.get_node("FogLayer/Wicklings")
@@ -69,6 +69,16 @@ func _process(_delta: float) -> void:
 				for off in [Vector2(-90, 0), Vector2(90, 30)]:
 					var w2 = sp2.spawn_at(main.player.position + off)
 					w2.hurt(99.0)
+			"ridge":
+				var f: FogGrid = main.fog
+				var c := f.tile_center(Vector2i(34, 17))
+				main.player.position = c + Vector2(-40, 40)
+				var src := _lantern(c + Vector2(-160, 0), "hooded")
+				var m := _lantern(c + Vector2(-60, 0), "mirror")
+				m.mirror_dir = 0
+				_lantern(c + Vector2(40, 96))
+				Progress.unlock("hooded")
+				Progress.unlock("mirror")
 			"map":
 				_lantern(s + Vector2(-160, 64))
 				for i in 60:

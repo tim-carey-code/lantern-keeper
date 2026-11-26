@@ -4,6 +4,7 @@
 Run from the repo root:  python3 -I tools/art/make_placeholders.py
 Writes assets/art/placeholders/*.png (transparent, crisp, no anti-aliasing).
 Replace any output with your own Pixelorama art of the same name and size.
+Existing files are never overwritten (your art is safe); pass --force to redraw them.
 """
 import pathlib, subprocess, sys
 
@@ -27,11 +28,23 @@ CAP = [r("w2", 2, 1, 13, 3), r("w", 3, 1, 12, 2), r("w2", 7, 0, 8, 0)]
 RES = [r("w2", 2, 20, 4, 31), r("w2", 11, 20, 13, 31), r("w", 3, 20, 3, 30), r("w", 12, 20, 12, 30),
        r("d1", 1, 10, 14, 21), r("b5", 2, 11, 13, 20), r("b6", 2, 11, 13, 12), r("w", 2, 17, 13, 20), r("d1", 5, 2, 10, 9)]
 
+HOOD = [r("w2", 6, 14, 9, 31), r("w", 7, 14, 8, 30), r("w2", 4, 29, 11, 31), r("w", 5, 29, 10, 30),
+        r("d1", 3, 4, 12, 14), r("b4", 2, 2, 13, 5), r("b5", 3, 2, 12, 3), r("b4", 2, 5, 3, 12), r("b4", 12, 5, 13, 12)]
+MIRROR = [r("w2", 7, 12, 8, 31), r("w", 7, 12, 7, 30), r("w2", 5, 29, 10, 31),
+          poly("d1", [(2, 10), (5, 1), (14, 4), (11, 13)])]
+
 SPRITES = {
     "post_lamp_lit.png": ((16, 32), POST + [r("a1", 4, 4, 11, 11), r("a2", 6, 6, 9, 10), r("a0", 7, 7, 8, 9)] + CAP),
     "post_lamp_cold.png": ((16, 32), POST + [r("b3", 4, 4, 11, 11), r("b4", 5, 5, 6, 7)] + CAP),
     "reservoir_lamp_lit.png": ((16, 32), RES + [r("a1", 6, 3, 9, 8), r("a0", 7, 4, 8, 7)]),
     "reservoir_lamp_cold.png": ((16, 32), RES + [r("b3", 6, 3, 9, 8)]),
+    "hooded_lamp_lit.png": ((16, 32), HOOD + [r("a1", 5, 7, 10, 12), r("a2", 6, 8, 9, 11), r("a0", 7, 9, 8, 10)]),
+    "hooded_lamp_cold.png": ((16, 32), HOOD + [r("b3", 5, 7, 10, 12)]),
+    "mirror_post_lit.png": ((16, 32), MIRROR + [poly("a0", [(3, 10), (6, 2), (13, 5), (10, 12)]), r("a1", 6, 5, 9, 8)]),
+    "mirror_post_dark.png": ((16, 32), MIRROR + [poly("b6", [(3, 10), (6, 2), (13, 5), (10, 12)]), r("b7", 6, 4, 7, 5)]),
+    "glass.png": ((16, 16), [
+        poly("b6", [(2, 14), (4, 7), (7, 12)]), poly("b7", [(6, 14), (9, 3), (12, 13)]), poly("b6", [(11, 14), (13, 9), (15, 14)]),
+        r("a0", 9, 5, 9, 6), r("b7", 4, 9, 4, 9)]),
     "dead_tree.png": ((16, 32), [
         r("d1", 6, 14, 9, 31), r("d1", 4, 30, 11, 31), r("b4", 7, 14, 8, 30),
         r("b4", 7, 6, 8, 13), r("b4", 7, 3, 7, 5),
@@ -51,7 +64,10 @@ SPRITES = {
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
+    force = "--force" in sys.argv
     for name, ((w, h), ops) in SPRITES.items():
+        if (OUT / name).exists() and not force:
+            continue
         cmd = ["magick", "-size", f"{w}x{h}", "xc:none", "+antialias"]
         for op in ops:
             cmd += ["-draw", op]

@@ -19,7 +19,7 @@ Command line: `godot --path ~/Projects/lantern-keeper`
 | Action | Keyboard / mouse | Gamepad |
 |---|---|---|
 | Move | WASD / arrows | Left stick / D-pad |
-| Read, refuel / relight (tap), gather (hold) | E | A (bottom) |
+| Read, refuel / relight, turn a Mirror Post (tap); gather (hold) | E | A (bottom) |
 | Build selected lantern | Space / left click | X (left) |
 | Pick up lantern | Q / right click | B (right) |
 | Lantern list (up/down to choose) | Tab | Y (top) |

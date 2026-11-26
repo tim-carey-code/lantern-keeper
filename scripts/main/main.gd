@@ -1,7 +1,9 @@
 extends Node2D
-## Grey-box valley, M3: Region 1 The Hollow (start) and Region 2 The Reedmarsh,
-## joined by a rocky passage. The marsh is soft ground; lanterns stand on
-## boardwalks and islands. The pumphouse on the far island unlocks the Reservoir Lamp.
+## The valley (M5): Region 1 The Hollow (start), Region 2 The Reedmarsh (east),
+## Region 3 The Windward Ridge (north). The marsh is soft ground; lanterns stand on
+## boardwalks and islands; its pumphouse unlocks the Reservoir Lamp. The Ridge is
+## windswept, holds glass, and its glazier's workshop and signal station unlock the
+## Hooded Lamp and the Mirror Post. (Region 4, The Still Lake, comes next.)
 
 const SEED := 11
 const HOLLOW_FUEL := 18
@@ -9,11 +11,17 @@ const HOLLOW_SCRAP := 16
 const MARSH_PEAT := 24
 const MARSH_SCRAP := 6
 
-const HOLLOW_C := Vector2(24, 32)
+const Y := 36   # the Hollow and Reedmarsh sit below the Ridge
+const HOLLOW_C := Vector2(24, 32 + Y)
 const HOLLOW_R := Vector2(19, 22)
-const MARSH_C := Vector2(80, 32)
+const MARSH_C := Vector2(80, 32 + Y)
 const MARSH_R := Vector2(28, 24)
-const ISLANDS := [Vector3(72, 23, 2), Vector3(76, 42, 2), Vector3(95, 24, 2), Vector3(97, 41, 2), Vector3(59, 43, 2), Vector3(102, 32, 3)]
+const ISLANDS := [Vector3(72, 23 + Y, 2), Vector3(76, 42 + Y, 2), Vector3(95, 24 + Y, 2), Vector3(97, 41 + Y, 2), Vector3(59, 43 + Y, 2), Vector3(102, 32 + Y, 3)]
+const RIDGE_C := Vector2(34, 17)
+const RIDGE_R := Vector2(30, 13)
+const RIDGE_GLASS := 14
+const RIDGE_FUEL := 8
+const RIDGE_SCRAP := 7
 
 @onready var fog: FogGrid = $FogLayer/FogGrid
 @onready var player: CharacterBody2D = $Player
@@ -83,14 +91,14 @@ func _generate() -> void:
 	# The passage between them, with a firm landing at the marsh edge.
 	for x in range(38, 58):
 		var wiggle := int(round(sin(x * 0.6)))
-		for y in range(30 + wiggle, 35 + wiggle):
+		for y in range(30 + Y + wiggle, 35 + Y + wiggle):
 			fog.set_tile(Vector2i(x, y), FogGrid.T_GROUND, FogGrid.R_HOLLOW if x < 48 else FogGrid.R_MARSH)
 	# Boardwalks.
-	_boardwalk(Vector2i(57, 32), Vector2i(104, 32))
-	_boardwalk(Vector2i(66, 13), Vector2i(66, 51))
-	_boardwalk(Vector2i(88, 17), Vector2i(88, 47))
-	_boardwalk(Vector2i(66, 23), Vector2i(72, 23))
-	_boardwalk(Vector2i(88, 41), Vector2i(97, 41))
+	_boardwalk(Vector2i(57, 32 + Y), Vector2i(104, 32 + Y))
+	_boardwalk(Vector2i(66, 13 + Y), Vector2i(66, 51 + Y))
+	_boardwalk(Vector2i(88, 17 + Y), Vector2i(88, 47 + Y))
+	_boardwalk(Vector2i(66, 23 + Y), Vector2i(72, 23 + Y))
+	_boardwalk(Vector2i(88, 41 + Y), Vector2i(97, 41 + Y))
 	# Islands of firm ground.
 	for c in ISLANDS:
 		var cx := int(c.x)
@@ -100,6 +108,35 @@ func _generate() -> void:
 			for x in range(cx - cr, cx + cr + 1):
 				if Vector2(x, y).distance_to(Vector2(c.x, c.y)) <= c.z + 0.3 and fog.terrain_of(Vector2i(x, y)) != FogGrid.T_ROCK:
 					fog.set_tile(Vector2i(x, y), FogGrid.T_GROUND, FogGrid.R_MARSH)
+
+	_generate_ridge()
+
+## Region 3: a long windswept ridge north of the Hollow, reached by a narrow climb.
+## Rock outcrops give shelter from the west wind.
+func _generate_ridge() -> void:
+	_carve_ellipse(RIDGE_C, RIDGE_R, FogGrid.T_GROUND, FogGrid.R_RIDGE, 2.7)
+	# The climb from the top of the Hollow up to the Ridge.
+	for y in range(26, 50):
+		var wiggle := int(round(sin(y * 0.5) * 1.5))
+		for x in range(22 + wiggle, 27 + wiggle):
+			if fog.terrain_of(Vector2i(x, y)) == FogGrid.T_ROCK:
+				fog.set_tile(Vector2i(x, y), FogGrid.T_GROUND, FogGrid.R_RIDGE if y < 38 else FogGrid.R_HOLLOW)
+	# Outcrops: small rock clusters, kept off the middle line so the Ridge stays walkable end to end.
+	var orng := RandomNumberGenerator.new()
+	orng.seed = SEED + 3
+	var placed := 0
+	var tries := 0
+	while placed < 22 and tries < 500:
+		tries += 1
+		var c := Vector2i(orng.randi_range(8, 60), orng.randi_range(7, 27))
+		if fog.terrain_of(c) != FogGrid.T_GROUND or fog.region[fog.idx(c)] != FogGrid.R_RIDGE:
+			continue
+		if absi(c.y - int(RIDGE_C.y)) < 2 or (c.x >= 20 and c.x <= 29 and c.y > 20):
+			continue   # keep the spine and the top of the climb open
+		for t in [Vector2i.ZERO, Vector2i(0, 1), Vector2i(0, -1)] if orng.randf() < 0.6 else [Vector2i.ZERO, Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+			if fog.region[fog.idx(c + t)] == FogGrid.R_RIDGE:
+				fog.set_tile(c + t, FogGrid.T_ROCK, FogGrid.R_RIDGE)
+		placed += 1
 
 func _carve_ellipse(c: Vector2, r: Vector2, t: int, reg: int, phase: float) -> void:
 	for y in fog.rows:
@@ -139,23 +176,54 @@ func _build_rock_collision() -> void:
 # --- Things in the world -----------------------------------------------------
 
 func _place_landmarks() -> void:
+	_place_ridge_landmarks()
 	_add_landmark("ledger", "Keepers' ledger", "ledger", start + Vector2(-96, -64),
 		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns grow short. The last page has a single mark.")
-	_add_landmark("stone_way", "Carved stone", "stone", fog.tile_center(Vector2i(40, 30)),
+	_add_landmark("stone_way", "Carved stone", "stone", fog.tile_center(Vector2i(40, 30 + Y)),
 		"KEEP THE WAY TO THE WATER LIT.")
-	_add_landmark("frames_east", "Old lantern frames", "frames", fog.tile_center(Vector2i(78, 31)),
+	_add_landmark("frames_east", "Old lantern frames", "frames", fog.tile_center(Vector2i(78, 31 + Y)),
 		"Three empty frames stand along the boardwalk.\nSomeone turned every one of them to face east, toward the lake.")
-	_add_landmark("chalk_lake", "Chalk on the pumphouse wall", "chalk", fog.tile_center(Vector2i(100, 30)),
+	_add_landmark("chalk_lake", "Chalk on the pumphouse wall", "chalk", fog.tile_center(Vector2i(100, 30 + Y)),
 		"Two drawings of the same lake.\nIn the first it shines, rays drawn all around it.\nIn the second it has been scribbled over in black.")
-	var pump := _add_landmark("pumphouse", "The pumphouse", "pumphouse", fog.tile_center(Vector2i(103, 33)),
+	var pump := _add_landmark("pumphouse", "The pumphouse", "pumphouse", fog.tile_center(Vector2i(103, 33 + Y)),
 		"The old pump still turns when you push it. Its tank could feed a lamp for a long time,\nand pipes once ran from here to the posts along the boardwalk.")
 	pump.unlock_kind = "reservoir"
+
+func _place_ridge_landmarks() -> void:
+	var glazier := _add_landmark("glazier", "The glazier's workshop", "workshop", _ridge_spot(Vector2i(14, 15)),
+		"Cold kilns and racks of cut glass. A half-finished lamp hood sits on the bench,\nshaped to keep a flame alive in any wind.")
+	glazier.unlock_kind = "hooded"
+	var station := _add_landmark("station", "The signal station", "station", _ridge_spot(Vector2i(58, 13)),
+		"A tall post with a cracked mirror at the top, aimed east over the ridge.\nKeepers once passed light from post to post, all the way to the lake.")
+	station.unlock_kind = "mirror"
+	_add_landmark("coat", "A keeper's coat", "coat", _ridge_spot(Vector2i(42, 22)),
+		"Snagged on the rocks and stiff with frost. In the pocket, a note in a shaking hand:\n\"It came up out of the water. It drank the great lamp, and then it was hungry for the rest.\"")
+	_add_landmark("lens", "A broken lens", "lens", _ridge_spot(Vector2i(30, 9)),
+		"A great curved lens, split down the middle. Scratched into the frame:\nTHE WICK REMEMBERS EVERY FLAME.")
+
+## The nearest open Ridge tile to a wanted spot (outcrops are random).
+func _ridge_spot(want: Vector2i) -> Vector2:
+	for r in 6:
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				var t := want + Vector2i(dx, dy)
+				if fog.terrain_of(t) == FogGrid.T_GROUND and fog.region[fog.idx(t)] == FogGrid.R_RIDGE:
+					return fog.tile_center(t)
+	return fog.tile_center(want)
+
+func _ridge_open(t: Vector2i) -> bool:
+	if fog.region[fog.idx(t)] != FogGrid.R_RIDGE or fog.terrain_of(t) != FogGrid.T_GROUND:
+		return false
+	return fog.terrain_of(t + Vector2i.LEFT) == FogGrid.T_GROUND or fog.terrain_of(t + Vector2i.RIGHT) == FogGrid.T_GROUND
 
 func _scatter() -> void:
 	_scatter_kind("fuel", "", HOLLOW_FUEL, func(t): return _hollow_spot(t), 4, 8, 8, 60.0)
 	_scatter_kind("scrap", "", HOLLOW_SCRAP, func(t): return _hollow_spot(t), 4, 7, 7, 75.0)
 	_scatter_kind("fuel", "Peat", MARSH_PEAT, func(t): return _peat_spot(t), 5, 9, 9, 45.0)
 	_scatter_kind("scrap", "", MARSH_SCRAP, func(t): return _island_spot(t), 4, 7, 7, 75.0)
+	_scatter_kind("glass", "", RIDGE_GLASS, func(t): return _ridge_open(t), 2, 4, 4, 120.0)
+	_scatter_kind("fuel", "", RIDGE_FUEL, func(t): return _ridge_open(t), 3, 6, 6, 60.0)
+	_scatter_kind("scrap", "", RIDGE_SCRAP, func(t): return _ridge_open(t), 3, 6, 6, 75.0)
 
 func _hollow_spot(t: Vector2i) -> bool:
 	var p := fog.tile_center(t)
@@ -250,6 +318,10 @@ func _draw() -> void:
 			var pos := Vector2(x * t, y * t)
 			var h := _hash(x, y)
 			match fog.terrain[y * fog.cols + x]:
+				FogGrid.T_ROCK when fog.region[y * fog.cols + x] == FogGrid.R_RIDGE:
+					# Ridge outcrops: bare stone that breaks the wind.
+					Art.cell(self, Art.TOWN, Art.GRASS, pos, Color(0.5, 0.55, 0.65))
+					Art.cell(self, Art.DUNGEON, Art.STONE_WALL, pos, Color(0.75, 0.78, 0.88))
 				FogGrid.T_ROCK:
 					Art.cell(self, Art.TOWN, Art.GRASS, pos, Color(0.22, 0.24, 0.32))
 					if h % 100 < 70:

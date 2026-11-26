@@ -72,8 +72,9 @@ func _process(delta: float) -> void:
 		return
 	var lim := Inventory.carry_limit
 	var lines: Array[String] = []
-	lines.append("Fuel %d/%d    Scrap %d/%d    Hand lamp %d%%" % [
-		Inventory.get_count("fuel"), lim, Inventory.get_count("scrap"), lim, roundi(player.lamp_charge * 100.0)])
+	var glass := "    Glass %d/%d" % [Inventory.get_count("glass"), lim] if (Inventory.get_count("glass") > 0 or Progress.regions_seen.has(FogGrid.R_RIDGE)) else ""
+	lines.append("Fuel %d/%d    Scrap %d/%d%s    Hand lamp %d%%" % [
+		Inventory.get_count("fuel"), lim, Inventory.get_count("scrap"), lim, glass, roundi(player.lamp_charge * 100.0)])
 	var where: int = fog.region_at(player.global_position)
 	var region_name: String = FogGrid.REGION_NAMES[where] if where < FogGrid.REGION_NAMES.size() else ""
 	var warm := roundi(player.warmth / Tuning.warmth_max * 100.0)
@@ -91,10 +92,16 @@ func _process(delta: float) -> void:
 	var t = player.nearest_target()
 	if t is Landmark:
 		lines.append("%s: [E / A] %s" % [t.display_name(), "read again" if t.is_read() else "look closer"])
+	elif t is Lantern and t.kind == "mirror":
+		lines.append("Mirror Post (%s): [E / A] turn   [Q / B] pick up" % ("catching light" if t.is_lit() else "dark: put it in a lantern's light"))
 	elif t is Lantern:
 		var state := "%d%% fuel" % roundi(t.fuel_frac() * 100.0) if t.is_lit() else "cold"
 		var shelter := ""
-		if wind and wind.state != Wind.State.CALM:
+		if t.wind_proof():
+			shelter = ", wind-proof"
+		elif t.in_ridge_wind():
+			shelter = ", in the ridge wind"
+		elif wind and wind.state != Wind.State.CALM:
 			shelter = ", sheltered" if t.is_sheltered_from(wind.direction) else ", exposed"
 		lines.append("%s (%s%s): [E / A] refuel   [Q / B] pick up" % [Lantern.display(t.kind), state, shelter])
 	elif t is ResourceNode:
@@ -103,6 +110,6 @@ func _process(delta: float) -> void:
 	var reason: String = player.place_block_reason(player.place_pos())
 	if reason != "" and reason != "too close to a lantern":
 		lines.append("Build here: %s" % reason)
-	lines.append("[Space / X] build %s (%d scrap)   [Tab / Y] lanterns   [M / LB] map   [Esc / Start] pause" % [
-		Lantern.display(Progress.selected), Lantern.cost(Progress.selected)])
+	lines.append("[Space / X] build %s (%s)   [Tab / Y] lanterns   [M / LB] map   [Esc / Start] pause" % [
+		Lantern.display(Progress.selected), Lantern.cost_text(Progress.selected)])
 	label.text = "\n".join(lines)

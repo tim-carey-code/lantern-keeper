@@ -70,8 +70,9 @@ func _process(_delta: float) -> void:
 		var cursor := ">" if i == index else " "
 		if Progress.is_unlocked(k):
 			var tag := "  [selected]" if k == Progress.selected else ""
-			var afford := "ready" if scrap >= Lantern.cost(k) else "need more scrap"
-			lines.append("%s %s   %d scrap   %s%s" % [cursor, Lantern.display(k), Lantern.cost(k), afford, tag])
+			var ok := scrap >= Lantern.cost(k) and Inventory.get_count("glass") >= Lantern.glass_cost(k)
+			var afford := "ready" if ok else "not enough yet"
+			lines.append("%s %s   %s   %s%s" % [cursor, Lantern.display(k), Lantern.cost_text(k), afford, tag])
 			lines.append("     %s" % Lantern.blurb(k))
 		else:
 			lines.append("%s ???   found somewhere in the valley" % cursor)

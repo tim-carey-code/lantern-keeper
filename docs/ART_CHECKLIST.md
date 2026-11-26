@@ -55,9 +55,10 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 | 🟨 | Post Lamp, cold | `assets/art/placeholders/post_lamp_cold.png` | 16×32 | bottom-centre | drop-in | Same frame, dark glass, no flame. Must still read in the dark. |
 | 🟨 | Reservoir Lamp, lit | `assets/art/placeholders/reservoir_lamp_lit.png` | 16×32 | bottom-centre | drop-in | Big tank on legs, small lamp on top. |
 | 🟨 | Reservoir Lamp, cold | `assets/art/placeholders/reservoir_lamp_cold.png` | 16×32 | bottom-centre | drop-in | |
-| ⬜ | Hooded Lamp, lit | `assets/art/lanterns/hooded_lamp_lit.png` | 16×32 | bottom-centre | needs hookup (M5) | Wind-proof: a hood or shield around the flame. |
-| ⬜ | Hooded Lamp, cold | `assets/art/lanterns/hooded_lamp_cold.png` | 16×32 | bottom-centre | needs hookup (M5) | |
-| ⬜ | Mirror Post | `assets/art/lanterns/mirror_post.png` | 16×32 | bottom-centre | needs hookup (M5) | No flame. A tilted mirror on a post. Optional: 2nd frame "catching light". |
+| 🟨 | Hooded Lamp, lit | `assets/art/placeholders/hooded_lamp_lit.png` | 16×32 | bottom-centre | drop-in | Wind-proof: a hood or shield around the flame. |
+| 🟨 | Hooded Lamp, cold | `assets/art/placeholders/hooded_lamp_cold.png` | 16×32 | bottom-centre | drop-in | |
+| 🟨 | Mirror Post, catching light | `assets/art/placeholders/mirror_post_lit.png` | 16×32 | bottom-centre | drop-in | No flame. A tilted mirror on a post, bright. |
+| 🟨 | Mirror Post, dark | `assets/art/placeholders/mirror_post_dark.png` | 16×32 | bottom-centre | drop-in | Same, unlit. |
 | ⬜ | Great Lamp (finale), cold | `assets/art/landmarks/great_lamp_cold.png` | 48×64 | bottom-centre | needs hookup (M5) | The valley's original light on the lake island. |
 | ⬜ | Great Lamp, lit | `assets/art/landmarks/great_lamp_lit.png` | 48×64 | bottom-centre | needs hookup (M5) | |
 
@@ -68,7 +69,7 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 | 🟨 | Dead tree (resin = fuel) | `assets/art/placeholders/dead_tree.png` | 16×32 | bottom-centre | drop-in | Bare, twisted, a few amber resin drips. |
 | 🟨 | Peat (marsh fuel) | `assets/art/placeholders/peat.png` | 16×16 | centre | drop-in | Dark brown mound, a few warm flecks. |
 | 🟨 | Scrap pile | `assets/art/placeholders/scrap_pile.png` | 16×16 | centre | drop-in | Blue-grey metal bits. |
-| ⬜ | Glass shards (Ridge resource) | `assets/art/resources/glass.png` | 16×16 | centre | needs hookup (M5) | Pale blue-white glints. |
+| 🟨 | Glass shards (Ridge resource) | `assets/art/placeholders/glass.png` | 16×16 | centre | drop-in | Pale blue-white glints. |
 | 🟨 | Ember drop (from Wicklings) | `assets/art/fx/ember.png` | 16×16, 4 frames → 64×16 strip | centre | needs hookup | Flickering flame. Drawn by code today. |
 | 🟨 | Scrap drop (from Wicklings) | `assets/art/fx/scrap_drop.png` | 16×16 | centre | needs hookup | Small heap with a glint. Drawn by code today. |
 
@@ -106,8 +107,8 @@ These look fine already. Draw your own only if you want a fully original look.
 | ✅ | Carved stone | Kenney Tiny Dungeon | 16×16 | in game | Optional |
 | 🟨 | Old lantern frames (×3) | reuses `post_lamp_cold.png` | 16×32 | updates with your lamp | |
 | 🟨 | Chalk drawings on the pumphouse wall | Kenney wall + code circles | 16×16 | needs hookup | Bright lake vs scribbled-over lake. |
-| ⬜ | Glazier's workshop (Ridge) | `assets/art/landmarks/glazier.png` | 48×32 | needs hookup (M5) | Unlocks the Hooded Lamp. |
-| ⬜ | Signal station (Ridge) | `assets/art/landmarks/signal_station.png` | 32×48 | needs hookup (M5) | Unlocks the Mirror Post. |
+| 🟨 | Glazier's workshop (Ridge) | Kenney tiles + code kiln today; yours: `assets/art/landmarks/glazier.png` | 48×32 | needs hookup | Unlocks the Hooded Lamp. |
+| 🟨 | Signal station (Ridge) | Kenney stone + code mirror today; yours: `assets/art/landmarks/signal_station.png` | 32×48 | needs hookup | Unlocks the Mirror Post. |
 | ⬜ | Moored boat (Lake) | `assets/art/landmarks/boat.png` | 32×16 | needs hookup (M5) | "Tied up and never used". |
 | ⬜ | Lantern rack, one missing | `assets/art/landmarks/rack.png` | 32×32 | needs hookup (M5) | |
 | ⬜ | 10–20 more small landmarks | `assets/art/landmarks/` | 16×16 or 16×32 | needs hookup (M5) | List grows as we write the story. |

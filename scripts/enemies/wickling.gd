@@ -41,6 +41,8 @@ func light_level_at(p: Vector2) -> float:
 		if r <= 0.0:
 			continue
 		best = maxf(best, 1.0 - l.global_position.distance_to(p) / r)
+	for m in get_tree().get_nodes_in_group("mirror"):
+		best = maxf(best, m.beam_level_at(p) * 0.8)   # a mirror beam is as harsh as a lantern core
 	return best
 
 func _nearest_lit_lantern(max_dist: float) -> Node2D:
