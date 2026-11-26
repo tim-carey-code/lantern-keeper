@@ -10,10 +10,17 @@ var index := 0
 func _ready() -> void:
 	layer = 6
 	panel = PanelContainer.new()
-	panel.position = Vector2(1280 - 470, 16)
-	panel.custom_minimum_size = Vector2(450, 0)
+	panel.position = Vector2(1280 - 16 - 480, 16)
+	panel.custom_minimum_size = Vector2(480, 0)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.05, 0.06, 0.08, 0.92)
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(12)
+	panel.add_theme_stylebox_override("panel", sb)
 	add_child(panel)
 	body = Label.new()
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.custom_minimum_size = Vector2(456, 0)
 	panel.add_child(body)
 	panel.visible = false
 

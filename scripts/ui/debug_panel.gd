@@ -24,10 +24,17 @@ var first_slider: HSlider
 func _ready() -> void:
 	layer = 10
 	panel = PanelContainer.new()
-	panel.position = Vector2(16, 90)
+	panel.position = Vector2(16, 175)   # below the HUD text
+	panel.add_theme_stylebox_override("panel", _bg())
 	add_child(panel)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(320, 520)
+	scroll.follow_focus = true
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(scroll)
 	var box := VBoxContainer.new()
-	panel.add_child(box)
+	box.custom_minimum_size = Vector2(300, 0)
+	scroll.add_child(box)
 	var title := Label.new()
 	title.text = "Tuning  (F1 / Select to close)"
 	box.add_child(title)
@@ -50,6 +57,13 @@ func _ready() -> void:
 		if first_slider == null:
 			first_slider = s
 	panel.visible = false
+
+static func _bg() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.05, 0.06, 0.08, 0.92)
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(10)
+	return sb
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_toggle"):

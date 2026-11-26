@@ -25,6 +25,7 @@ Command line: `godot --path ~/Projects/lantern-keeper`
 | Pause | Esc | Start |
 | Map | M | LB |
 | Tuning panel | F1 | Select / Back |
+| Fullscreen on/off | F11 | |
 
 ## Folders
 - `scenes/` scenes, grouped by feature

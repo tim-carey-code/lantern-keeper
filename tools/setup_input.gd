@@ -39,6 +39,7 @@ func _init() -> void:
 		"build_menu": [key(KEY_TAB), pad_button(JOY_BUTTON_Y)],
 		"pause": [key(KEY_ESCAPE), pad_button(JOY_BUTTON_START)],
 		"map": [key(KEY_M), pad_button(JOY_BUTTON_LEFT_SHOULDER)],
+		"toggle_fullscreen": [key(KEY_F11)],
 		"debug_toggle": [key(KEY_F1), pad_button(JOY_BUTTON_BACK)],    # live tuning panel
 	}
 	for name in actions:
