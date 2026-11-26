@@ -2,9 +2,15 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (combat prototype playtest)
+- **Wicklings are IN v1** (scope change; owner playtest: "more interesting", light still felt safe and calm, fainting felt fair). Combat, enemies and a health stat move from OUT to IN, in the light-based form: no death, no game over; warmth is the health; fainting wakes you at the nearest lit lantern and drops half your carried resources where you fell.
+- **The flare is replaced by a lamp beam** (owner: the flare one-shot everything and "wasn't really a flare"; wanted a beam that drains their health). Hold F / RB / RT; aim with the right stick, the mouse, or the way you walk. 1 carried fuel per 1.5 s. A Wickling takes about 2 s in the beam. You walk at half speed while beaming.
+- **More pressure** (owner: "not much added pressure"): first Wickling after 25 s (was 40), then every 12 s (was 16), up to 7 (was 5), a bit faster, drain 5 fuel/s (was 4).
+- The mouse cursor hides while playing with keys or a controller.
+
 ## 2026-11-26 (finale)
 - **The finale is a confrontation of light, not a fight.** The Soul of the Wick (owner's name) is the one who robbed the valley of its light. At the Still Lake he is coiled around the cold great lamp as living darkness. The player drives him off by surrounding him with light (a Mirror Post chain), and the lamp relights. He answers "who took the light"; "why" stays open for later (consistent with the partly-answered mystery). Landmark texts should start hinting at him. Built in M5.
-- Open: whether v1 gets a gentle form of conflict (see the "calm combat" proposal) so a combat sequel doesn't come out of nowhere. Combat stays OUT of v1 until the owner decides.
+- Settled later the same day: v1 gets light-based conflict (Wicklings), see above.
 
 ## 2026-11-26 (art style)
 - **Art style: moody pixel art.** Small crisp pixel art on 16x16 tiles drawn at 2x (32 px on screen, matching the fog grid), limited palette of deep blues and warm ambers, nearest-neighbour filtering. Chosen because it is simple and the owner can draw his own in Pixelorama. Free CC0 packs may be used and recoloured to the palette; every pack goes in assets/CREDITS.md.

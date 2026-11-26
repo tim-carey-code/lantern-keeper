@@ -26,3 +26,23 @@ static func radial() -> GradientTexture2D:
 ## texture_scale that makes the light reach `radius` px.
 static func scale_for(radius: float) -> float:
 	return radius / BASE_RADIUS
+
+static var _cone: ImageTexture
+
+## A soft cone of light pointing right from the left-middle edge (for the lamp beam).
+static func beam_cone() -> ImageTexture:
+	if _cone:
+		return _cone
+	var w := 256
+	var h := 128
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	for x in w:
+		var t := float(x) / float(w - 1)
+		var half := lerpf(3.0, 52.0, t)
+		var fade := pow(1.0 - t, 0.7)
+		for y in h:
+			var d := absf(y - h / 2.0)
+			var edge := clampf((half - d) / 10.0, 0.0, 1.0)
+			img.set_pixel(x, y, Color(1, 1, 1, fade * edge))
+	_cone = ImageTexture.create_from_image(img)
+	return _cone

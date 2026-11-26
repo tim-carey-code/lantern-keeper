@@ -23,7 +23,15 @@ func check(ok: bool, what: String) -> void:
 	if not ok:
 		fails += 1
 
+## Tests must not react to a real controller plugged into this PC (the owner may be playing).
+func strip_real_input() -> void:
+	for action in InputMap.get_actions():
+		for e in InputMap.action_get_events(action):
+			if e is InputEventJoypadButton or e is InputEventJoypadMotion:
+				InputMap.action_erase_event(action, e)
+
 func _ready() -> void:
+	strip_real_input()
 	main = load("res://scenes/main/main.tscn").instantiate()
 	add_child(main)
 

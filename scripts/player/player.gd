@@ -8,6 +8,14 @@ const REACH := 52.0   # px to interact with a lantern or resource
 var lamp: PointLight2D
 var lamp_charge := 1.0          # 0 = ember, 1 = full hand lamp
 var fuel_poured := 0.0
+var warmth := 100.0            # PROTOTYPE: the keeper's "health". Never kills; fainting sends you home.
+var beaming := false
+var aim := Vector2.RIGHT       # beam direction
+var _beam_fuel := 0.0          # seconds of beam already paid for
+var _last_move := Vector2.RIGHT
+var mouse_aiming := false     # true after the mouse moves; false after keys/controller input
+var beam_light: PointLight2D
+var faints := 0
 var _gather_target: ResourceNode = null
 var _gather_acc := 0.0
 var _facing_left := false
@@ -30,6 +38,20 @@ func _ready() -> void:
 	lamp.color = Color(1.0, 0.86, 0.62)
 	lamp.position = Vector2(10, -14)   # held in the keeper's hand
 	add_child(lamp)
+	beam_light = PointLight2D.new()
+	beam_light.texture = LightTex.beam_cone()
+	beam_light.offset = Vector2(128, 0)   # cone starts at the lamp
+	beam_light.color = Color(1.0, 0.88, 0.6)
+	beam_light.energy = 1.1
+	beam_light.position = Vector2(0, -14)
+	beam_light.enabled = false
+	add_child(beam_light)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and event.relative.length() > 2.0:
+		mouse_aiming = true
+	elif event is InputEventJoypadMotion and absf(event.axis_value) > 0.5:
+		mouse_aiming = false
 
 # --- Hand lamp -------------------------------------------------------------
 
@@ -54,6 +76,7 @@ func update_hand_lamp(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	update_hand_lamp(delta)
+	_update_warmth(delta)
 	lamp.texture_scale = LightTex.scale_for(get_light_radius())
 	lamp.energy = lerpf(0.35, 0.6, lamp_charge)
 	queue_redraw()
@@ -62,12 +85,17 @@ func _physics_process(delta: float) -> void:
 		_gather_target = null
 		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if dir != Vector2.ZERO:
+		_last_move = dir.normalized()
+	update_beam(delta, Input.is_action_pressed("flare"))
 	var fog := _fog()
 	var slow := 1.0
 	if fog and dir != Vector2.ZERO:
 		slow = lerpf(1.0, Tuning.fog_slow_min, fog.density_at(global_position + dir * 24.0))
 	if fog and fog.terrain_at(global_position) == FogGrid.T_MARSH:
 		slow *= 0.85   # wading through the marsh
+	if beaming:
+		slow *= Tuning.beam_walk_mult
 	velocity = dir * speed * slow
 	move_and_slide()
 	_footsteps(dir, _physics_delta(), fog)
@@ -116,6 +144,81 @@ func _footsteps(dir: Vector2, delta: float, fog: FogGrid) -> void:
 
 func _fog() -> FogGrid:
 	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
+
+# --- Lamp beam, warmth, fainting --------------------------------------
+
+## Where the beam points: right stick, else the mouse (if it is being used), else the way you last walked.
+func aim_dir() -> Vector2:
+	var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+	if stick.length() > 0.35:
+		return stick.normalized()
+	if mouse_aiming:
+		var m := get_global_mouse_position() - (global_position + Vector2(0, -14))
+		if m.length() > 8.0:
+			return m.normalized()
+	return _last_move
+
+## Hold to shine a cone of light. Pays 1 carried fuel per beam_sec_per_fuel seconds.
+func update_beam(delta: float, held: bool) -> void:
+	beaming = false
+	if held:
+		if _beam_fuel <= 0.0 and Inventory.spend("fuel", 1):
+			_beam_fuel += Tuning.beam_sec_per_fuel
+			Sfx.play("relight", -16.0, 0.2)
+		if _beam_fuel > 0.0:
+			beaming = true
+			_beam_fuel -= delta
+			aim = aim_dir()
+			apply_beam(delta)
+	beam_light.enabled = beaming
+	if beaming:
+		beam_light.rotation = aim.angle()
+		beam_light.texture_scale = Tuning.beam_length / 256.0
+
+## Damages every Wickling inside the cone. Public so tests can drive it.
+func apply_beam(delta: float) -> int:
+	var hit := 0
+	var origin := global_position + Vector2(0, -14)
+	for w in get_tree().get_nodes_in_group("wickling"):
+		var v: Vector2 = w.global_position - origin
+		if v.length() <= Tuning.beam_length and absf(aim.angle_to(v)) <= Tuning.beam_half_angle:
+			w.hurt(Tuning.beam_dps * delta, false)
+			hit += 1
+	return hit
+
+func chill(amount: float) -> void:
+	warmth = maxf(0.0, warmth - amount)
+	if warmth <= 0.0:
+		faint()
+
+func _update_warmth(delta: float) -> void:
+	if in_lantern_light():
+		warmth = minf(Tuning.warmth_max, warmth + Tuning.warmth_regen_per_sec * delta)
+
+## Out of warmth: drop part of what you carry where you fell, wake at the nearest lit lantern (or the hut).
+func faint() -> void:
+	faints += 1
+	var main := get_tree().get_first_node_in_group("main")
+	for kind in ["fuel", "scrap"]:
+		var lost := int(floor(Inventory.get_count(kind) * Tuning.faint_drop))
+		if lost > 0 and main:
+			Inventory.spend(kind, lost)
+			main.drop_pile(kind, global_position + Vector2(randf_range(-12, 12), randf_range(-12, 12)), lost)
+	var home: Vector2 = main.start if main else global_position
+	var best := INF
+	for l in get_tree().get_nodes_in_group("lantern"):
+		if l.is_lit():
+			var d: float = l.global_position.distance_to(global_position)
+			if d < best:
+				best = d
+				home = l.global_position + Vector2(0, 24)
+	global_position = home
+	reset_physics_interpolation()
+	warmth = Tuning.warmth_max * 0.6
+	for w in get_tree().get_nodes_in_group("wickling"):
+		w.state = Wickling.State.FLEE
+		w._flee_t = 3.0
+	Progress.note_opened.emit("You faint...", "The cold takes you. You wake by the warmth of a lantern.\nSome of what you carried lies where you fell.")
 
 # --- Interact: refuel or gather -------------------------------------------
 

@@ -30,6 +30,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800                    # no errors
 ```
 - Add checks to `tools/tests/test_core.gd` for new rules. Tests run as a scene so autoloads exist.
+- Tests strip joypad events first: a real controller on this PC would otherwise move the test keeper (this caused flaky runs).
 - Automated runs are silent (`--audio-driver Dummy`). Don't play sound through the owner's speakers.
 - Visual check without the owner's screen: render frames on a virtual display with `tools/capture/capture.tscn`
   (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.

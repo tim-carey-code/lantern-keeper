@@ -4,13 +4,18 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): start, marsh, cold, edge, map. The last frame is the one to look at.
+## Views (after "--"): start, marsh, cold, edge, wick, map. The last frame is the one to look at.
 
 var main: Node
 var frame := 0
 var view := "start"
 
 func _ready() -> void:
+	# Ignore any real controller on this PC.
+	for action in InputMap.get_actions():
+		for e in InputMap.action_get_events(action):
+			if e is InputEventJoypadButton or e is InputEventJoypadMotion:
+				InputMap.action_erase_event(action, e)
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		view = args[0]
@@ -45,6 +50,16 @@ func _process(_delta: float) -> void:
 			"edge":
 				main.player.position = main.fog.tile_center(Vector2i(8, 32))
 				_lantern(main.fog.tile_center(Vector2i(9, 30)))
+			"wick":
+				var l := _lantern(s + Vector2(-200, 40))
+				var sp = main.get_node("FogLayer/Wicklings")
+				for a in [0.3, 2.2, 4.0]:
+					var w = sp.spawn_at(l.global_position + Vector2.from_angle(a) * l.get_light_radius() * 0.9)
+					w.target = l
+					w.state = Wickling.State.SEEK_LANTERN
+				var c = sp.spawn_at(s + Vector2(170, -60))
+				main.player.position = s + Vector2(110, -20)
+				Inventory.counts["fuel"] = 5
 			"map":
 				_lantern(s + Vector2(-160, 64))
 				for i in 60:
@@ -55,6 +70,9 @@ func _process(_delta: float) -> void:
 				main.player.position = s + Vector2(-20, 30)
 		for i in 30:
 			main.fog.step(0.1)   # let the light push the fog back before the shot
+	if frame >= 30 and view == "wick":
+		main.player._last_move = Vector2(1, -0.6).normalized()
+		main.player.update_beam(1.0 / 30.0, true)
 	if frame == 6 and view == "map":
 		main.get_node("MapScreen").toggle()
 	if frame >= 45:

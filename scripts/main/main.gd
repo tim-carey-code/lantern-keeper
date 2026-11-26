@@ -23,6 +23,7 @@ var rng := RandomNumberGenerator.new()
 var _taken: Array[Vector2] = []
 
 func _ready() -> void:
+	add_to_group("main")
 	Inventory.reset()
 	Progress.reset()
 	rng.seed = SEED
@@ -46,6 +47,14 @@ func _ready() -> void:
 	_place_landmarks()
 	_scatter()
 	queue_redraw()
+
+func _input(event: InputEvent) -> void:
+	# Hide the cursor while playing with keys or a controller; show it when the mouse moves.
+	if event is InputEventMouseMotion and event.relative.length() > 2.0:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	elif event is InputEventJoypadButton or event is InputEventKey or (event is InputEventJoypadMotion and absf(event.axis_value) > 0.5):
+		if Input.mouse_mode != Input.MOUSE_MODE_HIDDEN:
+			Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_fullscreen"):
@@ -179,6 +188,12 @@ func _scatter_kind(kind: String, label: String, count: int, ok: Callable, lo: in
 		var r := _add_resource(kind, p, rng.randi_range(lo, hi), cap, regrow, false)
 		r.label = label
 		placed += 1
+
+## PROTOTYPE: what the keeper drops on fainting. A one-off pile, no regrowth.
+func drop_pile(kind: String, p: Vector2, amount: int) -> ResourceNode:
+	var r := _add_resource(kind, p, amount, amount, 1.0e9, false)
+	r.label = "Dropped " + ("fuel" if kind == "fuel" else "scrap")
+	return r
 
 func _add_lantern(p: Vector2, kind: String = "post") -> Lantern:
 	var l := Lantern.new()
