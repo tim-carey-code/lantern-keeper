@@ -19,6 +19,20 @@ Questions:
 
 ---
 
+## M2 results
+
+### 2026-11-26: owner, M2 build b604c71 (screenshot reviewed)
+1. Gathering: **felt worth it**, but there was a lot more fuel than scrap.
+2. New lanterns felt like real choices: **yes**.
+3. Ran short: **yes, of scrap**.
+4. Seen vs never-seen fog: **easier to tell now**.
+
+Gate: **passed**. Change made: scrap spots 14 -> 20 (4-7 each, regrow 75 s), fuel spots 30 -> 22.
+Rough totals at start: scrap ~63 -> ~115 (about 23 Post Lamps), fuel ~180 -> ~130 units.
+Screenshot note: the game ran on software rendering (Mesa llvmpipe) instead of the GPU.
+
+---
+
 # M1 playtest: "Is tending light fun?"
 
 Play for about 10 minutes. Grey-box only: circles and squares, no real art or sound yet.

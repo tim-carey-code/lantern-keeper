@@ -3,8 +3,8 @@ extends Node2D
 ## the keeper's hut in the middle, an old lantern, a woodpile, dead trees and ruins.
 
 const HOLLOW_SEED := 11
-const FUEL_SPOTS := 30
-const SCRAP_SPOTS := 14
+const FUEL_SPOTS := 22
+const SCRAP_SPOTS := 20
 
 @onready var fog: FogGrid = $FogLayer/FogGrid
 @onready var player: CharacterBody2D = $Player
@@ -100,7 +100,7 @@ func _scatter() -> void:
 			if kind == "fuel":
 				_add_resource("fuel", p, rng.randi_range(4, 8), 8, 60.0, false)
 			else:
-				_add_resource("scrap", p, rng.randi_range(3, 6), 6, 90.0, false)
+				_add_resource("scrap", p, rng.randi_range(4, 7), 7, 75.0, false)
 			placed += 1
 	for i in 260:
 		var p := Vector2(rng.randf() * fog.world_size().x, rng.randf() * fog.world_size().y)

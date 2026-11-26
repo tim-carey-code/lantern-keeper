@@ -7,7 +7,7 @@
 
 ## Status
 
-- M0 done (b9dab77). M1 done, playtest gate passed (2798574, 62f7612). M2 built, awaiting owner playtest.
+- M0 done (b9dab77). M1 done, playtest gate passed (2798574, 62f7612). M2 done, playtest gate passed; scrap rebalanced.
 - Second-tester playtest for M1 still to do.
 
 ---
