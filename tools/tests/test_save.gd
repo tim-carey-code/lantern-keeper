@@ -87,6 +87,17 @@ func _process(_delta: float) -> void:
 			check(main.player.global_position.distance_to(keeper_pos) < 2.0, "the keeper is where they were")
 			check(main.fog.remembered.count(1) >= seen_before, "the map of what you've seen comes back")
 			check(Progress.regions_seen.has(FogGrid.R_HOLLOW), "found regions come back")
+			# Pause menu: the controller's A (our "interact") presses the focused button.
+			var pm = main.get_node("PauseMenu")
+			pm.open()
+			check(pm.is_open() and get_tree().paused, "the pause menu opens and pauses the world")
+			var ev := InputEventAction.new()
+			ev.action = "interact"
+			ev.pressed = true
+			Input.parse_input_event(ev)
+		130:
+			var pm2 = main.get_node("PauseMenu")
+			check(not pm2.is_open() and not get_tree().paused, "A / E chooses the focused option (Resume)")
 			# New game: delete and skip.
 			SaveGame.delete_save()
 			check(not SaveGame.has_save(), "new game deletes the save")

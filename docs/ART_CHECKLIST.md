@@ -51,8 +51,8 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 
 | Status | Item | File | Size | Anchor | Hookup | Notes / your notes |
 |---|---|---|---|---|---|---|
-| 🟨 | Post Lamp, lit | `assets/art/placeholders/post_lamp_lit.png` | 16×32 | bottom-centre | drop-in | **Shepherd's crook** (owner's pick): starter drawn by `tools/art/crook_lamp.py`, ready to refine. Keep the hanging lamp where it is (glass centre at pixel 12,14): the light glows from there. |
-| 🟨 | Post Lamp, cold | `assets/art/placeholders/post_lamp_cold.png` | 16×32 | bottom-centre | drop-in | Crook starter, dark glass. Also shown as the outline you see through fog. |
+| ✅ | Post Lamp, lit | `assets/art/placeholders/post_lamp_lit.png` | 16×32 | bottom-centre | drop-in | **Shepherd's crook with a stone base** (owner's art, `source/art/post_lamp_lit.pxo`). Keep the hanging lamp where it is (glass centre at pixel 12,14): the light glows from there. |
+| ✅ | Post Lamp, cold | `assets/art/placeholders/post_lamp_cold.png` | 16×32 | bottom-centre | drop-in | Owner's art (`source/art/post_lamp_cold.pxo`). Also shown as the outline you see through fog. |
 | 🟨 | Reservoir Lamp, lit | `assets/art/placeholders/reservoir_lamp_lit.png` | 16×32 | bottom-centre | drop-in | Big tank on legs, small lamp on top. |
 | 🟨 | Reservoir Lamp, cold | `assets/art/placeholders/reservoir_lamp_cold.png` | 16×32 | bottom-centre | drop-in | |
 | 🟨 | Hooded Lamp, lit | `assets/art/placeholders/hooded_lamp_lit.png` | 16×32 | bottom-centre | drop-in | Wind-proof: a hood or shield around the flame. |

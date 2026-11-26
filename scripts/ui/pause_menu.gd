@@ -57,6 +57,17 @@ func close() -> void:
 	Progress.block_input()
 	Sfx.play("ui_close", -14.0)
 
+## The controller's A button (our "interact") presses the focused button. Godot's built-in
+## ui_accept doesn't include A in this project, so menus could be scrolled but not chosen.
+func _input(event: InputEvent) -> void:
+	if not root.visible:
+		return
+	if event.is_action_pressed("interact") and not event.is_action_pressed("ui_accept"):
+		var f := get_viewport().gui_get_focus_owner()
+		if f is Button:
+			(f as Button).pressed.emit()
+			get_viewport().set_input_as_handled()
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		if root.visible:
