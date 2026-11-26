@@ -31,6 +31,7 @@ func strip_real_input() -> void:
 func _ready() -> void:
 	strip_real_input()
 	Tuning.wick_enabled = false
+	Story.skip_opening = true
 	SaveGame.path = "user://test_ignore_save.json"
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()

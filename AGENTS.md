@@ -4,7 +4,7 @@ Rules for any AI agent or contributor working in this repo (Claude Code reads th
 
 ## What this is
 A quiet, moody 2D top-down Godot 4.7 game (GDScript, Compatibility renderer, PC, Linux first).
-Single-player, no game over. Read `docs/DESIGN.md`, `docs/ROADMAP.md` and especially
+Single-player, no game over. Read `docs/DESIGN.md`, `docs/STORY.md` (owner-reviewed story, goals, texts), `docs/ROADMAP.md` and especially
 `docs/DECISIONS.md` (owner decisions override the design doc) before changing behaviour.
 
 ## Working rules
@@ -30,6 +30,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_save.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_ridge.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_story.tscn
 # A test that fails to parse never quits: wrap runs in `timeout 120`.
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800                    # no errors
 ```
@@ -46,3 +47,8 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800 
 - Public repo: github.com/tim-carey-code/lantern-keeper. Commit with the GitHub noreply address; never commit secrets or personal data.
 - Code is MIT (`LICENSE`); art, audio, story, docs and the name are all rights reserved (`LICENSE-ASSETS.md`).
 - Every third-party asset needs a row in `assets/CREDITS.md` (source, author, license) in the same commit.
+
+## Story and guidance
+- All player-facing story text lives in `docs/STORY.md` (owner-reviewed) and is mirrored in `systems/story/story.gd` (goals, journal entries, tips, letter) and `scripts/main/main.gd` (landmark texts). Change both together.
+- New regions must add their goals, landmarks and journal entries from STORY.md; the goal pointer must have a target for every goal that names a place.
+- Tests and captures set `Story.skip_opening = true` so the new-game opening doesn't pause them.

@@ -311,6 +311,7 @@ func try_place() -> Lantern:
 	lamp_node.position = p   # lantern root sits at the origin
 	get_tree().get_first_node_in_group("lantern_root").add_child(lamp_node)
 	Sfx.play("place_lantern", -8.0)
+	Story.note_built(lamp_node.kind)
 	return lamp_node
 
 ## Refunds part of the scrap plus the fuel left in the tank.

@@ -7,6 +7,11 @@ var banner: Label
 var toast: Label
 var _banner_t := 0.0
 var _toast_t := 0.0
+var goal: Label
+var tip: Label
+var _tip_t := 0.0
+var _tips: Array[String] = []
+var _goal_flash := 0.0
 
 func _ready() -> void:
 	layer = 5
@@ -23,6 +28,24 @@ func _ready() -> void:
 	toast.position = Vector2(0, 630)
 	toast.size = Vector2(1280, 40)
 	toast.modulate.a = 0.0
+	goal = _make_label(24, Vector2.ZERO)
+	goal.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	goal.position = Vector2(640, 8)
+	goal.size = Vector2(624, 40)
+	goal.add_theme_color_override("font_color", Color(1.0, 0.87, 0.6))
+	tip = _make_label(22, Vector2.ZERO)
+	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tip.position = Vector2(140, 580)
+	tip.size = Vector2(1000, 40)
+	tip.add_theme_color_override("font_color", Color(0.75, 0.84, 0.92))
+	tip.modulate.a = 0.0
+	Story.tip_shown.connect(func(t: String) -> void: _tips.append(t))
+	Story.goal_completed.connect(func(_id: String, text: String) -> void:
+		_show_toast("Done: " + text, 3.5)
+		Sfx.play("unlock", -14.0))
+	Story.goal_changed.connect(func(_id: String, _text: String) -> void: _goal_flash = 2.0)
+	Story.entry_added.connect(func(title: String) -> void: _tips.push_front("New journal entry: %s  [J / Back]" % title))
 	Progress.region_revealed.connect(func(n: String) -> void:
 		banner.text = n
 		_banner_t = 4.0)
@@ -63,6 +86,16 @@ func _process(delta: float) -> void:
 	_toast_t = maxf(0.0, _toast_t - delta)
 	_fade(banner, _banner_t)
 	_fade(toast, _toast_t)
+	# Tips, one at a time.
+	_tip_t = maxf(0.0, _tip_t - delta)
+	if _tip_t <= 0.0 and not _tips.is_empty():
+		tip.text = _tips.pop_front()
+		_tip_t = 6.0
+	_fade(tip, _tip_t)
+	# The current goal, top right; it glows for a moment when it changes.
+	_goal_flash = maxf(0.0, _goal_flash - delta)
+	goal.text = ("Goal: " + Story.goal_text(Story.current)) if Story.current != "" else ""
+	goal.modulate = Color(1, 1, 1).lerp(Color(1.4, 1.25, 0.9), clampf(_goal_flash, 0.0, 1.0))
 	var lamps := get_tree().get_nodes_in_group("lantern")
 	var lit := lamps.filter(func(l): return l.is_lit()).size()
 	var fog := get_tree().get_first_node_in_group("fog_grid") as FogGrid
@@ -110,6 +143,6 @@ func _process(delta: float) -> void:
 	var reason: String = player.place_block_reason(player.place_pos())
 	if reason != "" and reason != "too close to a lantern":
 		lines.append("Build here: %s" % reason)
-	lines.append("[Space / X] build %s (%s)   [Tab / Y] lanterns   [M / LB] map   [Esc / Start] pause" % [
+	lines.append("[Space / X] build %s (%s)   [Tab / Y] lanterns   [M / LB] map   [J / Back] journal" % [
 		Lantern.display(Progress.selected), Lantern.cost_text(Progress.selected)])
 	label.text = "\n".join(lines)

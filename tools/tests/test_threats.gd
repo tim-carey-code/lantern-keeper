@@ -28,6 +28,7 @@ func strip_real_input() -> void:
 
 func _ready() -> void:
 	strip_real_input()
+	Story.skip_opening = true
 	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
@@ -41,6 +42,7 @@ func _process(_delta: float) -> void:
 			player = main.player
 			spawner = main.get_node("FogLayer/Wicklings")
 			lamp = main.get_node("Lanterns").get_child(0)
+			lamp.fuel = Tuning.lantern_max_fuel   # the old lantern starts cold; light it for these checks
 			main.get_node("Wind").force(Wind.State.CALM, Vector2i.RIGHT, 9999.0)
 			Tuning.lantern_burn_per_sec = 0.0   # isolate Wickling drain
 			check(spawner.count() == 0, "no Wicklings during the opening grace period")

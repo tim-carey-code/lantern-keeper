@@ -93,6 +93,30 @@ func _draw() -> void:
 			Art.cell_at_foot(self, Art.DUNGEON, Art.STONE_WALL, Vector2(0, -16))
 			draw_colored_polygon(PackedVector2Array([Vector2(-10, -50), Vector2(-4, -64), Vector2(12, -58), Vector2(6, -44)]), Color(0.64, 0.74, 0.83))
 			draw_line(Vector2(-2, -60), Vector2(6, -50), Color(0.08, 0.1, 0.18), 1.0)   # the crack
+		"letter":
+			# A sheet of paper pinned to the hut door, just above.
+			draw_rect(Rect2(-5, -30, 10, 12), Color(0.96, 0.95, 0.88))
+			draw_rect(Rect2(-1, -31, 2, 2), Color(0.35, 0.2, 0.14))
+			draw_line(Vector2(-3, -26), Vector2(3, -26), Color(0.29, 0.42, 0.58), 1.0)
+			draw_line(Vector2(-3, -23), Vector2(2, -23), Color(0.29, 0.42, 0.58), 1.0)
+			draw_line(Vector2(-3, -20), Vector2(3, -20), Color(0.29, 0.42, 0.58), 1.0)
+		"rack":
+			draw_rect(Rect2(-16, -10, 32, 3), Color(0.61, 0.29, 0.13))
+			for i in 5:
+				var hx := -12 + i * 6
+				draw_line(Vector2(hx, -7), Vector2(hx, -3), Color(0.35, 0.16, 0.11), 2.0)
+				if i != 4:
+					draw_rect(Rect2(hx - 2, -3, 4, 6), Color(0.29, 0.42, 0.58))
+		"cairn":
+			draw_colored_polygon(PackedVector2Array([Vector2(-11, 10), Vector2(-9, 2), Vector2(9, 2), Vector2(11, 10)]), Color(0.29, 0.42, 0.58))
+			draw_colored_polygon(PackedVector2Array([Vector2(-7, 2), Vector2(-5, -6), Vector2(5, -6), Vector2(7, 2)]), Color(0.43, 0.56, 0.7))
+			draw_colored_polygon(PackedVector2Array([Vector2(-4, -6), Vector2(-2, -12), Vector2(3, -12), Vector2(4, -6)]), Color(0.64, 0.74, 0.83))
+			draw_line(Vector2(0, -10), Vector2(0, -16), Color(0.96, 0.95, 0.88), 1.0)
+			draw_line(Vector2(0, -16), Vector2(-2, -14), Color(0.96, 0.95, 0.88), 1.0)
+			draw_line(Vector2(0, -16), Vector2(2, -14), Color(0.96, 0.95, 0.88), 1.0)
+		"steps":
+			for i in 4:
+				draw_rect(Rect2(-14 + i * 2, -10 + i * 6, 28 - i * 4, 5), Color(0.43, 0.56, 0.7).darkened(i * 0.15))
 		"coat":
 			draw_colored_polygon(PackedVector2Array([Vector2(-10, 10), Vector2(-7, -8), Vector2(0, -12), Vector2(7, -8), Vector2(10, 10)]), Color(0.36, 0.2, 0.14))
 			draw_rect(Rect2(-2, -6, 4, 14), Color(0.21, 0.31, 0.47))

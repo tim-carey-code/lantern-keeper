@@ -22,6 +22,7 @@ Inventory="*res://systems/inventory.gd"
 Progress="*res://systems/progress.gd"
 Sfx="*res://systems/audio/sfx.gd"
 SaveGame="*res://systems/save/save_game.gd"
+Story="*res://systems/story/story.gd"
 
 [display]
 
@@ -105,7 +106,7 @@ pause={
 debug_toggle={
 "deadzone": 0.25,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194332,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
-, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":4,"pressure":0.0,"pressed":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":7,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
 map={
@@ -144,6 +145,12 @@ aim_up={
 aim_down={
 "deadzone": 0.25,
 "events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":0,"axis":3,"axis_value":1.0,"script":null)
+]
+}
+journal={
+"deadzone": 0.25,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":74,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":4,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
 

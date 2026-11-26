@@ -41,7 +41,8 @@ func _init() -> void:
 		"map": [key(KEY_M), pad_button(JOY_BUTTON_LEFT_SHOULDER)],
 		"flare": [key(KEY_F), pad_button(JOY_BUTTON_RIGHT_SHOULDER), pad_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)],   # hold: warding glow
 		"toggle_fullscreen": [key(KEY_F11)],
-		"debug_toggle": [key(KEY_F1), pad_button(JOY_BUTTON_BACK)],    # live tuning panel
+		"journal": [key(KEY_J), pad_button(JOY_BUTTON_BACK)],
+		"debug_toggle": [key(KEY_F1), pad_button(JOY_BUTTON_LEFT_STICK)],    # live tuning panel (left stick click)
 	}
 	for name in actions:
 		ProjectSettings.set_setting("input/" + name, {"deadzone": DEADZONE, "events": actions[name]})

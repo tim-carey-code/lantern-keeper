@@ -28,6 +28,7 @@ func _new_main() -> void:
 func _ready() -> void:
 	strip_real_input()
 	Tuning.wick_enabled = false
+	Story.skip_opening = true
 	SaveGame.path = "user://test_save.json"
 	SaveGame.delete_save()
 	_new_main()

@@ -188,7 +188,7 @@ In the Text column, " / " marks a line break.
 | `ridge_steps` | Steps cut into the rock | Ridge (east end) | Old steps, worn smooth, going down. / Below, the fog does not move, even in the wind. |
 | `boat` | A boat tied at the shore | Lake | A boat half full of rain, the oars still in it. / Past the reeds the fog is too thick to row through. |
 | `drowned_frames` | Frames standing in the shallows | Lake | A row of frames in the shallows. Their glass is clean. / Someone tried to light them. The fog swallowed every one. |
-| `camp` | The last keeper's camp | Lake shore | Cold ashes, a blanket, a tin cup. / A Mirror Post aimed at the island, waiting for light. / H. was here. Not long ago. |
+| `camp` | The last keeper's camp | Lake shore | Cold ashes, a blanket, a tin cup. A half-built mirror frame, aimed at the island. / A crate of cut glass beside it. / H. was here. Not long ago. |
 | `pier_stone` | Carved stone at the end of the pier | Lake | FROM THE ISLAND, LIGHT. FROM THE KEEPERS, CARE. |
 | `island_steps` | Steps up to the great lamp | Island | A name cut into every step, one for each keeper. / The newest name is only half cut. |
 | `great_lamp` | Plate on the great lamp's base | Island | THE FIRST FLAME OF THE VALLEY. / IT WAS NEVER MEANT TO BE KEPT BY ONE. |
@@ -214,7 +214,7 @@ One entry after each beat, written by the keeper. Notes read are listed under ea
 6. **The workshop** (12): *H. could not stay to finish the hood. I did.*
 7. **The coat** (15): *H.'s coat, caught in the rocks. Something came up out of the water and drank the great lamp. I hope H. found somewhere warm.*
 8. **The station** (16): *H. turned the last mirror toward the lake. That is where H. went.*
-9. **The lake** (19): *Ordinary light dies here. H. built a mirror and had nothing to give it. I do.*
+9. **The lake** (19): *Ordinary light dies here. H. started a mirror and left the glass to finish it. I will.*
 10. **The island** (22): *A name on every step. The newest is not finished. The great lamp is cold, and it is not alone.*
 11. **The light returns** (23): *It let go. The great lamp caught, and the fog lifted. I could see the hut from the island.*
 12. **After** (`hand_lamp` read): *H. left their lamp for me. Past the far shore there is a small light. I will keep this one lit.*

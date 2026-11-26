@@ -47,6 +47,7 @@ func save(main: Node) -> bool:
 		},
 		"lanterns": [],
 		"resources": [],
+		"story": Story.to_dict(),
 		"fog": {"cols": fog.cols, "rows": fog.rows, "density": _pack_density(fog.density),
 			"remembered": Marshalls.raw_to_base64(fog.remembered)},
 	}
@@ -144,6 +145,7 @@ func load_into(main: Node) -> bool:
 	for m in main.get_tree().get_nodes_in_group("landmark"):
 		if Progress.notes_read.has(m.id):
 			m._spotted = true
+	Story.from_dict(data.get("story", {}))
 	# The keeper.
 	var pd: Dictionary = data["player"]
 	main.player.global_position = Vector2(pd["x"], pd["y"])

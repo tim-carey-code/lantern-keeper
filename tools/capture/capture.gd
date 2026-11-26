@@ -4,13 +4,14 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): start, marsh, cold, edge, wick, drops, ridge, map. The last frame is the one to look at.
+## Views (after "--"): start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter. The last frame is the one to look at.
 
 var main: Node
 var frame := 0
 var view := "start"
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # keep counting frames while the opening/journal pauses the world
 	# Ignore any real controller on this PC.
 	for action in InputMap.get_actions():
 		for e in InputMap.action_get_events(action):
@@ -19,6 +20,7 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		view = args[0]
+	Story.skip_opening = not view.begins_with("opening")
 	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
@@ -93,5 +95,26 @@ func _process(_delta: float) -> void:
 		main.player.update_ward(1.0 / 30.0, true)
 	if frame == 6 and view == "map":
 		main.get_node("MapScreen").toggle()
+	# Opening views: step through to the page we want to see.
+	if view == "opening_name" and frame == 5:
+		main.get_node("Opening")._next()
+		main.get_node("Opening").name_box.text = "Tess"
+	if view == "opening_letter" and frame == 5:
+		var o = main.get_node("Opening")
+		o._next()
+		o.name_box.text = "Tess"
+		o._next()
+	if view == "journal" and frame == 30:
+		Story.player_name = "Tess"
+		Inventory.counts["fuel"] = 2
+		Story.update(main)
+		for id in ["ledger", "stone_way"]:
+			for m in get_tree().get_nodes_in_group("landmark"):
+				if m.id == id:
+					Progress.notes_read[id] = true
+		Story.update(main)
+		main.get_node("Journal").toggle()
+		main.get_node("Journal").page = 1
+		main.get_node("Journal").refresh()
 	if frame >= 45:
 		get_tree().quit()

@@ -26,7 +26,7 @@ func _ready() -> void:
 	title.text = "Paused"
 	title.add_theme_font_size_override("font_size", 48)
 	box.add_child(title)
-	for item in [["Resume", _resume], ["Save", _save], ["New game", _new_game], ["Save and quit", _quit]]:
+	for item in [["Resume", _resume], ["Save", _save], ["New game", _new_game], ["Save and quit", _quit], ["Goal pointer", _cycle_pointer], ["Show tips again", _reset_tips]]:
 		var b := Button.new()
 		b.text = item[0]
 		b.pressed.connect(item[1])
@@ -46,6 +46,7 @@ func open() -> void:
 	_confirm_new = false
 	buttons[2].text = "New game"
 	info.text = "Last save: " + _last_save_text()
+	_pointer_label()
 	buttons[0].grab_focus()
 	Sfx.play("ui_open", -14.0)
 
@@ -107,6 +108,20 @@ func _new_game() -> void:
 	get_tree().paused = false
 	Tuning.ui_open = false
 	get_tree().reload_current_scene()
+
+const POINTER_NAMES := {"auto": "Goal pointer: auto (Hollow only)", "on": "Goal pointer: always on", "off": "Goal pointer: off"}
+
+func _pointer_label() -> void:
+	buttons[4].text = POINTER_NAMES.get(Story.pointer_mode, "Goal pointer")
+
+func _cycle_pointer() -> void:
+	var order := ["auto", "on", "off"]
+	Story.pointer_mode = order[(order.find(Story.pointer_mode) + 1) % order.size()]
+	_pointer_label()
+
+func _reset_tips() -> void:
+	Story.tips_seen = {}
+	info.text = "Tips will show again."
 
 func _quit() -> void:
 	if _main():

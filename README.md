@@ -23,9 +23,10 @@ Command line: `godot --path ~/Projects/lantern-keeper`
 | Build selected lantern | Space / left click | X (left) |
 | Pick up lantern | Q / right click | B (right) |
 | Lantern list (up/down to choose) | Tab | Y (top) |
-| Pause menu (resume, save, new game, save and quit) | Esc | Start |
+| Pause menu (resume, save, new game, save and quit, goal pointer, tips) | Esc | Start |
 | Map | M | LB |
-| Tuning panel | F1 | Select / Back |
+| Journal (goals, story so far, notes) | J | Back / View |
+| Tuning panel | F1 | Left stick click |
 | Fullscreen on/off | F11 | |
 
 ## Folders

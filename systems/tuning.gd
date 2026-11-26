@@ -65,7 +65,7 @@ var hand_lamp_charge_per_fuel := 0.5        # auto-burns 1 carried fuel when low
 
 # PROTOTYPE: Wicklings, the flare and warmth (branch proto/wicklings)
 var wick_enabled := true
-var wick_first_delay := 25.0        # grace period at the start (s)
+var wick_first_delay := 60.0        # grace period at the start (s): time to relight the first lantern
 var wick_spawn_sec := 12.0
 var wick_max := 7
 var wick_hp := 3.0

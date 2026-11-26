@@ -32,6 +32,7 @@ func strip_real_input() -> void:
 
 func _ready() -> void:
 	strip_real_input()
+	Story.skip_opening = true
 	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
@@ -52,7 +53,8 @@ func _process(_delta: float) -> void:
 					woodpile = r
 				elif r.kind == "scrap" and r.global_position.distance_to(start) < 100.0:
 					scrap_pile = r
-			check(lamp != null and lamp.is_lit(), "starting lantern exists and is lit")
+			check(lamp != null and not lamp.is_lit(), "the old lantern by the hut starts cold (relighting it is the first goal)")
+			lamp.fuel = Tuning.lantern_max_fuel   # relight it for the rest of these checks
 			check(woodpile != null and scrap_pile != null, "hut woodpile and starter scrap exist")
 			var res := get_tree().get_nodes_in_group("resource")
 			check(res.size() >= 40, "resources scattered in the Hollow (%d)" % res.size())
@@ -182,7 +184,7 @@ func _m3_checks() -> void:
 	check(fog.build_block(fog.tile_center(marsh)).begins_with("soft ground"), "cannot build on soft marsh")
 	check(walk.x >= 0 and fog.build_block(fog.tile_center(walk)) == "", "can build on a boardwalk")
 	var pump := _landmark("pumphouse")
-	check(get_tree().get_nodes_in_group("landmark").size() == 9, "nine landmarks placed (5 Hollow/marsh, 4 Ridge)")
+	check(get_tree().get_nodes_in_group("landmark").size() == 13, "thirteen landmarks placed (8 Hollow/marsh, 5 Ridge)")
 	check(pump != null and _connected(fog.tile_of(start), fog.tile_of(pump.global_position)), "walkable path from the hut to the pumphouse")
 	var peat := get_tree().get_nodes_in_group("resource").filter(func(r): return r.label == "Peat")
 	check(peat.size() >= 15, "peat in the marsh (%d)" % peat.size())

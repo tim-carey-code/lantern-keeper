@@ -44,7 +44,7 @@ func _ready() -> void:
 	box.custom_minimum_size = Vector2(340, 0)
 	scroll.add_child(box)
 	var title := Label.new()
-	title.text = "Tuning  (F1 / Select to close)"
+	title.text = "Tuning  (F1 / left stick click to close)"
 	box.add_child(title)
 	for row in ROWS:
 		var key: String = row[0]
