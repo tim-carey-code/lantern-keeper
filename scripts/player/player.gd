@@ -8,6 +8,10 @@ const REACH := 52.0   # px to interact with a lantern or resource
 var lamp: PointLight2D
 var lamp_charge := 1.0          # 0 = ember, 1 = full hand lamp
 var fuel_poured := 0.0
+var warmth := 100.0            # PROTOTYPE: the keeper's "health". Never kills; fainting sends you home.
+var _flare_cd := 0.0
+var _flare_t := 0.0            # >0 while the flare burst is showing
+var faints := 0
 var _gather_target: ResourceNode = null
 var _gather_acc := 0.0
 var _facing_left := false
@@ -54,6 +58,7 @@ func update_hand_lamp(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	update_hand_lamp(delta)
+	_update_warmth(delta)
 	lamp.texture_scale = LightTex.scale_for(get_light_radius())
 	lamp.energy = lerpf(0.35, 0.6, lamp_charge)
 	queue_redraw()
@@ -76,6 +81,8 @@ func _physics_process(delta: float) -> void:
 	if Progress.input_blocked():
 		_gather_target = null
 		return
+	if Input.is_action_just_pressed("flare"):
+		flare()
 	if Input.is_action_just_pressed("place_lantern"):
 		try_place()
 	elif Input.is_action_just_pressed("cancel"):
@@ -116,6 +123,59 @@ func _footsteps(dir: Vector2, delta: float, fog: FogGrid) -> void:
 
 func _fog() -> FogGrid:
 	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
+
+# --- PROTOTYPE: flare, warmth, fainting --------------------------------------
+
+## Burst of light from the hand lamp. Costs carried fuel; burns Wicklings nearby.
+func flare() -> bool:
+	if _flare_cd > 0.0:
+		return false
+	if not Inventory.spend("fuel", Tuning.flare_cost):
+		Sfx.play("ui_error", -14.0)
+		return false
+	_flare_cd = Tuning.flare_cooldown
+	_flare_t = 0.45
+	Sfx.play("relight", -6.0, 0.15)
+	for w in get_tree().get_nodes_in_group("wickling"):
+		if w.global_position.distance_to(global_position) <= Tuning.flare_radius:
+			w.hurt(Tuning.flare_damage)
+	return true
+
+func chill(amount: float) -> void:
+	warmth = maxf(0.0, warmth - amount)
+	if warmth <= 0.0:
+		faint()
+
+func _update_warmth(delta: float) -> void:
+	_flare_cd = maxf(0.0, _flare_cd - delta)
+	_flare_t = maxf(0.0, _flare_t - delta)
+	if in_lantern_light():
+		warmth = minf(Tuning.warmth_max, warmth + Tuning.warmth_regen_per_sec * delta)
+
+## Out of warmth: drop part of what you carry where you fell, wake at the nearest lit lantern (or the hut).
+func faint() -> void:
+	faints += 1
+	var main := get_tree().get_first_node_in_group("main")
+	for kind in ["fuel", "scrap"]:
+		var lost := int(floor(Inventory.get_count(kind) * Tuning.faint_drop))
+		if lost > 0 and main:
+			Inventory.spend(kind, lost)
+			main.drop_pile(kind, global_position + Vector2(randf_range(-12, 12), randf_range(-12, 12)), lost)
+	var home: Vector2 = main.start if main else global_position
+	var best := INF
+	for l in get_tree().get_nodes_in_group("lantern"):
+		if l.is_lit():
+			var d: float = l.global_position.distance_to(global_position)
+			if d < best:
+				best = d
+				home = l.global_position + Vector2(0, 24)
+	global_position = home
+	reset_physics_interpolation()
+	warmth = Tuning.warmth_max * 0.6
+	for w in get_tree().get_nodes_in_group("wickling"):
+		w.state = Wickling.State.FLEE
+		w._flee_t = 3.0
+	Progress.note_opened.emit("You faint...", "The cold takes you. You wake by the warmth of a lantern.\nSome of what you carried lies where you fell.")
 
 # --- Interact: refuel or gather -------------------------------------------
 
@@ -260,6 +320,11 @@ func _draw() -> void:
 	var fog := _fog()
 	if fog == null:
 		return
+	# Flare burst.
+	if _flare_t > 0.0:
+		var k := _flare_t / 0.45
+		draw_circle(Vector2(0, -14), Tuning.flare_radius * (1.0 - k * 0.6), Color(1.0, 0.85, 0.5, 0.25 * k))
+		draw_arc(Vector2(0, -14), Tuning.flare_radius * (1.0 - k * 0.6), 0.0, TAU, 48, Color(1.0, 0.9, 0.6, 0.8 * k), 2.0)
 	# Placement ghost: the tile and the radius a new lantern would light.
 	var p := place_pos()
 	var ok := can_place(p)

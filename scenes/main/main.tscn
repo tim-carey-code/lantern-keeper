@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id="10_map"]
 [ext_resource type="Script" path="res://systems/wind/wind_streaks.gd" id="11_streaks"]
 [ext_resource type="Script" path="res://scripts/ui/lantern_markers.gd" id="12_markers"]
+[ext_resource type="Script" path="res://systems/threat/wickling_spawner.gd" id="13_wick"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -48,6 +49,9 @@ script = ExtResource("11_streaks")
 
 [node name="LanternMarkers" type="Node2D" parent="FogLayer"]
 script = ExtResource("12_markers")
+
+[node name="Wicklings" type="Node2D" parent="FogLayer"]
+script = ExtResource("13_wick")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("4_hud")

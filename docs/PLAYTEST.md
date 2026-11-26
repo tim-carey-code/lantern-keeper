@@ -1,5 +1,23 @@
 # Playtests
 
+## PROTOTYPE build (branch `proto/wicklings`): calm conflict
+
+**Wicklings** drift out of the deep fog (first one after ~40 s, then every ~16 s, max 5).
+- They creep to the **rim** of a lantern's light and drain its fuel (a dark tendril shows which lantern). The bright **core** of a lantern burns them, so clustered lanterns are safer.
+- In the dark they come for **you**. Their touch drains your **Warmth** (HUD). In lantern light Warmth refills.
+- **Flare: F / RB.** A burst of light from your hand lamp, costs 1 carried fuel, burns away nearby Wicklings. 1 s cooldown.
+- Out of Warmth you **faint**: you wake beside the nearest lit lantern and drop half of what you carried where you fell (go back and pick it up). No game over, nothing you built is lost.
+- Tuning panel (F1) has spawn rate, speed, drain, warmth loss and flare radius.
+
+Questions (decision gate: keep, change, or drop):
+1. Did the game feel more interesting with Wicklings, or more stressful?
+2. Did the light still feel safe and calm?
+3. Did the flare feel good to use? Too strong, too weak?
+4. Did fainting feel fair?
+5. Should they stay in v1?
+
+---
+
 ## Current build: M3 (The Reedmarsh)
 
 The valley is bigger. East of the Hollow, through a rocky passage, is **The Reedmarsh**.

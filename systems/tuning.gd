@@ -44,4 +44,25 @@ var hand_lamp_drain_per_sec := 1.0 / 45.0   # full -> ember in 45 s of darkness
 var hand_lamp_recharge_per_sec := 0.5       # free top-up while in lantern light
 var hand_lamp_charge_per_fuel := 0.5        # auto-burns 1 carried fuel when low
 
+# PROTOTYPE: Wicklings, the flare and warmth (branch proto/wicklings)
+var wick_enabled := true
+var wick_first_delay := 40.0        # grace period at the start (s)
+var wick_spawn_sec := 16.0
+var wick_max := 5
+var wick_hp := 3.0
+var wick_speed := 55.0              # keeper walks at 160
+var wick_sense := 320.0             # px: how far they notice lanterns / the keeper
+var wick_rim := 0.12                # light level where they stop and drain (rim of the light)
+var wick_core := 0.55               # light level that burns them
+var wick_light_burn := 2.0          # hp/s while in a lantern's bright core
+var wick_drain_per_sec := 4.0       # lantern fuel/s drained (100-fuel tank: ~25 s)
+var flare_radius := 150.0
+var flare_damage := 3.0             # enough to burn a Wickling away
+var flare_cooldown := 1.0
+var flare_cost := 1                 # carried fuel
+var warmth_max := 100.0
+var warmth_drain_per_sec := 30.0    # while a Wickling touches the keeper
+var warmth_regen_per_sec := 20.0    # in lantern light
+var faint_drop := 0.5               # share of carried resources dropped on fainting
+
 var ui_open := false                    # true while a menu has focus (player stops)

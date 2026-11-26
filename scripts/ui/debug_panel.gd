@@ -16,6 +16,11 @@ const ROWS := [
 	["marsh_creep_mult", "Marsh fog creep x", 1.0, 4.0, 0.1],
 	["reservoir_feed_per_sec", "Reservoir feed (fuel/s)", 0.0, 3.0, 0.1],
 	["wind_burn_mult", "Gust burn x (exposed)", 1.0, 5.0, 0.25],
+	["wick_spawn_sec", "Wickling spawn every (s)", 4.0, 60.0, 1.0],
+	["wick_speed", "Wickling speed", 20.0, 160.0, 5.0],
+	["wick_drain_per_sec", "Wickling drain (fuel/s)", 0.0, 15.0, 0.5],
+	["warmth_drain_per_sec", "Warmth loss on touch (/s)", 0.0, 100.0, 5.0],
+	["flare_radius", "Flare radius (px)", 60.0, 300.0, 10.0],
 ]
 
 var panel: PanelContainer

@@ -76,6 +76,8 @@ func _process(delta: float) -> void:
 		Inventory.get_count("fuel"), lim, Inventory.get_count("scrap"), lim, roundi(player.lamp_charge * 100.0)])
 	var where: int = fog.region_at(player.global_position)
 	var region_name: String = FogGrid.REGION_NAMES[where] if where < FogGrid.REGION_NAMES.size() else ""
+	var warm := roundi(player.warmth / Tuning.warmth_max * 100.0)
+	lines.append("Warmth %d%%%s    [F / RB] flare (1 fuel)" % [warm, "  - cold! get back to the light" if warm < 35 else ""])
 	lines.append("Lanterns lit %d/%d    %s seen %d%%" % [lit, lamps.size(), region_name, roundi(fog.revealed_fraction(where) * 100.0)])
 	var markers = get_tree().get_first_node_in_group("lantern_markers")
 	if markers:
