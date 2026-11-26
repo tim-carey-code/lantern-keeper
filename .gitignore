@@ -1,0 +1,11 @@
+# Godot 4 cache and editor data (regenerated automatically)
+.godot/
+# Export output
+/build/
+*.x86_64
+*.exe
+*.pck
+# Art/audio working files stay in source/ (tracked). Exported PNG/OGG go in assets/.
+# OS clutter
+.DS_Store
+*~
