@@ -38,6 +38,8 @@ Follow-up fixes for 5 and 6:
 - Sound: replaced with real sounds in M4.
 
 Follow-up screenshots (owner): gust streaks + centre message + HUD line all visible; cold-lantern arrows and "Needs fuel: 3 cold" HUD line working; map readable.
+Owner tuning notes: lanterns going cold was not mainly the gusts; gusts don't affect lanterns enough; lanterns burn a little too slow.
+Changed: Post Lamp burn 0.33 -> 0.5 fuel/s (tank ~3.3 min), Reservoir burn 0.2 -> 0.3, gust burn x2 -> x3, gust light radius x0.85 -> x0.7, gust length 8 -> 10 s.
 Polish list for M4: arrows for lanterns in the same direction stack on one spot (add a count or spread them); streaks also draw over never-seen black (consider only over seen ground); map should zoom to the explored area; region labels can sit on paths; seen-fog tile outlines read as a heavy grid.
 
 ---

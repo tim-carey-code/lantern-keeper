@@ -4,7 +4,7 @@ extends Node
 
 # Post Lamp
 var lantern_max_fuel := 100.0
-var lantern_burn_per_sec := 1.0 / 3.0   # 100 fuel lasts ~5 minutes
+var lantern_burn_per_sec := 0.5         # 100 fuel lasts ~3.3 minutes (was 5; owner: "a little too slow")
 var lantern_max_radius := 224.0         # px at full tank
 var lantern_min_radius_frac := 0.4      # radius just before it goes cold
 var post_lamp_cost_scrap := 5
@@ -13,7 +13,7 @@ var pickup_refund := 0.5                # share of build cost returned on pick-u
 # Reservoir Lamp (unlocked at the pumphouse)
 var reservoir_cost_scrap := 8
 var reservoir_max_fuel := 200.0
-var reservoir_burn_per_sec := 0.2
+var reservoir_burn_per_sec := 0.3
 var reservoir_radius := 200.0
 var reservoir_min_radius_frac := 0.6
 var reservoir_feed_per_sec := 0.5       # fuel/s given to each other lantern in its light
@@ -32,9 +32,9 @@ var marsh_creep_mult := 1.8             # the Reedmarsh fogs back faster
 var wind_calm_min := 30.0
 var wind_calm_max := 55.0
 var wind_warning_sec := 5.0
-var wind_gust_sec := 8.0
-var wind_burn_mult := 2.0               # exposed lanterns during a gust
-var wind_radius_mult := 0.85
+var wind_gust_sec := 10.0
+var wind_burn_mult := 3.0               # exposed lanterns during a gust (was 2; owner: gusts too weak)
+var wind_radius_mult := 0.7
 var wind_creep_mult := 1.5
 
 # Hand lamp (dims in the dark, never goes out)
