@@ -103,6 +103,6 @@ func _process(delta: float) -> void:
 	var reason: String = player.place_block_reason(player.place_pos())
 	if reason != "" and reason != "too close to a lantern":
 		lines.append("Build here: %s" % reason)
-	lines.append("[Space / X] build %s (%d scrap)   [Tab / Y] lanterns   [M / LB] map   [F1 / Select] tuning" % [
+	lines.append("[Space / X] build %s (%d scrap)   [Tab / Y] lanterns   [M / LB] map   [Esc / Start] pause" % [
 		Lantern.display(Progress.selected), Lantern.cost(Progress.selected)])
 	label.text = "\n".join(lines)

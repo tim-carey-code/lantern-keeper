@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://systems/wind/wind_streaks.gd" id="11_streaks"]
 [ext_resource type="Script" path="res://scripts/ui/lantern_markers.gd" id="12_markers"]
 [ext_resource type="Script" path="res://systems/threat/wickling_spawner.gd" id="13_wick"]
+[ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="14_pause"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -67,3 +68,6 @@ script = ExtResource("10_map")
 
 [node name="DebugPanel" type="CanvasLayer" parent="."]
 script = ExtResource("5_debug")
+
+[node name="PauseMenu" type="CanvasLayer" parent="."]
+script = ExtResource("14_pause")

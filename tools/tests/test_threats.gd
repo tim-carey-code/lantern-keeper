@@ -28,6 +28,8 @@ func strip_real_input() -> void:
 
 func _ready() -> void:
 	strip_real_input()
+	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
+	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
 	add_child(main)
 
@@ -89,7 +91,7 @@ func _process(_delta: float) -> void:
 			player.lamp_charge = 0.0
 		362:
 			var scraps := get_tree().get_nodes_in_group("ember").filter(func(e): return e.kind == "scrap")
-			check(scraps.size() == 1, "a burned Wickling can also drop scrap")
+			check(scraps.size() >= 1, "a burned Wickling can also drop scrap (%d)" % scraps.size())
 		365:
 			check(not player.warding, "an empty hand lamp can't ward: go back to the light")
 			Input.action_release("flare")

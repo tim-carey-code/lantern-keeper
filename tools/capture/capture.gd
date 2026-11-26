@@ -19,6 +19,8 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		view = args[0]
+	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
+	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
 	add_child(main)
 

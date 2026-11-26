@@ -15,7 +15,7 @@
 | M3 Reedmarsh + Reservoir Lamp (+ wind moved up) | done, gate passed |
 | M4 Atmosphere (art, fog, font, sound) | mostly done. Left: night ambience recordings (owner, Freesound), owner's lantern art (placeholders in place) |
 | **M4b Light-based conflict** (added by owner decision) | done, playtested: Wicklings, warding glow on lamp charge, warmth, fainting, ember/scrap drops |
-| M5 Full v1 content + save/load | next |
+| M5 Full v1 content + save/load | in progress: save/load done (single slot, autosave, pause menu) |
 | M6 Polish, playtest, Linux build | after M5 |
 
 ### What M5 now contains

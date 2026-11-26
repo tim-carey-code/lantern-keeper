@@ -19,6 +19,7 @@ const ISLANDS := [Vector3(72, 23, 2), Vector3(76, 42, 2), Vector3(95, 24, 2), Ve
 @onready var player: CharacterBody2D = $Player
 
 var start := Vector2.ZERO
+var loaded_save := false
 var rng := RandomNumberGenerator.new()
 var _taken: Array[Vector2] = []
 
@@ -47,6 +48,15 @@ func _ready() -> void:
 	_place_landmarks()
 	_scatter()
 	queue_redraw()
+	# Continue from the save unless "New game" was just chosen.
+	if SaveGame.skip_load_once:
+		SaveGame.skip_load_once = false
+	else:
+		loaded_save = SaveGame.load_into(self)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		SaveGame.save(self)   # closing the window keeps your progress
 
 func _input(event: InputEvent) -> void:
 	# Hide the cursor while playing with keys or a controller; show it when the mouse moves.
