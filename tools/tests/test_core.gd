@@ -94,6 +94,9 @@ func _process(_delta: float) -> void:
 			player.position = woodpile.global_position + Vector2(12, 0)
 		400:
 			check(not lamp.is_lit(), "unfuelled lantern goes cold")
+			var markers = main.get_node("FogLayer/LanternMarkers")
+			check(markers.needs_attention().has(lamp), "a cold lantern is marked so you can find it to refuel")
+			check(main.get_node("HUD").label.text.contains("Needs fuel: 1 cold"), "HUD counts lanterns that need fuel")
 			check(woodpile.amount >= 1, "hut woodpile regrows: no soft-lock")
 			Input.action_press("interact")
 		460:

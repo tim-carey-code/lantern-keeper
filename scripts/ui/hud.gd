@@ -75,6 +75,13 @@ func _process(delta: float) -> void:
 	var where: int = fog.region_at(player.global_position)
 	var region_name: String = FogGrid.REGION_NAMES[where] if where < FogGrid.REGION_NAMES.size() else ""
 	lines.append("Lanterns lit %d/%d    %s seen %d%%" % [lit, lamps.size(), region_name, roundi(fog.revealed_fraction(where) * 100.0)])
+	var markers = get_tree().get_first_node_in_group("lantern_markers")
+	if markers:
+		var need: Array = markers.needs_attention()
+		var cold := need.filter(func(l): return not l.is_lit()).size()
+		var low := need.size() - cold
+		if need.size() > 0:
+			lines.append("Needs fuel: %d cold, %d low (follow the arrows)" % [cold, low])
 	if wind and wind.status_text() != "":
 		lines.append(wind.status_text())
 	var t = player.nearest_target()

@@ -2,6 +2,9 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (after M3 playtest)
+- Cold lanterns stay findable, as DESIGN 3.1/4 intended ("keeps its frame"): their frame and a pulse are drawn above fog and darkness. Lanterns below 25% fuel get an amber pulse. Off-screen cold/low lanterns get an arrow at the screen edge. The HUD counts them and the map colours them (red cold, yellow low).
+
 ## 2026-11-26 (M3 build choices, coordinator)
 - Wind gusts are valley-wide from M3 (not only the Windward Ridge), as the one weather effect. Shelter = rock 1-2 tiles upwind. The Ridge will get stronger, more frequent gusts later.
 - The Reservoir Lamp also refuels cold lanterns in its light (relights them), not only lit ones.

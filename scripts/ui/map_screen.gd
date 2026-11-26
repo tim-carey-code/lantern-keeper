@@ -22,7 +22,7 @@ func _ready() -> void:
 	bg.size = Vector2(1280, 720)
 	root.add_child(bg)
 	var title := Label.new()
-	title.text = "Map   (M / LB to close)"
+	title.text = "Map   (M / LB to close)      amber = lit lantern   yellow = low fuel   red = cold   white = you"
 	title.position = Vector2(24, 16)
 	root.add_child(title)
 	map_rect = TextureRect.new()
@@ -90,7 +90,12 @@ func render() -> void:
 	for l in get_tree().get_nodes_in_group("lantern"):
 		var t := fog.tile_of(l.global_position)
 		if fog.in_bounds(t):
-			img.set_pixel(t.x, t.y, Color(1.0, 0.75, 0.3) if l.is_lit() else Color(0.55, 0.55, 0.55))
+			var c := Color(1.0, 0.75, 0.3)
+			if not l.is_lit():
+				c = Color(0.95, 0.3, 0.25)
+			elif l.fuel_frac() < 0.25:
+				c = Color(1.0, 0.95, 0.4)
+			img.set_pixel(t.x, t.y, c)
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
 		var pt := fog.tile_of(player.global_position)
