@@ -48,6 +48,14 @@ func _ready() -> void:
 	_scatter()
 	queue_redraw()
 
+func _input(event: InputEvent) -> void:
+	# Hide the cursor while playing with keys or a controller; show it when the mouse moves.
+	if event is InputEventMouseMotion and event.relative.length() > 2.0:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	elif event is InputEventJoypadButton or event is InputEventKey or (event is InputEventJoypadMotion and absf(event.axis_value) > 0.5):
+		if Input.mouse_mode != Input.MOUSE_MODE_HIDDEN:
+			Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_fullscreen"):
 		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN

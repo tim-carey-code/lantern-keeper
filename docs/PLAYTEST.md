@@ -5,7 +5,7 @@
 **Wicklings** drift out of the deep fog (first one after ~40 s, then every ~16 s, max 5).
 - They creep to the **rim** of a lantern's light and drain its fuel (a dark tendril shows which lantern). The bright **core** of a lantern burns them, so clustered lanterns are safer.
 - In the dark they come for **you**. Their touch drains your **Warmth** (HUD). In lantern light Warmth refills.
-- **Flare: F / RB.** A burst of light from your hand lamp, costs 1 carried fuel, burns away nearby Wicklings. 1 s cooldown.
+- **Lamp beam: hold F / RB / RT.** Aim with the right stick, the mouse, or the way you walk. Costs 1 carried fuel per 1.5 s; burns a Wickling away in about 2 s. You walk slower while beaming.
 - Out of Warmth you **faint**: you wake beside the nearest lit lantern and drop half of what you carried where you fell (go back and pick it up). No game over, nothing you built is lost.
 - Tuning panel (F1) has spawn rate, speed, drain, warmth loss and flare radius.
 
@@ -15,6 +15,15 @@ Questions (decision gate: keep, change, or drop):
 3. Did the flare feel good to use? Too strong, too weak?
 4. Did fainting feel fair?
 5. Should they stay in v1?
+
+### Results: 2026-11-26, owner (video reviewed)
+1. More interesting; **not much added pressure**.
+2. Light still felt **safe and calm**.
+3. The flare "wasn't really a flare" and **one-shot everything close enough**: too strong. Wanted a **beam** that drains their health.
+4. Fainting felt **fair**.
+5. **Keep them in v1.**
+From the video: the mouse cursor sat in the middle of the screen; Wicklings were hard to spot in the dark; the editor debugger showed 13 messages (not yet identified).
+Changes: lamp beam replaces the flare; more Wicklings, sooner; brighter eyes, a cold rim and a health ring on hurt Wicklings; cursor hides when not using the mouse.
 
 ---
 

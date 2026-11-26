@@ -1,5 +1,5 @@
 extends Node
-## PROTOTYPE checks for Wicklings, the flare and warmth. Run:
+## Checks for Wicklings, the lamp beam and warmth. Run:
 ##   godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn
 
 var main: Node
@@ -59,16 +59,23 @@ func _process(_delta: float) -> void:
 			check(lamp.fuel < lamp_fuel_before - 5.0, "a Wickling at the rim drains the lantern (%.0f -> %.0f)" % [lamp_fuel_before, lamp.fuel])
 			check(not is_instance_valid(w_core), "a Wickling in a lantern's bright core burns away")
 			check(is_instance_valid(w_snuff) and w_snuff.light_level_at(w_snuff.global_position) < Tuning.wick_core, "Wicklings keep to the rim, out of the core")
-			# Flare: costs fuel, destroys nearby Wicklings.
-			player.position = w_snuff.global_position + Vector2(40, 0)
+			# Lamp beam: hold to wear a Wickling down; costs fuel over time.
+			player.mouse_aiming = false   # aim the way the keeper last walked
+			player.position = w_snuff.global_position + Vector2(-120, 14)
+			player._last_move = Vector2.RIGHT
 			Inventory.counts["fuel"] = 3
-			check(player.flare(), "flare fires with carried fuel")
-			check(Inventory.get_count("fuel") == 2, "flare costs 1 fuel")
-			check(not player.flare(), "flare has a cooldown")
-		303:
-			check(not is_instance_valid(w_snuff), "flare burns a nearby Wickling away")
+			Input.action_press("flare")
+		330:
+			check(player.beaming, "holding the beam button shines the lamp beam")
+			check(is_instance_valid(w_snuff) and w_snuff.hp < Tuning.wick_hp, "the beam hurts a Wickling in the cone (%.2f hp)" % (w_snuff.hp if is_instance_valid(w_snuff) else -1.0))
+			check(is_instance_valid(w_snuff), "the beam does not one-shot (it drains over time)")
+		460:
+			Input.action_release("flare")
+			check(not is_instance_valid(w_snuff), "holding the beam burns the Wickling away (about 2 s)")
+			check(Inventory.get_count("fuel") == 1, "the beam costs fuel over time (%d left of 3)" % Inventory.get_count("fuel"))
+		462:
+			check(not player.beaming, "releasing the button stops the beam")
 			Inventory.counts["fuel"] = 0
-			check(not player.flare() or true, "flare with no fuel does nothing")
 			# Chase and chill in the dark.
 			player.position = main.start + Vector2(-480, 0)
 			player.warmth = Tuning.warmth_max
@@ -76,10 +83,10 @@ func _process(_delta: float) -> void:
 			w_chase.state = Wickling.State.CHASE
 			Inventory.counts["fuel"] = 10
 			Inventory.counts["scrap"] = 10
-		330:
+		490:
 			check(player.warmth < Tuning.warmth_max, "a Wickling's touch drains warmth (%.0f)" % player.warmth)
 			player.warmth = 1.0
-		340:
+		500:
 			check(player.faints == 1, "out of warmth: the keeper faints (no game over)")
 			check(player.global_position.distance_to(lamp.global_position) < 60.0, "and wakes beside the nearest lit lantern")
 			check(Inventory.get_count("fuel") == 5 and Inventory.get_count("scrap") == 5, "half of what was carried is dropped")
