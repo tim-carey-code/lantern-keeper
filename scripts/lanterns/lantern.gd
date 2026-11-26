@@ -14,6 +14,8 @@ const DIRS := [Vector2(1, 0), Vector2(1, 1), Vector2(0, 1), Vector2(-1, 1), Vect
 const PREVAILING := Vector2i.RIGHT   # the Ridge wind blows from the west
 ## Lamp box height above the tile centre, so the light glows from the lamp, not the base.
 const LAMP_Y := -34.0
+## The Post Lamp is a shepherd's crook: its lamp hangs to the right of the post.
+const CROOK_LAMP := Vector2(9, -19)
 
 var kind := "post"
 var fuel := -1.0          # -1 = start with a full tank
@@ -71,6 +73,8 @@ func _ready() -> void:
 	light.texture = LightTex.radial()
 	light.color = Color(0.9, 0.86, 0.62) if kind == "reservoir" else Color(1.0, 0.78, 0.45)
 	light.position = Vector2(0, -44 if kind == "reservoir" else LAMP_Y)
+	if kind == "post":
+		light.position = CROOK_LAMP
 	add_child(light)
 	if kind == "mirror":
 		beam_light = PointLight2D.new()

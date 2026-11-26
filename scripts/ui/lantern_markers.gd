@@ -50,8 +50,8 @@ func _draw() -> void:
 		if view.has_point(p):
 			if cold:
 				# The frame stays visible through fog and darkness.
-				draw_line(p + Vector2(0, 8), p + Vector2(0, -12), FRAME_COL, 2.0)
-				draw_rect(Rect2(p + Vector2(-6, -24), Vector2(12, 12)), FRAME_COL, false, 1.5)
+				var file: String = {"reservoir": "reservoir_lamp_cold.png", "hooded": "hooded_lamp_cold.png"}.get(l.kind, "post_lamp_cold.png")
+				Art.sprite(self, Art.placeholder(file), p + Vector2(0, 16), FRAME_COL)
 				draw_arc(p + Vector2(0, -8), 16.0 + pulse * 6.0, 0.0, TAU, 28, Color(col, 0.75 - pulse * 0.5), 2.0)
 			else:
 				draw_arc(p + Vector2(0, -18), 9.0 + pulse * 4.0, 0.0, TAU, 20, Color(col, 0.8 - pulse * 0.5), 1.5)

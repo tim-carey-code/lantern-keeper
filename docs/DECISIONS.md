@@ -2,6 +2,9 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (Post Lamp look)
+- The Post Lamp is a **shepherd's crook**: a wooden post whose arm curls over, with the lamp hanging from a chain (owner's pick of four sketches). The light now glows from the hanging lamp, and cold-lantern markers show the real cold sprite through the fog. Starter art by `tools/art/crook_lamp.py`, for the owner to refine in Pixelorama.
+
 ## 2026-11-26 (M5: the Windward Ridge)
 - The map grows north (112x100 tiles): the Ridge sits above the Hollow, reached by a narrow climb from the top of the Hollow. Old saves (version 1) start fresh.
 - **Constant west wind** on the Ridge: exposed fuel lanterns burn 1.6x and shrink to 85%, on top of gusts (which come every 12-22 s while you are there). Rock outcrops 1-2 tiles to the west shelter a lantern. Wind streaks never stop on the Ridge.
