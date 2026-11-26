@@ -6,6 +6,7 @@ A quiet, moody 2D top-down game about pushing back the dark. Godot 4.7, GDScript
 - Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md)
 - Decisions log: [docs/DECISIONS.md](docs/DECISIONS.md)
 - Asset licenses: [assets/CREDITS.md](assets/CREDITS.md)
+- Art checklist (what to draw): [docs/ART_CHECKLIST.md](docs/ART_CHECKLIST.md)
 - Current playtest: [docs/PLAYTEST.md](docs/PLAYTEST.md)
 
 
