@@ -18,7 +18,7 @@ func _ready() -> void:
 	root.size = Vector2(1280, 720)
 	add_child(root)
 	var bg := ColorRect.new()
-	bg.color = Color(0.0, 0.0, 0.0, 0.85)
+	bg.color = Color(0.01, 0.012, 0.02, 1.0)   # opaque: HUD and fog outlines must not show through
 	bg.size = Vector2(1280, 720)
 	root.add_child(bg)
 	var title := Label.new()
