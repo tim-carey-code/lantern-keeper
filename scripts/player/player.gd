@@ -247,7 +247,7 @@ func pick_up_nearest() -> void:
 # --- Drawing ---------------------------------------------------------------
 
 func _draw() -> void:
-	var bob := -2.0 if int(_walk_t / 0.18) % 2 == 1 else 0.0
+	var bob := -roundf(absf(sin(_walk_t * 9.0)))   # 0 or -1 px, smooth cadence
 	Art.cell_at_foot(self, Art.DUNGEON, Art.KEEPER, Vector2(0, 10 + bob), Color.WHITE, _facing_left)
 	var fog := _fog()
 	if fog == null:

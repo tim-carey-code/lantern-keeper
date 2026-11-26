@@ -4,7 +4,7 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): start, marsh, cold, map. The last frame is the one to look at.
+## Views (after "--"): start, marsh, cold, edge, map. The last frame is the one to look at.
 
 var main: Node
 var frame := 0
@@ -42,6 +42,9 @@ func _process(_delta: float) -> void:
 				_lantern(s + Vector2(-160, 64), "post", 0.0)
 				_lantern(s + Vector2(200, 120), "post", 10.0)
 				main.player.position = s + Vector2(-40, 60)
+			"edge":
+				main.player.position = main.fog.tile_center(Vector2i(8, 32))
+				_lantern(main.fog.tile_center(Vector2i(9, 30)))
 			"map":
 				_lantern(s + Vector2(-160, 64))
 				for i in 60:

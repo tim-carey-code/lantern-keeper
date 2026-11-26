@@ -34,6 +34,8 @@ func _ready() -> void:
 	cam.limit_top = 0
 	cam.limit_right = int(size.x)
 	cam.limit_bottom = int(size.y)
+	cam.position_smoothing_enabled = true
+	cam.position_smoothing_speed = 7.0
 	start = fog.tile_center(Vector2i(HOLLOW_C))
 	player.position = start
 	_taken.append(start)
@@ -224,7 +226,9 @@ func _draw() -> void:
 			var h := _hash(x, y)
 			match fog.terrain[y * fog.cols + x]:
 				FogGrid.T_ROCK:
-					Art.cell(self, Art.TOWN, Art.FOREST, pos, Color(0.72, 0.74, 0.85))
+					Art.cell(self, Art.TOWN, Art.GRASS, pos, Color(0.22, 0.24, 0.32))
+					if h % 100 < 70:
+						Art.cell(self, Art.TOWN, Art.PINES[h % Art.PINES.size()], pos + Vector2((h % 7) - 3, (h % 5) - 2), Color(0.6, 0.64, 0.78))
 				FogGrid.T_MARSH:
 					Art.cell(self, Art.TOWN, Art.GRASS, pos, marsh_tint)
 					if h % 100 < 45:
