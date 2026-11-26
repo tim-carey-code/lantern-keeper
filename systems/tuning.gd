@@ -66,6 +66,7 @@ var ward_walk_mult := 0.6           # you move slower while warding
 var ward_min_charge := 0.05         # below this the lamp is too dim to ward
 var ember_fuel := 1                 # a burned Wickling leaves an ember worth this much fuel
 var ember_life := 30.0              # seconds before an ember fades
+var wick_scrap_chance := 0.35       # chance a burned Wickling also drops 1 scrap
 var warmth_max := 100.0
 var warmth_drain_per_sec := 30.0    # while a Wickling touches the keeper
 var warmth_regen_per_sec := 20.0    # in lantern light

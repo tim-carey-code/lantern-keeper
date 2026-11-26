@@ -4,7 +4,7 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): start, marsh, cold, edge, wick, map. The last frame is the one to look at.
+## Views (after "--"): start, marsh, cold, edge, wick, drops, map. The last frame is the one to look at.
 
 var main: Node
 var frame := 0
@@ -60,6 +60,13 @@ func _process(_delta: float) -> void:
 				var c = sp.spawn_at(s + Vector2(170, -60))
 				main.player.position = s + Vector2(110, -20)
 				Inventory.counts["fuel"] = 5
+			"drops":
+				main.player.position = s + Vector2(0, 260)
+				var sp2 = main.get_node("FogLayer/Wicklings")
+				Tuning.wick_scrap_chance = 1.0
+				for off in [Vector2(-90, 0), Vector2(90, 30)]:
+					var w2 = sp2.spawn_at(main.player.position + off)
+					w2.hurt(99.0)
 			"map":
 				_lantern(s + Vector2(-160, 64))
 				for i in 60:

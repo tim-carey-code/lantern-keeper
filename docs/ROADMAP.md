@@ -5,10 +5,27 @@
 
 ---
 
-## Status
+## Status (2026-11-26)
 
-- M0 done (b9dab77). M1 done, playtest gate passed (2798574, 62f7612). M2 done, playtest gate passed; scrap rebalanced. M3 done, playtest gate passed; gust and landmark readability improved after the playtest. M4 atmosphere pass in progress: Kenney CC0 art (recoloured), placeholders for lantern posts and other gaps, soft fog, pixel font, sound effects done; ambience recordings (Freesound CC0) and keeper walk frames still to do.
-- Second-tester playtest for M1 still to do.
+| Milestone | State |
+|---|---|
+| M0 Setup | done |
+| M1 Core prototype (light, fuel, fog) | done, gate passed |
+| M2 Resources and gathering | done, gate passed |
+| M3 Reedmarsh + Reservoir Lamp (+ wind moved up) | done, gate passed |
+| M4 Atmosphere (art, fog, font, sound) | mostly done. Left: night ambience recordings (owner, Freesound), owner's lantern art (placeholders in place) |
+| **M4b Light-based conflict** (added by owner decision) | done, playtested: Wicklings, warding glow on lamp charge, warmth, fainting, ember/scrap drops |
+| M5 Full v1 content + save/load | next |
+| M6 Polish, playtest, Linux build | after M5 |
+
+### What M5 now contains
+- Region 3 **The Windward Ridge**: strong wind, **glass** (third resource), **Hooded Lamp** and **Mirror Post**.
+- Region 4 **The Still Lake**: fog too thick for normal light, Mirror Post chains, the cold great lamp.
+- **Finale: the Soul of the Wick** (a light confrontation using the ward + mirror chains), then the valley stays open as a sandbox.
+- Mystery: grow from 5 landmarks to 15-25, with hints at the Soul of the Wick.
+- Wickling variety per region (kept small), and difficulty that rises with distance from the hut.
+- **Save/load** (single slot + autosave).
+- Update DESIGN.md: combat, warmth and the finale are now IN (see DECISIONS).
 
 ---
 

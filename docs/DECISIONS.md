@@ -2,6 +2,11 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (ward playtest)
+- Owner: the ward on lamp charge works; push-and-pull is fun ("explore while killing Wicklings, collecting fuel and scrap").
+- Embers looked like a flower on the ground. Now drawn on the fog layer so they glow through the dark: a flickering flame with a pulsing ring and sparks, a magnet pull when you are close, and a floating "+1 fuel".
+- Burned Wicklings now have a 35% chance to also drop 1 scrap (cool blue heap with a glint).
+
 ## 2026-11-26 (beam playtest -> warding glow)
 - Owner: the beam killed too slowly, ate all the fuel meant for lanterns, and missed Wicklings right on top of the keeper. Root cause: the weapon competed with building for the same fuel.
 - **The beam is replaced by a warding glow** (owner's choice, no aiming): hold F / RB / RT and the hand lamp swells into a ~110 px circle that burns (about 0.7 s per Wickling) and pushes back every Wickling inside it, including point blank.

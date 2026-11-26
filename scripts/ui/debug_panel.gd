@@ -23,6 +23,7 @@ const ROWS := [
 	["ward_radius", "Ward radius (px)", 50.0, 250.0, 5.0],
 	["ward_dps", "Ward damage (hp/s)", 0.5, 12.0, 0.25],
 	["ward_drain_per_sec", "Ward lamp drain (/s)", 0.05, 1.0, 0.05],
+	["wick_scrap_chance", "Wickling scrap drop chance", 0.0, 1.0, 0.05],
 ]
 
 var panel: PanelContainer

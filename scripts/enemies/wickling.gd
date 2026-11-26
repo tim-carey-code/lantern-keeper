@@ -71,11 +71,15 @@ func _die() -> void:
 	if is_queued_for_deletion():
 		return
 	Sfx.play("relight", -14.0, 0.2)
-	var main := get_tree().get_first_node_in_group("main")
-	if main:
-		var e := Ember.new()
-		e.position = global_position
-		main.add_child(e)
+	# Drops land on the fog layer (our parent) so they glow through the dark.
+	var e := Ember.new()
+	e.position = global_position
+	get_parent().add_child(e)
+	if randf() < Tuning.wick_scrap_chance:
+		var s := Ember.new()
+		s.kind = "scrap"
+		s.position = global_position + Vector2(14, 6)
+		get_parent().add_child(s)
 	queue_free()
 
 ## Shoved by the keeper's ward.

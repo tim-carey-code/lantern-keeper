@@ -72,6 +72,7 @@ func _process(_delta: float) -> void:
 			check(not is_instance_valid(w_snuff), "the ward burns away a Wickling right on top of you in under a second")
 			var embers := get_tree().get_nodes_in_group("ember")
 			check(embers.size() >= 1, "burned Wicklings leave embers (%d)" % embers.size())
+			check(embers.all(func(e): return e.get_parent() == spawner), "drops sit on the fog layer so they glow through the dark")
 			# Walk onto the nearest ember to collect it.
 			var best = null
 			for e in embers:
@@ -81,13 +82,23 @@ func _process(_delta: float) -> void:
 				player.position = best.global_position
 		360:
 			check(Inventory.get_count("fuel") == 3 + Tuning.ember_fuel, "collecting an ember gives fuel")
+			# Scrap drops: force the chance to 100% and burn one more.
+			Tuning.wick_scrap_chance = 1.0
+			var extra = spawner.spawn_at(player.global_position + Vector2(200, 0))
+			extra.hurt(99.0)
 			player.lamp_charge = 0.0
+		362:
+			var scraps := get_tree().get_nodes_in_group("ember").filter(func(e): return e.kind == "scrap")
+			check(scraps.size() == 1, "a burned Wickling can also drop scrap")
 		365:
 			check(not player.warding, "an empty hand lamp can't ward: go back to the light")
 			Input.action_release("flare")
 		462:
 			check(not player.warding, "releasing the button ends the ward")
 			Inventory.counts["fuel"] = 0
+			Tuning.wick_scrap_chance = 0.35
+			for e in get_tree().get_nodes_in_group("ember"):
+				e.queue_free()   # leftover drops would be magnet-collected after waking
 			# Chase and chill in the dark.
 			player.position = main.start + Vector2(-480, 0)
 			player.warmth = Tuning.warmth_max
