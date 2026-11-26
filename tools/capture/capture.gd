@@ -85,6 +85,10 @@ func _process(_delta: float) -> void:
 				_lantern(s + Vector2(-160, 64))
 				for i in 60:
 					main.fog.step(0.1)
+			"start_nohud":
+				_lantern(s + Vector2(-140, 90))
+				_lantern(s + Vector2(60, 150))
+				main.player.position = s + Vector2(-20, 30)
 			_:
 				_lantern(s + Vector2(-140, 90))
 				_lantern(s + Vector2(60, 150))
@@ -116,5 +120,7 @@ func _process(_delta: float) -> void:
 		main.get_node("Journal").toggle()
 		main.get_node("Journal").page = 1
 		main.get_node("Journal").refresh()
+	if view == "start_nohud" and frame == 3:
+		main.get_node("HUD").visible = false
 	if frame >= 45:
 		get_tree().quit()

@@ -23,6 +23,7 @@ Progress="*res://systems/progress.gd"
 Sfx="*res://systems/audio/sfx.gd"
 SaveGame="*res://systems/save/save_game.gd"
 Story="*res://systems/story/story.gd"
+InputHint="*res://systems/input/input_hint.gd"
 
 [display]
 

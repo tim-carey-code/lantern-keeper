@@ -5,6 +5,7 @@ extends CanvasLayer
 var root: Control
 var buttons: Array[Button] = []
 var info: Label
+var controls: Label
 var _confirm_new := false
 
 func _ready() -> void:
@@ -17,11 +18,24 @@ func _ready() -> void:
 	dim.color = Color(0.01, 0.012, 0.02, 0.8)
 	dim.size = Vector2(1280, 720)
 	root.add_child(dim)
+	var frame := PanelContainer.new()
+	frame.position = Vector2(150, 150)
+	frame.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.WOOD, UiStyle.NAVY, 2, 20))
+	root.add_child(frame)
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 48)
+	frame.add_child(cols)
 	var box := VBoxContainer.new()
-	box.position = Vector2(520, 230)
-	box.custom_minimum_size = Vector2(240, 0)
+	box.custom_minimum_size = Vector2(340, 0)
 	box.add_theme_constant_override("separation", 10)
-	root.add_child(box)
+	cols.add_child(box)
+	var right := VBoxContainer.new()
+	cols.add_child(right)
+	var ctitle := UiStyle.label(28, UiStyle.GOLD)
+	ctitle.text = "Controls"
+	right.add_child(ctitle)
+	controls = UiStyle.label(20, UiStyle.PALE)
+	right.add_child(controls)
 	var title := Label.new()
 	title.text = "Paused"
 	title.add_theme_font_size_override("font_size", 48)
@@ -46,6 +60,7 @@ func open() -> void:
 	_confirm_new = false
 	buttons[2].text = "New game"
 	info.text = "Last save: " + _last_save_text()
+	controls.text = InputHint.controls_text()
 	_pointer_label()
 	buttons[0].grab_focus()
 	Sfx.play("ui_open", -14.0)

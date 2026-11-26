@@ -117,11 +117,14 @@ These look fine already. Draw your own only if you want a fully original look.
 
 | Status | Item | File | Size | Hookup | Notes / your notes |
 |---|---|---|---|---|---|
-| ⬜ | Fuel icon | `assets/art/ui/icon_fuel.png` | 8×8 or 16×16 | needs hookup | Drop of resin / flame |
-| ⬜ | Scrap icon | `assets/art/ui/icon_scrap.png` | 8×8 or 16×16 | needs hookup | Gear or bolt |
-| ⬜ | Glass icon | `assets/art/ui/icon_glass.png` | 8×8 or 16×16 | needs hookup (M5) | |
-| ⬜ | Warmth icon | `assets/art/ui/icon_warmth.png` | 8×8 or 16×16 | needs hookup | Small heart-flame |
-| ⬜ | Hand lamp icon | `assets/art/ui/icon_lamp.png` | 8×8 or 16×16 | needs hookup | |
+| 🟨 | Fuel icon | `assets/art/ui/icon_fuel.png` | 16×16 | drop-in | Flame. Shown at 2× in the HUD panel. |
+| 🟨 | Scrap icon | `assets/art/ui/icon_scrap.png` | 16×16 | drop-in | Metal heap (or a gear/bolt) |
+| 🟨 | Glass icon | `assets/art/ui/icon_glass.png` | 16×16 | drop-in | Shards |
+| 🟨 | Warmth icon | `assets/art/ui/icon_warmth.png` | 16×16 | drop-in | Heart with a small flame |
+| 🟨 | Hand lamp icon | `assets/art/ui/icon_lamp.png` | 16×16 | drop-in | |
+| 🟨 | Wind icon | `assets/art/ui/icon_wind.png` | 16×16 | drop-in | Status chip |
+| 🟨 | Cold lantern icon | `assets/art/ui/icon_cold.png` | 16×16 | drop-in | Status chip |
+| 🟨 | Goal marker | `assets/art/ui/icon_goal.png` | 16×16 | drop-in | Diamond in the goal banner |
 | ⬜ | Game logo / title | `assets/art/ui/logo.png` | free size (e.g. 128×48) | needs hookup | For a title screen later |
 
 ---

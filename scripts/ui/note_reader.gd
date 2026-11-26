@@ -12,11 +12,7 @@ func _ready() -> void:
 	panel = PanelContainer.new()
 	panel.position = Vector2(240, 220)
 	panel.custom_minimum_size = Vector2(800, 0)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.05, 0.06, 0.08, 0.95)
-	sb.set_corner_radius_all(4)
-	sb.set_content_margin_all(16)
-	panel.add_theme_stylebox_override("panel", sb)
+	panel.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.WOOD, Color(0.078, 0.102, 0.18, 0.97), 2, 18))
 	add_child(panel)
 	var box := VBoxContainer.new()
 	panel.add_child(box)
@@ -35,7 +31,7 @@ func is_open() -> bool:
 
 func _open(title: String, text: String) -> void:
 	title_label.text = title
-	body_label.text = text + "\n\n[E / A] close"
+	body_label.text = text + "\n\n[%s] close" % InputHint.key("interact")
 	panel.visible = true
 	Tuning.ui_open = true
 	get_tree().paused = true   # reading or choosing never costs you anything

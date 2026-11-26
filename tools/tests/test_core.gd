@@ -109,7 +109,7 @@ func _process(_delta: float) -> void:
 			check(not lamp.is_lit(), "unfuelled lantern goes cold")
 			var markers = main.get_node("FogLayer/LanternMarkers")
 			check(markers.needs_attention().has(lamp), "a cold lantern is marked so you can find it to refuel")
-			check(main.get_node("HUD").label.text.contains("Needs fuel: 1 cold"), "HUD counts lanterns that need fuel")
+			check(str(main.get_node("HUD").status_items()).contains("1 lantern gone cold"), "the HUD shows a chip for a cold lantern")
 			check(woodpile.amount >= 1, "hut woodpile regrows: no soft-lock")
 			Input.action_press("interact")
 		460:

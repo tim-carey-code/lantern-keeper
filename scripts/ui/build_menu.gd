@@ -11,13 +11,9 @@ func _ready() -> void:
 	layer = 6
 	process_mode = Node.PROCESS_MODE_ALWAYS   # works while the world is paused
 	panel = PanelContainer.new()
-	panel.position = Vector2(1280 - 16 - 560, 16)
+	panel.position = Vector2(1280 - 16 - 560, 130)
 	panel.custom_minimum_size = Vector2(560, 0)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.05, 0.06, 0.08, 0.92)
-	sb.set_corner_radius_all(4)
-	sb.set_content_margin_all(12)
-	panel.add_theme_stylebox_override("panel", sb)
+	panel.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.WOOD, UiStyle.NAVY, 2, 14))
 	add_child(panel)
 	body = Label.new()
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

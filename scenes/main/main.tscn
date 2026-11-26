@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://scripts/ui/goal_pointer.gd" id="15_ptr"]
 [ext_resource type="Script" path="res://scripts/ui/journal.gd" id="16_journal"]
 [ext_resource type="Script" path="res://scripts/ui/opening.gd" id="17_opening"]
+[ext_resource type="Script" path="res://scripts/ui/world_prompt.gd" id="18_prompt"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -59,6 +60,9 @@ script = ExtResource("13_wick")
 
 [node name="GoalPointer" type="Node2D" parent="FogLayer"]
 script = ExtResource("15_ptr")
+
+[node name="WorldPrompt" type="Node2D" parent="FogLayer"]
+script = ExtResource("18_prompt")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("4_hud")

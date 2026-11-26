@@ -107,6 +107,19 @@ func _process(_delta: float) -> void:
 			check(j.body.text.contains("Gone east to the marsh"), "the journal keeps every note read, to read again")
 			j.toggle()
 			check(not j.is_open() and not get_tree().paused, "the journal closes")
+			# The new HUD: prompts over things, the right button for the device, goal banner, chips.
+			var wp = main.get_node("FogLayer/WorldPrompt")
+			InputHint.pad = false
+			var lamp_lines: Array = wp.lines_for(lamp)
+			check(lamp_lines[0][0] == "E" and String(lamp_lines[0][1]).begins_with("Refuel"), "a lantern shows '[E] Refuel' on keyboard (%s)" % str(lamp_lines))
+			InputHint.pad = true
+			check(wp.lines_for(lamp)[0][0] == "A" and wp.lines_for(lamp)[1][0] == "B", "and '[A] Refuel  [B] Pick up' on a controller")
+			check(wp.lines_for(_landmark("ledger"))[0][1] == "Read again", "a read note says 'Read again'")
+			InputHint.pad = false
+			var hud = main.get_node("HUD")
+			hud._process(0.016)
+			check(hud.goal_panel.visible and hud.goal_label.text == Story.goal_text(Story.current), "the goal banner shows the current goal")
+			check(hud.counts["fuel"].text == str(Inventory.get_count("fuel")), "the resource panel shows what you carry")
 			# Opening and name entry.
 			var o = main.get_node("Opening")
 			o.start()

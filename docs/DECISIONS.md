@@ -2,6 +2,10 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (HUD redesign, owner-approved mockup)
+- Notes, the lantern list, the map, the journal and the pause menu all **pause the world** (owner: Wicklings hurt you while reading).
+- New HUD: top-left panel (fuel/scrap/glass icons + counts, hand-lamp and warmth bars); top-centre goal banner; top-right status chips only when something needs you (wind, cold/low lanterns, getting cold, lamp an ember); prompts drawn over the thing you can use ("[A] Refuel 62%", "[A] Read", "[A] Turn", "Hold to gather"); build cost or reason under the placement outline; a key reminder that fades after a minute; full controls in the pause menu. Button letters follow the device in use (A vs E). One panel style (navy, wood/amber trim) for menus, notes and tips.
+
 ## 2026-11-26 (story markup)
 - Keep the premise: the new keeper answers a letter from the last keeper, **Hester Vane ("H.")**. Pronouns for H. not chosen; texts avoid them.
 - The player **types a name** at a new game; it signs the journal.
