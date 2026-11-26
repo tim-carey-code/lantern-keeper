@@ -64,8 +64,23 @@ func hurt(amount: float, scare: bool = true) -> void:
 		state = State.FLEE
 		_flee_t = 2.0
 	if hp <= 0.0:
-		Sfx.play("relight", -14.0, 0.2)
-		queue_free()
+		_die()
+
+## Burned away: leave an ember worth a little fuel.
+func _die() -> void:
+	if is_queued_for_deletion():
+		return
+	Sfx.play("relight", -14.0, 0.2)
+	var main := get_tree().get_first_node_in_group("main")
+	if main:
+		var e := Ember.new()
+		e.position = global_position
+		main.add_child(e)
+	queue_free()
+
+## Shoved by the keeper's ward.
+func push(v: Vector2) -> void:
+	global_position += v
 
 # --- Brain -------------------------------------------------------------------
 
@@ -81,7 +96,7 @@ func _process(delta: float) -> void:
 		hp -= Tuning.wick_light_burn * delta
 		_burning = 0.2
 		if hp <= 0.0:
-			queue_free()
+			_die()
 			return
 	var player := _player()
 	var speed := Tuning.wick_speed

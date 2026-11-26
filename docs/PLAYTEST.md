@@ -5,7 +5,7 @@
 **Wicklings** drift out of the deep fog (first one after ~40 s, then every ~16 s, max 5).
 - They creep to the **rim** of a lantern's light and drain its fuel (a dark tendril shows which lantern). The bright **core** of a lantern burns them, so clustered lanterns are safer.
 - In the dark they come for **you**. Their touch drains your **Warmth** (HUD). In lantern light Warmth refills.
-- **Lamp beam: hold F / RB / RT.** Aim with the right stick, the mouse, or the way you walk. Costs 1 carried fuel per 1.5 s; burns a Wickling away in about 2 s. You walk slower while beaming.
+- **Warding glow: hold F / RB / RT.** Your hand lamp swells into a bright circle that burns and pushes back every Wickling inside it (about 0.7 s each, even right on top of you). It runs on **hand-lamp charge, not fuel**: a full lamp gives ~4 s; recharge it in lantern light. Burned Wicklings drop an **ember** worth 1 fuel.
 - Out of Warmth you **faint**: you wake beside the nearest lit lantern and drop half of what you carried where you fell (go back and pick it up). No game over, nothing you built is lost.
 - Tuning panel (F1) has spawn rate, speed, drain, warmth loss and flare radius.
 
@@ -23,7 +23,8 @@ Questions (decision gate: keep, change, or drop):
 4. Fainting felt **fair**.
 5. **Keep them in v1.**
 From the video: the mouse cursor sat in the middle of the screen; Wicklings were hard to spot in the dark; the editor debugger showed 13 messages (not yet identified).
-Changes: lamp beam replaces the flare; more Wicklings, sooner; brighter eyes, a cold rim and a health ring on hurt Wicklings; cursor hides when not using the mouse.
+Beam playtest (owner): too slow to kill, used up all the fuel meant for lanterns, missed Wicklings right on top of you. Replaced by the warding glow (see DECISIONS).
+Earlier changes: lamp beam replaced the flare; more Wicklings, sooner; brighter eyes, a cold rim and a health ring on hurt Wicklings; cursor hides when not using the mouse.
 
 ---
 

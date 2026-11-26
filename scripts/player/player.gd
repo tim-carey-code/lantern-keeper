@@ -9,12 +9,9 @@ var lamp: PointLight2D
 var lamp_charge := 1.0          # 0 = ember, 1 = full hand lamp
 var fuel_poured := 0.0
 var warmth := 100.0            # PROTOTYPE: the keeper's "health". Never kills; fainting sends you home.
-var beaming := false
-var aim := Vector2.RIGHT       # beam direction
-var _beam_fuel := 0.0          # seconds of beam already paid for
-var _last_move := Vector2.RIGHT
-var mouse_aiming := false     # true after the mouse moves; false after keys/controller input
-var beam_light: PointLight2D
+var warding := false
+var _ward_grow := 0.0          # 0..1, how far the glow has swelled
+var _since_ward := 99.0        # seconds since the ward was last used
 var faints := 0
 var _gather_target: ResourceNode = null
 var _gather_acc := 0.0
@@ -38,25 +35,13 @@ func _ready() -> void:
 	lamp.color = Color(1.0, 0.86, 0.62)
 	lamp.position = Vector2(10, -14)   # held in the keeper's hand
 	add_child(lamp)
-	beam_light = PointLight2D.new()
-	beam_light.texture = LightTex.beam_cone()
-	beam_light.offset = Vector2(128, 0)   # cone starts at the lamp
-	beam_light.color = Color(1.0, 0.88, 0.6)
-	beam_light.energy = 1.1
-	beam_light.position = Vector2(0, -14)
-	beam_light.enabled = false
-	add_child(beam_light)
 
-func _input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and event.relative.length() > 2.0:
-		mouse_aiming = true
-	elif event is InputEventJoypadMotion and absf(event.axis_value) > 0.5:
-		mouse_aiming = false
 
 # --- Hand lamp -------------------------------------------------------------
 
 func get_light_radius() -> float:
-	return lerpf(Tuning.hand_lamp_ember_radius, Tuning.hand_lamp_max_radius, lamp_charge)
+	var r := lerpf(Tuning.hand_lamp_ember_radius, Tuning.hand_lamp_max_radius, lamp_charge)
+	return maxf(r, Tuning.ward_radius * _ward_grow)   # the ward also pushes the fog back
 
 func in_lantern_light() -> bool:
 	for l in get_tree().get_nodes_in_group("lantern"):
@@ -69,7 +54,8 @@ func update_hand_lamp(delta: float) -> void:
 		lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_recharge_per_sec * delta)
 	else:
 		lamp_charge = maxf(0.0, lamp_charge - Tuning.hand_lamp_drain_per_sec * delta)
-		if lamp_charge < 0.25 and Inventory.spend("fuel", 1):
+		# Auto top-up from carried fuel keeps the lamp alive on long walks, but never feeds the ward.
+		if lamp_charge < 0.25 and _since_ward > 4.0 and Inventory.spend("fuel", 1):
 			lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_charge_per_fuel)
 
 # --- Frame -----------------------------------------------------------------
@@ -85,17 +71,15 @@ func _physics_process(delta: float) -> void:
 		_gather_target = null
 		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	if dir != Vector2.ZERO:
-		_last_move = dir.normalized()
-	update_beam(delta, Input.is_action_pressed("flare"))
+	update_ward(delta, Input.is_action_pressed("flare"))
 	var fog := _fog()
 	var slow := 1.0
 	if fog and dir != Vector2.ZERO:
 		slow = lerpf(1.0, Tuning.fog_slow_min, fog.density_at(global_position + dir * 24.0))
 	if fog and fog.terrain_at(global_position) == FogGrid.T_MARSH:
 		slow *= 0.85   # wading through the marsh
-	if beaming:
-		slow *= Tuning.beam_walk_mult
+	if warding:
+		slow *= Tuning.ward_walk_mult
 	velocity = dir * speed * slow
 	move_and_slide()
 	_footsteps(dir, _physics_delta(), fog)
@@ -145,44 +129,27 @@ func _footsteps(dir: Vector2, delta: float, fog: FogGrid) -> void:
 func _fog() -> FogGrid:
 	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
 
-# --- Lamp beam, warmth, fainting --------------------------------------
+# --- Warding glow, warmth, fainting --------------------------------------
 
-## Where the beam points: right stick, else the mouse (if it is being used), else the way you last walked.
-func aim_dir() -> Vector2:
-	var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
-	if stick.length() > 0.35:
-		return stick.normalized()
-	if mouse_aiming:
-		var m := get_global_mouse_position() - (global_position + Vector2(0, -14))
-		if m.length() > 8.0:
-			return m.normalized()
-	return _last_move
+## Hold to swell the hand lamp into a warding glow. Spends lamp charge, not fuel.
+func update_ward(delta: float, held: bool) -> void:
+	warding = held and lamp_charge > Tuning.ward_min_charge
+	_since_ward = 0.0 if warding else _since_ward + delta
+	_ward_grow = move_toward(_ward_grow, 1.0 if warding else 0.0, delta * (5.0 if warding else 3.0))
+	if warding:
+		lamp_charge = maxf(0.0, lamp_charge - Tuning.ward_drain_per_sec * delta)
+		apply_ward(delta)
 
-## Hold to shine a cone of light. Pays 1 carried fuel per beam_sec_per_fuel seconds.
-func update_beam(delta: float, held: bool) -> void:
-	beaming = false
-	if held:
-		if _beam_fuel <= 0.0 and Inventory.spend("fuel", 1):
-			_beam_fuel += Tuning.beam_sec_per_fuel
-			Sfx.play("relight", -16.0, 0.2)
-		if _beam_fuel > 0.0:
-			beaming = true
-			_beam_fuel -= delta
-			aim = aim_dir()
-			apply_beam(delta)
-	beam_light.enabled = beaming
-	if beaming:
-		beam_light.rotation = aim.angle()
-		beam_light.texture_scale = Tuning.beam_length / 256.0
-
-## Damages every Wickling inside the cone. Public so tests can drive it.
-func apply_beam(delta: float) -> int:
+## Burns and pushes back every Wickling inside the glow (including ones right on top of you).
+func apply_ward(delta: float) -> int:
 	var hit := 0
-	var origin := global_position + Vector2(0, -14)
+	var r := Tuning.ward_radius * maxf(_ward_grow, 0.35)
 	for w in get_tree().get_nodes_in_group("wickling"):
-		var v: Vector2 = w.global_position - origin
-		if v.length() <= Tuning.beam_length and absf(aim.angle_to(v)) <= Tuning.beam_half_angle:
-			w.hurt(Tuning.beam_dps * delta, false)
+		var v: Vector2 = w.global_position - global_position
+		if v.length() <= r:
+			w.hurt(Tuning.ward_dps * delta, false)
+			if is_instance_valid(w) and not w.is_queued_for_deletion():
+				w.push((v.normalized() if v.length() > 0.5 else Vector2.RIGHT) * Tuning.ward_push * delta)
 			hit += 1
 	return hit
 
@@ -363,6 +330,11 @@ func _draw() -> void:
 	var fog := _fog()
 	if fog == null:
 		return
+	# Warding glow ring.
+	if _ward_grow > 0.01:
+		var r := Tuning.ward_radius * _ward_grow
+		draw_circle(Vector2(0, -6), r, Color(1.0, 0.85, 0.5, 0.08 * _ward_grow))
+		draw_arc(Vector2(0, -6), r, 0.0, TAU, 48, Color(1.0, 0.88, 0.6, 0.55 * _ward_grow), 2.0)
 	# Placement ghost: the tile and the radius a new lantern would light.
 	var p := place_pos()
 	var ok := can_place(p)

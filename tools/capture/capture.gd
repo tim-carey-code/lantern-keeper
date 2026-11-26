@@ -71,8 +71,7 @@ func _process(_delta: float) -> void:
 		for i in 30:
 			main.fog.step(0.1)   # let the light push the fog back before the shot
 	if frame >= 30 and view == "wick":
-		main.player._last_move = Vector2(1, -0.6).normalized()
-		main.player.update_beam(1.0 / 30.0, true)
+		main.player.update_ward(1.0 / 30.0, true)
 	if frame == 6 and view == "map":
 		main.get_node("MapScreen").toggle()
 	if frame >= 45:

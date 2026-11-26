@@ -56,12 +56,16 @@ var wick_rim := 0.12                # light level where they stop and drain (rim
 var wick_core := 0.55               # light level that burns them
 var wick_light_burn := 2.0          # hp/s while in a lantern's bright core
 var wick_drain_per_sec := 5.0       # lantern fuel/s drained (100-fuel tank: ~20 s)
-# Lamp beam (hold F / RB / RT): a cone of light from the hand lamp that wears Wicklings down.
-var beam_length := 230.0            # px
-var beam_half_angle := 0.32         # radians (~18 degrees each side)
-var beam_dps := 1.5                 # Wickling hp per second (3 hp -> 2 s)
-var beam_sec_per_fuel := 1.5        # one carried fuel keeps the beam on this long
-var beam_walk_mult := 0.5           # you move slower while beaming
+# Warding glow (hold F / RB / RT): the hand lamp swells into a bright circle that burns
+# and pushes back Wicklings. Powered by the hand lamp's charge, never by carried fuel.
+var ward_radius := 110.0            # px
+var ward_dps := 4.5                 # Wickling hp per second (3 hp -> about 0.7 s)
+var ward_push := 140.0              # px/s pushed outward
+var ward_drain_per_sec := 0.25      # lamp charge per second (full lamp -> 4 s of ward)
+var ward_walk_mult := 0.6           # you move slower while warding
+var ward_min_charge := 0.05         # below this the lamp is too dim to ward
+var ember_fuel := 1                 # a burned Wickling leaves an ember worth this much fuel
+var ember_life := 30.0              # seconds before an ember fades
 var warmth_max := 100.0
 var warmth_drain_per_sec := 30.0    # while a Wickling touches the keeper
 var warmth_regen_per_sec := 20.0    # in lantern light

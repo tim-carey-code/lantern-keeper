@@ -2,6 +2,12 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (beam playtest -> warding glow)
+- Owner: the beam killed too slowly, ate all the fuel meant for lanterns, and missed Wicklings right on top of the keeper. Root cause: the weapon competed with building for the same fuel.
+- **The beam is replaced by a warding glow** (owner's choice, no aiming): hold F / RB / RT and the hand lamp swells into a ~110 px circle that burns (about 0.7 s per Wickling) and pushes back every Wickling inside it, including point blank.
+- **The ward runs on hand-lamp charge, never carried fuel.** A full lamp gives about 4 s of ward; an empty lamp drops to an ember and can't ward, so you retreat to lantern light to recharge. The lamp's auto top-up from carried fuel no longer fires right after warding.
+- **Burned Wicklings drop an ember** worth 1 fuel (walk over it; fades after 30 s), so fights pay a little back instead of costing the lantern economy.
+
 ## 2026-11-26 (combat prototype playtest)
 - **Wicklings are IN v1** (scope change; owner playtest: "more interesting", light still felt safe and calm, fainting felt fair). Combat, enemies and a health stat move from OUT to IN, in the light-based form: no death, no game over; warmth is the health; fainting wakes you at the nearest lit lantern and drops half your carried resources where you fell.
 - **The flare is replaced by a lamp beam** (owner: the flare one-shot everything and "wasn't really a flare"; wanted a beam that drains their health). Hold F / RB / RT; aim with the right stick, the mouse, or the way you walk. 1 carried fuel per 1.5 s. A Wickling takes about 2 s in the beam. You walk at half speed while beaming.

@@ -20,9 +20,9 @@ const ROWS := [
 	["wick_speed", "Wickling speed", 20.0, 160.0, 5.0],
 	["wick_drain_per_sec", "Wickling drain (fuel/s)", 0.0, 15.0, 0.5],
 	["warmth_drain_per_sec", "Warmth loss on touch (/s)", 0.0, 100.0, 5.0],
-	["beam_dps", "Beam damage (hp/s)", 0.2, 6.0, 0.1],
-	["beam_length", "Beam length (px)", 80.0, 400.0, 10.0],
-	["beam_sec_per_fuel", "Beam seconds per fuel", 0.3, 5.0, 0.1],
+	["ward_radius", "Ward radius (px)", 50.0, 250.0, 5.0],
+	["ward_dps", "Ward damage (hp/s)", 0.5, 12.0, 0.25],
+	["ward_drain_per_sec", "Ward lamp drain (/s)", 0.05, 1.0, 0.05],
 ]
 
 var panel: PanelContainer

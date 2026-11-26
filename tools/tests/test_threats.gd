@@ -1,5 +1,5 @@
 extends Node
-## Checks for Wicklings, the lamp beam and warmth. Run:
+## Checks for Wicklings, the warding glow and warmth. Run:
 ##   godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn
 
 var main: Node
@@ -59,22 +59,34 @@ func _process(_delta: float) -> void:
 			check(lamp.fuel < lamp_fuel_before - 5.0, "a Wickling at the rim drains the lantern (%.0f -> %.0f)" % [lamp_fuel_before, lamp.fuel])
 			check(not is_instance_valid(w_core), "a Wickling in a lantern's bright core burns away")
 			check(is_instance_valid(w_snuff) and w_snuff.light_level_at(w_snuff.global_position) < Tuning.wick_core, "Wicklings keep to the rim, out of the core")
-			# Lamp beam: hold to wear a Wickling down; costs fuel over time.
-			player.mouse_aiming = false   # aim the way the keeper last walked
-			player.position = w_snuff.global_position + Vector2(-120, 14)
-			player._last_move = Vector2.RIGHT
+			# Warding glow: hold to burn and push back Wicklings; spends lamp charge, not fuel.
+			player.position = w_snuff.global_position + Vector2(-6, 4)   # point blank
+			player.lamp_charge = 1.0
 			Inventory.counts["fuel"] = 3
 			Input.action_press("flare")
 		330:
-			check(player.beaming, "holding the beam button shines the lamp beam")
-			check(is_instance_valid(w_snuff) and w_snuff.hp < Tuning.wick_hp, "the beam hurts a Wickling in the cone (%.2f hp)" % (w_snuff.hp if is_instance_valid(w_snuff) else -1.0))
-			check(is_instance_valid(w_snuff), "the beam does not one-shot (it drains over time)")
-		460:
+			check(player.warding, "holding the button swells the warding glow")
+			check(Inventory.get_count("fuel") == 3, "warding never spends carried fuel")
+			check(player.lamp_charge < 1.0, "warding spends hand-lamp charge")
+		355:
+			check(not is_instance_valid(w_snuff), "the ward burns away a Wickling right on top of you in under a second")
+			var embers := get_tree().get_nodes_in_group("ember")
+			check(embers.size() >= 1, "burned Wicklings leave embers (%d)" % embers.size())
+			# Walk onto the nearest ember to collect it.
+			var best = null
+			for e in embers:
+				if best == null or e.global_position.distance_to(player.global_position) < best.global_position.distance_to(player.global_position):
+					best = e
+			if best:
+				player.position = best.global_position
+		360:
+			check(Inventory.get_count("fuel") == 3 + Tuning.ember_fuel, "collecting an ember gives fuel")
+			player.lamp_charge = 0.0
+		365:
+			check(not player.warding, "an empty hand lamp can't ward: go back to the light")
 			Input.action_release("flare")
-			check(not is_instance_valid(w_snuff), "holding the beam burns the Wickling away (about 2 s)")
-			check(Inventory.get_count("fuel") == 1, "the beam costs fuel over time (%d left of 3)" % Inventory.get_count("fuel"))
 		462:
-			check(not player.beaming, "releasing the button stops the beam")
+			check(not player.warding, "releasing the button ends the ward")
 			Inventory.counts["fuel"] = 0
 			# Chase and chill in the dark.
 			player.position = main.start + Vector2(-480, 0)
