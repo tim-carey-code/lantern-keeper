@@ -2,6 +2,11 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (guidance and story before the Lake)
+- Owner: before adding regions, the game needs story and direction (no goals, no journal). Agreed: a guidance-and-story milestone comes **before** the Still Lake, so new regions are built with it.
+- Direction style **(b)**: a goal line + keeper's journal **plus a soft pointer** (amber arrow toward the current goal) that is **on in the first region and off by default after it** (can be turned back on in settings).
+- Process: coordinator drafts `docs/STORY.md` (premise, characters, Soul of the Wick, beats per region, goal list, landmark texts, opening, tips); owner marks it up; the journal is then built around the owner's version.
+
 ## 2026-11-26 (Post Lamp look)
 - The Post Lamp is a **shepherd's crook**: a wooden post whose arm curls over, with the lamp hanging from a chain (owner's pick of four sketches). The light now glows from the hanging lamp, and cold-lantern markers show the real cold sprite through the fog. Starter art by `tools/art/crook_lamp.py`, for the owner to refine in Pixelorama.
 
