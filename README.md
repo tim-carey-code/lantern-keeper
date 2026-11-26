@@ -33,3 +33,8 @@ Command line: `godot --path ~/Projects/lantern-keeper`
 - `source/` working files (Pixelorama `.pxo`, REAPER projects); not loaded by the game
 - `tools/` one-off editor/CLI helper scripts
 - `docs/` design docs
+
+## License
+- **Code** (GDScript, shaders, scenes, project config, tools): MIT, see [LICENSE](LICENSE).
+- **Art, audio, story, design docs, name and logo**: all rights reserved, see [LICENSE-ASSETS.md](LICENSE-ASSETS.md).
+- **Third-party assets**: their own licenses, listed in [assets/CREDITS.md](assets/CREDITS.md).
