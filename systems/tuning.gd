@@ -16,7 +16,7 @@ var reservoir_max_fuel := 200.0
 var reservoir_burn_per_sec := 0.3
 var reservoir_radius := 200.0
 var reservoir_min_radius_frac := 0.6
-var reservoir_feed_per_sec := 0.5       # fuel/s given to each other lantern in its light
+var reservoir_feed_per_sec := 0.75      # fuel/s to each other lantern in its light; must beat the Post Lamp burn (0.5)
 
 # Resources
 var fuel_per_unit := 10.0               # lantern fuel per carried fuel unit
