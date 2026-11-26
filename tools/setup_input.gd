@@ -38,6 +38,7 @@ func _init() -> void:
 		"cancel": [key(KEY_Q), mouse(MOUSE_BUTTON_RIGHT), pad_button(JOY_BUTTON_B)],
 		"build_menu": [key(KEY_TAB), pad_button(JOY_BUTTON_Y)],
 		"pause": [key(KEY_ESCAPE), pad_button(JOY_BUTTON_START)],
+		"debug_toggle": [key(KEY_F1), pad_button(JOY_BUTTON_BACK)],    # live tuning panel
 	}
 	for name in actions:
 		ProjectSettings.set_setting("input/" + name, {"deadzone": DEADZONE, "events": actions[name]})
