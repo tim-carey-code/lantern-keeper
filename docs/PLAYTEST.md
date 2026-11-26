@@ -29,3 +29,18 @@ Also note: best tuning values, anything confusing, anything that felt good.
 - Fuel and lanterns are unlimited (resources arrive in M2).
 - The hand lamp has a fixed small radius (its fuel arrives later).
 - No sound, no real art, no save.
+
+## Results
+
+### 2026-11-26: owner, M1 build 2798574 (screenshot reviewed)
+1. Wanted "just one more" lantern: **yes**.
+2. Upkeep: **felt like caring, not a chore**.
+3. Fog returning: **calm, not stressful**.
+
+Gate: **passed**. Proceed to M2.
+
+Observations from the screenshot (47 lanterns placed, 41 lit, 99% of the valley seen):
+- With unlimited lanterns the whole valley gets lit quickly. Expected for M1; M2 makes lanterns and fuel cost resources.
+- Fog reads as plain darkness: the grey fog is darkened by the scene's darkness overlay, so fogged, seen and never-seen ground look almost the same, and the seen-tile outlines are invisible.
+- Fog edges are blocky (32 px squares). Smoothing is planned for the M4 atmosphere pass.
+- Second tester still to do.
