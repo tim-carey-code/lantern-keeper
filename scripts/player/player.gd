@@ -89,7 +89,12 @@ func _physics_process(delta: float) -> void:
 		_gather_target = null
 		return
 	if Input.is_action_just_pressed("place_lantern"):
-		try_place()
+		var near := nearest_target()
+		if near is Lantern and near.kind == "mirror":
+			near.turn(-1)   # X / Space next to a mirror turns it left
+			Sfx.play("ui_tick", -10.0)
+		else:
+			try_place()
 	elif Input.is_action_just_pressed("cancel"):
 		pick_up_nearest()
 	elif Input.is_action_just_pressed("interact"):

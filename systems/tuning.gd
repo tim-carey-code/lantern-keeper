@@ -74,6 +74,7 @@ var wick_sense := 380.0             # px: how far they notice lanterns / the kee
 var wick_rim := 0.12                # light level where they stop and drain (rim of the light)
 var wick_core := 0.55               # light level that burns them
 var wick_light_burn := 2.0          # hp/s while in a lantern's bright core
+var wick_beam_burn := 3.5           # hp/s inside a Mirror Post beam (3 hp -> under a second)
 var wick_drain_per_sec := 5.0       # lantern fuel/s drained (100-fuel tank: ~20 s)
 # Warding glow (hold F / RB / RT): the hand lamp swells into a bright circle that burns
 # and pushes back Wicklings. Powered by the hand lamp's charge, never by carried fuel.

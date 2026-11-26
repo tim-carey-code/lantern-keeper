@@ -207,7 +207,7 @@ func _update_mirrors() -> void:
 	for pass_i in mirrors.size() + 1:
 		var changed := false
 		for m in mirrors:
-			if m.catching:
+			if m.catching or m.is_smothered():
 				continue
 			var lit := false
 			for l in burning:

@@ -2,6 +2,14 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (HUD playtest follow-ups)
+- **Mirror beams burn Wicklings fast** (about 1 s), and Wicklings can't sense beams, so they walk into them.
+- **Wicklings smother mirrors** (no mirror health): one clinging to a mirror turns it dark and cuts the chain after it; it drinks any beam that reaches it, so only your ward drives it off. A status chip counts smothered mirrors.
+- **Wind pop-ups removed.** A chip appears only while wind actually reaches your lit, unsheltered fuel lanterns ("Gust: 3 lanterns exposed"); exposed lanterns show a small wind mark.
+- **Mirrors turn both ways**: A/E right, X/Space left (building is blocked next to a mirror anyway).
+- **Lantern list redesigned** as cards (sprite, name, cost with icons, description; locked ones dim). **Tap Y/Tab to switch lanterns without opening it; hold to open; keys 1-4 pick directly.** The HUD panel shows which lantern you'll build.
+- **Journal** restyled to match the HUD.
+
 ## 2026-11-26 (HUD redesign, owner-approved mockup)
 - Notes, the lantern list, the map, the journal and the pause menu all **pause the world** (owner: Wicklings hurt you while reading).
 - New HUD: top-left panel (fuel/scrap/glass icons + counts, hand-lamp and warmth bars); top-centre goal banner; top-right status chips only when something needs you (wind, cold/low lanterns, getting cold, lamp an ember); prompts drawn over the thing you can use ("[A] Refuel 62%", "[A] Read", "[A] Turn", "Hold to gather"); build cost or reason under the placement outline; a key reminder that fades after a minute; full controls in the pause menu. Button letters follow the device in use (A vs E). One panel style (navy, wood/amber trim) for menus, notes and tips.

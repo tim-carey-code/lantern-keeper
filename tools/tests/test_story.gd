@@ -89,6 +89,15 @@ func _process(_delta: float) -> void:
 			bm.open()
 			check(get_tree().paused, "the lantern list pauses the world")
 			bm.close()
+			Progress.unlock("reservoir")
+			Progress.selected = "post"
+			bm.cycle()
+			check(Progress.selected == "reservoir", "tapping Y / Tab switches to the next lantern you have")
+			bm.cycle()
+			check(Progress.selected == "post", "and wraps around, skipping locked ones")
+			bm.select_slot(1)
+			check(Progress.selected == "reservoir", "keys 1-4 pick a lantern directly")
+			Progress.selected = "post"
 			var mp = main.get_node("MapScreen")
 			mp.toggle()
 			check(get_tree().paused, "the map pauses the world")

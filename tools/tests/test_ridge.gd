@@ -16,6 +16,8 @@ var m1: Lantern
 var m2: Lantern
 var lone: Lantern
 var far_tile := Vector2.ZERO
+var beam_victim: Wickling
+var smotherer: Wickling
 
 func check(ok: bool, what: String) -> void:
 	print(("PASS " if ok else "FAIL ") + what)
@@ -129,8 +131,12 @@ func _process(_delta: float) -> void:
 			check(not lone.is_lit(), "a mirror on its own stays dark")
 			check(not lone.needs_fuel() and not get_tree().get_first_node_in_group("lantern_markers").needs_attention().has(lone), "mirrors never ask for fuel")
 			var w: Wickling = main.get_node("FogLayer/Wicklings").spawn_at(m1.global_position + Vector2(140, 0))
-			check(w.light_level_at(w.global_position) > Tuning.wick_core, "a mirror beam burns Wicklings")
-			w.queue_free()
+			check(w.beam_level_at(w.global_position) > 0.0, "a Wickling in a mirror beam is caught by it")
+			beam_victim = w
+			# A Wickling clinging to a mirror smothers it (and the chain after it goes dark).
+			smotherer = main.get_node("FogLayer/Wicklings").spawn_at(m2.global_position)
+			smotherer.target = m2
+			smotherer.state = Wickling.State.SEEK_LANTERN
 			# Turning a mirror.
 			var before := m1.mirror_dir
 			player.position = m1.global_position + Vector2(0, 20)
@@ -140,7 +146,23 @@ func _process(_delta: float) -> void:
 			for i in 6:
 				player.begin_interact()
 			check(m1.mirror_dir == before, "eight turns bring it back around")
-		120:
+			m1.turn(-1)
+			check(m1.mirror_dir == posmod(before - 1, 8), "a mirror also turns left")
+			m1.turn(1)
+		100:
+			check(not is_instance_valid(beam_victim), "a mirror beam burns a Wickling away in about a second")
+			if is_instance_valid(smotherer):
+				check(m2.is_smothered() and not m2.is_lit(), "a Wickling clinging to a mirror smothers it: it goes dark")
+				player.position = m2.global_position + Vector2(30, 0)
+				player.lamp_charge = 1.0
+				player.update_ward(0.5, true)
+				player.update_ward(0.5, true)
+				check(not is_instance_valid(smotherer) or smotherer.hp < Tuning.wick_hp, "your ward burns it off the mirror")
+				if is_instance_valid(smotherer):
+					smotherer.queue_free()
+			else:
+				check(false, "a Wickling clinging to a mirror drinks the beam instead of burning")
+		200:
 			check(fog.density_at(far_tile) < 0.4, "a beam clears fog far from any lantern (%.2f)" % fog.density_at(far_tile))
 			# Glass cost (on lit ground, so "too dark" doesn't come first).
 			Inventory.counts["glass"] = 0
@@ -150,7 +172,7 @@ func _process(_delta: float) -> void:
 			Inventory.counts["glass"] = 5
 			check(player.try_place() != null and Inventory.get_count("glass") == 5 - Tuning.mirror_cost_glass, "building a Mirror Post spends glass")
 			Progress.selected = "post"
-		130:
+		210:
 			# Save and load keep mirror direction.
 			SaveGame.path = "user://test_ridge_save.json"
 			m2.mirror_dir = 5

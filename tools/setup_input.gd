@@ -42,6 +42,10 @@ func _init() -> void:
 		"flare": [key(KEY_F), pad_button(JOY_BUTTON_RIGHT_SHOULDER), pad_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)],   # hold: warding glow
 		"toggle_fullscreen": [key(KEY_F11)],
 		"journal": [key(KEY_J), pad_button(JOY_BUTTON_BACK)],
+		"select_1": [key(KEY_1)],
+		"select_2": [key(KEY_2)],
+		"select_3": [key(KEY_3)],
+		"select_4": [key(KEY_4)],
 		"debug_toggle": [key(KEY_F1), pad_button(JOY_BUTTON_LEFT_STICK)],    # live tuning panel (left stick click)
 	}
 	for name in actions:

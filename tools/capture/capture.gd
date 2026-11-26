@@ -4,7 +4,7 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter. The last frame is the one to look at.
+## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter. The last frame is the one to look at.
 
 var main: Node
 var frame := 0
@@ -120,6 +120,13 @@ func _process(_delta: float) -> void:
 		main.get_node("Journal").toggle()
 		main.get_node("Journal").page = 1
 		main.get_node("Journal").refresh()
+	if view == "lanterns" and frame == 30:
+		for k in ["reservoir", "hooded"]:
+			Progress.unlock(k)
+		Inventory.counts["scrap"] = 6
+		Inventory.counts["glass"] = 1
+		Progress.selected = "reservoir"
+		main.get_node("BuildMenu").open()
 	if view == "start_nohud" and frame == 3:
 		main.get_node("HUD").visible = false
 	if frame >= 45:

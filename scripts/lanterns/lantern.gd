@@ -21,6 +21,7 @@ var kind := "post"
 var fuel := -1.0          # -1 = start with a full tank
 var mirror_dir := 0       # mirror only: index into DIRS
 var catching := false     # mirror only: set each fog tick by FogGrid
+var smother_t := 0.0      # mirror only: seconds of smothering left (a Wickling keeps topping it up)
 var light: PointLight2D
 var beam_light: PointLight2D
 
@@ -188,9 +189,16 @@ func get_light_radius() -> float:
 func beam_dir() -> Vector2:
 	return DIRS[mirror_dir].normalized()
 
-func turn() -> void:
-	mirror_dir = (mirror_dir + 1) % DIRS.size()
+## Turn the mirror one step: +1 clockwise (right), -1 counter-clockwise (left).
+func turn(step: int = 1) -> void:
+	mirror_dir = posmod(mirror_dir + step, DIRS.size())
 	queue_redraw()
+
+func is_smothered() -> bool:
+	return kind == "mirror" and smother_t > 0.0
+
+func smother() -> void:
+	smother_t = 0.25
 
 ## The beam segment [from, to], clipped at the first rock tile. Empty if not catching.
 func beam_segment() -> Array:
@@ -231,6 +239,7 @@ func refuel(amount: float) -> float:
 	return fuel - before
 
 func _process(delta: float) -> void:
+	smother_t = maxf(0.0, smother_t - delta)
 	if fuel > 0.0 and needs_fuel():
 		fuel = maxf(0.0, fuel - burn_rate() * delta)
 	if kind == "reservoir" and fuel > 0.0:
@@ -277,6 +286,11 @@ func _draw() -> void:
 		_:
 			file = "post_lamp_" + ("lit.png" if lit else "cold.png")
 	Art.sprite(self, Art.placeholder(file), Vector2(0, 16))
+	if kind == "mirror" and is_smothered():
+		# Dark wisps over a smothered mirror.
+		var tt := Time.get_ticks_msec() * 0.006
+		for i in 3:
+			draw_circle(Vector2(sin(tt + i * 2.1) * 6.0, LAMP_Y + cos(tt * 1.3 + i) * 4.0), 6.0, Color(0.03, 0.035, 0.06, 0.8))
 	if kind == "mirror":
 		# Which way it points.
 		var d := beam_dir()
@@ -284,6 +298,12 @@ func _draw() -> void:
 		draw_line(c, c + d * 18.0, Color(1.0, 0.92, 0.7, 0.9 if lit else 0.45), 2.0)
 		draw_circle(c + d * 18.0, 2.5, Color(1.0, 0.92, 0.7, 0.9 if lit else 0.45))
 		return
+	if in_gust() or in_ridge_wind():
+		# A little wind mark: this lantern is exposed and burning faster.
+		var wt := fmod(Time.get_ticks_msec() * 0.002, 1.0)
+		var wx := -18.0 + wt * 10.0
+		draw_line(Vector2(wx, -58), Vector2(wx + 10, -58), Color(0.75, 0.84, 0.92, 0.9), 2.0)
+		draw_line(Vector2(wx + 4, -53), Vector2(wx + 16, -53), Color(0.75, 0.84, 0.92, 0.7), 2.0)
 	var bar := Color(1.0, 0.7, 0.3)
 	if (in_gust() or in_ridge_wind()) and int(Time.get_ticks_msec() / 250) % 2 == 0:
 		bar = Color(1.0, 0.35, 0.25)   # flashing: burning fast in the wind

@@ -33,17 +33,28 @@ func _player() -> Node2D:
 func _fog() -> FogGrid:
 	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
 
-## 0 outside any lantern light, up to 1 at a lantern's centre.
-func light_level_at(p: Vector2) -> float:
+## 0 outside any lantern light, up to 1 at a lantern's centre (mirror glows don't count).
+func lantern_level_at(p: Vector2) -> float:
 	var best := 0.0
 	for l in get_tree().get_nodes_in_group("lantern"):
+		if l.kind == "mirror":
+			continue
 		var r: float = l.get_light_radius()
 		if r <= 0.0:
 			continue
 		best = maxf(best, 1.0 - l.global_position.distance_to(p) / r)
-	for m in get_tree().get_nodes_in_group("mirror"):
-		best = maxf(best, m.beam_level_at(p) * 0.8)   # a mirror beam is as harsh as a lantern core
 	return best
+
+## How deep a point sits in any mirror beam (0 outside). Wicklings can't sense beams coming.
+func beam_level_at(p: Vector2) -> float:
+	var best := 0.0
+	for m in get_tree().get_nodes_in_group("mirror"):
+		best = maxf(best, m.beam_level_at(p))
+	return best
+
+## Overall light at a point: lantern light, or a beam (which counts as harsh as a core).
+func light_level_at(p: Vector2) -> float:
+	return maxf(lantern_level_at(p), beam_level_at(p) * 0.8)
 
 func _nearest_lit_lantern(max_dist: float) -> Node2D:
 	var best: Node2D = null
@@ -96,10 +107,16 @@ func _pick_wander() -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	_burning = maxf(0.0, _burning - delta)
-	var here := light_level_at(global_position)
-	# The bright core of a lantern burns it.
+	var here := lantern_level_at(global_position)
+	# The bright core of a lantern burns it; a mirror beam burns it fast.
+	var burn := 0.0
 	if here > Tuning.wick_core:
-		hp -= Tuning.wick_light_burn * delta
+		burn += Tuning.wick_light_burn
+	var smothering: bool = state == State.SNUFF and target != null and is_instance_valid(target) and target.kind == "mirror"
+	if beam_level_at(global_position) > 0.0 and not smothering:
+		burn += Tuning.wick_beam_burn   # (one clinging to a mirror drinks the beam instead)
+	if burn > 0.0:
+		hp -= burn * delta
 		_burning = 0.2
 		if hp <= 0.0:
 			_die()
@@ -123,6 +140,16 @@ func _process(delta: float) -> void:
 				goal = player.global_position
 				if player.global_position.distance_to(global_position) < 22.0:
 					player.chill(Tuning.warmth_drain_per_sec * delta)
+		State.SEEK_LANTERN, State.SNUFF when target != null and is_instance_valid(target) and target.kind == "mirror":
+			# Mirrors have no fuel: cling to one and smother it until burned off.
+			var dist := target.global_position.distance_to(global_position)
+			if dist < 16.0:
+				state = State.SNUFF
+				target.smother()
+				goal = target.global_position
+			else:
+				state = State.SEEK_LANTERN
+				goal = target.global_position
 		State.SEEK_LANTERN, State.SNUFF:
 			if target == null or not is_instance_valid(target) or not target.is_lit():
 				target = null
@@ -153,8 +180,8 @@ func _process(delta: float) -> void:
 					target = l
 					state = State.SEEK_LANTERN
 	var step := (goal - global_position).limit_length(speed * delta)
-	# Never walk into the bright core on purpose.
-	if state != State.FLEE and light_level_at(global_position + step) > Tuning.wick_core and here <= Tuning.wick_core:
+	# Never walk into a lantern's bright core on purpose (they don't see beams coming).
+	if state != State.FLEE and lantern_level_at(global_position + step) > Tuning.wick_core and here <= Tuning.wick_core:
 		step = Vector2.ZERO
 	global_position += step
 	queue_redraw()

@@ -13,6 +13,7 @@ var tabs: Label
 var body: Label
 var scroll: ScrollContainer
 var page := 0
+var tab_row: HBoxContainer
 
 func _ready() -> void:
 	layer = 9
@@ -21,29 +22,37 @@ func _ready() -> void:
 	root.size = Vector2(1280, 720)
 	add_child(root)
 	var bg := ColorRect.new()
-	bg.color = Color(0.03, 0.035, 0.05, 1.0)   # solid: the HUD must not show through
+	bg.color = Color(0.01, 0.012, 0.02, 0.96)   # nearly solid: the HUD must not show through
 	bg.size = Vector2(1280, 720)
 	root.add_child(bg)
-	title = Label.new()
+	var frame := Panel.new()
+	frame.position = Vector2(100, 24)
+	frame.size = Vector2(1080, 672)
+	frame.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.WOOD, UiStyle.NAVY, 2, 0))
+	root.add_child(frame)
+	title = UiStyle.label(40, UiStyle.GOLD)
 	title.position = Vector2(140, 40)
-	title.add_theme_font_size_override("font_size", 40)
 	root.add_child(title)
+	tab_row = HBoxContainer.new()
+	tab_row.position = Vector2(140, 98)
+	tab_row.add_theme_constant_override("separation", 10)
+	root.add_child(tab_row)
 	tabs = Label.new()
-	tabs.position = Vector2(140, 100)
+	tabs.visible = false
 	root.add_child(tabs)
 	scroll = ScrollContainer.new()
 	scroll.position = Vector2(140, 150)
 	scroll.size = Vector2(1000, 500)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
-	body = Label.new()
+	body = UiStyle.label(22, UiStyle.CREAM)
+	body.add_theme_constant_override("line_spacing", 4)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(980, 0)
 	scroll.add_child(body)
-	var hint := Label.new()
+	var hint := UiStyle.label(20, Color(0.43, 0.56, 0.7))
 	hint.text = "[Left / Right] page    [Up / Down] scroll    [J / Back / B] close"
 	hint.position = Vector2(140, 670)
-	hint.modulate = Color(1, 1, 1, 0.6)
 	root.add_child(hint)
 	root.visible = false
 
@@ -92,6 +101,16 @@ func refresh() -> void:
 	for i in PAGES.size():
 		t.append("[ %s ]" % PAGES[i] if i == page else "  %s  " % PAGES[i])
 	tabs.text = "   ".join(t)
+	for c in tab_row.get_children():
+		c.queue_free()
+	for i in PAGES.size():
+		var chip := PanelContainer.new()
+		var on := i == page
+		chip.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.AMBER if on else Color(0.29, 0.42, 0.58, 0.5), Color(0.043, 0.055, 0.1, 0.9), 2 if on else 1, 8))
+		var l := UiStyle.label(22, UiStyle.GOLD if on else UiStyle.PALE)
+		l.text = PAGES[i]
+		chip.add_child(l)
+		tab_row.add_child(chip)
 	scroll.scroll_vertical = 0
 	match page:
 		0:

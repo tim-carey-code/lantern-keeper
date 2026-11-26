@@ -19,6 +19,8 @@ var lamp_bar: ProgressBar
 var warm_bar: ProgressBar
 var chips: VBoxContainer
 var keys: Label
+var building: Label
+var building_pic: TextureRect
 var _banner_t := 0.0
 var _toast_t := 0.0
 var _tip_t := 0.0
@@ -71,6 +73,18 @@ func _build_resource_panel() -> void:
 			glass_row = item
 	lamp_bar = _meter(col, "icon_lamp", UiStyle.AMBER)
 	warm_bar = _meter(col, "icon_warmth", Color(0.85, 0.89, 0.94))
+	var b := HBoxContainer.new()
+	b.add_theme_constant_override("separation", 8)
+	col.add_child(b)
+	building_pic = TextureRect.new()
+	building_pic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	building_pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	building_pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	building_pic.custom_minimum_size = Vector2(24, 32)
+	b.add_child(building_pic)
+	building = UiStyle.label(20, UiStyle.PALE)
+	building.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.add_child(building)
 
 func _meter(parent: Control, icon_name: String, fill: Color) -> ProgressBar:
 	var row := HBoxContainer.new()
@@ -135,13 +149,6 @@ func _connect_events() -> void:
 	Progress.region_revealed.connect(func(n: String) -> void:
 		banner.text = n
 		_banner_t = 4.0)
-	var wind := get_tree().get_first_node_in_group("wind") as Wind
-	if wind:
-		wind.state_changed.connect(func(s) -> void:
-			if s == Wind.State.WARNING:
-				_show_toast("The wind is rising from the %s..." % wind.from_name(), 4.0)
-			elif s == Wind.State.GUST:
-				_show_toast("Gust from the %s! Exposed lanterns burn faster." % wind.from_name(), 5.0))
 	Progress.landmark_spotted.connect(func(title: String) -> void:
 		_show_toast("Something catches the light: %s" % title, 4.0))
 	Progress.lantern_unlocked.connect(func(k: String) -> void:
@@ -160,11 +167,22 @@ func _fade(c: CanvasItem, t: float) -> void:
 ## What needs the keeper right now: [[icon, text, color], ...]. Public for tests.
 func status_items() -> Array:
 	var out := []
+	# Wind only matters when it reaches your lanterns: say how many it is hitting.
 	var wind := get_tree().get_first_node_in_group("wind") as Wind
-	if wind and wind.state == Wind.State.WARNING:
-		out.append(["icon_wind", "Wind rising (%s)" % wind.from_name(), UiStyle.PALE])
-	elif wind and wind.state == Wind.State.GUST:
-		out.append(["icon_wind", "Gust from the %s" % wind.from_name(), UiStyle.WARN])
+	if wind and wind.state != Wind.State.CALM:
+		var hit := 0
+		for l in get_tree().get_nodes_in_group("lantern"):
+			if l.is_lit() and l.needs_fuel() and not l.wind_proof() and not l.is_sheltered_from(wind.direction):
+				hit += 1
+		if hit > 0:
+			var what := "Gust" if wind.state == Wind.State.GUST else "Wind rising"
+			out.append(["icon_wind", "%s: %d lantern%s exposed" % [what, hit, "" if hit == 1 else "s"], UiStyle.WARN if wind.state == Wind.State.GUST else UiStyle.PALE])
+	var smothered := 0
+	for m in get_tree().get_nodes_in_group("mirror"):
+		if m.is_smothered():
+			smothered += 1
+	if smothered > 0:
+		out.append(["icon_cold", "%d mirror%s smothered" % [smothered, "" if smothered == 1 else "s"], UiStyle.WARN])
 	var markers = get_tree().get_first_node_in_group("lantern_markers")
 	if markers:
 		var need: Array = markers.needs_attention()
@@ -223,6 +241,9 @@ func _process(delta: float) -> void:
 		counts[kind].text = str(n)
 		counts[kind].add_theme_color_override("font_color", UiStyle.GOLD if n >= Inventory.carry_limit else UiStyle.CREAM)
 	glass_row.visible = Inventory.get_count("glass") > 0 or Progress.regions_seen.has(FogGrid.R_RIDGE)
+	var sel := Progress.selected
+	building.text = "%s   [%s] switch" % [Lantern.display(sel), InputHint.key("build_menu")]
+	building_pic.texture = Art.placeholder({"post": "post_lamp_lit.png", "reservoir": "reservoir_lamp_lit.png", "hooded": "hooded_lamp_lit.png", "mirror": "mirror_post_lit.png"}.get(sel, "post_lamp_lit.png"))
 	lamp_bar.value = player.lamp_charge
 	warm_bar.value = player.warmth / Tuning.warmth_max
 	# Status chips: rebuilt only when what they say changes.

@@ -140,7 +140,6 @@ func _process(_delta: float) -> void:
 			_wind_checks()
 		540:
 			check(main.get_node("FogLayer/WindStreaks").active_count() > 40, "wind streaks blow across the screen in a gust")
-			check(main.get_node("HUD").toast.text != "" , "HUD toast active")
 			wind.force(Wind.State.CALM)
 		541:
 			Art._ph.clear()   # release cached textures so exit is clean
@@ -236,5 +235,5 @@ func _wind_checks() -> void:
 	check(not sheltered.in_gust() and is_equal_approx(sheltered.burn_rate(), Tuning.lantern_burn_per_sec), "rock upwind shelters a lantern")
 	check(wind.status_text().contains("west"), "HUD names the wind direction")
 	var hud = main.get_node("HUD")
-	check(hud.toast.text.contains("Gust from the west"), "a gust is announced in the middle of the screen")
+	check(str(hud.status_items()).contains("Gust:") and str(hud.status_items()).contains("exposed"), "a gust shows a chip only for lanterns it actually hits")
 	check(exposed.in_gust() and wind.is_gusting(), "gust stays on for the streak check")

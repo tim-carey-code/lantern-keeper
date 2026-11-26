@@ -23,7 +23,11 @@ func lines_for(t: Node) -> Array:
 	if t is Landmark:
 		return [[InputHint.key("interact"), "Read again" if t.is_read() else "Read"]]
 	if t is Lantern and t.kind == "mirror":
-		return [[InputHint.key("interact"), "Turn" if t.is_lit() else "Turn  (dark: needs a lantern's light)"], [InputHint.key("cancel"), "Pick up"]]
+		var state := "smothered!" if t.is_smothered() else ("" if t.is_lit() else "dark: needs a lantern's light")
+		var out := [[InputHint.key("interact"), "Turn right"], [InputHint.key("place_lantern"), "Turn left"], [InputHint.key("cancel"), "Pick up"]]
+		if state != "":
+			out.push_front(["", state])
+		return out
 	if t is Lantern:
 		var state := "%d%%" % roundi(t.fuel_frac() * 100.0) if t.is_lit() else "cold"
 		var extra := ""
