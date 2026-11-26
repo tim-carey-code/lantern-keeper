@@ -55,25 +55,16 @@ func _process(delta: float) -> void:
 			queue_redraw()
 
 func _draw() -> void:
-	var fade := 1.0 if amount > 0 else 0.4
+	var mod := Color(1, 1, 1, 1.0 if amount > 0 else 0.45)
 	if always_regrow:
-		for i in 3:
-			draw_rect(Rect2(-14, 4 - i * 6, 28, 5), Color(0.45, 0.32, 0.2, fade))
-		for i in amount:
-			draw_circle(Vector2(-10 + i * 5, -14), 2.0, Color(1.0, 0.7, 0.3))
+		Art.cell_at_foot(self, Art.TOWN, Art.LOG, Vector2(0, 14), mod)
 	elif kind == "fuel" and label == "Peat":
-		draw_colored_polygon(PackedVector2Array([Vector2(-12, 6), Vector2(-8, -4), Vector2(8, -6), Vector2(13, 6)]), Color(0.3, 0.22, 0.16, fade))
-		for i in amount:
-			draw_circle(Vector2(-8 + (i % 5) * 4, 2 - (i / 5) * 4), 2.0, Color(0.95, 0.62, 0.28))
+		Art.sprite(self, Art.placeholder("peat.png"), Vector2(0, 14), mod)
 	elif kind == "fuel":
-		var bark := Color(0.38, 0.3, 0.24, fade)
-		draw_line(Vector2(0, 10), Vector2(0, -20), bark, 4.0)
-		draw_line(Vector2(0, -8), Vector2(-10, -16), bark, 2.0)
-		draw_line(Vector2(0, -12), Vector2(9, -22), bark, 2.0)
-		for i in amount:
-			draw_circle(Vector2(-6 + (i % 4) * 4, 6 - (i / 4) * 5), 2.0, Color(1.0, 0.7, 0.3))
+		Art.sprite(self, Art.placeholder("dead_tree.png"), Vector2(0, 16), mod)
 	else:
-		var metal := Color(0.55, 0.58, 0.62, fade)
-		draw_colored_polygon(PackedVector2Array([Vector2(-12, 8), Vector2(-4, -6), Vector2(6, -2), Vector2(12, 8)]), metal)
-		for i in amount:
-			draw_rect(Rect2(-10 + (i % 4) * 6, -12 - (i / 4) * 5, 4, 3), Color(0.75, 0.78, 0.82))
+		Art.sprite(self, Art.placeholder("scrap_pile.png"), Vector2(0, 14), mod)
+	# How much is left: little amber pips.
+	var pip := Color(1.0, 0.82, 0.48)
+	for i in amount:
+		draw_rect(Rect2(-amount * 2.5 + i * 5.0, 18, 3, 3), pip)

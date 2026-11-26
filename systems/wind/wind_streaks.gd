@@ -49,5 +49,10 @@ func _draw() -> void:
 	if wind == null:
 		return
 	var dir := Vector2(wind.direction)
+	var fog := get_tree().get_first_node_in_group("fog_grid") as FogGrid
 	for s in _streaks:
+		if fog:
+			var t := fog.tile_of(s[0])
+			if not fog.in_bounds(t) or fog.remembered[fog.idx(t)] == 0:
+				continue   # keep never-seen darkness calm
 		draw_line(s[0], s[0] - dir * s[1], Color(0.82, 0.86, 0.95, s[3]), 1.5)

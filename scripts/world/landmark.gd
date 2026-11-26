@@ -56,34 +56,33 @@ func _process(_delta: float) -> void:
 	# Unread landmarks glow and pulse so they stand out from the scenery.
 	glow.enabled = v and not is_read()
 	if glow.enabled:
-		glow.energy = 0.55 + 0.25 * sin(Time.get_ticks_msec() * 0.004)
+		glow.energy = 0.35 + 0.2 * sin(Time.get_ticks_msec() * 0.004)
 	if v:
 		queue_redraw()
 
 func _draw() -> void:
+	var t := float(FogGrid.TILE)
 	match look:
 		"ledger":
-			draw_line(Vector2(0, 8), Vector2(0, -4), Color(0.35, 0.28, 0.22), 3.0)
-			draw_rect(Rect2(-9, -12, 18, 8), Color(0.55, 0.38, 0.22))
-			draw_line(Vector2(0, -12), Vector2(0, -4), Color(0.85, 0.8, 0.7), 1.0)
+			Art.cell_at_foot(self, Art.TOWN, Art.SIGN, Vector2(0, 14))
 		"frames":
 			for i in 3:
-				var x := -14 + i * 14
-				draw_line(Vector2(x, 8), Vector2(x, -10), Color(0.35, 0.3, 0.26), 2.0)
-				draw_rect(Rect2(x, -16, 8, 6), Color(0.45, 0.42, 0.38))   # all turned east
+				Art.sprite(self, Art.placeholder("post_lamp_cold.png"), Vector2(-26 + i * 26, 16), Color(0.8, 0.8, 0.85))
 		"chalk":
-			draw_rect(Rect2(-20, -18, 40, 22), Color(0.48, 0.48, 0.46))
-			draw_circle(Vector2(-9, -9), 5.0, Color(0.95, 0.95, 0.9))
-			draw_circle(Vector2(9, -9), 5.0, Color(0.12, 0.12, 0.12))
+			Art.cell_at_foot(self, Art.DUNGEON, Art.STONE_WALL, Vector2(0, 16))
+			draw_circle(Vector2(-7, -6), 4.0, Color(0.96, 0.95, 0.88))
+			draw_circle(Vector2(7, -6), 4.0, Color(0.05, 0.06, 0.1))
 		"pumphouse":
-			draw_rect(Rect2(-24, -30, 48, 36), Color(0.36, 0.34, 0.3))
-			draw_colored_polygon(PackedVector2Array([Vector2(-28, -30), Vector2(0, -46), Vector2(28, -30)]), Color(0.28, 0.24, 0.2))
-			draw_arc(Vector2(30, -8), 10.0, 0.0, TAU, 20, Color(0.5, 0.45, 0.38), 3.0)
+			var origin := Vector2(-1.5 * t, -1.5 * t)
+			for i in 3:
+				Art.cell(self, Art.TOWN, Art.PUMP_ROOF[i], origin + Vector2(i * t, 0))
+				Art.cell(self, Art.TOWN, Art.PUMP_WALL[i], origin + Vector2(i * t, t))
+			draw_arc(Vector2(1.9 * t, 0), 11.0, 0.0, TAU, 20, Color(0.42, 0.56, 0.7), 3.0)
+			draw_line(Vector2(1.9 * t - 11, 0), Vector2(1.9 * t + 11, 0), Color(0.42, 0.56, 0.7), 2.0)
 		_:
-			draw_colored_polygon(PackedVector2Array([Vector2(-8, 8), Vector2(-6, -14), Vector2(6, -16), Vector2(8, 8)]), Color(0.5, 0.5, 0.52))
-			draw_line(Vector2(-3, -6), Vector2(3, -6), Color(0.25, 0.25, 0.28), 1.0)
+			Art.cell_at_foot(self, Art.DUNGEON, Art.GRAVESTONE, Vector2(0, 14))
 	if not is_read():
-		var top := Vector2(0, -56 if look == "pumphouse" else -30)
+		var top := Vector2(0, -66 if look == "pumphouse" else -40)
 		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.004)
 		draw_circle(top, 4.0, Color(1.0, 0.85, 0.4))
 		draw_arc(top, 7.0 + pulse * 4.0, 0.0, TAU, 20, Color(1.0, 0.85, 0.4, 0.8 - pulse * 0.6), 1.5)

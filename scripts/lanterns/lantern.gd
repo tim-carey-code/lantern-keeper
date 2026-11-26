@@ -34,6 +34,7 @@ func _ready() -> void:
 	light = PointLight2D.new()
 	light.texture = LightTex.radial()
 	light.color = Color(0.9, 0.86, 0.62) if kind == "reservoir" else Color(1.0, 0.78, 0.45)
+	light.position = Vector2(0, -44 if kind == "reservoir" else LAMP_Y)
 	add_child(light)
 
 # --- Stats -------------------------------------------------------------------
@@ -108,7 +109,7 @@ func _process(delta: float) -> void:
 	if r > 0.0:
 		light.texture_scale = LightTex.scale_for(r)
 		var flicker := 0.15 if in_gust() else 0.06
-		var base := 0.8 if kind == "reservoir" else 1.2
+		var base := 0.6 if kind == "reservoir" else 0.85
 		light.energy = base + sin(Time.get_ticks_msec() * 0.011 + get_instance_id() % 97) * flicker
 	queue_redraw()
 
@@ -126,27 +127,15 @@ func _feed(delta: float) -> void:
 		l.fuel += give
 		fuel -= give
 
+## Lamp box height above the tile centre, so the light glows from the lamp, not the base.
+const LAMP_Y := -34.0
+
 func _draw() -> void:
-	var wood := Color(0.4, 0.34, 0.28)
-	var gust := in_gust()
-	var lean := Vector2.ZERO
-	if gust:
-		var w := _wind()
-		lean = Vector2(w.direction) * (3.0 + sin(Time.get_ticks_msec() * 0.03) * 1.5)
-	if kind == "reservoir":
-		draw_line(Vector2(-6, 8), Vector2(-6, -10), wood, 3.0)
-		draw_line(Vector2(6, 8), Vector2(6, -10), wood, 3.0)
-		draw_rect(Rect2(-10, -26, 20, 16), Color(0.42, 0.46, 0.48))
-		draw_rect(Rect2(-10, -26 + 16 * (1.0 - fuel_frac()), 20, 16 * fuel_frac()), Color(0.55, 0.45, 0.25, 0.8))
-		if is_lit():
-			draw_circle(Vector2(0, -30) + lean, 3.5, Color(0.95, 0.9, 0.65))
-	else:
-		draw_line(Vector2(0, 8), Vector2(0, -12), wood, 3.0)
-		draw_rect(Rect2(-6, -24, 12, 12), Color(0.5, 0.44, 0.36))
-		if is_lit():
-			draw_circle(Vector2(0, -18) + lean, 3.5, Color(1.0, 0.88, 0.55))
-	draw_rect(Rect2(-12, 12, 24, 4), Color(0, 0, 0, 0.7))
+	var lit := is_lit()
+	var file := ("reservoir_lamp_" if kind == "reservoir" else "post_lamp_") + ("lit.png" if lit else "cold.png")
+	Art.sprite(self, Art.placeholder(file), Vector2(0, 16))
 	var bar := Color(1.0, 0.7, 0.3)
-	if gust and int(Time.get_ticks_msec() / 250) % 2 == 0:
+	if in_gust() and int(Time.get_ticks_msec() / 250) % 2 == 0:
 		bar = Color(1.0, 0.35, 0.25)   # flashing: burning fast in the wind
-	draw_rect(Rect2(-12, 12, 24 * fuel_frac(), 4), bar)
+	draw_rect(Rect2(-12, 19, 24, 4), Color(0, 0, 0, 0.7))
+	draw_rect(Rect2(-12, 19, 24 * fuel_frac(), 4), bar)

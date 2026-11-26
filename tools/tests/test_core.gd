@@ -130,6 +130,7 @@ func _process(_delta: float) -> void:
 			check(main.get_node("HUD").toast.text != "" , "HUD toast active")
 			wind.force(Wind.State.CALM)
 		541:
+			Art._ph.clear()   # release cached textures so exit is clean
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)
 

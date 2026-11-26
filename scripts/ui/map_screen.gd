@@ -11,6 +11,7 @@ var tex: ImageTexture
 var _refresh := 0.0
 var _scale := 1.0
 var _centroids := {}
+var _view := Rect2i()
 
 func _ready() -> void:
 	layer = 9
@@ -36,10 +37,12 @@ func is_open() -> bool:
 
 func toggle() -> void:
 	if root.visible:
+		Sfx.play("ui_close", -14.0)
 		root.visible = false
 		Tuning.ui_open = false
 		Progress.block_input()
 	elif not Tuning.ui_open:
+		Sfx.play("ui_open", -14.0)
 		root.visible = true
 		Tuning.ui_open = true
 		_refresh = 0.0
@@ -66,10 +69,28 @@ func render() -> void:
 		return
 	if img == null or img.get_width() != fog.cols:
 		img = Image.create(fog.cols, fog.rows, false, Image.FORMAT_RGBA8)
-		_scale = floorf(minf(1180.0 / fog.cols, 620.0 / fog.rows))
-		map_rect.size = Vector2(fog.cols, fog.rows) * _scale
-		map_rect.position = (Vector2(1280, 720) - map_rect.size) / 2.0 + Vector2(0, 16)
 		_compute_centroids(fog)
+	# Zoom to the explored area (plus a margin) so the map stays readable.
+	var lo := Vector2i(fog.cols, fog.rows)
+	var hi := Vector2i(-1, -1)
+	for i in fog.remembered.size():
+		if fog.remembered[i] == 1:
+			var t := Vector2i(i % fog.cols, i / fog.cols)
+			lo = lo.min(t)
+			hi = hi.max(t)
+	if hi.x < 0:
+		lo = Vector2i.ZERO
+		hi = Vector2i(fog.cols - 1, fog.rows - 1)
+	lo = (lo - Vector2i(6, 6)).clamp(Vector2i.ZERO, Vector2i(fog.cols - 1, fog.rows - 1))
+	hi = (hi + Vector2i(6, 6)).clamp(Vector2i.ZERO, Vector2i(fog.cols - 1, fog.rows - 1))
+	# At least 40x24 tiles so a small explored area is not blown up.
+	var want := Vector2i(maxi(hi.x - lo.x + 1, 40), maxi(hi.y - lo.y + 1, 24))
+	var mid := (lo + hi) / 2
+	lo = (mid - want / 2).clamp(Vector2i.ZERO, Vector2i(fog.cols, fog.rows) - want)
+	_view = Rect2i(lo, want.min(Vector2i(fog.cols, fog.rows)))
+	_scale = clampf(floorf(minf(1180.0 / _view.size.x, 600.0 / _view.size.y)), 2.0, 9.0)
+	map_rect.size = Vector2(_view.size) * _scale
+	map_rect.position = (Vector2(1280, 720) - map_rect.size) / 2.0 + Vector2(0, 20)
 	for y in fog.rows:
 		for x in fog.cols:
 			var i := y * fog.cols + x
@@ -101,11 +122,12 @@ func render() -> void:
 		var pt := fog.tile_of(player.global_position)
 		if fog.in_bounds(pt):
 			img.set_pixel(pt.x, pt.y, Color.WHITE)
-	if tex == null:
-		tex = ImageTexture.create_from_image(img)
+	var shown := img.get_region(_view)
+	if tex == null or tex.get_size() != Vector2(shown.get_size()):
+		tex = ImageTexture.create_from_image(shown)
 		map_rect.texture = tex
 	else:
-		tex.update(img)
+		tex.update(shown)
 	_update_names()
 
 func _compute_centroids(fog: FogGrid) -> void:
@@ -134,6 +156,9 @@ func _update_names() -> void:
 		l.add_theme_color_override("font_shadow_color", Color.BLACK)
 		l.add_theme_constant_override("shadow_offset_x", 1)
 		l.add_theme_constant_override("shadow_offset_y", 1)
-		l.position = map_rect.position + _centroids[r] * _scale - Vector2(50, 10)
+		var c: Vector2 = _centroids[r] - Vector2(_view.position)
+		if not Rect2(Vector2.ZERO, Vector2(_view.size)).has_point(c):
+			continue
+		l.position = map_rect.position + c * _scale - Vector2(50, 34)   # sit above paths through the centre
 		root.add_child(l)
 		names.append(l)

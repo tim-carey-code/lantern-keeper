@@ -10,8 +10,8 @@ var index := 0
 func _ready() -> void:
 	layer = 6
 	panel = PanelContainer.new()
-	panel.position = Vector2(1280 - 16 - 480, 16)
-	panel.custom_minimum_size = Vector2(480, 0)
+	panel.position = Vector2(1280 - 16 - 560, 16)
+	panel.custom_minimum_size = Vector2(560, 0)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.05, 0.06, 0.08, 0.92)
 	sb.set_corner_radius_all(4)
@@ -20,7 +20,7 @@ func _ready() -> void:
 	add_child(panel)
 	body = Label.new()
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.custom_minimum_size = Vector2(456, 0)
+	body.custom_minimum_size = Vector2(536, 0)
 	panel.add_child(body)
 	panel.visible = false
 
@@ -30,9 +30,11 @@ func is_open() -> bool:
 func open() -> void:
 	panel.visible = true
 	Tuning.ui_open = true
+	Sfx.play("ui_open", -14.0)
 	index = maxi(0, Progress.LANTERN_ORDER.find(Progress.selected))
 
 func close() -> void:
+	Sfx.play("ui_close", -14.0)
 	panel.visible = false
 	Tuning.ui_open = false
 	Progress.block_input()
@@ -52,10 +54,12 @@ func _process(_delta: float) -> void:
 	if not panel.visible:
 		return
 	# Just-pressed works for D-pad, stick and keys without repeat spam.
-	if Input.is_action_just_pressed("move_up"):
-		index = maxi(0, index - 1)
-	elif Input.is_action_just_pressed("move_down"):
-		index = mini(Progress.LANTERN_ORDER.size() - 1, index + 1)
+	if Input.is_action_just_pressed("move_up") and index > 0:
+		index -= 1
+		Sfx.play("ui_tick", -16.0)
+	elif Input.is_action_just_pressed("move_down") and index < Progress.LANTERN_ORDER.size() - 1:
+		index += 1
+		Sfx.play("ui_tick", -16.0)
 	var kind: String = Progress.LANTERN_ORDER[index]
 	if Progress.is_unlocked(kind):
 		Progress.selected = kind

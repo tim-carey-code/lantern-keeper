@@ -10,16 +10,17 @@ var _toast_t := 0.0
 
 func _ready() -> void:
 	layer = 5
-	label = _make_label(16, Vector2(16, 12))
-	banner = _make_label(40, Vector2.ZERO)
+	label = _make_label(24, Vector2(16, 8))
+	label.add_theme_constant_override("line_spacing", 2)
+	banner = _make_label(64, Vector2.ZERO)
 	banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	banner.position = Vector2(0, 150)
 	banner.size = Vector2(1280, 60)
 	banner.modulate.a = 0.0
-	toast = _make_label(18, Vector2.ZERO)
+	toast = _make_label(32, Vector2.ZERO)
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.position = Vector2(0, 640)
+	toast.position = Vector2(0, 630)
 	toast.size = Vector2(1280, 40)
 	toast.modulate.a = 0.0
 	Progress.region_revealed.connect(func(n: String) -> void:
@@ -36,7 +37,8 @@ func _ready() -> void:
 		_show_toast("Something catches the light: %s" % title, 4.0))
 	Progress.lantern_unlocked.connect(func(k: String) -> void:
 		toast.text = "New lantern unlocked: %s" % Lantern.display(k)
-		_toast_t = 5.0)
+		_toast_t = 5.0
+		Sfx.play("unlock", -6.0))
 
 func _show_toast(text: String, secs: float) -> void:
 	toast.text = text

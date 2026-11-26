@@ -7,7 +7,7 @@
 
 ## Status
 
-- M0 done (b9dab77). M1 done, playtest gate passed (2798574, 62f7612). M2 done, playtest gate passed; scrap rebalanced. M3 done, playtest gate passed; gust and landmark readability improved after the playtest. Next: M4 atmosphere pass.
+- M0 done (b9dab77). M1 done, playtest gate passed (2798574, 62f7612). M2 done, playtest gate passed; scrap rebalanced. M3 done, playtest gate passed; gust and landmark readability improved after the playtest. M4 atmosphere pass in progress: Kenney CC0 art (recoloured), placeholders for lantern posts and other gaps, soft fog, pixel font, sound effects done; ambience recordings (Freesound CC0) and keeper walk frames still to do.
 - Second-tester playtest for M1 still to do.
 
 ---

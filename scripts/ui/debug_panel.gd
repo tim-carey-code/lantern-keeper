@@ -24,16 +24,16 @@ var first_slider: HSlider
 func _ready() -> void:
 	layer = 10
 	panel = PanelContainer.new()
-	panel.position = Vector2(16, 175)   # below the HUD text
+	panel.position = Vector2(16, 200)   # below the HUD text
 	panel.add_theme_stylebox_override("panel", _bg())
 	add_child(panel)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(320, 520)
+	scroll.custom_minimum_size = Vector2(360, 500)
 	scroll.follow_focus = true
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	panel.add_child(scroll)
 	var box := VBoxContainer.new()
-	box.custom_minimum_size = Vector2(300, 0)
+	box.custom_minimum_size = Vector2(340, 0)
 	scroll.add_child(box)
 	var title := Label.new()
 	title.text = "Tuning  (F1 / Select to close)"

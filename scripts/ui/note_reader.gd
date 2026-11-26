@@ -20,7 +20,7 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	panel.add_child(box)
 	title_label = Label.new()
-	title_label.add_theme_font_size_override("font_size", 22)
+	title_label.add_theme_font_size_override("font_size", 32)
 	box.add_child(title_label)
 	body_label = Label.new()
 	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -37,8 +37,11 @@ func _open(title: String, text: String) -> void:
 	body_label.text = text + "\n\n[E / A] close"
 	panel.visible = true
 	Tuning.ui_open = true
+	Sfx.play("note_open", -10.0)
 
 func close() -> void:
+	if panel.visible:
+		Sfx.play("note_close", -12.0)
 	panel.visible = false
 	Tuning.ui_open = false
 	Progress.block_input()

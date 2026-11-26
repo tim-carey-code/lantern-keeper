@@ -20,7 +20,6 @@ const ISLANDS := [Vector3(72, 23, 2), Vector3(76, 42, 2), Vector3(95, 24, 2), Ve
 
 var start := Vector2.ZERO
 var rng := RandomNumberGenerator.new()
-var _stones: Array = []
 var _taken: Array[Vector2] = []
 
 func _ready() -> void:
@@ -119,7 +118,7 @@ func _build_rock_collision() -> void:
 # --- Things in the world -----------------------------------------------------
 
 func _place_landmarks() -> void:
-	_add_landmark("ledger", "Keepers' ledger", "ledger", start + Vector2(-96, -56),
+	_add_landmark("ledger", "Keepers' ledger", "ledger", start + Vector2(-96, -64),
 		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns grow short. The last page has a single mark.")
 	_add_landmark("stone_way", "Carved stone", "stone", fog.tile_center(Vector2i(40, 30)),
 		"KEEP THE WAY TO THE WATER LIT.")
@@ -136,10 +135,6 @@ func _scatter() -> void:
 	_scatter_kind("scrap", "", HOLLOW_SCRAP, func(t): return _hollow_spot(t), 4, 7, 7, 75.0)
 	_scatter_kind("fuel", "Peat", MARSH_PEAT, func(t): return _peat_spot(t), 5, 9, 9, 45.0)
 	_scatter_kind("scrap", "", MARSH_SCRAP, func(t): return _island_spot(t), 4, 7, 7, 75.0)
-	for i in 420:
-		var p := Vector2(rng.randf() * fog.world_size().x, rng.randf() * fog.world_size().y)
-		if fog.terrain_at(p) == FogGrid.T_GROUND:
-			_stones.append([p, rng.randf_range(3.0, 10.0), rng.randf_range(0.0, 0.45)])
 
 func _hollow_spot(t: Vector2i) -> bool:
 	var p := fog.tile_center(t)
@@ -215,28 +210,37 @@ func _add_landmark(id: String, title: String, look: String, p: Vector2, text: St
 
 # --- Drawing -----------------------------------------------------------------
 
+func _hash(x: int, y: int) -> int:
+	return ((x * 73856093) ^ (y * 19349663)) & 0xffff
+
 func _draw() -> void:
 	var t := FogGrid.TILE
+	var ground_tint := Color(0.78, 0.8, 0.9)   # keep lamplit grass from washing out
+	var marsh_tint := Color(0.5, 0.68, 0.74)
+	var plank_tint := Color(1.0, 0.8, 0.6)
 	for y in fog.rows:
 		for x in fog.cols:
-			var r := Rect2(x * t, y * t, t, t)
+			var pos := Vector2(x * t, y * t)
+			var h := _hash(x, y)
 			match fog.terrain[y * fog.cols + x]:
 				FogGrid.T_ROCK:
-					draw_rect(r, Color(0.2, 0.2, 0.22))
+					Art.cell(self, Art.TOWN, Art.FOREST, pos, Color(0.72, 0.74, 0.85))
 				FogGrid.T_MARSH:
-					draw_rect(r, Color(0.16, 0.23, 0.22))
-					draw_line(r.position + Vector2(8, 26), r.position + Vector2(10, 12), Color(0.3, 0.38, 0.26), 1.0)
-					draw_line(r.position + Vector2(22, 28), r.position + Vector2(21, 16), Color(0.3, 0.38, 0.26), 1.0)
+					Art.cell(self, Art.TOWN, Art.GRASS, pos, marsh_tint)
+					if h % 100 < 45:
+						draw_texture_rect(Art.placeholder("reeds.png"), Rect2(pos, Vector2(t, t)), false)
 				FogGrid.T_BOARDWALK:
-					draw_rect(r, Color(0.16, 0.23, 0.22))
-					draw_rect(r.grow(-3), Color(0.42, 0.33, 0.22))
-					draw_line(r.position + Vector2(3, 16), r.position + Vector2(29, 16), Color(0.3, 0.23, 0.15), 1.0)
+					Art.cell(self, Art.TOWN, Art.GRASS, pos, marsh_tint)
+					Art.cell(self, Art.DUNGEON, Art.PLANKS, pos, plank_tint)
 				_:
-					draw_rect(r, Color(0.24, 0.29, 0.21))
-	for s in _stones:
-		draw_circle(s[0], s[1], Color(0.55, 0.55, 0.5).darkened(s[2]))
-	# The keeper's hut.
-	var h := start + Vector2(-20, -70)
-	draw_rect(Rect2(h, Vector2(40, 28)), Color(0.4, 0.3, 0.22))
-	draw_colored_polygon(PackedVector2Array([h + Vector2(-6, 0), h + Vector2(20, -18), h + Vector2(46, 0)]), Color(0.3, 0.2, 0.15))
-	draw_rect(Rect2(h + Vector2(15, 12), Vector2(10, 16)), Color(0.85, 0.65, 0.35))
+					var c := Art.GRASS
+					if h % 100 < 3:
+						c = Art.GRASS_FLOWERS
+					elif h % 100 < 25:
+						c = Art.GRASS_TUFT
+					Art.cell(self, Art.TOWN, c, pos, ground_tint)
+	# The keeper's hut: 3 tiles wide, roof over walls, just north of the start.
+	var hut := start + Vector2(-48, -112)
+	for i in 3:
+		Art.cell(self, Art.TOWN, Art.HUT_ROOF[i], hut + Vector2(i * t, 0))
+		Art.cell(self, Art.TOWN, Art.HUT_WALL[i], hut + Vector2(i * t, t))

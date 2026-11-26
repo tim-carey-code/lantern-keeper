@@ -31,7 +31,9 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800 
 ```
 - Add checks to `tools/tests/test_core.gd` for new rules. Tests run as a scene so autoloads exist.
 - Automated runs are silent (`--audio-driver Dummy`). Don't play sound through the owner's speakers.
-- Headless runs can't show visuals; say so when reporting, and ask the owner for a screenshot.
+- Visual check without the owner's screen: render frames on a virtual display with `tools/capture/capture.tscn`
+  (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
+- Art: 16x16 sprites drawn at 2x, palette in `source/palette/`. Kenney sheets are recoloured from `source/vendor/`; placeholders come from `tools/art/make_placeholders.py`.
 
 ## Storage, git, licensing
 - Never put project files, builds or scratch under `/tmp`. Use `~/.cache/openclaw/project-scratch/` for throwaway files and set `TMPDIR` there.

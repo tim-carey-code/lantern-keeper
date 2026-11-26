@@ -10,6 +10,9 @@ var lamp_charge := 1.0          # 0 = ember, 1 = full hand lamp
 var fuel_poured := 0.0
 var _gather_target: ResourceNode = null
 var _gather_acc := 0.0
+var _facing_left := false
+var _step_t := 0.0
+var _walk_t := 0.0
 
 func _ready() -> void:
 	add_to_group("light_source")
@@ -23,6 +26,7 @@ func _ready() -> void:
 	lamp = PointLight2D.new()
 	lamp.texture = LightTex.radial()
 	lamp.color = Color(1.0, 0.86, 0.62)
+	lamp.position = Vector2(10, -14)   # held in the keeper's hand
 	add_child(lamp)
 
 # --- Hand lamp -------------------------------------------------------------
@@ -49,7 +53,7 @@ func update_hand_lamp(delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	update_hand_lamp(delta)
 	lamp.texture_scale = LightTex.scale_for(get_light_radius())
-	lamp.energy = lerpf(0.55, 0.95, lamp_charge)
+	lamp.energy = lerpf(0.35, 0.6, lamp_charge)
 	queue_redraw()
 	if Tuning.ui_open:
 		velocity = Vector2.ZERO
@@ -64,6 +68,7 @@ func _physics_process(delta: float) -> void:
 		slow *= 0.85   # wading through the marsh
 	velocity = dir * speed * slow
 	move_and_slide()
+	_footsteps(dir, _physics_delta(), fog)
 	if fog:
 		position = position.clamp(Vector2.ZERO, fog.world_size())
 	if Progress.input_blocked():
@@ -79,6 +84,29 @@ func _physics_process(delta: float) -> void:
 		continue_gather(delta)
 	else:
 		_gather_target = null
+
+func _physics_delta() -> float:
+	return get_physics_process_delta_time()
+
+func _footsteps(dir: Vector2, delta: float, fog: FogGrid) -> void:
+	if dir.x != 0.0:
+		_facing_left = dir.x < 0.0
+	if dir == Vector2.ZERO:
+		_step_t = 0.0
+		_walk_t = 0.0
+		return
+	_walk_t += delta
+	_step_t -= delta
+	if _step_t <= 0.0:
+		_step_t = 0.36
+		var surface := "step_grass"
+		if fog:
+			match fog.terrain_at(global_position):
+				FogGrid.T_BOARDWALK:
+					surface = "step_wood"
+				FogGrid.T_MARSH:
+					surface = "step_marsh"
+		Sfx.play(surface, -20.0, 0.1)
 
 func _fog() -> FogGrid:
 	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
@@ -148,6 +176,7 @@ func continue_gather(delta: float) -> void:
 			return
 		target.take()
 		Inventory.add(target.kind, 1)
+		Sfx.play("gather_scrap" if target.kind == "scrap" else "gather_fuel", -12.0)
 
 ## Pours carried fuel into a lantern (relights it if cold). Returns units used.
 func refuel(l: Lantern) -> int:
@@ -155,8 +184,12 @@ func refuel(l: Lantern) -> int:
 	var units := mini(ceili(missing / Tuning.fuel_per_unit), Inventory.get_count("fuel"))
 	if units <= 0:
 		return 0
+	var was_cold := not l.is_lit()
 	Inventory.spend("fuel", units)
 	fuel_poured += l.refuel(units * Tuning.fuel_per_unit)
+	Sfx.play("refuel", -10.0)
+	if was_cold:
+		Sfx.play("relight", -12.0)
 	return units
 
 # --- Build / pick up -------------------------------------------------------
@@ -189,12 +222,14 @@ func can_place(p: Vector2) -> bool:
 func try_place() -> Lantern:
 	var p := place_pos()
 	if not can_place(p):
+		Sfx.play("ui_error", -16.0)
 		return null
 	Inventory.spend("scrap", Lantern.cost(Progress.selected))
 	var lamp_node := Lantern.new()
 	lamp_node.kind = Progress.selected
 	lamp_node.position = p   # lantern root sits at the origin
 	get_tree().get_first_node_in_group("lantern_root").add_child(lamp_node)
+	Sfx.play("place_lantern", -8.0)
 	return lamp_node
 
 ## Refunds part of the scrap plus the fuel left in the tank.
@@ -204,6 +239,7 @@ func pick_up_nearest() -> void:
 		return
 	Inventory.add("scrap", floori(Lantern.cost(l.kind) * Tuning.pickup_refund))
 	Inventory.add("fuel", floori(l.fuel / Tuning.fuel_per_unit))
+	Sfx.play("pickup_lantern", -10.0)
 	l.remove_from_group("lantern")
 	l.remove_from_group("light_source")
 	l.queue_free()
@@ -211,7 +247,8 @@ func pick_up_nearest() -> void:
 # --- Drawing ---------------------------------------------------------------
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, 9.0, Color(0.92, 0.88, 0.75))
+	var bob := -2.0 if int(_walk_t / 0.18) % 2 == 1 else 0.0
+	Art.cell_at_foot(self, Art.DUNGEON, Art.KEEPER, Vector2(0, 10 + bob), Color.WHITE, _facing_left)
 	var fog := _fog()
 	if fog == null:
 		return

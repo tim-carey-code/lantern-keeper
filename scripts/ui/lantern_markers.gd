@@ -40,6 +40,7 @@ func _draw() -> void:
 	var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.005)
 	var view := _view()
 	var inner := view.grow(-28.0)
+	var tips: Array[Vector2] = []
 	for l in needs_attention():
 		var p: Vector2 = l.global_position
 		var cold: bool = not l.is_lit()
@@ -62,5 +63,11 @@ func _draw() -> void:
 			if dir.y != 0.0:
 				t = minf(t, ((inner.end.y if dir.y > 0 else inner.position.y) - c.y) / dir.y)
 			var tip := c + dir * t
+			# Spread arrows that would land on the same spot along the screen edge.
+			var tries := 0
+			while tries < 8 and tips.any(func(q): return q.distance_to(tip) < 16.0):
+				tip += dir.orthogonal() * 16.0
+				tries += 1
+			tips.append(tip)
 			var side := dir.orthogonal() * 7.0
 			draw_colored_polygon(PackedVector2Array([tip + dir * 10.0, tip - dir * 6.0 + side, tip - dir * 6.0 - side]), Color(col, 0.55 + pulse * 0.4))

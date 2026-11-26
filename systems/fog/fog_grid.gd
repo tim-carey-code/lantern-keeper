@@ -169,32 +169,37 @@ func step(dt: float) -> void:
 					Progress.reveal_region(region[i], REGION_NAMES[region[i]])
 	density = next
 
-# --- Drawing (only what the camera can see) ---------------------------------
+# --- Drawing ------------------------------------------------------------------
+# One pixel per tile in a small image, stretched over the world with linear
+# filtering, so fog edges blend smoothly instead of showing 32 px squares.
 
-func _visible_tiles() -> Rect2i:
-	var cam := get_viewport().get_camera_2d()
-	if cam == null:
-		return Rect2i(0, 0, cols, rows)
-	var half := get_viewport().get_visible_rect().size / cam.zoom / 2.0
-	var c := cam.get_screen_center_position()
-	var t0 := tile_of(c - half) - Vector2i(4, 4)
-	var t1 := tile_of(c + half) + Vector2i(4, 4)
-	t0 = t0.clamp(Vector2i.ZERO, Vector2i(cols - 1, rows - 1))
-	t1 = t1.clamp(Vector2i.ZERO, Vector2i(cols - 1, rows - 1))
-	return Rect2i(t0, t1 - t0 + Vector2i.ONE)
+var _img: Image
+var _tex: ImageTexture
+var _pixels := PackedByteArray()
+
+func _ensure_texture() -> void:
+	if _tex != null:
+		return
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_pixels.resize(cols * rows * 4)
+	_img = Image.create_from_data(cols, rows, false, Image.FORMAT_RGBA8, _pixels)
+	_tex = ImageTexture.create_from_image(_img)
+
+func _rebuild_texture() -> void:
+	_ensure_texture()
+	var unseen := [int(UNSEEN.r * 255), int(UNSEEN.g * 255), int(UNSEEN.b * 255)]
+	var seen := [int(SEEN.r * 255), int(SEEN.g * 255), int(SEEN.b * 255)]
+	for i in density.size():
+		var v := density[i]
+		var o := i * 4
+		var c: Array = seen if remembered[i] == 1 else unseen
+		_pixels[o] = c[0]
+		_pixels[o + 1] = c[1]
+		_pixels[o + 2] = c[2]
+		_pixels[o + 3] = int(clampf(v * (0.8 if remembered[i] == 1 else 1.0), 0.0, 1.0) * 255.0)
+	_img.set_data(cols, rows, false, Image.FORMAT_RGBA8, _pixels)
+	_tex.update(_img)
 
 func _draw() -> void:
-	var view := _visible_tiles()
-	for y in range(view.position.y, view.end.y):
-		for x in range(view.position.x, view.end.x):
-			var i := y * cols + x
-			var v := density[i]
-			if v <= 0.02:
-				continue
-			var rect := Rect2(x * TILE, y * TILE, TILE, TILE)
-			if remembered[i] == 1:
-				draw_rect(rect, Color(SEEN, v * 0.8))
-				if v > 0.5 and solid[i] == 0:
-					draw_rect(rect.grow(-4), Color(SEEN_OUTLINE, 0.35 * v), false, 1.0)
-			else:
-				draw_rect(rect, Color(UNSEEN, v))
+	_rebuild_texture()
+	draw_texture_rect(_tex, Rect2(Vector2.ZERO, world_size()), false)
