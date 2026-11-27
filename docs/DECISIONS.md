@@ -2,6 +2,11 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (wick by level gap)
+- **Wick scales with the level gap, not "no wick"** (owner: "Idk about give no wick. Other games solve this by the XP they give not being proportionate to levels... eventually it doesn't pay to do so and it's too grindy, you will be there forever. That's part of the many reasons the game pushes the player to progress forward."). Every foe has a level (Lv 1 by the hut up to 6 by the WayLamp); a kill pays full wick up to 1 level over the foe, then ×0.25 a level, nothing at 5+. Hatched, called and re-fought foes pay normally again. DESIGN §9.
+- **The Hollow's last level comes on the Ashbrood kill**, not from kindling afterwards (owner). Ashbrood wick up, kindling down to a small amount.
+- **The four new upgrade cards are approved as written** (owner): Hot core, Steady hand, Lee, Spill.
+
 ## 2026-11-27 (loot and agent skills)
 - **Loot is Diablo-style:** random drops with rarity and rolled stats you compare and swap (lens, burner, coat, wick slots). Rolling is our own code. NPC talk uses Dialogue Manager; inventory data uses GLoot (both MIT; vetted).
 - **Leveling needs a balance pass** (owner), after the bigger map lands (it changes how much wick there is).

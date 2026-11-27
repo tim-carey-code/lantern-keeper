@@ -181,7 +181,7 @@ var kl_ashbrood_dive_period := 6.0
 var kl_ashbrood_dive_tell := 0.7
 var kl_ashbrood_dive_warmth := 25.0
 var kl_ashbrood_sit_sec := 4.0
-var kl_ashbrood_wick := 50              # was 40: two phases of 40 hp + 12 shell (balance pass)
+var kl_ashbrood_wick := 32              # base (Lv 7: x2.5 = 80); was 50 flat, 40 before the balance pass. Its kill is the Hollow's last level
 var kl_ashbrood_puff_charge := 0.1
 var kl_ashbrood_wave_count := 3
 var kl_ashbrood_dive_dist := 200.0
@@ -203,14 +203,29 @@ var kl_linger_dps := 2.0
 var kl_catch_damage := 2.0
 # Wick and levels (balance pass 2026-11-27, DESIGN §9). Wick to go from level L to L+1 is
 # round(kl_wick_base * L ^ kl_wick_exp): 6, 14, 24, 34, 45, 56, 68, 81, 93... (was flat: 15, then +10 a level).
-# A full Hollow clear gives 271 wick: level 2 after the first pack or two, level 3 before the Clinker, level 8 at the end.
+# Level-gap pass (owner, 2026-11-27): every foe has a level, and its wick scales with it (DESIGN §9).
+# Level 2 after the first pack or two, level 3 before the Clinker, level 7 into the Ashbrood, level 8 on its kill.
 var kl_wick_base := 6.0
 var kl_wick_exp := 1.25
 var kl_level_cap := 12                  # v1 cap (PLAN §5.1): never more level-ups than upgrades to pick
-var kl_wick_kindle := 30                # kindling a WayLamp (was hard-coded in Progress.settle)
+var kl_wick_kindle := 10                # kindling a WayLamp (was 30: the Hollow's last level now comes on the Ashbrood kill)
 var kl_wickling_wick := 1               # 3 hp, half a second of beam
 var kl_elite_wick := 3                  # was 1 (unset): 9 hp behind a 4-point shell, about 2 s of beam (PLAN §5.1 says 3)
-var kl_wick_summoned := 0               # was 1: Wicklings hatched by a nest or called by a guardian (they never end)
+# Wick by level gap (Diablo/PoE style; replaces the old "hatchlings pay 0, a pack member pays once" rules).
+# A kill pays base wick * (1 + kl_xp_level_growth * (foe level - 1)) * the gap factor, gap = keeper level - foe level:
+# gap <= band: full; above it x kl_xp_falloff per level; nothing at kl_xp_zero_gap or more. Foes above the keeper
+# pay kl_xp_bonus more per level, up to kl_xp_bonus_max. Farming Lv 1 foes stalls at level 4 (test_leveling).
+var kl_xp_band := 1                     # full wick up to this many levels above the foe
+var kl_xp_falloff := 0.25               # each level past the band: x0.25 (gap 2: 1/4, gap 3: 1/16, gap 4: 1/64)
+var kl_xp_zero_gap := 5                 # this many levels above the foe (or more): no wick
+var kl_xp_bonus := 0.1                  # per level the foe is above the keeper
+var kl_xp_bonus_max := 0.3
+var kl_xp_level_growth := 0.25          # higher-level foes are worth more: +25% base wick per level over 1
+var kl_clinker_level := 4
+var kl_ashbrood_level := 7
+var kl_ashbrood_add_level := 5          # its phase-1 Wicklings: two below it, so standing in phase 1 is no farm
+var kl_waylamp_swarm_level := 6         # Wicklings drawn to a kindling WayLamp (no guardian)
+# Foe levels for packs and nests are in the HOLLOW_PACKS / HOLLOW_NESTS tables in scripts/main/main.gd.
 var kl_wick_drop_radius := 28.0
 var kl_pack_wake_radius := 320.0
 

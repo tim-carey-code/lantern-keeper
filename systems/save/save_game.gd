@@ -100,7 +100,7 @@ func save(main: Node) -> bool:
 			"notes_read": Progress.notes_read.keys(),
 			"settled": Progress.settled.keys(),
 			"waylamp_fuel": Progress.waylamp_fuel.duplicate(),
-			"wick": Progress.wick, "level": Progress.level,
+			"wick": Progress.wick, "wick_frac": Progress.wick_frac, "level": Progress.level,
 			"cleared": Progress.cleared.duplicate(),
 			"combat_upgrades": Progress.combat_upgrades.duplicate(),
 		},
@@ -190,6 +190,7 @@ func load_into(main: Node) -> bool:
 	for k in wf:
 		Progress.waylamp_fuel[str(k)] = int(wf[k])
 	Progress.wick = int(p.get("wick", 0))
+	Progress.wick_frac = float(p.get("wick_frac", 0.0))
 	Progress.level = int(p.get("level", 1))
 	Progress.pending_level_ups = 0
 	Progress.cleared = {}
