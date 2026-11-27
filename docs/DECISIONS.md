@@ -2,6 +2,12 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (combat kit playtest)
+- The combat kit mostly feels good; the owner dashed on purpose to dodge. Still too easy, but more fun. Sound effects and music are the owner's job.
+- **Start of the game:** only the pointer (on the woodpile) until you have fuel; then the cold lamp gets its ring.
+- **The Hollow's notes follow the new route** (DRAFT text): the ledger sends you north to the WayLamp first, then east; the cairn says to come back once the marsh is lit.
+- **Three save slots**, picked on a screen at start; the old single save becomes slot 1 (a later one goes to the next empty slot). The pause menu has "Save slots".
+
 ## 2026-11-27 (Keeper's Light: owner answers)
 - **The Post Lamp becomes the Hollow's find**: you start with no lanterns to build and earn it from an elite north of the hut.
 - **The finale becomes a real fight.** Owner's pitch: the Soul of the Wick is not killed; it retreats into a dark realm, a portal opens, and the keeper follows it. That is the hook for expanding the game after v1.

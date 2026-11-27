@@ -117,7 +117,7 @@ Text lives in STORY.md, mirrored in `systems/story/story.gd` and `scripts/main/m
 | Fullscreen; tuning panel (dev) | F11; F1 | —; L3 |
 
 ### 3.10 Save, load and pause
-- One save slot, plus autosave every 60 s *(code)*, on closing the window and from the pause menu.
+- Three save slots, chosen on a screen at start (your keeper, region and play time on each), plus autosave every 60 s *(code)*, on closing the window and from the pause menu.
 - Saved: the keeper, inventory, unlocks, every lantern, resource spots and dropped piles, the fog and what has been seen, and story progress. Not saved: Wicklings, embers, wind.
 - **Pause menu (Esc / Start):** Resume, Save, New game (press twice; deletes the save), Save and quit, Goal pointer, Show tips again, plus the controls.
 - Notes, menus, the map and the journal pause the world.

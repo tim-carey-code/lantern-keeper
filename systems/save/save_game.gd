@@ -9,9 +9,62 @@ extends Node
 const VERSION := 2   # 2: the map grew north for the Windward Ridge; older saves start fresh
 const AUTOSAVE_SEC := 60.0
 
-var path := "user://save.json"
+const SLOTS := 3
+var slot_prefix := "user://save_"   # tests point this elsewhere so they never touch the real slots
+var slot := 1                    # which save slot is in use (1-3)
+var path := "user://save_1.json"
 var skip_load_once := false      # set by "New game" so the next start ignores the save
 var _autosave_t := AUTOSAVE_SEC
+
+func slot_path(n: int) -> String:
+	return "%s%d.json" % [slot_prefix, n]
+
+## Play in slot n from now on.
+func use_slot(n: int) -> void:
+	slot = clampi(n, 1, SLOTS)
+	path = slot_path(slot)
+
+## What a slot holds, for the slot screen: {} if empty, else name, region, time (s) and saved_at.
+func slot_info(n: int) -> Dictionary:
+	var p := slot_path(n)
+	if not FileAccess.file_exists(p):
+		return {}
+	var f := FileAccess.open(p, FileAccess.READ)
+	if f == null:
+		return {}
+	var data = JSON.parse_string(f.get_as_text())
+	f.close()
+	if typeof(data) != TYPE_DICTIONARY:
+		return {}
+	var st: Dictionary = data.get("story", {})
+	var region := 1
+	for r in st.get("visited", []):
+		region = maxi(region, int(r))
+	var names := ["", "The Hollow", "The Reedmarsh", "The Windward Ridge", "The Still Lake"]
+	return {"name": str(st.get("name", "")), "region": names[clampi(region, 1, names.size() - 1)],
+		"time": float(st.get("time", 0.0)), "saved_at": str(data.get("saved_at", "")),
+		"old": int(data.get("version", 0)) != VERSION}
+
+func delete_slot(n: int) -> void:
+	var p := ProjectSettings.globalize_path(slot_path(n))
+	if FileAccess.file_exists(slot_path(n)):
+		DirAccess.remove_absolute(p)
+
+## The one save from before slots becomes slot 1 (kept, never overwritten).
+func _ready() -> void:
+	migrate("user://save.json")
+
+## Moves a save from before slots into the first empty slot (never over a used one).
+## Returns the slot it went to, or 0.
+func migrate(old: String) -> int:
+	if not FileAccess.file_exists(old):
+		return 0
+	for n in range(1, SLOTS + 1):
+		if not FileAccess.file_exists(slot_path(n)):
+			if DirAccess.rename_absolute(ProjectSettings.globalize_path(old), ProjectSettings.globalize_path(slot_path(n))) == OK:
+				return n
+			return 0
+	return 0
 
 func has_save() -> bool:
 	return FileAccess.file_exists(path)

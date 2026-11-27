@@ -40,7 +40,7 @@ func _ready() -> void:
 	title.text = "Paused"
 	title.add_theme_font_size_override("font_size", 40)
 	box.add_child(title)
-	for item in [["Resume", _resume], ["Save", _save], ["New game", _new_game], ["Save and quit", _quit], ["Goal pointer", _cycle_pointer], ["Show tips again", _reset_tips]]:
+	for item in [["Resume", _resume], ["Save", _save], ["New game", _new_game], ["Save and quit", _quit], ["Goal pointer", _cycle_pointer], ["Show tips again", _reset_tips], ["Save slots", _to_slots]]:
 		var b := Button.new()
 		b.text = item[0]
 		b.pressed.connect(item[1])
@@ -144,3 +144,11 @@ func _quit() -> void:
 	if _main():
 		SaveGame.save(_main())
 	get_tree().quit()
+
+## Save, then go back to the save-slot screen.
+func _to_slots() -> void:
+	if _main():
+		SaveGame.save(_main())
+	get_tree().paused = false
+	Tuning.ui_open = false
+	get_tree().change_scene_to_file("res://scenes/menu/slots.tscn")

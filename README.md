@@ -100,7 +100,7 @@ Lantern Keeper is in development. It is a single-player game for PC (Linux first
 - **Finds worth the walk.** A keeper's satchel in each region lets you carry more, and a lamp glass makes your hand lamp reach further, dim more slowly and ward for longer.
 - **The map.** It shows the ground you have explored, the regions you have found, and your lanterns, colored by how much fuel they have left.
 - **Keyboard and mouse, or a gamepad.** Menus work without a mouse, and on-screen prompts show the buttons for the device you used last.
-- **Save and autosave.** One save slot. The game saves every minute, when you close the window, and when you choose Save in the pause menu.
+- **Save and autosave.** Three save slots, picked when the game starts. The game saves every minute, when you close the window, and when you choose Save in the pause menu.
 
 ## How to run it
 
@@ -169,6 +169,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_combat.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_save.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_slots.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_ridge.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_story.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_waylamps.tscn
