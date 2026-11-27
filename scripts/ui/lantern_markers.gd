@@ -23,11 +23,17 @@ func needs_attention() -> Array:
 			continue
 		if not l.is_lit() and not Story.done.has("gather_fuel"):
 			continue   # at the very start the pointer shows the woodpile; the cold lamp's ring waits for fuel
+		if not l.is_lit() and not Story.done.has("read_ledger") and _is_waypost(l):
+			continue   # the north path's old lamp waits its turn: one cold lamp to look at by the hut
 		if not l.is_lit():
 			cold.append(l)
 		elif l.fuel_frac() < LOW:
 			low.append(l)
 	return cold + low
+
+func _is_waypost(l: Node) -> bool:
+	var main := get_tree().get_first_node_in_group("main")
+	return main != null and "waypost_lantern_pos" in main and l.global_position.distance_to(main.waypost_lantern_pos) < 8.0
 
 func _view() -> Rect2:
 	var cam := get_viewport().get_camera_2d()

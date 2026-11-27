@@ -341,3 +341,40 @@ Even fully stacked, the Ashbrood still takes about two thirds of a fresh keeper'
 Both routes backtrack through the low south late, which now pays almost nothing; that is the point. A farmer who camps the hut row and the south (a Lv 1 nest's 18 hatchlings a minute, and every south pack fought again after a faint every 5 minutes) reaches L4 in 4 minutes, then L5 only at 25 minutes, and earns about 1 wick a minute in the last 10 (18 at the start). The beeline reaches L8 in roughly 12 minutes on the test's walk-and-fight estimate. Why band 1 and ×0.25, not the first suggestion (band 2, ×0.5): measured on the same map, band 2 with ×0.5 lets the farmer reach L5 in 5 minutes and L6 in 10, and band 2 with ×0.25 reaches L5 in 7. Both also over-pay the forward run, which then reaches L9 by the end of the Hollow.
 
 **What you see:** name bars read "Wickling Lv 2", dimmed when the foe is too low to pay full wick. A kill floats "+2 wick" in gold, or in dim grey when the gap cut it.
+
+#### The first 10 minutes (2026-11-27, branch `proto/kl-onboard`)
+
+**Why:** a newcomer met the find last (the crook and the Clinker sat 41 tiles out, 8 short of the WayLamp), a nest they could not hurt on the road, about 17 foes before the find, and no haven between the hut and the fights. `docs/PLAN_ONBOARDING.md` has the diagnosis; the owner's answers in its §8 chose **Option B**. This replaces the "Clinker guards the Post Lamp find" and "three nests on the road north" lines above.
+
+**The main route** (tile offsets from the hut's start tile `(48, 136)`, +x east, -y north; distances in tiles, as placed after snapping; `test_prototype_onboarding.tscn` prints and checks them):
+
+| Order | What | Offset | From the hut | Wakes at |
+|---|---|---|---|---|
+| 1 | The lone first Wickling (pack 20: 1 Wickling, Lv 1) | (-1, -10) | 10.0 | 5 tiles |
+| 2 | **A second cold old lantern** (the north path's lamp, a haven; goal `relight_waypost`) | (+2, -12) | 12.2 | - |
+| 3 | The first pack (pack 23: 3 Wicklings, Lv 1) | (+5, -17) | 17.7 | 6 tiles |
+| 4 | **Oswin's crook** (the Post Lamp find) with its **small guard** (one shelled Wickling, Lv 2) and a **6-scrap cache** | (-1, -19) | 19.0 | 4 tiles (`kl_post_guard_wake_radius` 128 px) |
+| 5 | **Nest A** (nest 4, Lv 2): the first lock the Post Lamp opens; goal `burn_nest` | (+2, -30) | 30.1 | 10 tiles (11.4 past the crook) |
+| 6 | Pack 2 (4: one Spitwick, one shelled, Lv 4): the first ranged foe and the first elite in a pack | (+13, -32) | 34.5 | 10 tiles |
+| 7 | **The Clinker**, now a mid-boss (Lv 4), with its sleep and leash as before | (+7, -40) | 40.6 | 7 tiles (9.4 from the WayLamp) |
+| 8 | The WayLamp and the Ashbrood | (+15, -45) | 47.4 | - |
+
+**Rules the test holds:** nothing wakes at the hut, its lantern, the woodpile, the scrap or the ledger, even a tile off. Only the lone Wickling is within 16 tiles of the hut (the owner allowed it closer). From the hut to the crook, at most 2 packs and 4 Wicklings, no Spitwick, no elite, no nest, no Clinker. From the crook to the WayLamp, at most 2 packs and exactly one nest, nest A. The whole route wakes 3 of the 24 packs and 1 of the 12 nests; the rest is optional. No nest is within 28 tiles of the hut, and no Spitwick or elite pack within 25. Nothing but the warm-ups can wake at the north path's lamp or the crook, nothing else wakes at nest A, and nest A is past its hatch range from the crook. The route is open ground.
+
+**What moved:** the crook from (+10, -40) to (-1, -19). The Clinker from the crook to (+7, -40) (it was 7.1 tiles from the snapped WayLamp, inside its own 7-tile wake). Pack 20 (was 3 Wicklings at (0, +24)) and pack 23 (was 3 at (-20, -2)) became the route's first two fights, each with its own wake range (the sixth column of `HOLLOW_PACKS`; `EnemyPack.wake_radius`). Pack 2 (was 5/1/1, Lv 6 at (+12, -30)) is now 4/1/1, Lv 4 at (+13, -32). Off the route, as optional side content: pack 5 (was on the route at (-2, -32)) to (-14, -32), now 4/1/0 Lv 4; pack 8 (was beside the old crook at (0, -24)) to (+24, -16); pack 9 to (+18, -14), now 4 Wicklings Lv 2 (no Spitwick near the start); pack 10 now 4 Wicklings; pack 1 to (+26, -34). Nest 4 (was (+8, -24)) became nest A; nest 3 to (+28, -38), out of the Ashbrood fight; nest 5 (was 23 tiles from the hut) to (-26, -30). The south is unchanged (owner: optional content, maybe an NPC side quest later). With the guard, the Hollow has 25 packs: the 24 in the table and the guard.
+
+**Guidance:** goals `gather_fuel`, `relight_first`, `read_ledger`, then `relight_waypost` (pointer: the north path's lamp), `build_post` ("Take back the lamp from Oswin's crook"), `burn_nest` (pointer: nest A, then the nearest nest left), `kindle_hollow`. The ledger's last line names the crook, then the WayLamp. Six new tips (`haven`, `burst`, `shell`, `dash`, `nest`, `build_here`) and a new `wickling_close`; `[beam]`, `[burst]`, `[dash]`, `[build]` and `[aim]` in a tip become the button for the device in use (`Story.tip_text`). The north path's lamp gets its cold ring only after the ledger, so the hut shows one cold lamp at a time. Texts: STORY.md §5, §6, §8.
+
+**Leveling** (`test_leveling.tscn`; the beeline now follows this route and burns the nests it passes; the explorer's nests open at the guard, not the Clinker). Targets changed with a reason: "level 2 after the first pack or two" became **level 2 with the first three fights, at the find** (the lone Wickling and the pack of 3 give 4 wick of the 6; the guard brings it). "Level 3 before the Clinker", "level 7 into the Ashbrood", "L8 on its kill" and "6-8 level-ups" are unchanged and pass.
+
+| | Beeline | Explorer |
+|---|---|---|
+| Level 2 | at the crook's guard (3rd fight) | at pack 23 (3rd fight, after the guard) |
+| Level 3 | pack 2, before the Clinker | pack 2, before the Clinker |
+| Level 4 | the Clinker | the Clinker |
+| Into the Ashbrood | L7 | L7 |
+| The kill | L8 | L8 |
+
+The Hollow's fixed wick changed little (25 packs of 88 foes). The farming check still stalls (L5 only at 25 minutes); the forward run reaches L8 in about 13 minutes on the test's estimate (was 12).
+
+**Not done:** no balance change to the guard or the Clinker (the Clinker now meets an L3 keeper, as before). Pack and nest lures still look alike above the fog (plan §9). Timings are estimates, not a playtest.

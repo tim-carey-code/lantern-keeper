@@ -37,6 +37,7 @@ const RIDGE_OUTCROPS := 88
 
 var start := Vector2.ZERO
 var start_lantern_pos := Vector2.ZERO
+var waypost_lantern_pos := Vector2.ZERO   # the second cold lantern on the north path (onboarding)
 var loaded_save := false
 var rng := RandomNumberGenerator.new()
 var _taken: Array[Vector2] = []
@@ -69,6 +70,11 @@ func _ready() -> void:
 	var first := _add_lantern(start + Vector2(96, 0))
 	first.fuel = 0.0
 	start_lantern_pos = first.position
+	# A second cold old lantern on the north path (onboarding, owner 2026-11-27): a safe spot and an easy win.
+	var waypost := _add_lantern(start + Vector2(WAYPOST_OFFSET) * FogGrid.TILE)
+	waypost.fuel = 0.0
+	waypost_lantern_pos = waypost.position
+	_taken.append(waypost_lantern_pos)
 	# Near the hut: a woodpile that always regrows (no soft-lock) and a little scrap.
 	_add_resource("fuel", start + Vector2(-64, 32), 3, 5, 10.0, true)
 	_add_resource("scrap", start + Vector2(64, -32), 6, 6, 60.0, false)   # beside the hut, clear of its wall
@@ -233,7 +239,7 @@ func _place_landmarks() -> void:
 	_add_landmark("climb_cairn", "A stone cairn", "cairn", fog.tile_center(Vector2i(48, 94)),
 		"A small cairn, a chalk arrow on the top stone, pointing up.\nThe wind is worse up there. Come back when the marsh is lit. - Oswin")
 	_add_landmark("ledger", "Keepers' ledger", "ledger", start + Vector2(-96, -64),
-		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns shrink to a single mark, in a newer hand.\nUnder it: The north lamps first. Wake the WayLamp up there, then follow the stones east. - Oswin")
+		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns shrink to a single mark, in a newer hand.\nUnder it: My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, at the top. - Oswin")
 	_add_landmark("stone_way", "Carved stone", "stone", fog.tile_center(Vector2i(80, 60 + Y)),
 		"KEEP THE WAY TO THE WATER LIT.\nBelow the old letters, a fresh chalk arrow points east.")
 	_add_landmark("frames_east", "Old lantern frames", "frames", fog.tile_center(Vector2i(156, 62 + Y)),
@@ -407,18 +413,35 @@ func _build_terrain() -> void:
 			Art.cell(hut, Art.TOWN, Art.HUT_WALL[i], Vector2(i * FogGrid.TILE, FogGrid.TILE)))
 	terrain.add_child(hut)
 
+## The first 10 minutes (docs/PLAN_ONBOARDING.md, owner answers 2026-11-27, Option B). Tile offsets from the
+## hut's start tile, +x east, -y north. The main route: the lone Wickling (pack 20, -1,-10), this cold lantern
+## (+2,-12), a pack of 3 (pack 23, +5,-17), Oswin's crook with its small guard and a 6-scrap cache (-1,-19),
+## nest A (nest 4, +2,-30), one pack (pack 2, +13,-32), the Clinker (+7,-40), the WayLamp (+15,-45 once snapped).
+const WAYPOST_OFFSET := Vector2i(2, -12)
+const CROOK_OFFSET := Vector2i(-1, -19)
+const CLINKER_TILE := Vector2i(55, 96)   # a mid-boss near the WayLamp, before the Ashbrood (out of its wake range from the WayLamp)
+
 ## Keeper's Light prototype content, limited to the Hollow.
 func _place_hollow_prototype() -> void:
-	# A calm start (owner): nothing hostile within 16 tiles of the hut. The Clinker's post sits just past that.
-	var post_pos := _spot_in_region(Vector2i(58, 96), FogGrid.R_HOLLOW)   # owner: near the WayLamp
+	# The hut is calm (owner): nothing wakes at the hut, the woodpile or the ledger. The crook is about 18 tiles north.
+	var post_pos := _spot_in_region(Vector2i(HOLLOW_C) + CROOK_OFFSET, FogGrid.R_HOLLOW)
 	var post := _add_landmark("crook_post", "A keeper's post", "post", post_pos,
 		"A keeper's crook, fallen across the path. The lamp on it is cold, but whole.\nTied to it: Plant one where you mean to stand. The small ones will not come into it. - Oswin")
 	post.unlock_kind = "post"
 	var lure := PostLure.new()
 	lure.position = post_pos
 	$FogLayer/Wicklings.add_child(lure)
+	# Option B: a small guard on the crook, one shelled Wickling. The Clinker keeps its sleep and leash near the WayLamp.
+	var guard := EnemyPack.new()
+	guard.id = "hollow_post_guard"
+	guard.guard = true
+	guard.count = 1
+	guard.elites = 1
+	guard.level = Tuning.kl_post_guard_level
+	guard.position = post_pos
+	$FogLayer/Wicklings.add_child(guard)
 	var clinker := Clinker.new()
-	clinker.position = post_pos
+	clinker.position = _spot_in_region(CLINKER_TILE, FogGrid.R_HOLLOW)
 	$FogLayer/Wicklings.add_child(clinker)
 	for i in HOLLOW_NESTS.size():
 		var nest := WickNest.new()
@@ -434,36 +457,44 @@ func _place_hollow_prototype() -> void:
 		pack.spitwicks = int(row[2])
 		pack.elites = int(row[3])
 		pack.level = int(row[4])
+		if row.size() > 5:
+			pack.wake_radius = float(row[5]) * FogGrid.TILE
 		pack.position = _spot_in_region(row[0], FogGrid.R_HOLLOW)
 		$FogLayer/Wicklings.add_child(pack)
 	_place_caches()
 
-## Nests (4x for the 4x Hollow): three on the road north, the rest out on the flanks and in the south.
-## All at least 20 tiles from the hut. [tile, foe level]: 1 on the hut row and south, rising to 6 by the WayLamp;
+## Nests (4x for the 4x Hollow): one on the main route (nest 4, nest A: the first thing the Post Lamp unlocks,
+## more than its wake radius past the crook), the rest optional on the flanks and in the south, all at least
+## 30 tiles from the hut. [tile, foe level]: 1 on the hut row and south, rising to 6 by the WayLamp;
 ## hatchlings take their nest's level (DESIGN §9, level-gap wick).
 const HOLLOW_NESTS := [
-	[Vector2i(32, 100), 5], [Vector2i(42, 90), 6], [Vector2i(70, 96), 6],     # the road north (the first three)
-	[Vector2i(56, 112), 4], [Vector2i(36, 116), 3],
+	[Vector2i(32, 100), 5], [Vector2i(42, 90), 6], [Vector2i(76, 98), 6],     # the north flanks; nest 3 is clear of the WayLamp fight
+	[Vector2i(50, 106), 2], [Vector2i(22, 106), 3],                           # nest A on the route; nest 5 out west
 	[Vector2i(20, 112), 3], [Vector2i(80, 118), 3], [Vector2i(14, 130), 1], [Vector2i(84, 136), 1],
 	[Vector2i(30, 160), 1], [Vector2i(66, 162), 1], [Vector2i(48, 172), 1],
 ]
 
-## Fixed packs (4x for the 4x Hollow). [tile, how many, Spitwicks, shelled elites, foe level]:
-## tougher the closer to the WayLamp (north), quiet in the south. All at least 20 tiles from the hut.
-## Levels (DESIGN §9): 1 on the hut row and south of it, 2-4 through the middle, 5-6 by the WayLamp.
+## Fixed packs (4x for the 4x Hollow). [tile, how many, Spitwicks, shelled elites, foe level, (wake radius in tiles)]:
+## tougher the closer to the WayLamp (north), quiet in the south. Levels (DESIGN §9): 1 on the hut row and south
+## of it, 2-4 through the middle, 5-6 by the WayLamp. The main route (onboarding) holds three: pack 20 (the lone
+## Wickling) and pack 23 (3 Wicklings) wake closer than the rest, so nothing wakes at the hut; pack 2 is the
+## first Spitwick and elite, after nest A. The rest are optional side content: no Spitwick or elite within
+## 25 tiles of the hut, and none wakes from the route.
 const HOLLOW_PACKS := [
 	# Near the WayLamp: elites.
-	[Vector2i(70, 100), 5, 1, 1, 6], [Vector2i(60, 106), 5, 1, 1, 6], [Vector2i(36, 94), 4, 0, 1, 5],
-	[Vector2i(76, 112), 4, 1, 1, 5], [Vector2i(46, 104), 4, 1, 1, 5], [Vector2i(26, 100), 4, 0, 1, 5],
-	# The middle: Spitwicks.
-	[Vector2i(24, 110), 4, 1, 0, 4], [Vector2i(48, 112), 4, 1, 0, 4], [Vector2i(62, 118), 4, 1, 0, 4],
-	[Vector2i(30, 120), 4, 1, 0, 3], [Vector2i(82, 126), 4, 1, 0, 2],
+	[Vector2i(74, 102), 5, 1, 1, 6], [Vector2i(61, 104), 4, 1, 1, 4], [Vector2i(36, 94), 4, 0, 1, 5],
+	[Vector2i(76, 112), 4, 1, 1, 5], [Vector2i(34, 104), 4, 1, 0, 4], [Vector2i(26, 100), 4, 0, 1, 5],
+	# The middle: Spitwicks on the flanks.
+	[Vector2i(24, 110), 4, 1, 0, 4], [Vector2i(72, 120), 4, 1, 0, 4], [Vector2i(66, 122), 4, 0, 0, 2],
+	[Vector2i(30, 120), 4, 0, 0, 3], [Vector2i(82, 126), 4, 1, 0, 2],
 	[Vector2i(16, 122), 4, 0, 0, 2], [Vector2i(68, 132), 4, 0, 0, 1], [Vector2i(72, 150), 4, 0, 0, 1],
 	[Vector2i(86, 146), 4, 0, 0, 1], [Vector2i(80, 160), 4, 0, 0, 1],
 	# The quiet south and the west.
 	[Vector2i(16, 160), 3, 0, 0, 1], [Vector2i(34, 176), 3, 0, 0, 1], [Vector2i(60, 176), 3, 0, 0, 1],
-	[Vector2i(48, 160), 3, 0, 0, 1], [Vector2i(12, 138), 3, 0, 0, 1], [Vector2i(24, 150), 3, 0, 0, 1],
-	[Vector2i(28, 134), 3, 0, 0, 1], [Vector2i(70, 170), 3, 0, 0, 1],
+	[Vector2i(47, 126), 1, 0, 0, 1, 5],   # pack 20: the main route's lone first Wickling, 10 tiles north
+	[Vector2i(12, 138), 3, 0, 0, 1], [Vector2i(24, 150), 3, 0, 0, 1],
+	[Vector2i(53, 119), 3, 0, 0, 1, 6],   # pack 23: the main route's first pack, past the cold lantern
+	[Vector2i(70, 170), 3, 0, 0, 1],
 ]
 
 ## Side caches: an old keeper's stash at a dead end of each region, worth a detour. One-off (no regrowth).
@@ -471,6 +502,7 @@ const HOLLOW_PACKS := [
 const CACHES := [
 	[FogGrid.R_HOLLOW, Vector2i(12, 150), "scrap", 10], [FogGrid.R_HOLLOW, Vector2i(84, 168), "fuel", 10],
 	[FogGrid.R_HOLLOW, Vector2i(16, 104), "scrap", 8],
+	[FogGrid.R_HOLLOW, Vector2i(48, 117), "scrap", 6],   # at Oswin's crook: enough for a Post Lamp right away
 	[FogGrid.R_MARSH, Vector2i(122, 112), "scrap", 10], [FogGrid.R_MARSH, Vector2i(170, 172), "fuel", 10],
 	[FogGrid.R_RIDGE, Vector2i(20, 26), "glass", 6], [FogGrid.R_RIDGE, Vector2i(120, 46), "glass", 6],
 ]

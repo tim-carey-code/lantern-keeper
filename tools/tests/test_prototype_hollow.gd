@@ -27,10 +27,11 @@ func _process(_delta: float) -> void:
 	match frame:
 		2:
 			check(not Progress.is_unlocked("post"), "the Post Lamp starts locked")
-			check(get_tree().get_nodes_in_group("enemy_pack").size() == 24, "24 fixed Hollow packs are placed (4x for the 4x Hollow)")
-			check(get_tree().get_nodes_in_group("foe").filter(func(f): return f is WickNest).size() == 12, "twelve nests, three of them on the road north")
+			var all_packs := get_tree().get_nodes_in_group("enemy_pack")
+			check(all_packs.filter(func(p): return not p.guard).size() == 24 and all_packs.filter(func(p): return p.guard).size() == 1, "24 fixed Hollow packs are placed (4x for the 4x Hollow), plus the Post Lamp's small guard")
+			check(get_tree().get_nodes_in_group("foe").filter(func(f): return f is WickNest).size() == 12, "twelve nests, one of them on the road north")
 			var caches := get_tree().get_nodes_in_group("resource").filter(func(r): return r.label == "Old cache")
-			check(caches.size() == 7, "side caches wait at the dead ends (%d)" % caches.size())
+			check(caches.size() == 8, "side caches wait at the dead ends, and one at Oswin's crook (%d)" % caches.size())
 			var find := get_tree().get_nodes_in_group("landmark").filter(func(m): return m.id == "crook_post")
 			check(find.size() == 1, "the Post Lamp find is placed north of the hut")
 			check(Story.goal_target("build_post") == "crook_post", "the goal pointer leads to the Hollow find")
@@ -104,7 +105,8 @@ func _process(_delta: float) -> void:
 			var wl_pos: Vector2 = get_tree().get_nodes_in_group("waylamp").filter(func(w): return w.id == "hollow")[0].global_position
 			check(clink.global_position.distance_to(wl_pos) < 10.0 * FogGrid.TILE, "the Clinker guards its post near the WayLamp")
 			check(not clink.awake, "and sleeps there until you come close")
-			check(too_close.is_empty(), "a calm start: no pack, nest or Clinker within 16 tiles of the hut (%s)" % str(too_close))
+			# Owner 2026-11-27 (onboarding): the lone first Wickling may sit closer; test_prototype_onboarding checks nothing wakes at the hut.
+			check(too_close.size() == 1 and too_close[0].contains(str(main.fog.tile_of(start + Vector2(-1, -10) * FogGrid.TILE))), "a calm start: within 16 tiles of the hut only the lone first Wickling (%s)" % str(too_close))
 			var packs := get_tree().get_nodes_in_group("enemy_pack")
 			check(packs.any(func(p): return p.elites > 0), "the northern packs hold shelled elites")
 			# Tougher toward the WayLamp: the third of the packs nearest it outweighs the farthest third.

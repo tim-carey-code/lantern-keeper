@@ -28,6 +28,21 @@ func target_pos() -> Variant:
 			return null
 		"start_lantern":
 			return main.start_lantern_pos
+		"waypost_lantern":
+			return main.waypost_lantern_pos
+		"nest_a":
+			# The route's nest (nest 4, nest A); once it is out, the nearest nest still standing.
+			var best: Variant = null
+			var bd := INF
+			for n in get_tree().get_nodes_in_group("foe"):
+				if n is WickNest and not Progress.cleared.has(n.foe_id):
+					if n.foe_id == "nest_hollow_4":
+						return n.global_position
+					var d: float = n.global_position.distance_to(main.player.global_position)
+					if d < bd:
+						bd = d
+						best = n.global_position
+			return best
 		"passage":
 			return main.fog.tile_center(Vector2i(88, 136))
 		"marsh_entry":

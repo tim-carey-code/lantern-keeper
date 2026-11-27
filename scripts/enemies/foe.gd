@@ -159,6 +159,8 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 		if Progress.has_combat_upgrade("lingering_burn"):
 			_linger_t = Tuning.kl_linger_duration
 	if shell > 0.0:
+		if source == "beam":
+			Story.tip("shell")   # the first beam on a shell (onboarding: the Post Lamp's guard)
 		if source != "beam":
 			_clink = 0.2
 			if _impact_t <= 0.0:

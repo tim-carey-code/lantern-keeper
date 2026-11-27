@@ -93,7 +93,7 @@ func _process(_delta: float) -> void:
 			check(main.loaded_save, "starting the game loads the save")
 			var lamps := get_tree().get_nodes_in_group("lantern")
 			var found = lamps.filter(func(x): return x.position == lamp_pos)
-			check(lamps.size() == 2 and found.size() == 1, "lanterns come back (%d)" % lamps.size())
+			check(lamps.size() == 3 and found.size() == 1, "lanterns come back: the two old lamps and the built one (%d)" % lamps.size())
 			if found.size() == 1:
 				check(found[0].kind == "reservoir" and absf(found[0].fuel - 77.0) < 2.0, "with their type and fuel (%.1f)" % found[0].fuel)
 			check(Inventory.get_count("fuel") == 12 and Inventory.get_count("scrap") == 7, "inventory comes back")

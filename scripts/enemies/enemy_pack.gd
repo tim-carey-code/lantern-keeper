@@ -7,6 +7,8 @@ var count := 4
 var spitwicks := 0
 var elites := 0                 # shelled Wicklings in the pack
 var level := 1                  # foe level of every member (HOLLOW_PACKS in main.gd; wick scales with the level gap)
+var wake_radius := -1.0         # px; below 0: Tuning.kl_pack_wake_radius (the first route packs wake closer)
+var guard := false              # the small guard on the Post Lamp find (wakes at Tuning.kl_post_guard_wake_radius)
 var awake := false
 var _pulse := 0.0
 
@@ -21,7 +23,7 @@ func _process(delta: float) -> void:
 	visible = true
 	_pulse += delta
 	var player := get_tree().get_first_node_in_group("player") as Node2D
-	if not awake and player and player.global_position.distance_to(global_position) <= Tuning.kl_pack_wake_radius:
+	if not awake and player and player.global_position.distance_to(global_position) <= wake_px():
 		awake = true
 		for i in count:
 			var foe: Foe
@@ -46,6 +48,12 @@ func _process(delta: float) -> void:
 			awake = false
 			visible = false
 	queue_redraw()
+
+## How close the keeper must come to wake this pack (px).
+func wake_px() -> float:
+	if guard:
+		return Tuning.kl_post_guard_wake_radius
+	return wake_radius if wake_radius >= 0.0 else Tuning.kl_pack_wake_radius
 
 func _draw() -> void:
 	if awake:
