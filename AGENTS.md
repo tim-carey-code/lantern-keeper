@@ -39,6 +39,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_leveling.tscn   # wick in a full Hollow clear vs the level targets
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_hollow.tscn # prototype branch only
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_onboarding.tscn # prototype: the first 10 minutes' main route
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_loop.tscn # prototype: the loop route, one-way Ridge, WayLamp fast travel
 python3 tools/check_docs.py                                                                    # docs match the code
 # A test that fails to parse never quits: wrap runs in `timeout 120`.
 # In a fresh checkout the first --import can crash (Godot 4.7.2) and leave the font unimported, and then every
@@ -66,7 +67,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
 - Tests strip joypad events first: a real controller on this PC would otherwise move the test keeper (this caused flaky runs).
 - Automated runs are silent (`--audio-driver Dummy`). Don't play sound through the owner's speakers.
 - Visual check without the owner's screen: render frames on a virtual display with `tools/capture/capture.tscn`
-  (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
+  (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map; the loop: loop_waylamp, loop_marsh_climb, loop_ridge_entry, loop_travel). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
 - README images: `tools/capture/readme_shots.sh` renders the staged `readme_*` views into `docs/screenshots/` (look at each one before committing).
 - Art: 16x16 sprites drawn at 2x, palette in `source/palette/`. Kenney sheets are recoloured from `source/vendor/`; placeholders come from `tools/art/make_placeholders.py`.
 

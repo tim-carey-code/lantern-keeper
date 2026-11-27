@@ -105,6 +105,7 @@ var waylamp_radius := 420.0
 var waylamp_swarm := 4                   # bold Wicklings drawn to a kindling WayLamp
 var waylamp_clear_radius := 160.0        # px: no building this close, so no lantern's bright core covers it
 var waylamp_sap_per_wick := 1.5          # seconds of kindling undone per second, per Wickling on it
+var travel_hunt_radius := 384.0          # px (12 tiles): a foe hunting the keeper this close blocks WayLamp fast travel
 
 # Light repels Wicklings; only a dying lantern can be drained (PROTOTYPE)
 var dying_frac := 0.25                   # under this share of its tank a lantern is "dying"
