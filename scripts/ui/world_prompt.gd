@@ -20,6 +20,8 @@ func _process(_delta: float) -> void:
 ## The lines shown over the current target: [[button, text], ...]. Public for tests.
 func lines_for(t: Node) -> Array:
 	var player = _player()
+	if t is Landmark and t.upgrade != "":
+		return [[InputHint.key("interact"), "Look again" if t.is_taken() else "Take"]]
 	if t is Landmark:
 		return [[InputHint.key("interact"), "Read again" if t.is_read() else "Read"]]
 	if t is Lantern and t.kind == "mirror":

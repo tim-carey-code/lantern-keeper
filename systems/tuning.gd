@@ -57,6 +57,12 @@ var wind_radius_mult := 0.7
 var wind_creep_mult := 1.5
 
 # Hand lamp (dims in the dark, never goes out)
+# Upgrades found in the valley: a keeper's satchel and a lamp glass in each region (placeholders)
+var carry_base := 30                       # carried of each resource before any satchel
+var carry_upgrade_step := 10               # each satchel: carry this many more of everything
+var lamp_upgrade_radius := 12.0            # each lamp glass: hand lamp light reaches this much further (px)
+var lamp_upgrade_dim_mult := 0.75          # ...and dims this much slower in the dark (x per glass)
+var lamp_upgrade_ward_mult := 0.85         # ...and the ward costs this much charge (x per glass)
 var hand_lamp_max_radius := 104.0
 var hand_lamp_ember_radius := 44.0
 var hand_lamp_drain_per_sec := 1.0 / 45.0   # full -> ember in 45 s of darkness
@@ -65,7 +71,7 @@ var hand_lamp_charge_per_fuel := 0.5        # auto-burns 1 carried fuel when low
 
 # PROTOTYPE: Wicklings, the flare and warmth (branch proto/wicklings)
 var wick_enabled := true
-var wick_first_delay := 60.0        # grace period at the start (s): time to relight the first lantern
+var wick_first_delay := 25.0        # grace period at the start (s): time to relight the first lantern (owner: 25 s)
 var wick_spawn_sec := 12.0
 var wick_max := 7
 var wick_hp := 3.0

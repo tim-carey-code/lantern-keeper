@@ -4,7 +4,7 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter. The last frame is the one to look at.
+## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, upgrade. The last frame is the one to look at.
 ## README views (staged, pop-ups hidden; rendered by tools/capture/readme_shots.sh): readme_hollow, readme_ward,
 ## readme_marsh, readme_ridge, readme_map, readme_lanterns, readme_relight (an animation: use every frame).
 
@@ -88,6 +88,13 @@ func _process(_delta: float) -> void:
 				Progress.unlock("mirror")
 			"readme_hollow", "readme_ward", "readme_marsh", "readme_ridge", "readme_map", "readme_lanterns", "readme_relight":
 				_readme_setup()
+			"upgrade":
+				for m in get_tree().get_nodes_in_group("landmark"):
+					if m.id == "satchel_hollow":
+						_lantern(m.global_position + Vector2(120, 40))
+						main.player.position = m.global_position + Vector2(30, 20)
+					if m.id == "lampglass_hollow":
+						_lantern(m.global_position + Vector2(-90, -30))
 			"map":
 				_lantern(s + Vector2(-160, 64))
 				for i in 60:

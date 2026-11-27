@@ -42,6 +42,7 @@ func save(main: Node) -> bool:
 		"progress": {
 			"unlocks": Progress.unlocks.duplicate(),
 			"selected": Progress.selected,
+			"upgrades": Progress.upgrades.duplicate(),
 			"regions_seen": Progress.regions_seen.keys(),
 			"notes_read": Progress.notes_read.keys(),
 		},
@@ -108,6 +109,11 @@ func load_into(main: Node) -> bool:
 	for k in p["unlocks"]:
 		Progress.unlocks[k] = bool(p["unlocks"][k])
 	Progress.selected = p["selected"]
+	Progress.upgrades = {}
+	var ups: Dictionary = p.get("upgrades", {})
+	for k in ups:
+		Progress.upgrades[str(k)] = str(ups[k])
+	Progress.apply_upgrades()
 	Progress.regions_seen = {}
 	for r in p["regions_seen"]:
 		Progress.regions_seen[int(r)] = true

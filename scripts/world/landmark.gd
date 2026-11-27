@@ -1,7 +1,8 @@
 class_name Landmark
 extends Node2D
 ## Something the light reveals that tells a piece of the valley's story.
-## Interact to read it. Some landmarks unlock a lantern type (the pumphouse).
+## Interact to read it. Some landmarks unlock a lantern type (the pumphouse); some are upgrades
+## you take (a keeper's satchel: carry more; a lamp glass: a better hand lamp).
 
 const REVEAL_BELOW := 0.35
 
@@ -10,6 +11,7 @@ var title := ""
 var text := ""
 var look := "stone"        # stone, ledger, frames, chalk, pumphouse
 var unlock_kind := ""
+var upgrade := ""          # "carry" or "lamp": taken the first time it is read
 var glow: PointLight2D
 var _spotted := false
 
@@ -43,8 +45,17 @@ func activate() -> void:
 	if unlock_kind != "" and not Progress.is_unlocked(unlock_kind):
 		Progress.unlock(unlock_kind)
 		body += "\n\nNew lantern: %s. Pick it in the lantern list (Tab / Y)." % Lantern.display(unlock_kind)
+	if upgrade != "" and Progress.take_upgrade(id, upgrade):
+		Sfx.play("unlock", -6.0)
+		if upgrade == "carry":
+			body += "\n\nYou can carry %d of each now." % Inventory.carry_limit
+		else:
+			body += "\n\nYour hand lamp reaches further, dims more slowly and wards for longer."
 	Progress.note_opened.emit(title, body)
 	queue_redraw()
+
+func is_taken() -> bool:
+	return upgrade != "" and Progress.upgrades.has(id)
 
 func _process(_delta: float) -> void:
 	var v := is_revealed()
@@ -120,6 +131,10 @@ func _draw() -> void:
 		"coat":
 			draw_colored_polygon(PackedVector2Array([Vector2(-10, 10), Vector2(-7, -8), Vector2(0, -12), Vector2(7, -8), Vector2(10, 10)]), Color(0.36, 0.2, 0.14))
 			draw_rect(Rect2(-2, -6, 4, 14), Color(0.21, 0.31, 0.47))
+		"satchel", "lampglass":
+			# Taken: what is left looks dull and empty.
+			var tint := Color(0.42, 0.42, 0.5, 0.85) if is_taken() else Color.WHITE
+			Art.sprite(self, Art.placeholder("satchel.png" if look == "satchel" else "lamp_glass.png"), Vector2(0, 14), tint)
 		"lens":
 			draw_arc(Vector2(-3, 0), 11.0, PI * 0.6, PI * 1.45, 16, Color(0.64, 0.74, 0.83), 3.0)
 			draw_arc(Vector2(3, 2), 11.0, -PI * 0.45, PI * 0.4, 16, Color(0.64, 0.74, 0.83), 3.0)

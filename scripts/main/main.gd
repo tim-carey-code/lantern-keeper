@@ -59,6 +59,7 @@ func _ready() -> void:
 	_add_resource("fuel", start + Vector2(-64, 32), 3, 5, 10.0, true)
 	_add_resource("scrap", start + Vector2(64, -32), 6, 6, 60.0, false)   # beside the hut, clear of its wall
 	_place_landmarks()
+	_place_upgrades()
 	_scatter()
 	queue_redraw()
 	# Continue from the save unless "New game" was just chosen.
@@ -360,3 +361,38 @@ func _draw() -> void:
 	for i in 3:
 		Art.cell(self, Art.TOWN, Art.HUT_ROOF[i], hut + Vector2(i * t, 0))
 		Art.cell(self, Art.TOWN, Art.HUT_WALL[i], hut + Vector2(i * t, t))
+
+## Upgrades in the far corners of each region: a keeper's satchel (carry more) and a lamp glass
+## (a better hand lamp). Texts are DRAFT in STORY.md until the owner approves them.
+func _place_upgrades() -> void:
+	var u := _add_landmark("satchel_hollow", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(7, 55), FogGrid.R_HOLLOW),
+		"A keeper's satchel, hung on a nail in a fallen wall.\nPatched many times, and still sound.")
+	u.upgrade = "carry"
+	u = _add_landmark("lampglass_hollow", "A lamp glass", "lampglass", _spot_in_region(Vector2i(11, 82), FogGrid.R_HOLLOW),
+		"A spare glass for a hand lamp, wrapped in a rag.\nIt is clearer than yours.")
+	u.upgrade = "lamp"
+	u = _add_landmark("satchel_marsh", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(88, 54), FogGrid.R_MARSH),
+		"A satchel wrapped in oilcloth, wedged under an old post.\nIt is dry inside.")
+	u.upgrade = "carry"
+	u = _add_landmark("lampglass_marsh", "A lamp glass", "lampglass", _spot_in_region(Vector2i(97, 79), FogGrid.R_MARSH),
+		"A lamp glass in a tin box, packed in dry moss.\nNot a crack in it.")
+	u.upgrade = "lamp"
+	u = _add_landmark("satchel_ridge", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(46, 6), FogGrid.R_RIDGE),
+		"A satchel under a flat stone, its strap mended with wire.\nSomeone meant to come back for it.")
+	u.upgrade = "carry"
+	u = _add_landmark("lampglass_ridge", "A lamp glass", "lampglass", _spot_in_region(Vector2i(7, 20), FogGrid.R_RIDGE),
+		"A thin lamp glass from the glazier's racks, cut clear as water.\nIt fits your hand lamp.")
+	u.upgrade = "lamp"
+
+## The nearest walkable ground or boardwalk tile of a region to a wanted tile.
+func _spot_in_region(want: Vector2i, region_id: int) -> Vector2:
+	for r in 10:
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				var t := want + Vector2i(dx, dy)
+				if not fog.in_bounds(t):
+					continue
+				var ter := fog.terrain_of(t)
+				if (ter == FogGrid.T_GROUND or ter == FogGrid.T_BOARDWALK) and fog.region[fog.idx(t)] == region_id:
+					return fog.tile_center(t)
+	return fog.tile_center(want)

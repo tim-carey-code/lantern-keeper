@@ -18,8 +18,8 @@
 | **M5a Story and guidance** (owner decision) | done, playtested by the owner ("that was great"): opening (title card, name entry, letter), 18 goals for the current regions with a HUD goal line, journal (goals, story so far, notes), goal pointer (auto: Hollow only), 12 first-time tips, rewritten landmarks + 4 new ones. Follow-ups: pause while reading, HUD redesign (M5b) |
 | **M5b HUD redesign** (owner decision) | built, plus playtest follow-ups (see DECISIONS); awaiting owner playtest of the follow-ups |
 | **WayLamps prototype** (owner decision) | built on branch `proto/waylamps`: one WayLamp per region holds it; healthy light repels Wicklings; only dying lanterns can be drained. Awaiting owner playtest; this is the gate before the Still Lake |
-| People and new creatures (owner request) | plan drafted in `docs/PLAN_NPCS_ENEMIES.md`; awaiting owner markup; would start after the WayLamp playtest |
-| M5 Full v1 content + save/load | in progress: save/load done; Windward Ridge done (glass, Hooded Lamp, Mirror Post, ridge wind); next the WayLamp playtest, then the Still Lake |
+| **M5c-M5d People and creatures** (owner decision 2026-11-27) | approved for v1, all before the Still Lake: people with short spoken lines and errands, four creatures. Plan in `docs/PLAN_NPCS_ENEMIES.md`; starts after the WayLamp playtest |
+| M5 Full v1 content + save/load | in progress: save/load done; Windward Ridge done (glass, Hooded Lamp, Mirror Post, ridge wind); carry and hand-lamp upgrades done (3 satchels, 3 lamp glasses); next the WayLamp playtest, then people and creatures, then the Still Lake |
 | M6 Polish, playtest, Linux build | after M5 |
 
 ### What M5 now contains
@@ -134,7 +134,7 @@
 - **Wind gusts** (if not started earlier), with warnings and sheltered tiles.
 - Region 3 (The Windward Ridge): constant wind, glass, the **Hooded Lamp** and the **Mirror Post**.
 - Region 4 (The Still Lake): thick fog that only mirror beams can cut, the great lamp, and the finale where the fog lifts.
-- All mystery objects (15–25) placed. Carry-limit and hand-lamp upgrades placed.
+- All mystery objects (15–25) placed. Carry-limit and hand-lamp upgrades placed *(done 2026-11-27)*.
 - **Save/load:** one slot plus autosave. Saves lanterns (type, position, fuel, cold/lit), the fog grid, revealed/remembered tiles, resources, unlocks, and objects found.
 
 **Done when:** the full game can be finished in one sitting in about 1–2 hours. Saving and loading at any point restores the same state. Every item on the *IN* list in `DESIGN.md` is checked off.

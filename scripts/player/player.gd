@@ -40,7 +40,7 @@ func _ready() -> void:
 # --- Hand lamp -------------------------------------------------------------
 
 func get_light_radius() -> float:
-	var r := lerpf(Tuning.hand_lamp_ember_radius, Tuning.hand_lamp_max_radius, lamp_charge)
+	var r := lerpf(Tuning.hand_lamp_ember_radius, Progress.lamp_max_radius(), lamp_charge)
 	return maxf(r, Tuning.ward_radius * _ward_grow)   # the ward also pushes the fog back
 
 func in_lantern_light() -> bool:
@@ -53,7 +53,7 @@ func update_hand_lamp(delta: float) -> void:
 	if in_lantern_light():
 		lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_recharge_per_sec * delta)
 	else:
-		lamp_charge = maxf(0.0, lamp_charge - Tuning.hand_lamp_drain_per_sec * delta)
+		lamp_charge = maxf(0.0, lamp_charge - Progress.lamp_drain_per_sec() * delta)
 		# Auto top-up from carried fuel keeps the lamp alive on long walks, but never feeds the ward.
 		if lamp_charge < 0.25 and _since_ward > 4.0 and Inventory.spend("fuel", 1):
 			lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_charge_per_fuel)
@@ -142,7 +142,7 @@ func update_ward(delta: float, held: bool) -> void:
 	_since_ward = 0.0 if warding else _since_ward + delta
 	_ward_grow = move_toward(_ward_grow, 1.0 if warding else 0.0, delta * (5.0 if warding else 3.0))
 	if warding:
-		lamp_charge = maxf(0.0, lamp_charge - Tuning.ward_drain_per_sec * delta)
+		lamp_charge = maxf(0.0, lamp_charge - Progress.ward_drain_per_sec() * delta)
 		apply_ward(delta)
 
 ## Burns and pushes back every Wickling inside the glow (including ones right on top of you).

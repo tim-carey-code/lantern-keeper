@@ -3,9 +3,9 @@
 > **Synced to commit 9a2b9cc** (2026-11-26). The title card, letter, goals 1-18, journal entries 1-8, tips and the 13 built landmark texts below match `systems/story/story.gd` and `scripts/main/main.gd` as built. **Built** = in the game at 9a2b9cc; **Planned** = written, not built yet.
 > **Owner-reviewed 2026-11-26** (milestone M5a). **DECIDED** lines are owner decisions. **DEFAULT** lines keep the draft until the owner says otherwise.
 > Sources: DECISIONS.md (overrides), `systems/story/story.gd`, `scripts/main/main.gd`, DESIGN.md, ROADMAP.md.
-> Voice for all in-game text: short, plain sentences. Calm, a little sad, a little eerie. Never horror. No dialogue.
+> Voice for all in-game text: short, plain sentences. Calm, a little sad, a little eerie. Never horror. H. never speaks or appears; people met in the valley may speak short lines (DECIDED 2026-11-27).
 
-NPCs and new enemies: see PLAN_NPCS_ENEMIES.md (proposal)
+People and new creatures: see PLAN_NPCS_ENEMIES.md (approved for v1 on 2026-11-27, before the Still Lake).
 
 ---
 
@@ -30,18 +30,20 @@ DECIDED: keep "the new keeper answers a letter".
 DECIDED: the player types a name at a new game; it signs the journal.
 Built: the name prompt comes after the title card (up to 16 characters; left empty, the keeper is "Keeper"). The journal is titled "<name>'s journal".
 
-**The last keeper.** Suggested name **Hester Vane**; alternatives **Tobin Ash**, **Nell Corrie**, **Oswin Reed**. Signs every note "— H.", so the full name can change cheaply. Kept the valley alone after the others left: tired, stubborn, kind. Went ahead to the Lake, lost their coat on the Ridge, left a half-built mirror on the shore. Fate not confirmed. This draft avoids pronouns for them where it can.
+**The last keeper: Oswin Reed.** Kept the valley alone after the others left: tired, stubborn, kind. Went ahead to the Lake, lost his coat on the Ridge, left a half-built mirror on the shore. Fate not confirmed. His full name does not appear in the game yet.
 
-DECIDED: Hester Vane, who signs notes "— H.". Pronouns: not chosen yet, so texts avoid them (DEFAULT).
-NOTE (as built): the game prints the sign-off with a plain hyphen, "- H.", and the built texts below follow the code. The game font also has the em dash, so "— H." is still possible if the owner prefers it.
+DECIDED (2026-11-27): the last keeper is **Oswin Reed**, a man ("he"). (Was Hester Vane; Tobin Ash and Nell Corrie were the other options.)
+DECIDED (2026-11-27): the sign-off uses a plain hyphen, "- H.", as built.
+OWNER (open): with the name Oswin Reed, should he sign "- O." instead of "- H."? That changes "H." to "O." in every built text (the letter, his notes, journal entries, goals, the coat's stitched initial). Until decided, the game and this file keep "H.".
 
 **The Soul of the Wick.**
 - A living darkness that feeds on flame. It rose out of the Still Lake, coiled around the great lamp and drank its light.
-- Then it was hungry for the rest of the valley. It never speaks and has no face: a coil of black that moves like smoke under water.
+- Then it was hungry for the rest of the valley. It never speaks. A coil of black that moves like smoke under water, with big pale eyes.
 - THE WICK REMEMBERS EVERY FLAME hints that it was once part of the light, or made from it.
 - **Left unexplained:** why it rose, whether it was always there, whether the keepers woke it, where it goes when driven off.
 
-DECIDED: "it". In-world texts say "it", "the dark" or "the Soul of the Wick"; never a name or a face.
+DECIDED: "it". In-world texts say "it", "the dark" or "the Soul of the Wick"; never a name.
+DECIDED (2026-11-27): the Soul of the Wick has **big pale eyes**. The old "no face" rule is dropped for it and for the creatures.
 
 **The Wicklings.** Small pieces of the Soul of the Wick that wander the dark. They crawl toward warmth, drain lanterns and chill the keeper. Hungry, not cruel: moths turned inside out. More and bolder the farther you go from the hut *(planned: at 9a2b9cc they come at the same rate everywhere)*.
 
@@ -229,6 +231,37 @@ DECIDED: keep the plate.
 
 ---
 
+### Upgrade finds (6): DRAFT for owner approval
+Built on `main`: one keeper's satchel and one lamp glass in a far corner of each region. Reading one takes it: a satchel lets you carry 10 more of each resource; a lamp glass makes the hand lamp reach further, dim more slowly and ward for longer. Each quoted line is one line on screen.
+
+**`satchel_hollow`**, "A keeper's satchel" (far west of the Hollow)
+> A keeper's satchel, hung on a nail in a fallen wall.
+> Patched many times, and still sound.
+
+**`lampglass_hollow`**, "A lamp glass" (south of the Hollow)
+> A spare glass for a hand lamp, wrapped in a rag.
+> It is clearer than yours.
+
+**`satchel_marsh`**, "A keeper's satchel" (north-east Reedmarsh)
+> A satchel wrapped in oilcloth, wedged under an old post.
+> It is dry inside.
+
+**`lampglass_marsh`**, "A lamp glass" (south-east Reedmarsh)
+> A lamp glass in a tin box, packed in dry moss.
+> Not a crack in it.
+
+**`satchel_ridge`**, "A keeper's satchel" (north Ridge)
+> A satchel under a flat stone, its strap mended with wire.
+> Someone meant to come back for it.
+
+**`lampglass_ridge`**, "A lamp glass" (west Ridge, below the glazier's workshop)
+> A thin lamp glass from the glazier's racks, cut clear as water.
+> It fits your hand lamp.
+
+Added under the note when it is taken (one of these):
+> You can carry {40, 50 or 60} of each now.
+> Your hand lamp reaches further, dims more slowly and wards for longer.
+
 ## 7. Journal "story so far"
 
 One entry after each beat, written by the keeper. **Built:** entries 1-8 (as in `Story.ENTRIES`). **Planned:** 9-12.
@@ -316,7 +349,7 @@ DEFAULT: the ending as drafted.
 1. **Premise:** keep the letter from the last keeper, or another way in? **DECIDED:** keep the letter.
 2. **H.'s fate:** open (hand lamp + far light, as drafted), confirmed alive, or never mentioned? **DEFAULT:** open, as drafted.
 3. **Names:** last keeper, the order, and whether the player keeper has a name. **DECIDED:** Hester Vane ("H."); the player types a name. **DEFAULT:** the order stays nameless.
-4. **The Soul of the Wick:** "it" or "he"; and is it only hungry, or something more? **DECIDED:** "it", no name, no face. **DEFAULT:** the rest stays unexplained, as drafted.
+4. **The Soul of the Wick:** "it" or "he"; and is it only hungry, or something more? **DECIDED:** "it", no name; big pale eyes (2026-11-27, replacing "no face"). **DEFAULT:** the rest stays unexplained, as drafted.
 5. **The "why" hint:** keep the great lamp plate, or keep "why" fully silent for now? **DECIDED:** keep the plate.
 6. **Pointer:** off on entering the marsh, or later? **DECIDED:** off on reaching the Reedmarsh (built).
 7. **Finale:** calm puzzle or light pressure? **DECIDED:** some pressure.
@@ -324,7 +357,7 @@ DEFAULT: the ending as drafted.
 
 ---
 
-## 11. WayLamps (DRAFT for owner approval)
+## 11. WayLamps (text DECIDED 2026-11-27; the mechanic is a prototype on branch `proto/waylamps`)
 
 > **Draft, not in the game at 9a2b9cc.** Story text for the WayLamp prototype (DESIGN.md §8, "WayLamps (PROTOTYPE, owner playtest pending)"). If approved, mirror it in `story.gd` and `main.gd` like the rest of this file. Ids and titles are suggestions.
 
