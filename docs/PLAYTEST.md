@@ -1,10 +1,18 @@
 # Playtests
 
+## Next: M1a, fire in the Hollow (not ready yet)
+
+Being built on `proto/kl-m1a`. When a build is ready, how to run it goes here. The owner checks are in `docs/ROADMAP.md` (M1a, checks 1-11), on a pad only. Record the answers here, including which fire skills to keep, rework or cut (check 8), and whether to keep the Beam and Hearth ring (check 9).
+
+---
+
 ## PROTOTYPE build (branch `proto/kl-hollow`): Keeper's Light in the Hollow
 
 Open the `proto/kl-hollow` worktree in Godot and press F5. This build uses a separate prototype save, so your regular save remains untouched. Automated checks use the Dummy audio driver; normal play keeps audio enabled.
 
 Since the loop (branch `proto/kl-loop`), the passage east is open; the old climb north is closed by fallen stones until you come back down it from the Ridge. Start by relighting the hut lantern. Find the red pulse north of the hut, fight the Clinker for the Post Lamp, and burn out the nests with a built lantern's bright core. The blue glints mark two guarded upgrades. Feed the Hollow WayLamp 15 fuel to wake the Ashbrood; break its shell with the beam, then learn its second phase. The level-up screen pauses play and offers three of twelve upgrades.
+
+> **Correction (2026-11-27, AUDIT M16, M17):** parts of this paragraph are older than the first-10-minutes pass. Since then one shelled Wickling guards the crook, and the Clinker is a mid-boss near the WayLamp, not on the post. For "two guarded upgrades": no lure or guard for the upgrade finds was found in the code (**uncertain**; searched, not run). The paragraph is kept as written.
 
 **Controls:** beam: hold left click / RT; burst: F / RB; dash: Shift / LT. Move: WASD / left stick. Interact/read/refuel: E / A. Build: Space / X. F1 opens the tuning panel; Esc / Start pauses.
 
@@ -29,6 +37,19 @@ Questions (decision gate):
 6. Was the Ashbrood tense but fair? Did you understand each phase?
 7. Did the lures pull you along? Did the Hollow still feel empty anywhere?
 8. Did you still build lamps, and why?
+
+### Results: 2026-11-27 (later), owner: fuel and abilities
+
+The playtest that led to the re-plan. The owner's notes came as messages and were logged in DECISIONS (commits `42bcdee` and `c7b457f`; the first wording is quoted from `42bcdee`). **Uncertain:** which build was played. The notes were logged after the first-10-minutes merge (`f126af7`) and before the loop was merged, so most likely `proto/kl-hollow` at about `f126af7`.
+
+1. **Fuel and tending.** Owner: "fuel is ABUNDANT, its everywhere, its pretty much useless... i dont want that to be a chore i didnt want that anyway but even less so because its an ARPG now". → Lamp tending is not wanted. Owner: "fuel as flasks". → Fuel becomes lamp-oil flasks (M1a), and tending goes (M1b).
+2. **The abilities.** Owner: "the beam and the ward idk i feel like we need to shoot flaming light fireballs or some shit instead". → Light-fire projectile and area skills replace the beam-and-ward kit as the core (M1a). ("The ward" most likely means the burst, which replaced the ward in play; GAME_PLAN, uncertainty 7. The approved kit settles it either way.)
+3. **The beam.** Owner: "keep as optional for now and we will see if i want to get rid of it when i play it". → The Beam is optional, in LB at level 1 (M1a, check 9).
+4. **An action bar.** Owner: "i guess we need an action bar". → The action bar (M1a).
+5. **Leveling.** Level 8 on the Ashbrood kill, as tuned. (The plan later moved the Hollow's end to level 6, in M1b.)
+6. **The docs.** Owner: "I think we need to re-plan this entire game and rethink all of the docs". → The audit, the reference brief, the game plan, an independent review, and plan v2, approved on 2026-11-27 (DECISIONS, "the game plan approved").
+
+**Not answered:** the extra question sets above (bigger regions, leveling, the level gap, the first 10 minutes, the loop). M1a and M1b change most of what they ask about. A word on any of them is still welcome.
 
 ### Results: 2026-11-27, owner (gamepad only so far)
 1. Aiming and firing the beam feels good. **Hit feedback felt off** → added a hit flash, screen shake on the burst, kills and big hits (a short freeze on a kill was already in).
