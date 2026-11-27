@@ -1,211 +1,229 @@
-# Lantern Keeper — Roadmap (Draft v1)
+# Lantern Keeper — Roadmap
 
-> Status: **draft, awaiting owner review.** Scope is fixed by the *Version 1 scope box* in `DESIGN.md`. Any new idea goes to the *Maybe later* list there, not into a milestone.
-> No time estimates yet. A milestone is finished only when its "done when" check passes.
+> Rewritten 2026-11-27 from `docs/replan/GAME_PLAN.md` §18 (approved by the owner; DECISIONS 2026-11-27, "the game plan approved"). **DRAFT for owner approval** (GAME_PLAN §17). The version before the rewrite is `docs/archive/ROADMAP_PRE_REPLAN.md`.
+> Scope follows the game plan and this roadmap. New ideas go to "Maybe later" in `DESIGN.md` §18, not into a milestone.
+> No time estimates. A milestone is finished only when its owner checks pass.
 
 ---
 
-## Status (2026-11-26)
+## Status (2026-11-27)
 
 | Milestone | State |
 |---|---|
-| M0 Setup | done |
-| M1 Core prototype (light, fuel, fog) | done, gate passed |
-| M2 Resources and gathering | done, gate passed |
-| M3 Reedmarsh + Reservoir Lamp (+ wind moved up) | done, gate passed |
-| M4 Atmosphere (art, fog, font, sound) | mostly done. Left: night ambience recordings (owner, Freesound), owner's lantern art (placeholders in place) |
-| **M4b Light-based conflict** (added by owner decision) | done, playtested: Wicklings, warding glow on lamp charge, warmth, fainting, ember/scrap drops |
-| **M5a Story and guidance** (owner decision) | done, playtested by the owner ("that was great"): opening (title card, name entry, letter), 18 goals for the current regions with a HUD goal line, journal (goals, story so far, notes), goal pointer (auto: Hollow only), 12 first-time tips, rewritten landmarks + 4 new ones. Follow-ups: pause while reading, HUD redesign (M5b) |
-| **M5b HUD redesign** (owner decision) | built, plus playtest follow-ups (see DECISIONS); awaiting owner playtest of the follow-ups |
-| **WayLamps prototype** (owner decision) | built on branch `proto/waylamps`: one WayLamp per region holds it; healthy light repels Wicklings; only dying lanterns can be drained. Awaiting owner playtest; this is the gate before the Still Lake |
-| **M5c People, part 1** (owner decision 2026-11-27) | planned, after the WayLamp playtest: talk panel, journal People/Errands pages, save section; Amos (Hollow), Maud (Reedmarsh), Kit (Ridge); the Gutterkite. Ends in an owner playtest. Plan: `docs/PLAN_NPCS_ENEMIES.md` |
-| **M5d The Lakeshore** (owner decision 2026-11-27) | planned, after M5c: a new small region between the Ridge and the Lake (down the old steps), with its WayLamp, the Fogstilt and Ebba. Design draft for owner markup. Ends in an owner playtest |
-| **M5e People and creatures, part 3** | planned, after M5d: the Slowwater, the Clinker and Ivo. Ends in an owner playtest; then the Still Lake |
-| M5 Full v1 content + save/load | in progress: save/load done; Windward Ridge done (glass, Hooded Lamp, Mirror Post, ridge wind); carry and hand-lamp upgrades done (3 satchels, 3 lamp glasses); next the WayLamp playtest, then people and creatures, then the Still Lake |
-| M6 Polish, playtest, Linux build | after M5 |
+| History: M0-M5b, the prototypes and the loop | done; see "History" at the end |
+| **M1a** Fire in the Hollow | being built on `proto/kl-m1a` (not merged; nothing in DESIGN describes it as built) |
+| **M1b** No more tending | planned, after M1a passes. **Merge to `main` once M1b passes.** |
+| **M2** Builds | planned |
+| **M3** Loot | planned |
+| **M4** People, part 1 | planned. Needs the owner's pronoun call for Amos (and the others before their milestones) |
+| **M5** The Reedmarsh | planned |
+| **M6** The Windward Ridge | planned |
+| **M7** The Lakeshore | planned |
+| **M8** The Still Lake and the finale | planned |
+| **M9** Polish and the Linux build | planned |
 
-### What M5 now contains
-- Region 3 **The Windward Ridge**: strong wind, **glass** (third resource), **Hooded Lamp** and **Mirror Post**.
-- Region 4 **The Still Lake**: fog too thick for normal light, Mirror Post chains, the cold great lamp.
-- **Finale: the Soul of the Wick** (a light confrontation using the ward + mirror chains), then the valley stays open as a sandbox.
-- Mystery: grow from 5 landmarks to 15-25, with hints at the Soul of the Wick.
-- Wickling variety per region (kept small), and difficulty that rises with distance from the hut.
-- **Save/load** (single slot + autosave).
-- Update DESIGN.md: combat, warmth and the finale are now IN (see DECISIONS).
+**Rules for every milestone**
+- Every milestone ends with an owner playtest **on a gamepad**. Its checks go in `docs/PLAYTEST.md`, and the results go there too.
+- Don't start the next milestone, or add content to fix a loop that isn't fun, before the checks pass.
+- One branch per milestone. Docs change in the same branch as the code (`.agents/skills/lantern-keeper-docs/SKILL.md`).
+- **Scope traps:** no co-op and no extra platforms before v1; one projectile system and one status system; no second progression track; one region fully playable before the next.
+- **Cut lines,** first to go if time runs short: the Tallest, Kit's re-cut, Ivo, Moth-lights' tier 3.
+- Every third-party asset or add-on gets a row in `assets/CREDITS.md` in the same commit, with its license checked on the source page ("free" is not always CC0).
 
 ---
 
-## M0 — Setup
+## M1a: Fire in the Hollow
 
-**Goal:** an empty project that runs, is tracked in git, and has a structure we won't need to rework.
+**Scope**
+- Lampfire, Fireglobe, Lance and the dash. The Beam (7.5 hp/s) and Hearth ring as optional picks in a plain Skills list.
+- The action bar and HUD bars, on pad and keyboard/mouse. Aim assist and aim hold. The Y rule. The flask on B, read after the menu guard. The D-pad off movement.
+- The regen table (DESIGN §5.2). Oil from packs, elites and the Ashbrood. Rest at a lit WayLamp (flasks and warmth).
+- Clinker and Ashbrood health set by hand against today's curve (M1b re-checks them with scaling). Summoned foes drop nothing.
+- The juice baseline, the shake slider and "reduce flashes". Save version 5.
+- **Stays as built for now:** lamps still burn, the WayLamp still takes fuel, and the old cards stay until M2.
 
-**Deliverables**
-- A Godot 4.7.2 project with GDScript and a 2D renderer setup.
-- A git repo with a Godot `.gitignore` (ignore `.godot/` and export output).
-- The folder structure below, plus `DESIGN.md` and `ROADMAP.md` copied into `docs/`.
-- An input map:
+**Owner checks** (pad only, one WayLamp lit)
+1. A new game reaches the lit Hollow WayLamp without a keyboard. Your name stays "Keeper" (no pad letter grid until M9).
+2. RT, RB, LB and LT fire while you move and aim, and the right thumb never leaves the stick.
+3. Holding RT and pressing B drinks, and the fireballs keep their aim.
+4. Closing the journal, map, a note and the pause menu with B never spends a flask.
+5. Moving through every menu with the D-pad never opens the map or moves the keeper.
+6. Cooldowns sweep, and a skill short of charge greys out.
+7. The first packs fall to Lampfire, Fireglobe and Lance alone.
+8. **Are the fire skills fun?** The owner marks each one keep, rework or cut in PLAYTEST.md.
+9. **Keep the Beam?** Try it in LB at level 1 and again after level 2, then record keep or cut. The same for Hearth ring.
+10. Mid-fight, standing in a lamp's light refills charge only slowly.
+11. Packs drop oil, the Ashbrood drops oil halfway through each phase, and resting at the lit WayLamp refills.
 
-  | Action | Keys |
-  |--------|------|
-  | `move_up` / `move_down` / `move_left` / `move_right` | WASD and arrow keys |
-  | `interact` (gather / refuel / relight) | E |
-  | `place` | left mouse button |
-  | `cancel` | right mouse button (Esc also cancels while in build mode) |
-  | `build_menu` | B |
-  | `map` | M |
-  | `pause` | Esc (when not in build mode) |
+**Tests:** `test_combat` becomes `test_skills`. New `test_flasks` and `test_input` (B after each menu, the D-pad through each menu). The bench runs 40 projectiles.
 
-- `scenes/test/test_scene.tscn`: a coloured square that moves on a grey grid.
-- `assets/CREDITS.md`, created empty from the template below.
-
-**Done when:** a fresh clone opens in Godot, the test scene runs, WASD moves the square, and the first commit exists locally. Whether and where to push to a remote is the owner's decision.
-
----
-
-## M1 — Core prototype ("Is tending light fun?")
-
-**Goal:** prove the core feeling with grey-box shapes only.
-
-**Deliverables**
-- The player (a circle) moves around in darkness (`CanvasModulate` near black) and carries a hand lamp at ember radius.
-- **Fog grid** (`systems/fog/`): per-tile density, creep-back toward fog, and "remembered" tiles. Drawn as plain shaded squares.
-- **One lantern type** (the Post Lamp): place it, it burns fuel, its radius shrinks as fuel runs low, and it goes cold when empty. The player can refuel it from an infinite test pool.
-- Lit tiles are revealed and fog returns where light fades.
-- A debug panel that shows and tweaks the main placeholder numbers live (burn rate, creep rate, radius).
-
-**Done when:** at least one other person and the owner each play for 10 minutes and answer three questions:
-1. Did you want to place "just one more" lantern?
-2. Did upkeep feel like caring for something, or like a chore?
-3. Did watching fog return feel calm or stressful?
-
-**Decision gate:** if the answers are mostly negative, tune or rethink the loop **before starting M2**. Don't add content to fix a loop that isn't fun.
+**Risks**
+- Feel is most of the work. If the fire doesn't feel good, do one more feel pass before M1b.
+- RT and RB on one finger; the auto-fire option is the fallback.
+- Fog lights may cost more than the budget allows.
 
 ---
 
-## M2 — Resources and gathering (the fuel loop closes)
+## M1b: No more tending
 
-**Goal:** light reveals resources, and resources make more light. The infinite test fuel goes away.
+**Scope**
+- Lamps never burn, in every region's code paths. Fuel and glass cut. Scrap piles one-off. The woodpile becomes scenery.
+- Old lamps and WayLamps lit by touch. The lamp limit (3 outside held ground) and the 15 s replant delay.
+- The faint rule (DESIGN §12.4).
+- Hollow foe levels 1-4 (Ashbrood 5), foe scaling, and the curve at base 7 and exponent 1.65.
+- The lures. The Hollow's goals and tips (new text as DRAFT in STORY). The lamp glass gives charge.
+- Ridge wind goes inert until M6. The unused ward code goes.
 
-**Deliverables**
-- Fuel and scrap nodes that are visible and gatherable only on lit tiles, with slow regrowth while lit.
-- Carry limits and a simple HUD (resource counts, fuel bar of the nearest lantern).
-- A build menu with costs, a ghost placement preview, pick-up with refund, and relighting cold lanterns.
-- Gentle failure in place: no game over, the hand lamp never goes fully out, a slower walk in deep fog.
-- A grey-box layout of Region 1 (The Hollow).
+**Owner checks**
+1. No prompt, tip or HUD item says fuel, refuel or gather, and lamps never dim.
+2. The hut lamp, the north-path lamp and the WayLamp light by touch; the WayLamp wakes the Ashbrood.
+3. A 4th lamp outside held ground is refused, with the reason. A picked-up lamp can be planted again after 15 s.
+4. After a faint, cleared packs stay cleared, a half-fought pack is whole and asleep, the Ashbrood restarts its phase, and nothing carried is lost.
+5. A pack, a nest and an elite look different through the fog.
+6. The last Hollow level comes on the Ashbrood kill.
 
-**Done when:** the player can start with nothing and grow a self-sustaining lit area in The Hollow. Letting every lantern go cold never soft-locks the game (there is always a fuel node reachable by hand-lamp).
+**Tests:** rewrite `test_core`, `test_threats` (light reactions; the ward goes), `test_waylamps` (light by touch, hold fights) and `test_upgrades` (the lamp glass part). **`test_ridge`:** keep its layout, trail and placement checks; delete its tending, ward and wind-burn checks (wind checks return in M6). New `test_faint`. `test_leveling` checks level 2 at the crook and the Ashbrood kill on both routes (L5 beeline, L6 explorer).
 
----
+**Risks:** hidden fuel dependencies (goals, prompts, HUD); old saves start fresh.
 
-## M3 — Second lantern type and first region reveal
-
-**Goal:** prove that a new region and a new lantern type create new decisions using the same systems.
-
-**Deliverables**
-- Region 2 (The Reedmarsh) in grey-box: soft ground, boardwalks, faster fog creep, plenty of peat fuel.
-- The **Reservoir Lamp**, unlocked at the pumphouse.
-- A region-reveal moment: as light enters a new region, its name fades in and the ambient layer changes (a placeholder sound is fine).
-- The first 3–4 mystery objects, readable on interact.
-- The map screen shows revealed and remembered areas.
-
-**Done when:** a playtester moves from The Hollow into The Reedmarsh without help, unlocks the Reservoir Lamp, and uses it on purpose to cut down upkeep.
+**Then:** merge to `main`, and rewrite the README (GAME_PLAN §17).
 
 ---
 
-## M4 — Atmosphere pass (CC0 assets)
+## M2: Builds
 
-**Goal:** make it look and sound moody. This is where the mood is made.
+**Scope:** skill points and fixed branches, tiers 1-3, for Lampfire, Fireglobe, Lance and the dash (the Beam and Hearth ring only if kept). Respec at rest. The pack screen with Skills, Journal and Map tabs; the card screen goes. Elite affixes. The Ashbrood's phase 3.
 
-**Deliverables**
-- CC0 tiles and props replace the grey-box in Regions 1–2. Every pack is logged in `assets/CREDITS.md`.
-- `PointLight2D` lanterns with flicker, and `LightOccluder2D` shadows on walls and rocks.
-- A fog shader driven by the fog grid, plus `GPUParticles2D` drifting mist.
-- Ambient audio layers, lantern sounds, and footsteps, on separate audio buses (Ambience / SFX / Music).
-- Palette check: amber light is the only warm color.
-- Performance check: holds 60 fps with 50+ lanterns on target Linux hardware.
+**Owner checks:** at level 2, choose a pick that changes how a skill behaves, on the pad. Tier 3 opens on the Ashbrood kill. Respec at the WayLamp. Swap a skill with View, the D-pad, A and B. An elite shows its affix.
 
-**Done when:** screenshots and a 2-minute capture of Regions 1–2 feel "dark, calm, curious" to the owner, with no placeholder shapes visible in normal play.
+**Tests:** `test_skills` covers gating, respec and saving.
+
+**Risks:** 12-18 picks to build and tune. Start with tier 1 if time is short.
 
 ---
 
-## M5 — Full v1 content and save/load
+## M3: Loot
 
-**Goal:** the whole valley, playable from start to finale.
+**Scope:** GLoot data; 4 slots with Plain starting gear; 3 rarities; the Ashbrood's relic; 20 affixes; drops; the bag and compare; salvage; satchels become bag slots.
 
-**Deliverables**
-- **Wind gusts** (if not started earlier), with warnings and sheltered tiles.
-- Region 3 (The Windward Ridge): constant wind, glass, the **Hooded Lamp** and the **Mirror Post**.
-- Region 4 (The Still Lake): thick fog that only mirror beams can cut, the great lamp, and the finale where the fog lifts.
-- All mystery objects (15–25) placed. Carry-limit and hand-lamp upgrades placed *(done 2026-11-27)*.
-- **Save/load:** one slot plus autosave. Saves lanterns (type, position, fuel, cold/lit), the fog grid, revealed/remembered tiles, resources, unlocks, and objects found.
+**Owner checks:** compare and equip in under 5 s on the pad; a Hollow clear gives about 18-20 items; hold X salvages; a nest left hatching drops no items.
 
-**Done when:** the full game can be finished in one sitting in about 1–2 hours. Saving and loading at any point restores the same state. Every item on the *IN* list in `DESIGN.md` is checked off.
+**Tests:** `test_loot` (seeded rolls, rates, stacking, summoned foes drop nothing, save); `test_upgrades` (satchel).
+
+**Risks:** tuning multiplies; GLoot on Godot 4.7.2 is untested.
 
 ---
 
-## M6 — Polish, playtest, Linux build
+## M4: People, part 1
 
-**Goal:** a v1 that a stranger can play.
+**Scope:** Dialogue Manager, the balloon, People and Errands pages, Amos and "Amos's cart". Merge the people from `PLAN_NPCS_ENEMIES.md` into STORY and DESIGN.
 
-**Deliverables**
-- At least 3 external playtests, with notes. Fix the blockers. Tune the placeholder numbers.
-- Minimal settings: volume per bus, fullscreen toggle.
-- Title screen, pause menu, a short "how to play" hint on first launch.
-- A Linux export (x86_64), tested on a machine without Godot installed.
-- A final check that `assets/CREDITS.md` is complete.
+**Before it starts:** the owner gives pronouns for Amos, Maud, Kit and Ivo, or keeps none (DECISIONS 2026-11-27).
 
-**Done when:** the *Done when* list in `DESIGN.md` §7 passes, and the Linux build runs from a clean machine. Releasing or publishing the build is a separate decision for the owner.
+**Owner checks:** talk with A, close with B; lines match STORY.md; the errand shows in the journal; the Wide Pack adds 4 slots.
 
----
+**Tests:** `test_npcs`; `check_docs` reads `.dialogue` files.
 
-## Suggested Godot folder structure
-
-```
-lantern-keeper/
-├── project.godot
-├── docs/                  # DESIGN.md, ROADMAP.md, playtest notes
-├── scenes/
-│   ├── main/              # main.tscn, title, pause
-│   ├── world/             # the valley map, regions, props
-│   ├── player/
-│   ├── lanterns/          # one scene per lantern type
-│   ├── ui/                # HUD, build menu, map screen
-│   └── test/              # throwaway test scenes
-├── scripts/               # scripts that belong to a scene (player, lanterns, UI)
-├── systems/               # game-wide systems, mostly autoloads
-│   ├── fog/               # fog grid: density, creep, memory
-│   ├── light/             # lantern registry, fuel ticks, light → tile reveal
-│   ├── resources/         # nodes, inventory, regrowth
-│   ├── weather/           # wind gusts, shelter checks
-│   └── save/              # save/load
-├── data/                  # tunable numbers as .tres resources (burn rates, costs)
-└── assets/
-    ├── art/
-    ├── audio/
-    ├── fonts/
-    ├── shaders/
-    └── CREDITS.md
-```
-
-Notes:
-- `systems/` holds the simulation. Scenes only display and trigger it. This keeps the fog and light logic testable, and it makes save/load simpler.
-- Keep all placeholder numbers in `data/` so tuning doesn't mean editing code.
+**Risks:** Dialogue Manager on Godot 4.7.2 is untested.
 
 ---
 
-## Asset license tracking
+## M5: The Reedmarsh
 
-Every external asset must be logged in `assets/CREDITS.md` **when it is added**, not at the end.
+**Scope:** the U-route and the north-leg WayLamp (DESIGN §12.4); 26 packs at Lv 5-7; Slowwater, Fenlight, the mire Clinker, the Sump and its relic; the Reservoir's job; Moth-lights at level 7; Maud; Ivo (cut line).
 
-1. Before adding a pack, check its license on the source page. "Free" does not mean CC0. Some packs on asset sites are CC-BY, which requires attribution, or have other terms.
-2. Keep each pack in its own folder (e.g. `assets/art/kenney_<packname>/`) and include the pack's own license file.
+**Owner checks** (pad): walk from the marsh's entry to the climb without crossing your own path; Reservoir light brings the Sump up; Moth-lights on Y; level 8 by the climb.
 
-Template:
+**Tests:** a marsh route test like the loop's; `test_leveling` for the region.
 
-```markdown
-# Credits and asset licenses
+**Risks:** water readability; Slowwater fairness.
 
-| Asset / pack | Author | Source URL | License | Used for | Folder | Date added |
-|--------------|--------|------------|---------|----------|--------|------------|
-| (example) Top-down tiles | Kenney | https://kenney.nl/assets/... | CC0 1.0 | Ground tiles | assets/art/kenney_tiles/ | YYYY-MM-DD |
-```
+---
+
+## M6: The Windward Ridge
+
+**Scope:** 22 packs at Lv 8-9; gusts that snuff and drift; the Gutterkite; the Hooded Lamp's job; the downwind Clinker; the Galekite and its relic. Wheeling flame (level 9); Oswin's coat; Kit and the Long lens; the re-cut (cut line). **The loop's stones:** the "The way is open." toast, a note readable from below, and stones drawn as a fallen pile. Pack 11 (52,93) and nest 7 (60,91) move off the foot of the old climb, so the shortcut lands on quiet ground.
+
+**Owner checks** (pad): the Ridge is one walk; a gust snuffs exposed lamps and pushes fireballs; the Galekite snags on a Hooded Lamp; coming down the old climb, the stones fall with the line, and from below the note reads.
+
+**Tests:** `test_ridge` wind checks; the loop test's stones checks.
+
+**Risks:** wind punishing more than it teaches.
+
+---
+
+## M7: The Lakeshore
+
+**Scope:** carve region 4; thick fog; the Mirror Post; the Fogstilt; the fog Clinker; the Tallest and its relic (first cut); Ebba. Merge `PLAN_LAKESHORE.md` into DESIGN and STORY.
+
+**Owner checks** (pad): a mirror lane is the quick way through the fog; fire crossing a beam on a Fogstilt unravels it.
+
+**Tests:** shore route and fog tests.
+
+**Risks:** fog too slow; the Tallest's scope.
+
+---
+
+## M8: The Still Lake and the finale
+
+**Scope:** region 5; the catch ring; the Soul in three phases; the portal; the ending and sandbox; Ebba's crossing.
+
+**Owner checks** (pad): the Soul takes 6-10 minutes; a faint returns you to the start of the phase; the portal and the credits; the valley stays open.
+
+**Tests:** finale phase test.
+
+**Risks:** the biggest milestone; phase 2 depends on M5-M7.
+
+---
+
+## M9: Polish and the Linux build
+
+**Scope:** owner art and audio; a pad letter grid for the name; accessibility; a full balance pass; 3 or more external playtests; a Linux export tested on a clean machine.
+
+**Owner checks:** the DESIGN "Done when" list (§18).
+
+**Risks:** polish creep. Hold the cut lines.
+
+---
+
+## Not yet placed
+
+The plan describes these but names no milestone. Place each one when its neighbour milestone is planned in detail. **Uncertain** where each belongs; the guesses below are guesses.
+
+| Item | Plan | Likely |
+|---|---|---|
+| Damage numbers that pop and drift, grey when the gap cut the wick | §14 | M1a (the juice baseline) |
+| The L3 tuning panel behind a dev-build flag | §3, §16 | M1a (the input work) |
+| Lamp-kind cycling on the D-pad, replacing the lantern list on Y | §3, §16 | M1a (Y becomes a skill slot) |
+| Warmth +8 a level; foe damage +8% a level | §5 | M1b (with foe scaling) |
+| Fog slows walking to 85% at most, not 60% | §7 | M1b |
+| The map shows WayLamp icons, lures you've seen and the share explored | §14 | M1b or M2 |
+| The auto-fire option | §3, §14 | after M1a, or in M1a as the fallback |
+| `check_docs.py` reads skill and item texts | §17 | M2 and M3 |
+
+---
+
+## History
+
+What was built before the re-plan, in short. The full old roadmap is in `docs/archive/ROADMAP_PRE_REPLAN.md`; the old playtests are in `docs/archive/PLAYTEST_PRE_ARPG.md`.
+
+**On `main` (the tending game, 2026-11-26 to 2026-11-27):**
+- **M0 Setup:** the Godot project, git, the input map. Done.
+- **M1 Core prototype** (light, fuel, fog): gate passed ("felt like caring, not a chore").
+- **M2 Resources and gathering:** gate passed.
+- **M3 The Reedmarsh and the Reservoir Lamp,** with wind moved up: gate passed.
+- **M4 Atmosphere** (CC0 art, fog, font, sound): mostly done. Never done: occluder shadows, a fog shader, mist particles, recorded ambience.
+- **M4b Light-based conflict** (Wicklings, the ward, warmth, fainting): done and playtested.
+- **M5a Story and guidance** (opening, goals, journal, pointer, tips): done; the owner: "that was great".
+- **M5b HUD redesign:** built with playtest follow-ups.
+- **M5 (part):** the Windward Ridge, glass, the Hooded Lamp, the Mirror Post, save slots, satchels and lamp glasses. Done.
+- **WayLamps:** playtested and merged into `main` (WayLamps take fuel directly).
+- **M5c-M5e** (people and creatures in three steps) and the old **M6** were never started. The game plan replaces them.
+
+**On the prototype line (`proto/kl-*`, 2026-11-27), not yet on `main`:**
+- **Keeper's Light in the Hollow** (`proto/kl-hollow`): the beam, burst and dash; packs, nests, the Clinker, the Ashbrood; wick and level-up cards. Owner playtest done; follow-ups built.
+- **Bigger regions** (`proto/kl-big`): every region 4x the area, and the performance pass.
+- **Leveling balance** (`proto/kl-balance`) and **level-gap wick** (`proto/kl-xpgap`).
+- **The first 10 minutes** (`proto/kl-onboard`): Option B.
+- **The loop and WayLamp fast travel** (`proto/kl-loop`): built and merged into `proto/kl-hollow`. Loop texts approved; three loop calls under review.
+- **The fuel-and-abilities playtest** led to the re-plan (PLAYTEST.md). The game plan v2 was approved on 2026-11-27.
