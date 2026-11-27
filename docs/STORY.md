@@ -221,7 +221,7 @@ In the Text column, " / " marks a line break.
 | `pier_stone` | Carved stone at the end of the pier | Lake | FROM THE ISLAND, LIGHT. FROM THE KEEPERS, CARE. |
 | `island_steps` | Steps up to the great lamp | Island | A name cut into every step, one for each keeper. / The newest name is only half cut. |
 | `great_lamp` | Plate on the great lamp's base | Island | THE FIRST FLAME OF THE VALLEY. / IT WAS NEVER MEANT TO BE KEPT BY ONE. |
-| `hand_lamp` | A hand lamp on the top step (after the finale) | Island | A keeper's hand lamp, set down with care. It is cold. / Beside it, in chalk: Thank you. Keep it lit. — H. |
+| `hand_lamp` | A hand lamp on the top step (after the finale) | Island | A keeper's hand lamp, set down with care. It is cold. / Beside it, in chalk: Thank you. Keep it lit. - H. |
 | `far_shore` | A post on the far shore, facing away | Lake (far side) | A new post, freshly cut. Its lamp is gone. / Far off, past the end of the valley, one small light is burning. |
 
 Total: 21 landmarks (13 built, 8 planned; inside the 15-25 target).
@@ -348,7 +348,7 @@ DEFAULT: the ending as drafted.
 
 1. **Premise:** keep the letter from the last keeper, or another way in? **DECIDED:** keep the letter.
 2. **H.'s fate:** open (hand lamp + far light, as drafted), confirmed alive, or never mentioned? **DEFAULT:** open, as drafted.
-3. **Names:** last keeper, the order, and whether the player keeper has a name. **DECIDED:** Hester Vane ("H."); the player types a name. **DEFAULT:** the order stays nameless.
+3. **Names:** last keeper, the order, and whether the player keeper has a name. **DECIDED:** Oswin Reed ("H.", he; was Hester Vane until 2026-11-27); the player types a name. **DEFAULT:** the order stays nameless.
 4. **The Soul of the Wick:** "it" or "he"; and is it only hungry, or something more? **DECIDED:** "it", no name; big pale eyes (2026-11-27, replacing "no face"). **DEFAULT:** the rest stays unexplained, as drafted.
 5. **The "why" hint:** keep the great lamp plate, or keep "why" fully silent for now? **DECIDED:** keep the plate.
 6. **Pointer:** off on entering the marsh, or later? **DECIDED:** off on reaching the Reedmarsh (built).

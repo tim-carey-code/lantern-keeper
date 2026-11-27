@@ -176,7 +176,7 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 - A Windows build; Steam Deck.
 - An original soundtrack.
 - A photo mode, and an "ambient" mode with no goals.
-- NPCs and more enemy types (a separate proposal is pending).
+- (People and four new creatures moved to v1 on 2026-11-27: see `PLAN_NPCS_ENEMIES.md`.)
 
 ---
 
