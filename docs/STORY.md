@@ -3,7 +3,7 @@
 > **Synced to commit 9a2b9cc** (2026-11-26). The title card, letter, goals 1-18, journal entries 1-8, tips and the 13 built landmark texts below match `systems/story/story.gd` and `scripts/main/main.gd` as built. **Built** = in the game at 9a2b9cc; **Planned** = written, not built yet.
 > **Owner-reviewed 2026-11-26** (milestone M5a). **DECIDED** lines are owner decisions. **DEFAULT** lines keep the draft until the owner says otherwise.
 > Sources: DECISIONS.md (overrides), `systems/story/story.gd`, `scripts/main/main.gd`, DESIGN.md, ROADMAP.md.
-> Voice for all in-game text: short, plain sentences. Calm, a little sad, a little eerie. Never horror. O. never speaks or appears; people met in the valley may speak short lines (DECIDED 2026-11-27).
+> Voice for all in-game text: short, plain sentences. Calm, a little sad, a little eerie. Never horror. Oswin never speaks or appears; people met in the valley may speak short lines (DECIDED 2026-11-27).
 
 People and new creatures: see PLAN_NPCS_ENEMIES.md (approved for v1 on 2026-11-27, before the Still Lake).
 
@@ -30,10 +30,10 @@ DECIDED: keep "the new keeper answers a letter".
 DECIDED: the player types a name at a new game; it signs the journal.
 Built: the name prompt comes after the title card (up to 16 characters; left empty, the keeper is "Keeper"). The journal is titled "<name>'s journal".
 
-**The last keeper: Oswin Reed.** Kept the valley alone after the others left: tired, stubborn, kind. Went ahead to the Lake, lost his coat on the Ridge, left a half-built mirror on the shore. Fate not confirmed. His full name does not appear in the game yet.
+**The last keeper: Oswin Reed.** Kept the valley alone after the others left: tired, stubborn, kind. Went ahead to the Lake, lost his coat on the Ridge, left a half-built mirror on the shore. Fate not confirmed. He signs with his first name; his surname does not appear in the game yet.
 
 DECIDED (2026-11-27): the last keeper is **Oswin Reed**, a man ("he"). (Was Hester Vane; Tobin Ash and Nell Corrie were the other options.)
-DECIDED (2026-11-27): he signs his notes "- O.", with a plain hyphen. (Until then the game said "- H.", for Hester.)
+DECIDED (2026-11-27): he signs his notes "- Oswin", with a plain hyphen, and the journal calls him Oswin. (It was "- H." for Hester, then briefly "- O."; in the game font a capital O looks like a zero.) His surname never appears in the game.
 
 **The Soul of the Wick.**
 - A living darkness that feeds on flame. It rose out of the Still Lake, coiled around the great lamp and drank its light.
@@ -78,7 +78,7 @@ Hint line: *Type a name, then [Enter] or [A]. Leave it empty to be called Keeper
 >
 > If you came, thank you.
 >
-> \- O., the last keeper
+> \- Oswin, the last keeper
 
 DEFAULT: the letter as drafted.
 
@@ -90,8 +90,8 @@ DEFAULT: the letter as drafted.
 |--------|---------------|----------------|---------------|
 | **1. The Hollow** | Gather, relight, build. Many keepers once counted their lamps; one stayed longest. | Arriving somewhere abandoned but not hopeless. The first flame is a small welcome. | Ledger: "Gone east to the marsh. Follow the stones." Fresh chalk arrow on the carved stone. Pointer is on. |
 | **2. The Reedmarsh** | The way to the water was kept lit. Every frame faces the lake. The lake once shone; then something dark coiled around it. The pump still works. | Curiosity turning to unease. The chalk is the first sign that something *took* the light. | Pumphouse note: "Now go up, past the Hollow. The ridge has glass." |
-| **3. The Windward Ridge** | Keepers made glass and passed light by mirror. The Wick remembers every flame. O. lost their coat here and wrote: "It came up out of the water." | Exposure and worry. The loneliest place in the game. | The station's mirror has been turned down toward the lake; steps beside it lead into the fog. |
-| **4. The Still Lake** | Ordinary light dies here; only beams cut through. O. camped on the shore and built a mirror with no light to give it. Every keeper's name is on the island steps. | Stillness and dread, then resolve: finishing what O. started. | O.'s mirror faces the island. Build the chain to the great lamp. |
+| **3. The Windward Ridge** | Keepers made glass and passed light by mirror. The Wick remembers every flame. Oswin lost their coat here and wrote: "It came up out of the water." | Exposure and worry. The loneliest place in the game. | The station's mirror has been turned down toward the lake; steps beside it lead into the fog. |
+| **4. The Still Lake** | Ordinary light dies here; only beams cut through. Oswin camped on the shore and built a mirror with no light to give it. Every keeper's name is on the island steps. | Stillness and dread, then resolve: finishing what Oswin started. | Oswin's mirror faces the island. Build the chain to the great lamp. |
 | **5. Finale** | Who took the light: the Soul of the Wick. Light drives it off. | A quiet confrontation, not a battle. Tension, then release. | The fog lifts over the whole valley. |
 | **6. After** | Nothing more is required. | Rest. The valley is lit and open; the dark is thinner, not gone. | Optional goals. Far past the lake, one small light that was not there before (hook for later). |
 
@@ -127,14 +127,14 @@ One goal shows on the HUD at a time; the journal lists the current goal and fini
 | 16 | `station` | Reach the signal station | `station` read (Mirror Post) | Signal station |
 | 17 | `build_mirror` | Light a Mirror Post from a lantern | A Mirror Post is lit | — |
 | 18 | `descend` | Take the old steps down to the lake | Enter the Still Lake (not built yet, so this goal stays on the HUD) | `ridge_steps` |
-| 19 | `camp` | Find where O. stopped | `camp` read | Camp |
+| 19 | `camp` | Find where Oswin stopped | `camp` read | Camp |
 | 20 | `first_beam` | Send a beam out over the water | A beam reaches lake fog | — |
 | 21 | `reach_island` | Carry light to the island | A beam reaches the island | Island |
 | 22 | `great_lamp` | Climb the steps to the great lamp | Reach the great lamp | Great lamp |
 | 23 | `drive_off` | Drive the dark from the great lamp | Finale done, lamp lit | Great lamp |
 | 24 | `keep_valley` | The valley is yours to keep | Never (free play) | — |
 
-Optional after-game goals (journal only): `all_notes` "Find every note O. left"; `all_frames` "Relight every old frame"; `far_light` "Look toward the far shore" (reach `far_shore`).
+Optional after-game goals (journal only): `all_notes` "Find every note Oswin left"; `all_frames` "Relight every old frame"; `far_light` "Look toward the far shore" (reach `far_shore`).
 
 Lens comes before coat because it sits west of the coat (`_ridge_spot(30, 9)` vs `(42, 22)`), so the trail runs west to east: glazier, lens, coat, station.
 
@@ -150,7 +150,7 @@ Each quoted line is one line on screen. The title shows on the note and in "Some
 
 **`letter`**, "The letter on the hut door" (Hollow, pinned to the hut door)
 > The letter that brought you here. The ink has run a little.
-> Light that first. Then follow my marks. - O.
+> Light that first. Then follow my marks. - Oswin
 
 **`rack`**, "Lantern rack" (Hollow, by the hut)
 > Five hooks, five worn marks where lamps hung.
@@ -159,7 +159,7 @@ Each quoted line is one line on screen. The title shows on the note and in "Some
 **`ledger`**, "Keepers' ledger" (Hollow, by the hut)
 > Long columns of tally marks, one for every lamp lit each night.
 > Near the end the columns shrink to a single mark, in a newer hand.
-> Under it: Gone east to the marsh. Follow the stones. - O.
+> Under it: Gone east to the marsh. Follow the stones. - Oswin
 
 **`stone_way`**, "Carved stone" (Hollow, at the passage to the marsh)
 > KEEP THE WAY TO THE WATER LIT.
@@ -167,31 +167,31 @@ Each quoted line is one line on screen. The title shows on the note and in "Some
 
 **`climb_cairn`**, "A stone cairn" (top of the Hollow, at the foot of the climb)
 > A small cairn, a chalk arrow on the top stone, pointing up.
-> The wind is worse up there. Keep your lights sheltered. - O.
+> The wind is worse up there. Keep your lights sheltered. - Oswin
 
 **`frames_east`**, "Old lantern frames" (Reedmarsh boardwalk)
 > Three empty frames along the boardwalk, all turned east, toward the lake.
-> A rag is tied to the last one: The pump still works. Wake it. - O.
+> A rag is tied to the last one: The pump still works. Wake it. - Oswin
 
 **`chalk_lake`**, "Chalk on the pumphouse wall" (Reedmarsh)
 > Two drawings of the same lake. In the first it shines.
 > In the second, something dark is coiled around the light.
-> Beside them, newer chalk: I went to look. - O.
+> Beside them, newer chalk: I went to look. - Oswin
 
 **`pumphouse`**, "The pumphouse" (Reedmarsh, far-east island; unlocks the Reservoir Lamp)
 > The old pump still turns when you push it. Its tank could feed a lamp for a long time.
 > Scratched on the tank: Light has to be fed from somewhere.
-> Now go up, past the Hollow. The ridge has glass. - O.
+> Now go up, past the Hollow. The ridge has glass. - Oswin
 
 **`glazier`**, "The glazier's workshop" (Ridge, west; unlocks the Hooded Lamp)
 > Cold kilns and racks of cut glass. A half-finished hood sits on the bench,
 > shaped to keep a flame alive in any wind.
-> A note under it: Finish it. I could not stay. - O.
+> A note under it: Finish it. I could not stay. - Oswin
 
 **`lens`**, "A broken lens" (Ridge)
 > A great curved lens, split down the middle. Scratched into the frame:
 > THE WICK REMEMBERS EVERY FLAME.
-> Below, in a newer hand: Then it will remember ours. - O.
+> Below, in a newer hand: Then it will remember ours. - Oswin
 
 **`coat`**, "A keeper's coat" (Ridge)
 > Snagged on the rocks, stiff with frost. An O is stitched inside the collar.
@@ -207,7 +207,7 @@ Each quoted line is one line on screen. The title shows on the note and in "Some
 > Old steps, worn smooth, going down.
 > Below, the fog does not move, even in the wind.
 
-DEFAULT: the coat is O.'s.
+DEFAULT: the coat is Oswin's.
 
 ### Planned landmarks (8)
 In the Text column, " / " marks a line break.
@@ -216,16 +216,16 @@ In the Text column, " / " marks a line break.
 |----|--------|--------|------|
 | `boat` | A boat tied at the shore | Lake | A boat half full of rain, the oars still in it. / Past the reeds the fog is too thick to row through. |
 | `drowned_frames` | Frames standing in the shallows | Lake | A row of frames in the shallows. Their glass is clean. / Someone tried to light them. The fog swallowed every one. |
-| `camp` | The last keeper's camp | Lake shore | Cold ashes, a blanket, a tin cup. A half-built mirror frame, aimed at the island. / A crate of cut glass beside it. / O. was here. Not long ago. |
+| `camp` | The last keeper's camp | Lake shore | Cold ashes, a blanket, a tin cup. A half-built mirror frame, aimed at the island. / A crate of cut glass beside it. / Oswin was here. Not long ago. |
 | `pier_stone` | Carved stone at the end of the pier | Lake | FROM THE ISLAND, LIGHT. FROM THE KEEPERS, CARE. |
 | `island_steps` | Steps up to the great lamp | Island | A name cut into every step, one for each keeper. / The newest name is only half cut. |
 | `great_lamp` | Plate on the great lamp's base | Island | THE FIRST FLAME OF THE VALLEY. / IT WAS NEVER MEANT TO BE KEPT BY ONE. |
-| `hand_lamp` | A hand lamp on the top step (after the finale) | Island | A keeper's hand lamp, set down with care. It is cold. / Beside it, in chalk: Thank you. Keep it lit. - O. |
+| `hand_lamp` | A hand lamp on the top step (after the finale) | Island | A keeper's hand lamp, set down with care. It is cold. / Beside it, in chalk: Thank you. Keep it lit. - Oswin |
 | `far_shore` | A post on the far shore, facing away | Lake (far side) | A new post, freshly cut. Its lamp is gone. / Far off, past the end of the valley, one small light is burning. |
 
 Total: 21 landmarks (13 built, 8 planned; inside the 15-25 target).
 
-DECIDED: the player builds every mirror. O.'s camp holds a half-built mirror frame (story only) and a crate of glass instead, so the Lake can be started.
+DECIDED: the player builds every mirror. Oswin's camp holds a half-built mirror frame (story only) and a crate of glass instead, so the Lake can be started.
 DECIDED: keep the plate.
 
 ---
@@ -265,20 +265,20 @@ Added under the note when it is taken (one of these):
 
 One entry after each beat, written by the keeper. **Built:** entries 1-8 (as in `Story.ENTRIES`). **Planned:** 9-12.
 
-As built, the journal has three pages: *Goals*, *Story so far* (O.'s letter, then these entries) and *Notes* (every landmark read, in full, to read again). Notes have their own page; they are not listed under each entry. Each new entry shows "New journal entry: <title>" with the journal button.
+As built, the journal has three pages: *Goals*, *Story so far* (Oswin's letter, then these entries) and *Notes* (every landmark read, in full, to read again). Notes have their own page; they are not listed under each entry. Each new entry shows "New journal entry: <title>" with the journal button.
 
 1. **Arrival** (goal 2): *I came because of the letter. The old lantern took the flame on the first try. One hook on the rack is empty.*
-2. **The ledger** (3): *The keepers counted every lamp they lit. At the end, one mark a night. O. went east.*
+2. **The ledger** (3): *The keepers counted every lamp they lit. At the end, one mark a night. Oswin went east.*
 3. **The marsh** (7): *The frames all face east, toward a lake I cannot see.*
 4. **The pumphouse** (9): *The chalk shows the lake, bright, then dark. Something coiled around its light. The pump still works.*
-5. **The climb** (11): *O. sent me up. The wind pulls at every flame.*
-6. **The workshop** (12): *O. could not stay to finish the hood. I did.*
-7. **The coat** (15): *O.'s coat, caught in the rocks. Something came up out of the water and drank the great lamp. I hope O. found somewhere warm.*
-8. **The station** (16): *O. turned the last mirror toward the lake. That is where O. went.*
-9. **The lake** (19): *Ordinary light dies here. O. started a mirror and left the glass to finish it. I will.*
+5. **The climb** (11): *Oswin sent me up. The wind pulls at every flame.*
+6. **The workshop** (12): *Oswin could not stay to finish the hood. I did.*
+7. **The coat** (15): *Oswin's coat, caught in the rocks. Something came up out of the water and drank the great lamp. I hope Oswin found somewhere warm.*
+8. **The station** (16): *Oswin turned the last mirror toward the lake. That is where Oswin went.*
+9. **The lake** (19): *Ordinary light dies here. Oswin started a mirror and left the glass to finish it. I will.*
 10. **The island** (22): *A name on every step. The newest is not finished. The great lamp is cold, and it is not alone.*
 11. **The light returns** (23): *It let go. The great lamp caught, and the fog lifted. I could see the hut from the island.*
-12. **After** (`hand_lamp` read): *O. left me the hand lamp. Past the far shore there is a small light. I will keep this one lit.*
+12. **After** (`hand_lamp` read): *Oswin left me the hand lamp. Past the far shore there is a small light. I will keep this one lit.*
 
 DEFAULT: first person.
 
@@ -346,8 +346,8 @@ DEFAULT: the ending as drafted.
 ## 10. Open questions for the owner (answered 2026-11-26)
 
 1. **Premise:** keep the letter from the last keeper, or another way in? **DECIDED:** keep the letter.
-2. **O.'s fate:** open (hand lamp + far light, as drafted), confirmed alive, or never mentioned? **DEFAULT:** open, as drafted.
-3. **Names:** last keeper, the order, and whether the player keeper has a name. **DECIDED:** Oswin Reed ("O.", he; was Hester Vane until 2026-11-27); the player types a name. **DEFAULT:** the order stays nameless.
+2. **Oswin's fate:** open (hand lamp + far light, as drafted), confirmed alive, or never mentioned? **DEFAULT:** open, as drafted.
+3. **Names:** last keeper, the order, and whether the player keeper has a name. **DECIDED:** Oswin Reed ("Oswin", he; was Hester Vane until 2026-11-27); the player types a name. **DEFAULT:** the order stays nameless.
 4. **The Soul of the Wick:** "it" or "he"; and is it only hungry, or something more? **DECIDED:** "it", no name; big pale eyes (2026-11-27, replacing "no face"). **DEFAULT:** the rest stays unexplained, as drafted.
 5. **The "why" hint:** keep the great lamp plate, or keep "why" fully silent for now? **DECIDED:** keep the plate.
 6. **Pointer:** off on entering the marsh, or later? **DECIDED:** off on reaching the Reedmarsh (built).
@@ -380,7 +380,7 @@ Each quoted line is one line on screen.
 **`waylamp_hollow`**, "WayLamp of the Hollow" (by the carved stone at the east passage)
 > A tall lamp with a wide iron bowl, cold and full of old ash.
 > Cut into the base: WHILE THIS BURNS, THE HOLLOW IS KEPT.
-> Tied to the post: This has to be held until it takes. I could not hold it and keep the rest. - O.
+> Tied to the post: This has to be held until it takes. I could not hold it and keep the rest. - Oswin
 
 **`waylamp_marsh`**, "WayLamp of the Reedmarsh" (on the pumphouse island)
 > A WayLamp on a stone footing, above the damp. Its bowl is dry.
@@ -390,7 +390,7 @@ Each quoted line is one line on screen.
 **`waylamp_ridge`**, "WayLamp of the Ridge" (by the signal station)
 > A WayLamp in the lee of the station wall. Frost has cracked its hood.
 > Cut into the base: WHILE THIS BURNS, THE RIDGE IS KEPT.
-> Under a stone: When this went out, the small dark ones came up the steps. - O.
+> Under a stone: When this went out, the small dark ones came up the steps. - Oswin
 
 Under each inspection text, the note explains the WayLamp (one line on screen each):
 > Reach it with your own light, then feed it 15 fuel.

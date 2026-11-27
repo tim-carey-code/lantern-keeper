@@ -6,7 +6,7 @@ Sources: the docs on branch `proto/waylamps` at db283fa, which includes `main`: 
 
 How to read it:
 - **OWNER n:** lines are choices for the owner. Mark each one yes, no or change. Section 9 lists them all in one table.
-- Every in-game text is **DRAFT**. In quoted texts, each line is one line on screen. Notes are signed "- O.", with a plain hyphen.
+- Every in-game text is **DRAFT**. In quoted texts, each line is one line on screen. Notes are signed "- Oswin", with a plain hyphen.
 - Goal numbers are as on `proto/waylamps`, with the WayLamp rows. STORY §5's numbers, without those rows, are in brackets.
 - (x,y) are tile coordinates. A tile is 32 px.
 
@@ -75,7 +75,7 @@ r Ridge · s Lakeshore · L Still Lake · m Reedmarsh · # rock · T signal stat
 **Entering.** You come down the old steps by the signal station. Once the Ridge is held, its WayLamp lights the top of the steps: its light reaches about 13 tiles, and the steps are about 7 tiles away. Halfway down, the wind stops and the thick fog begins. Stepping onto the first Lakeshore tile completes `descend`, and "The Lakeshore" fades in, as region names do.
 
 **Leaving.**
-- **On to the Lake:** by the causeway. It starts at the south end of the shingle, at about (76,35), and runs east across the shallows into the Still Lake. O.'s camp stands at its far end. Until the Lake is built, the causeway ends in rock and fog, as the steps do today, and the `causeway` goal waits on the HUD.
+- **On to the Lake:** by the causeway. It starts at the south end of the shingle, at about (76,35), and runs east across the shallows into the Still Lake. Oswin's camp stands at its far end. Until the Lake is built, the causeway ends in rock and fog, as the steps do today, and the `causeway` goal waits on the HUD.
 - **Back:** up the steps to the Ridge, any time.
 - **By boat:** Ebba's boat, later and only if you want it (section 6.2). No main goal needs it.
 
@@ -96,7 +96,7 @@ On the Lake, the fog is too thick for ordinary light, and only beams cut it. The
   - Fog slows walking (as built), so beam lanes become the quick paths. Building needs thin fog, so building along a beam is quicker too.
 - **Step toward the Lake:** here ordinary light is slow, and on the Lake it clears nothing. Beams already do the job they'll do there.
 - **Not a copy:** every lantern still works, just slowly. Only the WayLamp on the landing needs a beam (1.4).
-- **Cost:** S. One number in the fog step for region 4 (`shore_clear_mult` 0.25), plus a tip and O.'s note. Light radius, mirror catching, building and the Wickling rules don't change.
+- **Cost:** S. One number in the fog step for region 4 (`shore_clear_mult` 0.25), plus a tip and Oswin's note. Light radius, mirror catching, building and the Wickling rules don't change.
 - **Risks:** it may be too quiet to notice. The hand lamp clears slowly too, so ground you walk through stays foggier.
 
 **Option B: mist off the water.**
@@ -119,6 +119,8 @@ On the Lake, the fog is too thick for ordinary light, and only beams cut it. The
 Keep B as the fallback if A proves too quiet in the playtest.
 
 **OWNER 2:** the twist: A, thick fog (recommended), or B, mist off the water.
+
+DECIDED (2026-11-27): A, thick fog.
 
 **OWNER 3:** with A, the thick fog stays after the shore is held, as the Ridge's wind does. Recommended: yes. Held lanterns are full anyway, and the WayLamp clears at the usual speed. And the hand lamp counts as ordinary light. Recommended: yes. If walking feels slow in the playtest, let the hand lamp clear at the usual speed.
 
@@ -153,6 +155,8 @@ No upgrade finds here: the three satchels and three lamp glasses stay one per bu
 
 **OWNER 4:** worn glass on the shore (4 small spots). DESIGN §3.3 says glass is found only on the Ridge. Recommended: yes, so the shore's mirrors don't need a trip back up. Amos's trade (4 scrap for 1 glass) is the other way, but Amos is at the hut. If no, the player carries glass down from the Ridge.
 
+DECIDED (2026-11-27): yes, a few spots of worn glass on the shore, so its mirrors don't need a trip back up the steps.
+
 **OWNER 5:** no upgrade finds on the shore (recommended).
 
 ### 1.4 The WayLamp
@@ -167,13 +171,13 @@ No upgrade finds here: the three satchels and three lamp glasses stay one per bu
   - At the other WayLamps, a lantern just outside the no-build radius covers the keeper, so the ward refills during the hold (DESIGN §8's playtest note).
   - No lantern light reaches the landing. So the ward runs on the hand lamp's charge: about 4 s from full, about 6.5 s with all three lamp glasses. Warmth doesn't refill either (`player.gd`, `in_lantern_light`).
   - Beams help. They burn Wicklings in about a second, and Wicklings can't sense them, so a second beam across the landing guards it.
-  - O.'s note asks for that second beam, and the Fogstilt leaves when kindling starts (6.1).
+  - Oswin's note asks for that second beam, and the Fogstilt leaves when kindling starts (6.1).
   - If the hold is still too hard: a smaller swarm here (2 instead of 4).
 
 **`waylamp_shore`**, "WayLamp of the Lakeshore" (on the old landing, out in the shallows). DRAFT
 > A WayLamp on the old landing, out in the shallows. Still water stands around its foot.
 > Cut into the base: WHILE THIS BURNS, THE SHORE IS KEPT.
-> In chalk: No lamp can reach it from the shore. Send a beam, and one more to keep it. - O.
+> In chalk: No lamp can reach it from the shore. Send a beam, and one more to keep it. - Oswin
 
 Under the note, the game adds the three lines it shows under every WayLamp note, starting "Reach it with your own light, then feed it 15 fuel."
 
@@ -182,6 +186,8 @@ Under the note, the game adds the three lines it shows under every WayLamp note,
 - **Is the great lamp still "the last one"?** Yes. The shore's WayLamp is the fourth, and the great lamp stays the fifth and last. STORY §11 and DESIGN §8 only need the shore added to their lists. This doesn't settle PLAN §7's open question of whether the great lamp holds the Lake like a WayLamp.
 
 **OWNER 6:** the WayLamp stands on the old landing, where only a beam reaches it (recommended). The alternative is the shingle, where a lantern can reach it, as in the other regions. The Fogstilt fix in 6.1 relies on the landing.
+
+DECIDED (2026-11-27): try it on the old landing, reached only by a beam; judge it in the M5d playtest.
 
 ---
 
@@ -192,9 +198,9 @@ There are three, from the steps out along the shore. One of them is the planned 
 **`steps_foot`**, "The foot of the steps" (Lakeshore, north-west, about (67,18)). DRAFT
 > The steps end on wet shingle. The wind does not follow you down.
 > On the last step, a chalk arrow points along the shore.
-> Under it: The fog is thick down here. A lamp only thins it. A mirror cuts it. - O.
+> Under it: The fog is thick down here. A lamp only thins it. A mirror cuts it. - Oswin
 
-With Option B, the last line becomes: "Under it: Mist comes off the water here. Keep a mirror lit. It cuts through. - O."
+With Option B, the last line becomes: "Under it: Mist comes off the water here. Keep a mirror lit. It cuts through. - Oswin"
 
 **`water_post`**, "The water post" (Lakeshore, in the shallows, about (79,14)). DRAFT
 > A tall post in the shallows. The keepers cut a line where the water stood, one line a night.
@@ -214,7 +220,7 @@ The planned Lake text was "A boat half full of rain, the oars still in it. / Pas
 
 **OWNER 7:** move the planned `boat` landmark from the Lake to the Lakeshore, so there is one boat, and it is Ebba's.
 
-**OWNER 8:** the landmark count. Either count O.'s trail and the story marks only, not errand props like the survey stones (23, recommended), or count the stones and drop `water_post` (25).
+**OWNER 8:** the landmark count. Either count Oswin's trail and the story marks only, not errand props like the survey stones (23, recommended), or count the stones and drop `water_post` (25).
 
 ---
 
@@ -226,7 +232,7 @@ There are five new goals. With the WayLamp rows, the goals run 1-32: 21 built, 5
 |---|---|---|---|---|---|
 | 20 [—] | `kindle_ridge` | Kindle the WayLamp by the signal station | 40 | (built) | `waylamp_ridge` |
 | 21 [18] | `descend` | Take the old steps down to the lake | 35 | Enter the Lakeshore (region 4) | `ridge_steps` |
-| **22 [19]** | `steps_foot` | Find O.'s mark below the steps | 30 | `steps_foot` read (entry 16) | `steps_foot` |
+| **22 [19]** | `steps_foot` | Find Oswin's mark below the steps | 30 | `steps_foot` read (entry 16) | `steps_foot` |
 | **23 [20]** | `shore_beam` | Cut through the fog with a beam | 31 | A Mirror Post in the Lakeshore is lit | — |
 | **24 [21]** | `water_post` | Find the post in the shallows | 29 | `water_post` read (entry 17) | `water_post` |
 | **25 [—]** | `kindle_shore` | Kindle the WayLamp on the old landing | 37 | The Lakeshore is held (entry 18) | `waylamp_shore` |
@@ -295,7 +301,7 @@ These replace parts of PLAN_NPCS_ENEMIES: "Moved from the Lake" in §1, the Fogs
   - It can cut the beam you need to feed the landing's WayLamp. While it stands in that beam's way, you can't feed.
   - When kindling starts, it sinks back into the water, so the hold belongs to the Wicklings alone.
 - **Threat:** mirror chains, including the one that feeds the WayLamp.
-- **Counter:** one beam on it makes it step away, and two beams crossing on it unravel it. The way out to the landing and the boulders make a second beam easy, and O.'s note asks for one.
+- **Counter:** one beam on it makes it step away, and two beams crossing on it unravel it. The way out to the landing and the boulders make a second beam easy, and Oswin's note asks for one.
 - **Light and no game over:** unchanged. It never touches the keeper or a mirror, and drains nothing. When it leaves, the beam reaches again.
 - **How many:** one at a time (`stilt_max` 1). After one unravels, the next rises about a minute later (`stilt_respawn_sec` 60), until kindling starts.
 - **Art:** unchanged (16x32; a 4-frame wade and a 3-frame unravel).
@@ -330,25 +336,25 @@ This also answers the worry about a busy Ridge. The Ridge keeps the Gutterkite, 
 - **Who:** rowed for the keepers, out to the island and back. The boat in the reeds (`boat`) is Ebba's.
 - **Where, when, why:** on the shore end of the old jetty, about (69,26), once the Lakeshore is held. Ebba saw the landing lit again and came back, but still won't row into the still fog. The old plan kept Ebba away from the lake; now Ebba comes back to its shore and stops at the water.
 - **Errand, "Show me the boat":** get your own light onto the boat in the reeds, as for a WayLamp: a lantern's light or a beam (the hand lamp doesn't count). The shore is held by then, so it's a calm errand.
-- **Fragment:** on the night it went dark, the lake went still. Ebba tied up the boat and walked away. O. always sat in the bow, to see the lamp coming.
+- **Fragment:** on the night it went dark, the lake went still. Ebba tied up the boat and walked away. Oswin always sat in the bow, to see the lamp coming.
 - **Reward:** 10 fuel (placeholder), and Ebba bails the boat out.
   - After the finale, **"Row out"**: Ebba rows you to the island and the far shore (a map feature, built with the Lake).
   - The old reward, a tip about the Fogstilts, is now the `fogstilt` tip (section 5).
 - **Personality:** quiet, careful, a little superstitious.
 - **Lines** (DRAFT; one per talk):
-  - First meeting: "I saw the landing lit. For a moment I thought O. had come back."
+  - First meeting: "I saw the landing lit. For a moment I thought Oswin had come back."
   - Errand open: "My boat's out in the reeds. I can't see it from here. Put a light on it?"
   - Errand done: "Still there. Still mine. I'll bail it out."
   - Fragment (kept): "The night it went dark, the lake didn't freeze. It went still. Even the reeds stopped."
-  - About O.: "O. always sat in the bow. He said he liked to see the lamp coming."
+  - About Oswin: "Oswin always sat in the bow. He said he liked to see the lamp coming."
   - Later visits: "I won't row into that. Not while the water stands still."
   - After the finale (built with the Lake): "It moves again. Get in. I'll row."
   - After the finale (kept): "That light past the far shore? I don't know who keeps it. Nobody lived out there."
   - Only if Fogstilts wade the Lake (OWNER 12): "The tall ones wade out there too. One light moves them. Two send them off."
 - **Guardrails:**
-  - O. is remembered, never seen. "I thought O. had come back" keeps his fate open.
+  - Oswin is remembered, never seen. "I thought Oswin had come back" keeps his fate open.
   - In "it went dark", "it" is the night, not the Soul. Nobody says why it rose.
-  - "He" for O. appears once. If the owner wants no pronouns: "O. always sat in the bow, to see the lamp coming."
+  - "He" for Oswin appears once. If the owner wants no pronouns: "Oswin always sat in the bow, to see the lamp coming."
 - **Art and sound:** unchanged (32x32, oar knock). The boat reuses the sprite already on the art list for the Lake. There's no separate marsh boat.
 - **Effort:** S, on top of M5c's talk panel.
 
@@ -371,9 +377,13 @@ The Reedmarsh now brings back two people, not three, so the old M5d question abo
 
 **OWNER 13:** Ebba's home on the Lakeshore is decided. The details: the spot on the old jetty, coming back when the shore is held, and the errand, reward and lines above.
 
-**OWNER 14:** when the boat crosses. Only after the finale (recommended), or also before it, as an optional ride from the jetty to O.'s camp once the Lake is built.
+**OWNER 14:** when the boat crosses. Only after the finale (recommended), or also before it, as an optional ride from the jetty to Oswin's camp once the Lake is built.
+
+DECIDED (2026-11-27): the boat crosses only after the finale.
 
 **OWNER 15:** the brief calls Ebba "she", but PLAN §7 still leaves pronouns for the five people open, and the lines above use none for Ebba. Confirm "she"?
+
+DECIDED (2026-11-27): Ebba is "she".
 
 ---
 
@@ -422,16 +432,16 @@ M5e keeps the old M5d questions about the Slowwater, the Clinker and the busy Ri
 7. Doc sync only: PLAN §2 and §6 still describe the old two-milestone split, with the Slowwater, the Clinker and the Fogstilt in M5d. ROADMAP has the decided M5c, M5d, M5e order (section 7).
 8. The brief's map facts: the Reedmarsh reaches y 42, not 49. The split allows for it (1.1).
 9. The brief calls Ebba "she", and PLAN §7 leaves that open (OWNER 15).
-10. Doc wording only: STORY §2 says O. "left a half-built mirror on the shore", and §6 places the camp on the "Lake shore". The camp is past the causeway, on the Lake, not on the Lakeshore. Suggest "at the water's edge" in those two places. No in-game text names the camp's spot.
+10. Doc wording only: STORY §2 says Oswin "left a half-built mirror on the shore", and §6 places the camp on the "Lake shore". The camp is past the causeway, on the Lake, not on the Lakeshore. Suggest "at the water's edge" in those two places. No in-game text names the camp's spot.
 
 **Rules that hold**
 
 | Rule | Source | Holds |
 |---|---|---|
 | Short, plain sentences; calm, a little sad, a little eerie; never horror | STORY header | yes |
-| O. never speaks or appears; notes signed "- O."; his full name never in the game | STORY header, PLAN §1 | yes |
+| Oswin never speaks or appears; notes signed "- Oswin"; his surname never in the game | STORY header, PLAN §1 | yes |
 | The Soul is "it"; people don't describe it; why it rose stays unexplained | STORY §2, PLAN §1 | yes; no shore text mentions it |
-| O.'s fate stays open | STORY §10 | yes |
+| Oswin's fate stays open | STORY §10 | yes |
 | Each quoted line is one line on screen; HUD goals about 40 characters or fewer | STORY §6, brief | yes (29-38) |
 | The pointer is off after the Reedmarsh; goals have targets | STORY §5 | yes; only the build goal has none |
 | Built and planned journal numbers don't move | brief | yes (16-18) |
@@ -464,7 +474,7 @@ STORY §4 row (DRAFT):
 
 | Region | Player learns | Emotional beat | Points onward |
 |---|---|---|---|
-| **4. The Lakeshore** | Below the steps the wind stops. The fog is thick and still: lamps only thin it, beams cut it. The keepers marked the water every night until it went still. | Stillness after the wind. A held breath before the lake. | The causeway runs out over the still water, toward where O. stopped. |
+| **4. The Lakeshore** | Below the steps the wind stops. The fog is thick and still: lamps only thin it, beams cut it. The keepers marked the water every night until it went still. | Stillness after the wind. A held breath before the lake. | The causeway runs out over the still water, toward where Oswin stopped. |
 
 DESIGN §4 entry (DRAFT):
 
@@ -473,6 +483,8 @@ DESIGN §4 entry (DRAFT):
 ---
 
 ## 9. OWNER lines and still open
+
+Decided by the owner on 2026-11-27: 2 (thick fog), 4 (worn glass: yes), 6 (try the beam-only landing), 14 (the boat crosses after the finale) and 15 (Ebba is "she"). 10: the owner asked what trimming entry 15 means; the proposal is in section 3.
 
 | # | Choice | Recommended | Section |
 |---|---|---|---|
@@ -500,5 +512,5 @@ Already decided, so not asked again: the region, the new homes for the Fogstilt 
   - whether held regions stop every creature (the Fogstilt fix assumes they do);
   - whether a held region can be lost again;
   - whether the great lamp holds the Lake like a WayLamp.
-- For the Still Lake: O.'s camp stands at the far end of the causeway, in fog no lantern clears. A beam along the straight causeway would show it, so the Lake may want `first_beam` before `camp`.
+- For the Still Lake: Oswin's camp stands at the far end of the causeway, in fog no lantern clears. A beam along the straight causeway would show it, so the Lake may want `first_beam` before `camp`.
 - Pronouns for the other four people (PLAN §7).

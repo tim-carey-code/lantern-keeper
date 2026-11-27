@@ -2,6 +2,10 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (owner answers, afternoon)
+- **Oswin signs "- Oswin"** (it was "- H.", then briefly "- O."; in the game font a capital O looks like a zero), and the journal calls him Oswin. His surname stays out of the game.
+- **The Lakeshore:** thick fog (lanterns only thin it; beams and WayLamps cut it); its WayLamp on the old landing, reached only by a beam (to try in the M5d playtest); a few spots of worn glass on the shore; Ebba is "she"; her boat crosses to the Lake only after the finale.
+
 ## 2026-11-27 (owner answers, later)
 - **Oswin signs "- O."** The sign-off changed from "- H." (for Hester) in every built text: the letter, his notes, journal entries and the initial stitched in his coat.
 - **People are drawn at the keeper's 32x32 scale**, without portraits.

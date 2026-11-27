@@ -10,7 +10,7 @@ Synced to commit 9a2b9cc plus the Reservoir refuel fix (2026-11-26). History of 
 
 ## 1. Pitch and feeling
 
-**Pitch:** As the new keeper of a dark, foggy valley, you build and tend lanterns that push the dark back, following the last keeper, O., to the cold great lamp at the Still Lake.
+**Pitch:** As the new keeper of a dark, foggy valley, you build and tend lanterns that push the dark back, following the last keeper, Oswin, to the cold great lamp at the Still Lake.
 
 **Feeling:** calm, curious, moody, rewarding, with a quiet unease.
 - **Light is safety.** In it you warm up, your lamp refills and nothing chases you.
@@ -26,9 +26,9 @@ Synced to commit 9a2b9cc plus the Reservoir refuel fix (2026-11-26). History of 
 3. **Build or refuel** at the edge.
 4. **Watch** the fog pull back and new things appear.
 5. **Tend.** Lanterns burn down, faster in wind or with Wicklings at them. Ward Wicklings off, then recharge in the light.
-6. **Follow** the goal line and O.'s notes onward.
+6. **Follow** the goal line and Oswin's notes onward.
 
-Over a session: *light a path → read O.'s next mark → unlock a lantern → reach the region it was made for.*
+Over a session: *light a path → read Oswin's next mark → unlock a lantern → reach the region it was made for.*
 
 ---
 
@@ -93,10 +93,10 @@ Space / X (or left click) builds the selected lantern on your tile: firm ground 
 
 ### 3.8 Story and guidance
 Text lives in STORY.md, mirrored in `systems/story/story.gd` and `scripts/main/main.gd`.
-- **Opening** (new games only): a three-line title card, "Your name, keeper?" (up to 16 characters *(code)*; left empty, you are "Keeper"), then O.'s letter.
+- **Opening** (new games only): a three-line title card, "Your name, keeper?" (up to 16 characters *(code)*; left empty, you are "Keeper"), then Oswin's letter.
 - **Goals:** 18 for the built regions, one at a time in the top banner, completed by what you do. Finish one early and the next unfinished one shows. Goal 18 waits for the Still Lake; 19-24 are planned.
 - **Goal pointer:** a soft amber arrow at the screen edge, or a chevron over the target. Auto mode: on in the Hollow, off once you first walk into the Reedmarsh. The pause menu sets auto, always on or off.
-- **Journal (J / View):** *Goals*, *Story so far* (O.'s letter and the keeper's entries, 8 so far) and *Notes* (every landmark read). It is titled with the keeper's name.
+- **Journal (J / View):** *Goals*, *Story so far* (Oswin's letter and the keeper's entries, 8 so far) and *Notes* (every landmark read). It is titled with the keeper's name.
 - **Landmarks:** 13 built; unread ones glow, and three unlock lantern types. A region's name fades in when its ground is first seen.
 - **Tips:** 12 one-time tips. "Show tips again" is in the pause menu.
 
@@ -134,7 +134,7 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 
 **3. The Windward Ridge** (north, built). Up a narrow climb from the Hollow. **Twist: wind.** 14 glass, 8 fuel and 7 scrap spots *(code)*. Landmarks, west to east: the glazier's workshop (Hooded Lamp), a broken lens, a keeper's coat, the signal station (Mirror Post), old steps going down. Goals 11-18.
 
-**4. The Still Lake** (planned). Down the old steps. **Twist: fog too thick for ordinary light.** Only beams cut through, so the player chains mirrors from the shore to the island. O.'s camp holds a half-built mirror frame and a crate of glass; the player builds every mirror. 8 landmarks and goals 19-24 are in STORY.md.
+**4. The Still Lake** (planned). Down the old steps. **Twist: fog too thick for ordinary light.** Only beams cut through, so the player chains mirrors from the shore to the island. Oswin's camp holds a half-built mirror frame and a crate of glass; the player builds every mirror. 8 landmarks and goals 19-24 are in STORY.md.
 
 **The finale** (planned). A confrontation of light, not a fight. The Soul of the Wick took the valley's light. It is "it", with no name and big pale eyes: a coil of living darkness around the cold great lamp. It drains the lanterns feeding the mirrors, Wicklings rise from the water, and standing near it chills the keeper. The ward pushes it back while beams strike the coil from more sides, until it lets go and slides into the water. The great lamp catches, and the fog lifts over the whole valley. The game answers **who** took the light, not **why**. Afterwards the valley stays open as a sandbox.
 

@@ -13,24 +13,24 @@ This plan adds four creatures, five people who come back as regions are held, a 
 **What changes.** People and short spoken lines move to IN. DESIGN §5 and STORY's header already say so (commit 40f3406). This plan also adds creature kinds beyond ROADMAP's "Wickling variety per region (kept small)".
 
 **What stays.** These are also the guardrails for every line a person says:
-1. O.'s marks still lead the main path, and no main goal needs a person.
-2. O. is never seen. Nobody saw O. after the letter or knows where O. went.
-3. O. signs notes "- O.", with a plain hyphen. O.'s full name (Oswin Reed) never appears in the game, so people call him "O.". Lines may use "he" for O., but none need to.
+1. Oswin's marks still lead the main path, and no main goal needs a person.
+2. Oswin is never seen. Nobody saw Oswin after the letter or knows where Oswin went.
+3. Oswin signs notes "- Oswin", with a plain hyphen. His surname (Reed) never appears in the game, so people call him "Oswin". Lines may use "he" for Oswin, but none need to.
 4. The Soul of the Wick stays "it", with no name. It has big pale eyes. People call it only "it" or "the dark", and don't describe it.
 5. Why it rose stays unexplained. People know what they saw, not what it means. The great lamp's plate stays the strongest hint.
 6. Light is safe, there is no game over, and amber means safety.
 
 DECIDED (2026-11-27): people and short spoken lines move to IN, under these guardrails. All the people and all the creatures come before the Still Lake.
 
-DECIDED (2026-11-27): the sign-off uses a plain hyphen: "- O.". O.'s full name never appears in the game.
+DECIDED (2026-11-27): the sign-off uses a plain hyphen: "- Oswin". His surname never appears in the game.
 
 DECIDED (2026-11-27): the Soul of the Wick has big pale eyes. It is still "it", and why it rose is still unexplained. The blanket "no face" rule for creatures is dropped. Section 2 suggests eyes, or none, for each creature.
 
-OWNER: keep people optional, so the game still feels like following O.
+OWNER: keep people optional, so the game still feels like following Oswin
 
 DECIDED (2026-11-27): the last keeper is **Oswin Reed**, a man ("he"); the name Hester Vane is dropped.
 
-DECIDED (2026-11-27): he signs "- O." (it was "- H.", for Hester). The spoken lines in this plan that name him say "O.".
+DECIDED (2026-11-27): he signs "- Oswin" (it was "- H." for Hester, then briefly "- O."). The spoken lines in this plan that name him say "Oswin".
 
 ### Moved from the Lake (proposal)
 The old plan put Ebba and the Fogstilt at the Lake. Everything now comes before the Lake, so each needs an earlier home.
@@ -141,23 +141,23 @@ OWNER: approve the rule: people come back to a region once its WayLamp is kindle
 - **Who:** a travelling trader with a handcart, who sold the keepers oil and glass.
 - **Where, when, why:** by the hut once the Hollow is held. Lit roads mean customers.
 - **Errand:** "Light the road" (three lanterns lit along the marsh passage, so the cart can pass).
-- **Fragment:** O.'s last order, from before the letter: only glass, no oil.
+- **Fragment:** Oswin's last order, from before the letter: only glass, no oil.
 - **Reward:** trading (3 fuel for 1 scrap, and 4 scrap for 1 glass once the Ridge is held) and the Wide Pack: +10 carry of each resource, on top of the satchels (70 with all three).
 - **Personality:** cheerful and practical. Scared of the dark, and pretending not to be.
 - **Lines:**
   - "Lights on the road again. Lights mean people. People mean trade."
-  - "O. ordered glass once. No oil. Just glass, all I had."
+  - "Oswin ordered glass once. No oil. Just glass, all I had."
 
-### Maud Fallow, old pump keeper (the Reedmarsh), who knew O.
-- **Who:** an old keeper who ran the marsh pump with O. for years, then left as the lamps failed.
+### Maud Fallow, old pump keeper (the Reedmarsh), who knew Oswin
+- **Who:** an old keeper who ran the marsh pump with Oswin for years, then left as the lamps failed.
 - **Where, when, why:** at the pumphouse once the Reedmarsh is held. Saw it lit from the hills and came back, ashamed of leaving.
 - **Errand:** "Maud's lamp" (fetch it from the lantern rack by the hut).
-- **Fragment:** Maud and O. argued as the ledger counts fell; Maud left, O. stayed. Maud doesn't know why it came.
+- **Fragment:** Maud and Oswin argued as the ledger counts fell; Maud left, Oswin stayed. Maud doesn't know why it came.
 - **Reward:** the old lamp's glass, fitted to your hand lamp. It counts as a fourth lamp glass, on top of the three found in the world. The rack note becomes "Two hooks are empty now."
 - **Personality:** blunt and dry. Guilty, but kind underneath.
 - **Lines:**
-  - "You're the one who answered. O. always did find someone."
-  - "We argued over that ledger. I left. O. stayed. That's all of it."
+  - "You're the one who answered. Oswin always did find someone."
+  - "We argued over that ledger. I left. Oswin stayed. That's all of it."
   - "Why did it come? I've had years to think. I still don't know."
 
 ### Kit Brand, glazier's apprentice (the Windward Ridge)
@@ -188,11 +188,11 @@ OWNER: approve the rule: people come back to a region once its WayLamp is kindle
 - **Who:** drew the keepers' lamp maps.
 - **Where, when, why:** at the carved stone on the marsh road once two regions are held, to draw the valley again.
 - **Errand:** "Walk the edges" (read three new survey stones, one each in the Hollow, the Reedmarsh and the Ridge).
-- **Fragment:** no old map shows a lamp past the lake. O. borrowed Ivo's best map and never returned it.
+- **Fragment:** no old map shows a lamp past the lake. Oswin borrowed Ivo's best map and never returned it.
 - **Reward:** the map shows resource spots and unread notes in held regions.
 - **Personality:** fussy, precise and warm. Measures in paces.
 - **Lines:**
-  - "O. borrowed my best map. Never brought it back. I hope it helped."
+  - "Oswin borrowed my best map. Never brought it back. I hope it helped."
   - "No lamps past the lake on any map. There was nothing out there to keep."
 - **Landmark count:** with the stones the game has 24 story landmarks (13 built, 8 planned for the Lake, 3 stones). The three WayLamp notes would make 27. The six upgrade finds, also built as readable landmarks, would make 33. The target is 15-25.
 
@@ -282,7 +282,7 @@ DECIDED (2026-11-27): people's rewards add to the upgrades and don't replace the
 
 OWNER: may people say the keeper's typed name once, at the first meeting?
 
-OWNER: all names are drafts. Choose pronouns for the five people, or keep avoiding them, as for O.
+OWNER: all names are drafts. Choose pronouns for the other four people, or keep avoiding them. (DECIDED 2026-11-27: Ebba is "she"; Oswin is "he".)
 
 OWNER: how close may people come to existing hints? Draft: Kit echoes the plate and the lens ("every flame"); nobody says how many kept the great lamp.
 
