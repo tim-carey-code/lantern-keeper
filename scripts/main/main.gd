@@ -59,6 +59,7 @@ func _ready() -> void:
 	_add_resource("fuel", start + Vector2(-64, 32), 3, 5, 10.0, true)
 	_add_resource("scrap", start + Vector2(64, -32), 6, 6, 60.0, false)   # beside the hut, clear of its wall
 	_place_landmarks()
+	_place_upgrades()
 	_scatter()
 	queue_redraw()
 	# Continue from the save unless "New game" was just chosen.
@@ -226,7 +227,7 @@ func _place_ridge_landmarks() -> void:
 
 ## PROTOTYPE: one old WayLamp per region (texts are drafts until the owner approves STORY.md).
 func _place_waylamps() -> void:
-	# DRAFT texts (STORY.md section 11): owner approval pending.
+	# Texts approved by the owner on 2026-11-27 (STORY.md section 11).
 	_add_waylamp("hollow", FogGrid.R_HOLLOW, Vector2i(37, 68), "WayLamp of the Hollow",
 		"A tall lamp with a wide iron bowl, cold and full of old ash.\nCut into the base: WHILE THIS BURNS, THE HOLLOW IS KEPT.\nTied to the post: This has to be held until it takes. I could not hold it and keep the rest. - H.")
 	_add_waylamp("marsh", FogGrid.R_MARSH, Vector2i(100, 70), "WayLamp of the Reedmarsh",
@@ -240,21 +241,10 @@ func _add_waylamp(id: String, region_id: int, want: Vector2i, title: String, tex
 	w.region_id = region_id
 	w.title = title
 	w.text = text
-	w.position = _region_spot(want, region_id)
+	w.position = _spot_in_region(want, region_id)
 	_taken.append(w.position)
 	$Landmarks.add_child(w)
 	return w
-
-## The nearest open, firm tile of a region to a wanted spot.
-func _region_spot(want: Vector2i, region_id: int) -> Vector2:
-	for r in 8:
-		for dy in range(-r, r + 1):
-			for dx in range(-r, r + 1):
-				var t := want + Vector2i(dx, dy)
-				var ter := fog.terrain_of(t)
-				if (ter == FogGrid.T_GROUND or ter == FogGrid.T_BOARDWALK) and fog.region[fog.idx(t)] == region_id:
-					return fog.tile_center(t)
-	return fog.tile_center(want)
 
 ## The nearest open Ridge tile to a wanted spot (outcrops are random).
 func _ridge_spot(want: Vector2i) -> Vector2:
@@ -400,3 +390,38 @@ func _draw() -> void:
 	for i in 3:
 		Art.cell(self, Art.TOWN, Art.HUT_ROOF[i], hut + Vector2(i * t, 0))
 		Art.cell(self, Art.TOWN, Art.HUT_WALL[i], hut + Vector2(i * t, t))
+
+## Upgrades in the far corners of each region: a keeper's satchel (carry more) and a lamp glass
+## (a better hand lamp). Texts are DRAFT in STORY.md until the owner approves them.
+func _place_upgrades() -> void:
+	var u := _add_landmark("satchel_hollow", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(7, 55), FogGrid.R_HOLLOW),
+		"A keeper's satchel, hung on a nail in a fallen wall.\nPatched many times, and still sound.")
+	u.upgrade = "carry"
+	u = _add_landmark("lampglass_hollow", "A lamp glass", "lampglass", _spot_in_region(Vector2i(11, 82), FogGrid.R_HOLLOW),
+		"A spare glass for a hand lamp, wrapped in a rag.\nIt is clearer than yours.")
+	u.upgrade = "lamp"
+	u = _add_landmark("satchel_marsh", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(88, 54), FogGrid.R_MARSH),
+		"A satchel wrapped in oilcloth, wedged under an old post.\nIt is dry inside.")
+	u.upgrade = "carry"
+	u = _add_landmark("lampglass_marsh", "A lamp glass", "lampglass", _spot_in_region(Vector2i(97, 79), FogGrid.R_MARSH),
+		"A lamp glass in a tin box, packed in dry moss.\nNot a crack in it.")
+	u.upgrade = "lamp"
+	u = _add_landmark("satchel_ridge", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(46, 6), FogGrid.R_RIDGE),
+		"A satchel under a flat stone, its strap mended with wire.\nSomeone meant to come back for it.")
+	u.upgrade = "carry"
+	u = _add_landmark("lampglass_ridge", "A lamp glass", "lampglass", _spot_in_region(Vector2i(7, 20), FogGrid.R_RIDGE),
+		"A thin lamp glass from the glazier's racks, cut clear as water.\nIt fits your hand lamp.")
+	u.upgrade = "lamp"
+
+## The nearest walkable ground or boardwalk tile of a region to a wanted tile.
+func _spot_in_region(want: Vector2i, region_id: int) -> Vector2:
+	for r in 10:
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				var t := want + Vector2i(dx, dy)
+				if not fog.in_bounds(t):
+					continue
+				var ter := fog.terrain_of(t)
+				if (ter == FogGrid.T_GROUND or ter == FogGrid.T_BOARDWALK) and fog.region[fog.idx(t)] == region_id:
+					return fog.tile_center(t)
+	return fog.tile_center(want)

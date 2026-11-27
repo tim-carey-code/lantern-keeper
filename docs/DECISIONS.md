@@ -2,6 +2,16 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (owner answers)
+- **People and creatures are IN for v1:** people with short spoken lines and errands, and the four creatures from `docs/PLAN_NPCS_ENEMIES.md`. **All of them come before the Still Lake.** The plan is being revised to match (two milestones, after the WayLamp playtest).
+- **WayLamp story text approved** (STORY §11).
+- **The last keeper is Oswin Reed, a man ("he").** He replaces Hester Vane. His full name doesn't appear in the game yet. Open: whether he now signs "- O." instead of "- H.".
+- **The sign-off uses a plain hyphen**, "- H.", as built.
+- **First Wickling after 25 s** (`wick_first_delay`; was 60 s).
+- **Fainting keeps glass safe** (it drops half your fuel and scrap only), as built.
+- **Upgrades built:** a keeper's satchel (carry +10 of each) and a lamp glass (hand lamp reaches further, dims slower, wards longer) in each region, found by exploring. Texts are DRAFT in STORY §6.
+- **The Soul of the Wick has big pale eyes.** The "no face" rule is dropped, for the Soul and for the creatures.
+
 ## 2026-11-26 (lantern upkeep, docs, people and creatures)
 - **WayLamps (prototype; the owner named them).** One old WayLamp per region. Reach it with your own light, feed it fuel, and hold it while it kindles. Once lit, it **holds its region**: lanterns there are refilled and stop burning down, and no Wicklings come. Why: lighting the built regions takes about 40-50 lanterns, which means a refuel about every 4 s, and letting lanterns go cold had no stakes. Built on branch `proto/waylamps`. Its playtest is the gate before the Still Lake. Design: DESIGN §8; draft text: STORY §11.
 - **Light repels Wicklings (same prototype).** Healthy light pushes Wicklings back into the dark. They can only drain a **dying** lantern, one under a quarter of its tank that no healthy light covers.
@@ -22,9 +32,9 @@ Owner decisions that override or settle the design docs. Newest first.
 - New HUD: top-left panel (fuel/scrap/glass icons + counts, hand-lamp and warmth bars); top-centre goal banner; top-right status chips only when something needs you (wind, cold/low lanterns, getting cold, lamp an ember); prompts drawn over the thing you can use ("[A] Refuel 62%", "[A] Read", "[A] Turn", "Hold to gather"); build cost or reason under the placement outline; a key reminder that fades after a minute; full controls in the pause menu. Button letters follow the device in use (A vs E). One panel style (navy, wood/amber trim) for menus, notes and tips.
 
 ## 2026-11-26 (story markup)
-- Keep the premise: the new keeper answers a letter from the last keeper, **Hester Vane ("H.")**. Pronouns for H. not chosen; texts avoid them.
+- Keep the premise: the new keeper answers a letter from the last keeper, **Hester Vane ("H.")**. Pronouns for H. not chosen; texts avoid them. *(Changed 2026-11-27: Oswin Reed, "he".)*
 - The player **types a name** at a new game; it signs the journal.
-- The Soul of the Wick is **"it"**: no name, no face.
+- The Soul of the Wick is **"it"**: no name, no face. *(Changed 2026-11-27: it has big pale eyes.)*
 - The goal pointer turns **off on reaching the Reedmarsh**.
 - The player **builds every mirror** (H.'s camp holds a crate of glass instead of a free mirror).
 - **Keep** the great lamp plate ("IT WAS NEVER MEANT TO BE KEPT BY ONE.").

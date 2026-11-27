@@ -30,6 +30,8 @@ func lines_for(t: Node) -> Array:
 		if not t.is_reached():
 			return [["", "WayLamp: your own light must reach it first"]]
 		return [[InputHint.key("interact"), "Feed fuel  %d / %d" % [t.fuel_units(), t.needs()]]]
+	if t is Landmark and t.upgrade != "":
+		return [[InputHint.key("interact"), "Look again" if t.is_taken() else "Take"]]
 	if t is Landmark:
 		return [[InputHint.key("interact"), "Read again" if t.is_read() else "Read"]]
 	if t is Lantern and t.kind == "mirror":

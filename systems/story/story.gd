@@ -42,7 +42,7 @@ const ENTRIES := {
 	6: ["The workshop", "H. could not stay to finish the hood. I did."],
 	7: ["The coat", "H.'s coat, caught in the rocks. Something came up out of the water and drank the great lamp. I hope H. found somewhere warm."],
 	8: ["The station", "H. turned the last mirror toward the lake. That is where H. went."],
-	# DRAFT (WayLamps prototype, STORY.md section 11): owner approval pending.
+	# WayLamps (prototype; text approved by the owner 2026-11-27, STORY.md section 11).
 	13: ["The first WayLamp", "I held the WayLamp until it took. Now the Hollow keeps its own lamps."],
 	14: ["The marsh WayLamp", "The old keepers left dry wicks for whoever came next. The marsh is held again."],
 	15: ["The ridge WayLamp", "The ridge is held. Nothing comes up the steps now, and only the lake is left."],
@@ -64,7 +64,7 @@ const TIPS := {
 	"glass": "Glass. The keepers on the ridge made lamps from it.",
 	"mirror_placed": "A mirror needs light. Stand it inside a burning lantern's glow.",
 	"mirror_lit": "Interact to turn the beam. Beams pass from mirror to mirror.",
-	# DRAFT (WayLamps prototype, STORY.md section 11)
+	# WayLamps (prototype; text approved 2026-11-27, STORY.md section 11)
 	"waylamp_seen": "A WayLamp. Reach it with a lantern's light, feed it fuel, and hold it until it takes.",
 	"dying_lantern": "A lantern below a quarter is dying. Wicklings can drain it, so keep it fed.",
 	"kindle_attack": "Wicklings have come for the WayLamp. Ward them off until it takes.",

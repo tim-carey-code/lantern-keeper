@@ -52,7 +52,7 @@ Over a session: *light a path → read H.'s next mark → unlock a lantern → r
 - Hold E / A on a lit spot to gather 1 unit per 0.25 s. You carry up to 30 of each *(code)*.
 - Spots regrow while lit *(code)*: 1 unit per 45 s (peat), 60 s (resin), 75 s (scrap) or 120 s (glass).
 - **No soft-lock:** the hut woodpile regrows every 10 s, even in the dark *(code)*.
-- **Planned, not built:** carry-limit and hand-lamp upgrades (ROADMAP M5).
+- **Upgrades** lie in the far corners of each region, revealed by light like landmarks: a **keeper's satchel** (carry 10 more of each resource, so 30 → 60 with all three) and a **lamp glass** (the hand lamp reaches 12 px further, dims 25% slower and the ward costs 15% less charge, per glass). Read one to take it. Numbers in `tuning.gd` (`carry_*`, `lamp_upgrade_*`).
 
 ### 3.4 The four lanterns
 Space / X (or left click) builds the selected lantern on your tile: firm ground (not rock or soft marsh), lit or at the edge of the light, at least 1.5 tiles from other lanterns *(code)*. The outline shows its light and cost, or why it can't be built. Q / B picks a lantern up for half its cost (rounded down) plus its fuel.
@@ -75,7 +75,7 @@ Space / X (or left click) builds the selected lantern on your tile: firm ground 
 - **Feedback:** wind streaks, a wind mark and a flashing fuel bar on exposed lanterns, and a chip ("Wind rising" or "Gust: 3 lanterns exposed") only while a coming or current gust would hit them. No pop-ups.
 
 ### 3.6 Wicklings, the ward, warmth and fainting
-- **Wicklings** are small pieces of the dark: 3 hp, 65 px/s, noticing things within 380 px. After 60 s, one comes every 12 s (up to 7 at once) from deep fog 10-18 tiles away *(code)*. The rate is the same everywhere; more of them far from the hut is planned.
+- **Wicklings** are small pieces of the dark: 3 hp, 65 px/s, noticing things within 380 px. After 25 s, one comes every 12 s (up to 7 at once) from deep fog 10-18 tiles away *(code)*. The rate is the same everywhere; more of them far from the hut is planned.
 - **Against lanterns:** they creep to the rim of the nearest lit lantern and drain 5 fuel per second (a full Post Lamp in about 20 s); a dark tendril shows which. Lit mirrors get smothered instead (3.7). A lantern's bright core (its inner 45%) burns them at 2 hp per second, and they never step into it on purpose.
 - **Against the keeper:** in the dark they chase you, and their touch drains 30 warmth per second. Lantern light ends the chase.
 - **Warding glow (hold F / RB / RT):** a 110 px circle that burns 4.5 hp per second (about 0.7 s per Wickling) and pushes them back, even point-blank. It spends **hand-lamp charge, never carried fuel**: 0.25 per second, so 4 s from a full lamp and none from an ember. You walk at 60% while warding. In lantern light the lamp refills faster than the ward drains it, so the ward only runs dry in the dark.
@@ -136,7 +136,7 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 
 **4. The Still Lake** (planned). Down the old steps. **Twist: fog too thick for ordinary light.** Only beams cut through, so the player chains mirrors from the shore to the island. H.'s camp holds a half-built mirror frame and a crate of glass; the player builds every mirror. 8 landmarks and goals 19-24 are in STORY.md.
 
-**The finale** (planned). A confrontation of light, not a fight. The Soul of the Wick took the valley's light. It is "it", with no name and no face: a coil of living darkness around the cold great lamp. It drains the lanterns feeding the mirrors, Wicklings rise from the water, and standing near it chills the keeper. The ward pushes it back while beams strike the coil from more sides, until it lets go and slides into the water. The great lamp catches, and the fog lifts over the whole valley. The game answers **who** took the light, not **why**. Afterwards the valley stays open as a sandbox.
+**The finale** (planned). A confrontation of light, not a fight. The Soul of the Wick took the valley's light. It is "it", with no name and big pale eyes: a coil of living darkness around the cold great lamp. It drains the lanterns feeding the mirrors, Wicklings rise from the water, and standing near it chills the keeper. The ward pushes it back while beams strike the coil from more sides, until it lets go and slides into the water. The great lamp catches, and the fog lifts over the whole valley. The game answers **who** took the light, not **why**. Afterwards the valley stays open as a sandbox.
 
 ---
 
@@ -156,11 +156,12 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 | Save/load: one slot plus autosave | built |
 | Atmosphere: lights, fog, sound, pixel art | built; placeholders remain |
 | Settings: fullscreen, goal pointer, tips; volume | volume planned (M6) |
-| Carry-limit and hand-lamp upgrades | planned (M5), not built |
+| Carry-limit and hand-lamp upgrades | built: 3 satchels and 3 lamp glasses |
 | Wickling variety by region; more far from the hut | planned (M5), not built |
+| People (5) with short spoken lines and errands; four new creatures, each answered by a lantern | approved 2026-11-27; planned for M5c-M5d, before the Still Lake (`PLAN_NPCS_ENEMIES.md`) |
 | A Linux build | planned (M6) |
 
-**OUT** (v1): death or game over; story told through dialogue, NPCs or cutscenes; more than one map, or random maps; day/night, rain, seasons; crafting beyond the lantern recipes; a Windows build.
+**OUT** (v1): death or game over; dialogue trees or cutscenes (short spoken lines from people are IN since 2026-11-27); more than one map, or random maps; day/night, rain, seasons; crafting beyond the lantern recipes; a Windows build.
 
 **Target playtime:** about 1-2 hours to relight the great lamp.
 

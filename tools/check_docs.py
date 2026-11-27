@@ -184,8 +184,8 @@ def main() -> int:
     # 4. Code a doc describes changed after the doc was last touched.
     for doc, paths in WATCH.items():
         last = git("log", "-1", "--format=%h", "--", doc).strip()
-        if not last:
-            continue
+        if not last or git("diff", "--name-only", "HEAD", "--", doc).strip():
+            continue   # never committed, or being updated right now
         changed = [f for f in git("diff", "--name-only", f"{last}..HEAD", "--", *paths).split() if f]
         changed += [f for f in git("diff", "--name-only", "HEAD", "--", *paths).split() if f and f not in changed]
         if changed:

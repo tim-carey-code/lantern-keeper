@@ -72,6 +72,8 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 | 🟨 | Peat (marsh fuel) | `assets/art/placeholders/peat.png` | 16×16 | centre | drop-in | Dark brown mound, a few warm flecks. |
 | 🟨 | Scrap pile | `assets/art/placeholders/scrap_pile.png` | 16×16 | centre | drop-in | Blue-grey metal bits. |
 | 🟨 | Glass shards (Ridge resource) | `assets/art/placeholders/glass.png` | 16×16 | centre | drop-in | Pale blue-white glints. |
+| 🟨 | Keeper's satchel (carry upgrade) | `assets/art/placeholders/satchel.png` | 16×16 | bottom-centre | drop-in | Patched leather satchel, brass buckle. Shown dull once taken. |
+| 🟨 | Lamp glass (hand-lamp upgrade) | `assets/art/placeholders/lamp_glass.png` | 16×16 | bottom-centre | drop-in | A clear glass lamp chimney. Shown dull once taken. |
 | 🟨 | Ember drop (from Wicklings) | `assets/art/fx/ember.png` | 16×16, 4 frames → 64×16 strip | centre | needs hookup | Flickering flame. Drawn by code today. |
 | 🟨 | Scrap drop (from Wicklings) | `assets/art/fx/scrap_drop.png` | 16×16 | centre | needs hookup | Small heap with a glint. Drawn by code today. |
 

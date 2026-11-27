@@ -97,6 +97,7 @@ Lantern Keeper is in development. It is a single-player game for PC (Linux first
 - **Wicklings and the warding glow.** Wicklings drift out of the deep fog to drain your lanterns and smother your mirrors. Hold F / RB / RT and your hand lamp swells into a warding glow that burns them and pushes them back. The glow runs on the lamp's own charge, never your fuel. Burned Wicklings leave an ember worth a little fuel.
 - **No game over.** Warmth is your health. It drops when a Wickling touches you and comes back in lantern light. At zero you faint, drop some of what you carry, and wake by the nearest lit lantern (or the hut).
 - **Story and guidance.** A short opening asks your keeper's name and gives you H.'s letter. One goal at a time sits at the top of the screen, and an optional pointer shows the way. The journal keeps your goals, the story so far and every note you have read. H.'s marks wait in the fog for your light to find them.
+- **Finds worth the walk.** A keeper's satchel in each region lets you carry more, and a lamp glass makes your hand lamp reach further, dim more slowly and ward for longer.
 - **The map.** It shows the ground you have explored, the regions you have found, and your lanterns, colored by how much fuel they have left.
 - **Keyboard and mouse, or a gamepad.** Menus work without a mouse, and on-screen prompts show the buttons for the device you used last.
 - **Save and autosave.** One save slot. The game saves every minute, when you close the window, and when you choose Save in the pause menu.
@@ -169,6 +170,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_ridge.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_story.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_waylamps.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_upgrades.tscn
 # A test that fails to parse never quits: wrap runs in `timeout 120`.
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800                    # no errors
 python3 tools/check_docs.py                                                                    # the docs still match the code
