@@ -1,5 +1,28 @@
 # Playtests
 
+## PROTOTYPE build (branch `proto/waylamps`): WayLamps hold a region
+
+The project folder is on this branch. Open it in Godot and press F5 (or `godot --path ~/Projects/lantern-keeper`).
+Your save still loads: the WayLamps start cold, and the first unfinished goal points you back to the Hollow.
+
+**WayLamps.** Each region has one old WayLamp on a stone plinth: the Hollow's is by the carved stone, the Reedmarsh's is on the pumphouse island, and the Ridge's is by the signal station.
+- **Reach it** with your own light: a burning lantern whose light covers it, or a mirror beam. Your hand lamp doesn't count. You can't build right next to it.
+- **Feed it** 15 fuel (E / A). You can do it over several trips; what you pour in stays.
+- **It kindles** for 15 s. A swarm of bold Wicklings (reddish rim) comes for it and ignores the push of your lanterns. Each one sitting on it undoes the kindling, so ward them off (F / RB / RT). It never fails, it only stalls.
+- **Lit, it holds the region.** Every lantern there is refilled and stops burning down (a gold diamond replaces its fuel bar), no Wicklings spawn there, and any inside fade away. Its light clears only its own region's fog.
+
+**Light rules.** A healthy lantern pushes Wicklings back into the dark. Only a **dying** lantern can be drained: under a quarter of its tank (the tick on the fuel bar), shown with a red bar and a flicker, and not covered by any healthy light. Mirrors out in the dark can still be smothered.
+
+Questions (decision gate: keep, change, or drop):
+1. Did kindling a WayLamp feel like a moment worth working for? Too easy, too hard?
+2. Once the Hollow was held, did upkeep feel right: less of a chore, with real tending only at the frontier?
+3. Was it clear which lanterns were in danger (dying) and which were safe?
+4. Did Wicklings being pushed out of the light make the lanterns feel safer, or make Wicklings pointless?
+5. Do 15 fuel and 15 s feel right?
+6. Does a held region feel good to come back to, or too empty?
+
+---
+
 ## PROTOTYPE build (branch `proto/wicklings`): calm conflict
 
 **Wicklings** drift out of the deep fog (first one after ~40 s, then every ~16 s, max 5).
