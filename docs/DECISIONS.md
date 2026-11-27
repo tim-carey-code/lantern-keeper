@@ -8,7 +8,7 @@ Owner decisions that override or settle the design docs. Newest first.
 - **The keeper takes and wears Oswin's coat** on the Ridge.
 - **Moves approved:** the Reedmarsh's WayLamp to the south-east island; the Mirror Post's unlock to the Lakeshore.
 - **Lamp charge stays as built** for now: lantern light refills it, carried fuel tops it up between fights.
-- **The tuning panel (F1)** shows the combat kit's numbers too (beam, burst, dash, elites, warmth); the old ward rows are gone.
+- **The tuning panel (F1)** shows the combat kit's numbers on the prototype branch.
 
 ## 2026-11-27 (new direction and font)
 - **The game becomes an action RPG: direction B, "Keeper's Light".** The hand lamp becomes a weapon (aimed beam, burst, dash), with enemy families and elites, a guardian fight at each WayLamp, levels with pick-1-of-3 upgrades, and gear. **Each region's find is the key to conquering that region and lighting its WayLamp** (owner's rule). Direction C's tides (ebb and flood) are kept for later, if fights need build-up. The owner: the cozy idea "will just end up being too boring". Research: `CORE_LOOP_RESEARCH` (drafts). Next: a design draft for owner markup, and a prototype in the Hollow with a playtest gate. People, creatures and the Lakeshore wait, to be refitted to it.
