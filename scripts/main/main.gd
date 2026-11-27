@@ -33,6 +33,11 @@ var rng := RandomNumberGenerator.new()
 var _taken: Array[Vector2] = []
 
 func _ready() -> void:
+	# This prototype must never load or overwrite the owner's main-game save.
+	# Automated captures/tests set skip_opening and choose their own isolated path.
+	if not Story.skip_opening:
+		SaveGame.slot_prefix = "user://keepers_light_slot_"
+		SaveGame.path = "user://keepers_light_prototype.json"
 	add_to_group("main")
 	Inventory.reset()
 	Progress.reset()
@@ -60,6 +65,7 @@ func _ready() -> void:
 	_add_resource("scrap", start + Vector2(64, -32), 6, 6, 60.0, false)   # beside the hut, clear of its wall
 	_place_landmarks()
 	_place_upgrades()
+	_place_hollow_prototype()
 	_scatter()
 	queue_redraw()
 	# Continue from the save unless "New game" was just chosen.
@@ -73,6 +79,7 @@ func _ready() -> void:
 
 ## A WayLamp caught: every lantern in its region flares back to a full tank and is held from now on.
 func _on_region_settled(region_id: int, _name: String) -> void:
+	Story.update(self)
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if l.needs_fuel() and fog.region_at(l.global_position) == region_id:
 			l.fuel = l.max_fuel()
@@ -125,6 +132,12 @@ func _generate() -> void:
 					fog.set_tile(Vector2i(x, y), FogGrid.T_GROUND, FogGrid.R_MARSH)
 
 	_generate_ridge()
+	# The first prototype ends in the Hollow; keep the east and north routes shut in normal play.
+	if not Story.skip_opening:
+		for y in range(65, 73):
+			fog.set_tile(Vector2i(47, y), FogGrid.T_ROCK, FogGrid.R_HOLLOW)
+		for x in range(16, 33):
+			fog.set_tile(Vector2i(x, 42), FogGrid.T_ROCK, FogGrid.R_HOLLOW)
 
 ## Region 3: a long windswept ridge north of the Hollow, reached by a narrow climb.
 ## Rock outcrops give shelter from the west wind.
@@ -236,6 +249,7 @@ func _place_waylamps() -> void:
 
 func _add_waylamp(id: String, region_id: int, want: Vector2i, title: String, text: String) -> WayLamp:
 	var w := WayLamp.new()
+	w.guardian_fight = id == "hollow"
 	w.id = id
 	w.region_id = region_id
 	w.title = title
@@ -389,6 +403,38 @@ func _draw() -> void:
 	for i in 3:
 		Art.cell(self, Art.TOWN, Art.HUT_ROOF[i], hut + Vector2(i * t, 0))
 		Art.cell(self, Art.TOWN, Art.HUT_WALL[i], hut + Vector2(i * t, t))
+
+## Keeper's Light prototype content, limited to the Hollow.
+func _place_hollow_prototype() -> void:
+	var post_pos := fog.tile_center(Vector2i(24, 58))
+	var post := _add_landmark("crook_post", "A keeper's post", "post", post_pos,
+		"A keeper's crook, fallen across the path. The lamp on it is cold, but whole.\nTied to it: Plant one where you mean to stand. The small ones will not come into it. - Oswin")
+	post.unlock_kind = "post"
+	var lure := PostLure.new()
+	lure.position = post_pos
+	$FogLayer/Wicklings.add_child(lure)
+	var clinker := Clinker.new()
+	clinker.position = post_pos
+	$FogLayer/Wicklings.add_child(clinker)
+	var nest_tiles := [Vector2i(21, 53), Vector2i(27, 50), Vector2i(30, 47)]
+	for i in nest_tiles.size():
+		var nest := WickNest.new()
+		nest.foe_id = "nest_hollow_%d" % (i + 1)
+		nest.position = _spot_in_region(nest_tiles[i], FogGrid.R_HOLLOW)
+		$FogLayer/Wicklings.add_child(nest)
+	var packs := [
+		[Vector2i(13, 64), 3, 0], [Vector2i(35, 66), 4, 0],
+		[Vector2i(15, 57), 4, 1], [Vector2i(34, 58), 4, 1],
+		[Vector2i(18, 49), 4, 0], [Vector2i(29, 54), 5, 0],
+	]
+	for i in packs.size():
+		var row: Array = packs[i]
+		var pack := EnemyPack.new()
+		pack.id = "hollow_%d" % (i + 1)
+		pack.count = int(row[1])
+		pack.spitwicks = int(row[2])
+		pack.position = _spot_in_region(row[0], FogGrid.R_HOLLOW)
+		$FogLayer/Wicklings.add_child(pack)
 
 ## Upgrades in the far corners of each region: a keeper's satchel (carry more) and a lamp glass
 ## (a better hand lamp). Texts are DRAFT in STORY.md until the owner approves them.

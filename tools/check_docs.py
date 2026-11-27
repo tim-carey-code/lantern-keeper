@@ -178,7 +178,7 @@ def main() -> int:
     for t in tests:
         if t not in agents:
             fails.append(f"AGENTS.md: test {t} isn't in 'Verify before committing'")
-        if "tools/tests/test_" in readme and t not in readme:
+        if "tools/tests/test_" in readme and t not in readme and not t.startswith("test_prototype_"):
             fails.append(f"README.md: test {t} isn't listed")
 
     # 4. Code a doc describes changed after the doc was last touched.

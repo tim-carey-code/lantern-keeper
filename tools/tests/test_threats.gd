@@ -34,6 +34,9 @@ func _ready() -> void:
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
 	add_child(main)
+	# This suite isolates the ambient Wickling threat; fixed Hollow encounters have their own test.
+	for pack in get_tree().get_nodes_in_group("enemy_pack"):
+		pack.queue_free()
 
 func _process(_delta: float) -> void:
 	frame += 1

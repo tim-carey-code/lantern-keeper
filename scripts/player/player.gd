@@ -62,7 +62,8 @@ func in_lantern_light() -> bool:
 
 func update_hand_lamp(delta: float) -> void:
 	if in_lantern_light() and not warding and not (combat and combat.beaming):   # light weapons are never free
-		lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_recharge_per_sec * delta)
+		var fill_mult := 1.5 if Progress.has_combat_upgrade("quick_fill") else 1.0
+		lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_recharge_per_sec * fill_mult * delta)
 	else:
 		lamp_charge = maxf(0.0, lamp_charge - Progress.lamp_drain_per_sec() * delta)
 		# Auto top-up from carried fuel keeps the lamp alive on long walks, but never feeds the ward.
@@ -193,7 +194,18 @@ func _update_warmth(delta: float) -> void:
 ## Out of warmth: drop part of what you carry where you fell, wake at the nearest lit lantern (or the hut).
 func faint() -> void:
 	faints += 1
+	for pack_key in Progress.cleared.keys():
+		if str(pack_key).begins_with("pack_"):
+			Progress.cleared.erase(pack_key)
 	var main := get_tree().get_first_node_in_group("main")
+	if Progress.wick > 0:
+		var drop := WickDrop.new()
+		drop.amount = Progress.wick
+		drop.position = global_position
+		var arena := get_tree().get_first_node_in_group("wickling_spawner")
+		if arena:
+			arena.add_child(drop)
+		Progress.wick = 0
 	for kind in ["fuel", "scrap"]:
 		var lost := int(floor(Inventory.get_count(kind) * Tuning.faint_drop))
 		if lost > 0 and main:
@@ -344,6 +356,8 @@ func place_block_reason(p: Vector2) -> String:
 		if w.global_position.distance_to(p) < Tuning.waylamp_clear_radius:
 			return "too close to the WayLamp"
 	var k := Progress.selected
+	if not Progress.is_unlocked(k):
+		return "not found yet"
 	if Inventory.get_count("scrap") < Lantern.cost(k) or Inventory.get_count("glass") < Lantern.glass_cost(k):
 		return "needs " + Lantern.cost_text(k)
 	return ""

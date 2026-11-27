@@ -1,5 +1,27 @@
 # Playtests
 
+## PROTOTYPE build (branch `proto/kl-hollow`): Keeper's Light in the Hollow
+
+Open the `proto/kl-hollow` worktree in Godot and press F5. This build uses a separate prototype save, so your regular save remains untouched. Automated checks use the Dummy audio driver; normal play keeps audio enabled.
+
+The north/east exits are closed. Start by relighting the hut lantern. Find the red pulse north of the hut, fight the Clinker for the Post Lamp, and burn out the three nests with a built lantern's bright core. The blue glints mark two guarded upgrades. Feed the Hollow WayLamp 15 fuel to wake the Ashbrood; break its shell with the beam, then learn its second phase. The level-up screen pauses play and offers three of eight upgrades.
+
+**Controls:** beam: hold left click / RT; burst: F / RB; dash: Shift / LT. Move: WASD / left stick. Interact/read/refuel: E / A. Build: Space / X. F1 opens the tuning panel; Esc / Start pauses.
+
+**Prototype limits:** creatures and effects are code-drawn placeholders. Leads, journal changes, the third boss phase, regions beyond the Hollow, and full animation/audio polish are not included. Values are prototypes and can be adjusted in F1.
+
+Questions (decision gate):
+1. Did aiming and firing the beam feel good on mouse and pad? What felt off: reach, speed, sound or hit feedback?
+2. Did you dash on purpose to dodge? When hit, did it feel fair?
+3. Did you work out how shells and nests are damaged? Did the Clinker take too long?
+4. Did finding the Post Lamp change how you fought? Did it feel earned?
+5. Did the level-up choices feel distinct and useful?
+6. Was the Ashbrood tense but fair? Did you understand each phase?
+7. Did the lures pull you along? Did the Hollow still feel empty anywhere?
+8. Did you still build lamps, and why?
+
+---
+
 ## PROTOTYPE build (branch `proto/waylamps`): WayLamps hold a region
 
 The project folder is on this branch. Open it in Godot and press F5 (or `godot --path ~/Projects/lantern-keeper`).

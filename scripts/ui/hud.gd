@@ -7,6 +7,7 @@ extends CanvasLayer
 ## What you can do with the thing in front of you is shown over it (see world_prompt.gd).
 
 const KEY_HINT_SECS := 60.0
+const LEVEL_UP_SCRIPT := preload("res://scripts/ui/level_up.gd")
 
 var banner: Label
 var toast: Label
@@ -17,6 +18,9 @@ var counts := {}          # kind -> Label
 var glass_row: Control
 var lamp_bar: ProgressBar
 var warm_bar: ProgressBar
+var wick_bar: ProgressBar
+var wick_level: Label
+var level_up_screen: Node
 var chips: VBoxContainer
 var keys: Label
 var building: Label
@@ -30,9 +34,12 @@ var _status: Array = []   # [[icon, text, color], ...] currently shown
 var _keys_t := KEY_HINT_SECS
 
 func _ready() -> void:
+	add_to_group("hud")
 	layer = 5
 	_build_resource_panel()
 	_build_goal_banner()
+	level_up_screen = LEVEL_UP_SCRIPT.new()
+	add_child(level_up_screen)
 	chips = VBoxContainer.new()
 	# Pinned to the top-right corner and growing leftwards, so a long chip never runs off screen.
 	chips.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -78,6 +85,21 @@ func _build_resource_panel() -> void:
 			glass_row = item
 	lamp_bar = _meter(col, "icon_lamp", UiStyle.AMBER)
 	warm_bar = _meter(col, "icon_warmth", Color(0.85, 0.89, 0.94))
+	var wick_row := HBoxContainer.new()
+	wick_row.add_theme_constant_override("separation", 8)
+	col.add_child(wick_row)
+	wick_level = UiStyle.label(18, UiStyle.PALE)
+	wick_level.custom_minimum_size = Vector2(32, 0)
+	wick_row.add_child(wick_level)
+	wick_bar = ProgressBar.new()
+	wick_bar.custom_minimum_size = Vector2(192, 10)
+	wick_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	wick_bar.show_percentage = false
+	wick_bar.max_value = 1.0
+	var wick_styles := UiStyle.bar(Color(0.56, 0.7, 0.82))
+	wick_bar.add_theme_stylebox_override("background", wick_styles[0])
+	wick_bar.add_theme_stylebox_override("fill", wick_styles[1])
+	wick_row.add_child(wick_bar)
 	var b := HBoxContainer.new()
 	b.add_theme_constant_override("separation", 8)
 	col.add_child(b)
@@ -259,6 +281,9 @@ func _process(delta: float) -> void:
 	building_pic.texture = Art.placeholder({"post": "post_lamp_lit.png", "reservoir": "reservoir_lamp_lit.png", "hooded": "hooded_lamp_lit.png", "mirror": "mirror_post_lit.png"}.get(sel, "post_lamp_lit.png"))
 	lamp_bar.value = player.lamp_charge
 	warm_bar.value = player.warmth / Tuning.warmth_max
+	wick_level.text = "L%d" % Progress.level
+	wick_bar.value = float(Progress.wick) / float(maxi(1, Progress.wick_needed()))
+	wick_bar.tooltip_text = "Wick: %d / %d" % [Progress.wick, Progress.wick_needed()]
 	# Status chips: rebuilt only when what they say changes.
 	var items := status_items()
 	if str(items) != str(_status):

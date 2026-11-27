@@ -78,6 +78,8 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	var t := float(FogGrid.TILE)
 	match look:
+		"post":
+			Art.sprite(self, Art.placeholder("post_lamp_cold.png"), Vector2(0, 14))
 		"ledger":
 			Art.cell_at_foot(self, Art.TOWN, Art.SIGN, Vector2(0, 14))
 		"frames":

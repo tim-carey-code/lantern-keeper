@@ -11,12 +11,14 @@ extends Node2D
 const LAMP_Y := -60.0   # the lamp cage, above the tile centre
 
 var id := ""            # "hollow", "marsh", "ridge"
+var guardian_fight := false  # the Keeper's Light Hollow prototype replaces its hold with Ashbrood
 var region_id := 0
 var title := ""
 var text := ""          # inspection text (DRAFT until the owner approves STORY.md)
 var kindling := false
 var kindle_t := 0.0
 var light: PointLight2D
+var _guardian: Ashbrood
 
 func _ready() -> void:
 	add_to_group("waylamp")
@@ -60,6 +62,8 @@ func get_light_radius() -> float:
 	if is_lit():
 		return Tuning.waylamp_radius
 	if kindling:
+		if guardian_fight:
+			return 180.0
 		return lerpf(48.0, 220.0, clampf(kindle_t / Tuning.waylamp_kindle_sec, 0.0, 1.0))
 	return 0.0
 
@@ -96,7 +100,13 @@ func start_kindling() -> void:
 	Sfx.play("relight", -6.0)
 	Story.tip("kindle_attack")
 	var spawner := get_tree().get_first_node_in_group("wickling_spawner")
-	if spawner and Tuning.waylamp_swarm > 0:
+	if guardian_fight:
+		_guardian = Ashbrood.new()
+		_guardian.position = global_position
+		_guardian.waylamp = self
+		if spawner:
+			spawner.add_child(_guardian)
+	elif spawner and Tuning.waylamp_swarm > 0:
 		spawner.spawn_swarm(self, Tuning.waylamp_swarm)
 
 ## A Wickling on the WayLamp drinks the new flame.
@@ -105,11 +115,15 @@ func sap(seconds: float) -> void:
 
 func _process(delta: float) -> void:
 	if kindling:
-		kindle_t += delta
-		if kindle_t >= Tuning.waylamp_kindle_sec:
-			kindling = false
-			Sfx.play("unlock", -4.0)
-			Progress.settle(region_id, FogGrid.REGION_NAMES[region_id])
+		if guardian_fight:
+			if is_lit():
+				kindling = false
+		else:
+			kindle_t += delta
+			if kindle_t >= Tuning.waylamp_kindle_sec:
+				kindling = false
+				Sfx.play("unlock", -4.0)
+				Progress.settle(region_id, FogGrid.REGION_NAMES[region_id])
 	elif not is_lit() and fuel_units() >= needs():
 		start_kindling()   # fed before a reload: carry on
 	var r := get_light_radius()

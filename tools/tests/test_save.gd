@@ -25,6 +25,7 @@ func strip_real_input() -> void:
 func _new_main() -> void:
 	main = load("res://scenes/main/main.tscn").instantiate()
 	add_child(main)
+	Progress.unlock("post")
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS   # keep counting frames when a note or menu pauses the world
@@ -60,6 +61,14 @@ func _process(_delta: float) -> void:
 			Inventory.counts["scrap"] = 7
 			Progress.unlock("reservoir")
 			Progress.selected = "reservoir"
+			Progress.wick = 7
+			Progress.level = 2
+			Progress.cleared["nest_hollow_1"] = true
+			Progress.choose_combat_upgrade("long_throw")
+			var wick_drop := WickDrop.new()
+			wick_drop.amount = 4
+			wick_drop.position = main.start + Vector2(160, 40)
+			main.get_node("FogLayer/Wicklings").add_child(wick_drop)
 			Progress.notes_read["ledger"] = true
 			var r: ResourceNode = main.get_node("Resources").get_child(5)
 			res_pos = r.position
@@ -89,6 +98,10 @@ func _process(_delta: float) -> void:
 				check(found[0].kind == "reservoir" and absf(found[0].fuel - 77.0) < 2.0, "with their type and fuel (%.1f)" % found[0].fuel)
 			check(Inventory.get_count("fuel") == 12 and Inventory.get_count("scrap") == 7, "inventory comes back")
 			check(Progress.is_unlocked("reservoir") and Progress.selected == "reservoir", "unlocks and selected lantern come back")
+			check(Progress.wick == 7 and Progress.level == 2 and Progress.cleared.has("nest_hollow_1"), "wick/level/cleared come back (%d/%d/%s)" % [Progress.wick, Progress.level, str(Progress.cleared)])
+			check(Progress.has_combat_upgrade("long_throw"), "chosen combat upgrades come back")
+			var wick_drops := get_tree().get_nodes_in_group("wick_drop")
+			check(wick_drops.size() == 1 and wick_drops[0].amount == 4, "dropped wick comes back (%d)" % wick_drops.size())
 			check(Progress.notes_read.has("ledger"), "notes read come back")
 			var rs := get_tree().get_nodes_in_group("resource").filter(func(x): return x.position == res_pos)
 			check(rs.size() == 1 and rs[0].amount == 1, "resource amounts come back")

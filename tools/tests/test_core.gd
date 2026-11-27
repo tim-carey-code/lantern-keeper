@@ -55,6 +55,8 @@ func _process(_delta: float) -> void:
 				elif r.kind == "scrap" and r.global_position.distance_to(start) < 100.0:
 					scrap_pile = r
 			check(lamp != null and not lamp.is_lit(), "the old lantern by the hut starts cold (relighting it is the first goal)")
+			check(not Progress.is_unlocked("post"), "the Post Lamp starts locked until the Hollow find")
+			Progress.unlock("post")  # the remaining legacy core checks cover the build loop
 			lamp.fuel = Tuning.lantern_max_fuel   # relight it for the rest of these checks
 			check(woodpile != null and scrap_pile != null, "hut woodpile and starter scrap exist")
 			var res := get_tree().get_nodes_in_group("resource")
@@ -224,7 +226,7 @@ func _m3_checks() -> void:
 	check(walk.x >= 0 and fog.build_block(fog.tile_center(walk)) == "", "can build on a boardwalk")
 	var pump := _landmark("pumphouse")
 	var notes := get_tree().get_nodes_in_group("landmark").filter(func(m): return m.upgrade == "" and not m.scenery)
-	check(notes.size() == 11, "eleven story landmarks to read (6 Hollow/marsh, 5 Ridge); the rack is scenery (%d)" % notes.size())
+	check(notes.size() == 12, "twelve story landmarks to read, including the Hollow find; the rack is scenery (%d)" % notes.size())
 	check(_landmark("rack") != null and _landmark("rack").scenery and _landmark("letter") == null, "the rack is just scenery and the door letter is gone (less to read at the start)")
 	check(pump != null and _connected(fog.tile_of(start), fog.tile_of(pump.global_position)), "walkable path from the hut to the pumphouse")
 	var peat := get_tree().get_nodes_in_group("resource").filter(func(r): return r.label == "Peat")

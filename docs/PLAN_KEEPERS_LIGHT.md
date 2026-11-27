@@ -521,19 +521,19 @@ Ebba is "she". Maud's "him" is Oswin.
 
 ## 8. The Hollow prototype
 
-The first build, with a playtest gate. Branch `proto/keepers-light`. Slice 1 is built. It should play for 20-30 minutes.
+The first build, with a playtest gate. Branch `proto/kl-hollow`. Slices 1-6 are implemented; slice 7 (the small Leads version) is cut for this build. The prototype is not playtested yet. Target: 20-30 minutes.
 
 ### 8.1 Exact contents
 
 | # | Slice | Contents | State |
 |---|---|---|---|
 | 1 | **The kit** | beam, burst, dash on lamp charge; mouse and right-stick aim; shelled Wicklings (every 4th); building on Space / X | **Built** (701c42e) |
-| 2 | **Enemies** | the **Spitwick**; the **Clinker**; **nests**; 6-8 fixed packs; lures above the fog for nests, caches and the cold post | to build |
-| 3 | **Wick and levels** | the wick bar; the "Trim the wick" screen; eight upgrades (5.2) | to build |
-| 4 | **The find** | the Post Lamp starts locked. A Clinker sits on a cold keeper's post about 10 tiles north of the hut. Three nests lie on the way north, burned out only by a lamp's core | to build |
-| 5 | **The guardian** | feed 15 fuel and the **Ashbrood** wakes; phases 1 and 2; the WayLamp takes when it falls. The faint rule from 1.4 | to build |
-| 6 | **Feel** | a flash on every hit, the shell's clink and crack, a short freeze on a kill, a small shake on the burst, about six placeholder sounds; every number in the F1 panel | to build |
-| 7 | **Leads, the small version** | the banner shows up to three leads for the Hollow. No journal page yet | to build; the first thing to cut |
+| 2 | **Enemies** | the **Spitwick**; the **Clinker**; **nests**; 6 fixed packs; lures above the fog for nests, caches and the cold post | implemented; needs playtest |
+| 3 | **Wick and levels** | the wick bar; the "Trim the wick" screen; eight upgrades (5.2) | implemented; needs playtest |
+| 4 | **The find** | the Post Lamp starts locked. A Clinker sits on a cold keeper's post about 10 tiles north of the hut. Three nests lie on the way north, burned out only by a lamp's core | implemented; needs playtest |
+| 5 | **The guardian** | feed 15 fuel and the **Ashbrood** wakes; phases 1 and 2; the WayLamp takes when it falls. The faint rule from 1.4 | implemented; needs playtest |
+| 6 | **Feel** | hit and shell feedback, short freeze on a kill, burst shake; F1 tuning for the prototype | implemented; needs audio/feel playtest |
+| 7 | **Leads, the small version** | the banner shows up to three leads for the Hollow. No journal page yet | cut from this playtest build |
 
 **The run.** The opening as built. Relight the hut lantern. Fight near it, with the hut as your only haven. A red pulse shows to the north. Crack the Clinker and take the Post Lamp. Burn out three nests on the way north. Two glints, west and south, are the built satchel and lamp glass, each with a guard. Feed the WayLamp. Beat the Ashbrood. "The Hollow is held", then an end card. The passage east and the climb north are closed.
 

@@ -7,27 +7,61 @@ signal lantern_unlocked(kind: String)
 signal note_opened(title: String, text: String)
 signal landmark_spotted(title: String)
 signal region_settled(region_id: int, region_name: String)
+signal wick_changed(current: int, needed: int, level: int)
+signal level_up(level: int)
 
 const LANTERN_ORDER := ["post", "reservoir", "hooded", "mirror"]
 
 var upgrades := {}   # upgrade landmark id -> "carry" (keeper's satchel) or "lamp" (lamp glass), once taken
-var unlocks := {"post": true}
+var unlocks := {"post": false}
 var selected := "post"
 var regions_seen := {}
 var notes_read := {}
 var settled := {}          # region id -> true once its WayLamp is lit ("held")
 var waylamp_fuel := {}     # WayLamp id -> carried fuel fed into it so far
+var wick := 0
+var level := 1
+var cleared := {}           # fixed prototype enemies and packs that stay beaten
+var combat_upgrades: Array[String] = []
+var pending_level_ups := 0
 var _input_block_until := 0
 
 func reset() -> void:
 	upgrades = {}
 	apply_upgrades()
-	unlocks = {"post": true}
+	unlocks = {"post": false}
 	selected = "post"
 	regions_seen = {}
 	notes_read = {}
 	settled = {}
 	waylamp_fuel = {}
+	wick = 0
+	level = 1
+	cleared = {}
+	combat_upgrades = []
+	pending_level_ups = 0
+
+func wick_needed() -> int:
+	return Tuning.kl_wick_first_level + Tuning.kl_wick_level_step * (level - 1)
+
+func add_wick(amount: int) -> void:
+	if amount <= 0:
+		return
+	wick += amount
+	while wick >= wick_needed():
+		wick -= wick_needed()
+		level += 1
+		pending_level_ups += 1
+		level_up.emit(level)
+	wick_changed.emit(wick, wick_needed(), level)
+
+func choose_combat_upgrade(id: String) -> void:
+	if id != "" and not combat_upgrades.has(id):
+		combat_upgrades.append(id)
+	pending_level_ups = maxi(0, pending_level_ups - 1)
+
+func has_combat_upgrade(id: String) -> bool:
+	return combat_upgrades.has(id)
 
 func is_unlocked(kind: String) -> bool:
 	return unlocks.get(kind, false)
@@ -46,6 +80,7 @@ func settle(region_id: int, region_name: String) -> void:
 	if settled.has(region_id):
 		return
 	settled[region_id] = true
+	add_wick(30)
 	region_settled.emit(region_id, region_name)
 
 # --- Upgrades ----------------------------------------------------------------

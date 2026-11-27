@@ -39,6 +39,7 @@ func _ready() -> void:
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
 	add_child(main)
+	Progress.unlock("post")
 
 func _find(pred: Callable) -> Vector2i:
 	for y in fog.rows:

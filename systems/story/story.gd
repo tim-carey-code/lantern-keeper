@@ -13,7 +13,7 @@ const GOALS := [
 	{"id": "gather_fuel", "text": "Take fuel from the woodpile", "target": "woodpile"},
 	{"id": "relight_first", "text": "Relight the old lantern by the hut", "target": "start_lantern", "entry": 1},
 	{"id": "read_ledger", "text": "Read the ledger by the hut", "target": "ledger", "entry": 2},
-	{"id": "build_post", "text": "Build a Post Lamp at the edge of the light", "target": "passage"},
+	{"id": "build_post", "text": "Find the keeper's post north of the hut", "target": "crook_post"},
 	{"id": "kindle_hollow", "text": "Kindle the WayLamp in the north Hollow", "target": "waylamp_hollow", "entry": 13},
 	{"id": "stone_way", "text": "Light the way east to the carved stone", "target": "stone_way"},
 	{"id": "enter_marsh", "text": "Follow the arrow into the marsh", "target": "marsh_entry"},
@@ -187,7 +187,7 @@ func _is_done(id: String, main: Node) -> bool:
 		"chalk_lake":
 			return read.has("chalk_lake") or read.has("pumphouse")
 		"build_post":
-			return int(built.get("post", 0)) > 0
+			return read.has("crook_post") or int(built.get("post", 0)) > 0
 		"enter_marsh":
 			return visited.has(FogGrid.R_MARSH)
 		"build_reservoir":

@@ -28,6 +28,7 @@ func _ready() -> void:
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
 	add_child(main)
+	Progress.unlock("post")  # this story regression suite assumes the pre-prototype starting kit
 
 func _landmark(id: String) -> Landmark:
 	for m in get_tree().get_nodes_in_group("landmark"):

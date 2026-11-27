@@ -6,7 +6,7 @@ extends Node
 ## what has been seen). Not saved: Wicklings, embers and wind (they come back on their own).
 ## File: user://save.json  (on Linux: ~/.local/share/godot/app_userdata/Lantern Keeper/)
 
-const VERSION := 2   # 2: the map grew north for the Windward Ridge; older saves start fresh
+const VERSION := 3   # 3: isolated Keeper's Light prototype progression
 const AUTOSAVE_SEC := 60.0
 
 const SLOTS := 3
@@ -100,9 +100,13 @@ func save(main: Node) -> bool:
 			"notes_read": Progress.notes_read.keys(),
 			"settled": Progress.settled.keys(),
 			"waylamp_fuel": Progress.waylamp_fuel.duplicate(),
+			"wick": Progress.wick, "level": Progress.level,
+			"cleared": Progress.cleared.duplicate(),
+			"combat_upgrades": Progress.combat_upgrades.duplicate(),
 		},
 		"lanterns": [],
 		"resources": [],
+		"wick_drops": [],
 		"story": Story.to_dict(),
 		"fog": {"cols": fog.cols, "rows": fog.rows, "density": _pack_density(fog.density),
 			"remembered": Marshalls.raw_to_base64(fog.remembered)},
@@ -112,6 +116,8 @@ func save(main: Node) -> bool:
 	for r in get_tree().get_nodes_in_group("resource"):
 		data["resources"].append({"kind": r.kind, "label": r.label, "x": r.position.x, "y": r.position.y,
 			"amount": r.amount, "max": r.max_amount, "regrow": r.regrow_sec, "always": r.always_regrow})
+	for drop in get_tree().get_nodes_in_group("wick_drop"):
+		data["wick_drops"].append({"x": drop.position.x, "y": drop.position.y, "amount": drop.amount})
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f == null:
 		push_warning("Could not write save: %s" % FileAccess.get_open_error())
@@ -182,6 +188,15 @@ func load_into(main: Node) -> bool:
 	var wf: Dictionary = p.get("waylamp_fuel", {})
 	for k in wf:
 		Progress.waylamp_fuel[str(k)] = int(wf[k])
+	Progress.wick = int(p.get("wick", 0))
+	Progress.level = int(p.get("level", 1))
+	Progress.pending_level_ups = 0
+	Progress.cleared = {}
+	for key in p.get("cleared", {}):
+		Progress.cleared[str(key)] = true
+	Progress.combat_upgrades = []
+	for upgrade in p.get("combat_upgrades", []):
+		Progress.combat_upgrades.append(str(upgrade))
 	# Lanterns: replace the generated ones.
 	var lroot: Node = main.get_node("Lanterns")
 	for c in lroot.get_children():
@@ -209,6 +224,13 @@ func load_into(main: Node) -> bool:
 		n.always_regrow = bool(r["always"])
 		n.position = Vector2(r["x"], r["y"])
 		rroot.add_child(n)
+	var arena := get_tree().get_first_node_in_group("wickling_spawner")
+	if arena:
+		for drop_data in data.get("wick_drops", []):
+			var drop := WickDrop.new()
+			drop.amount = int(drop_data["amount"])
+			drop.position = Vector2(drop_data["x"], drop_data["y"])
+			arena.add_child(drop)
 	# Landmarks already read count as already spotted (no repeat "something catches the light").
 	for m in main.get_tree().get_nodes_in_group("landmark"):
 		if Progress.notes_read.has(m.id):

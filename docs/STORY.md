@@ -112,7 +112,7 @@ One goal shows on the HUD at a time; the journal lists the current goal and fini
 | 1 | `gather_fuel` | Take fuel from the woodpile | Carrying at least 1 fuel (also done once the old lantern is relit) | Woodpile |
 | 2 | `relight_first` | Relight the old lantern by the hut | Start lantern lit | Start lantern |
 | 3 | `read_ledger` | Read the ledger by the hut | `ledger` read | Ledger |
-| 4 | `build_post` | Build a Post Lamp at the edge of the light | Any new Post Lamp placed | Fog edge toward the east passage |
+| 4 | `build_post` | Find the keeper's post north of the hut | The keeper reads `crook_post` (or builds a Post Lamp in tests) | `crook_post` |
 | 5 | `stone_way` | Light the way east to the carved stone | `stone_way` read | Carved stone |
 | 6 | `enter_marsh` | Follow the arrow into the marsh | Enter the Reedmarsh | Passage exit |
 | 7 | `frames_east` | Find the old frames on the boardwalk | `frames_east` read | Frames |
@@ -145,7 +145,7 @@ DECIDED: the pointer turns off on reaching the Reedmarsh (a setting turns it bac
 
 ## 6. Landmark texts
 
-### Built landmarks (13), as in `scripts/main/main.gd`
+### Built landmarks (14 on `proto/kl-hollow`; the added find is DRAFT)
 Each quoted line is one line on screen. The title shows on the note and in "Something catches the light: ...". A landmark that unlocks a lantern adds a line to its note: "New lantern: <name>. Pick it in the lantern list (Tab / Y)."
 
 **`letter`**, "The letter on the hut door" (Hollow, pinned to the hut door). **Cut 2026-11-27** (owner: too much to read at the start; the letter is in the opening and the journal).
@@ -170,6 +170,11 @@ DRAFT (2026-11-27): changed because the Hollow's WayLamp moved north (owner: the
 > A small cairn, a chalk arrow on the top stone, pointing up.
 > The wind is worse up there. Come back when the marsh is lit. - Oswin
 DRAFT (2026-11-27): the cairn now stands by the Hollow's WayLamp, before the marsh. Was: "Keep your lights sheltered."
+
+**`crook_post`**, "A keeper's post" (Hollow, north of the hut; Keeper's Light prototype)
+> A keeper's crook, fallen across the path. The lamp on it is cold, but whole.
+> Tied to it: Plant one where you mean to stand. The small ones will not come into it. - Oswin
+DRAFT: the Post Lamp unlocks when the keeper reads this find.
 
 **`frames_east`**, "Old lantern frames" (Reedmarsh boardwalk)
 > Three empty frames along the boardwalk, all turned east, toward the lake.

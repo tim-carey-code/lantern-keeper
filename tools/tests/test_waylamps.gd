@@ -49,6 +49,7 @@ func _ready() -> void:
 	Tuning.waylamp_kindle_sec = 3.0   # keep the test short
 	main = load("res://scenes/main/main.tscn").instantiate()
 	add_child(main)
+	Progress.unlock("post")
 
 func _waylamp(id: String) -> WayLamp:
 	for w in get_tree().get_nodes_in_group("waylamp"):
@@ -106,6 +107,7 @@ func _process(_delta: float) -> void:
 			check(ids.size() == 3 and ids.has("hollow") and ids.has("marsh") and ids.has("ridge"), "three WayLamps: Hollow, Reedmarsh, Ridge (%s)" % str(ids.keys()))
 			check(placed_ok, "each WayLamp stands in its own region")
 			hollow = _waylamp("hollow")
+			hollow.guardian_fight = false  # exercise the legacy hold/swarm mechanics; boss behavior has its own prototype test
 			check(not hollow.is_lit() and not hollow.kindling, "a WayLamp starts cold")
 			check(fog.tile_of(hollow.global_position).distance_to(fog.tile_of(main.start)) > 20.0, "the Hollow's WayLamp is well away from the hut (%.0f tiles)" % fog.tile_of(hollow.global_position).distance_to(fog.tile_of(main.start)))
 			check(wp.lines_for(hollow)[0][1] == "Look closer", "the first prompt is 'Look closer'")

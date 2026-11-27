@@ -1,5 +1,5 @@
 class_name Wickling
-extends Node2D
+extends Foe
 ## A small shadow from the Soul of the Wick. It never kills anyone.
 ## Healthy light pushes it back into the dark (PROTOTYPE, WayLamps). It goes after what is weak:
 ##   - a dying lantern (under Tuning.dying_frac of its tank) that no healthy light protects: it drains it
@@ -14,96 +14,28 @@ extends Node2D
 enum State { WANDER, SEEK_LANTERN, SNUFF, CHASE, FLEE }
 
 var state := State.WANDER
-var hp := 0.0
 var target: Node2D = null
 var bold := false
-var elite := false              # PROTOTYPE: a bigger, shelled Wickling
-var shell := 0.0                # only a beam (the keeper's or a mirror's) wears it down
-var _knock_v := Vector2.ZERO
-var _knock_t := 0.0
-var _clink := 0.0               # > 0: something just glanced off the shell
+var elite := false              # PROTOTYPE: a bigger, shelled Wickling (hp, shell and the rest live in Foe)
 var _flee_t := 0.0
 var _wander_to := Vector2.ZERO
 var _t := 0.0
-var _burning := 0.0
-var _fading := 0.0
 var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	add_to_group("wickling")
+	add_to_group("foe")
 	z_index = 7
 	hp = Tuning.kl_elite_hp if elite else Tuning.wick_hp
 	if elite:
 		shell = Tuning.kl_elite_shell
+		shell_max = shell
+		knock_weight = 0.5
 	rng.randomize()
 	_t = rng.randf() * 10.0
 	_pick_wander()
 
-# --- Senses ------------------------------------------------------------------
-
-func _player() -> Node2D:
-	return get_tree().get_first_node_in_group("player") as Node2D
-
-func _fog() -> FogGrid:
-	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
-
-## 0 outside any lantern light, up to 1 at a lantern's centre (mirror glows don't count).
-func lantern_level_at(p: Vector2) -> float:
-	var best := 0.0
-	for l in get_tree().get_nodes_in_group("lantern"):
-		if l.kind == "mirror":
-			continue
-		var r: float = l.get_light_radius()
-		if r <= 0.0:
-			continue
-		best = maxf(best, 1.0 - l.global_position.distance_to(p) / r)
-	return best
-
-## Lights strong enough to push a Wickling back: burning lanterns that aren't dying, and lit WayLamps.
-func _healthy_lights() -> Array:
-	var out := []
-	for l in get_tree().get_nodes_in_group("lantern"):
-		if l.kind != "mirror" and l.is_lit() and not l.is_dying():
-			out.append(l)
-	for w in get_tree().get_nodes_in_group("waylamp"):
-		if w.is_lit():
-			out.append(w)
-	return out
-
-## How deep a point sits in healthy light (0 outside). Optionally ignoring one light.
-func healthy_level_at(p: Vector2, ignore: Node = null) -> float:
-	var best := 0.0
-	for l in _healthy_lights():
-		if l == ignore:
-			continue
-		var r: float = l.get_light_radius()
-		if r > 0.0:
-			best = maxf(best, 1.0 - l.global_position.distance_to(p) / r)
-	return best
-
-## The way out of healthy light from a point (zero when outside it).
-func repel_at(p: Vector2) -> Vector2:
-	var push := Vector2.ZERO
-	for l in _healthy_lights():
-		var r: float = l.get_light_radius()
-		if r <= 0.0:
-			continue
-		var v: Vector2 = p - l.global_position
-		var d := v.length()
-		if d < r:
-			push += (v / maxf(d, 0.001)) * (1.0 - d / r + 0.2)
-	return push
-
-## How deep a point sits in any mirror beam (0 outside). Wicklings can't sense beams coming.
-func beam_level_at(p: Vector2) -> float:
-	var best := 0.0
-	for m in get_tree().get_nodes_in_group("mirror"):
-		best = maxf(best, m.beam_level_at(p))
-	return best
-
-## Overall light at a point: lantern light, or a beam (which counts as harsh as a core).
-func light_level_at(p: Vector2) -> float:
-	return maxf(lantern_level_at(p), beam_level_at(p) * 0.8)
+# --- Senses (the light senses are in Foe) --------------------------------------
 
 ## What it would go after, nearest first: kindling WayLamps, unprotected dying lanterns,
 ## mirrors out in the dark.
@@ -133,71 +65,11 @@ func _find_prey(max_dist: float) -> Node2D:
 func body_radius() -> float:
 	return 16.0 if elite else 10.0
 
-## Damage from a source: "beam" (the keeper's beam or a mirror beam), "burst", "core", "ward" or "".
-## A shell takes beam damage first and turns everything else aside.
-func hurt(amount: float, scare: bool = true, source: String = "") -> void:
-	if shell > 0.0:
-		if source != "beam":
-			_clink = 0.2
-			return
-		shell -= amount
-		_burning = 0.3
-		if shell > 0.0:
-			return
-		amount = -shell
-		shell = 0.0
-		Sfx.play("ui_tick", -6.0, 0.5)   # the shell cracks
-	hp -= amount
-	_burning = 0.3
+## A hit scares a small one off for a moment (the hit itself is in Foe.hurt).
+func _on_hurt(scare: bool, _source: String) -> void:
 	if scare and not elite:
 		state = State.FLEE
 		_flee_t = 2.0
-	if hp <= 0.0:
-		_die()
-
-## Thrown back (by the burst): moves over a short moment instead of teleporting.
-func knock(v: Vector2) -> void:
-	var weight := 0.5 if elite else 1.0
-	_knock_v = v * weight / 0.2
-	_knock_t = 0.2
-
-## Burned away: leave an ember worth a little fuel.
-func _die() -> void:
-	if is_queued_for_deletion():
-		return
-	Sfx.play("relight", -14.0, 0.2)
-	# Drops land on the fog layer (our parent) so they glow through the dark.
-	var drop_at := walkable_near(global_position)
-	var e := Ember.new()
-	e.position = drop_at
-	get_parent().add_child(e)
-	if randf() < Tuning.wick_scrap_chance:
-		var s := Ember.new()
-		s.kind = "scrap"
-		s.position = walkable_near(global_position + Vector2(14, 6))
-		get_parent().add_child(s)
-	queue_free()
-
-## Wicklings float over rock; their drops land on the nearest ground the keeper can walk on.
-func walkable_near(p: Vector2) -> Vector2:
-	var fog := _fog()
-	if fog == null:
-		return p
-	var t := fog.tile_of(p)
-	if fog.in_bounds(t) and fog.solid[fog.idx(t)] == 0:
-		return p
-	for r in range(1, 8):
-		var best := Vector2.INF
-		for dy in range(-r, r + 1):
-			for dx in range(-r, r + 1):
-				var q := t + Vector2i(dx, dy)
-				if fog.in_bounds(q) and fog.solid[fog.idx(q)] == 0:
-					var c := fog.tile_center(q)
-					if best == Vector2.INF or c.distance_to(p) < best.distance_to(p):
-						best = c
-		if best != Vector2.INF:
-			return best
-	return p
 
 ## Shoved by the keeper's ward.
 func push(v: Vector2) -> void:
@@ -210,36 +82,19 @@ func _pick_wander() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	_burning = maxf(0.0, _burning - delta)
+	tick_foe(delta)
+	if is_queued_for_deletion():
+		return
 	# A held region is no place for it: it fades away (no drops).
-	var fog := _fog()
-	if fog and Progress.is_settled(fog.region_at(global_position)):
-		_fading += delta
-		modulate.a = clampf(1.0 - _fading / 1.2, 0.0, 1.0)
-		if _fading >= 1.2:
-			queue_free()
+	if fade_if_held(delta):
 		return
 	var here := lantern_level_at(global_position)
-	# The bright core of a lantern burns it; a mirror beam burns it fast.
-	var burn := 0.0
-	if here > Tuning.wick_core:
-		burn += Tuning.wick_light_burn
+	# A Wickling clinging to a mirror can drink its beam instead of being burned by it.
 	var smothering: bool = state == State.SNUFF and target != null and is_instance_valid(target) and target is Lantern and target.kind == "mirror"
 	if beam_level_at(global_position) > 0.0 and not smothering:
-		burn += Tuning.wick_beam_burn   # (one clinging to a mirror drinks the beam instead)
-	if burn > 0.0:
-		var beam_part := burn - (Tuning.wick_light_burn if here > Tuning.wick_core else 0.0)
-		var core_part := burn - beam_part
-		if beam_part > 0.0:
-			hurt(beam_part * delta, false, "beam")
-		if core_part > 0.0:
-			hurt(core_part * delta, false, "core")
-		if not is_instance_valid(self) or is_queued_for_deletion():
+		hurt(Tuning.wick_beam_burn * delta, false, "beam")
+		if is_queued_for_deletion():
 			return
-	_clink = maxf(0.0, _clink - delta)
-	if _knock_t > 0.0:
-		_knock_t -= delta
-		global_position += _knock_v * delta
 	var player := _player()
 	var speed := (Tuning.kl_elite_speed if elite else Tuning.wick_speed) * (1.25 if bold else 1.0)
 	var goal := global_position
@@ -315,12 +170,10 @@ func _process(delta: float) -> void:
 					target = prey
 					state = State.SEEK_LANTERN
 	var step := (goal - global_position).limit_length(speed * delta)
-	if not bold and state != State.FLEE:
-		if healthy_level_at(global_position) > 0.0:
-			# Pushed back out of healthy light, into the dark.
-			step = repel_at(global_position).normalized() * Tuning.wick_repel_speed * delta
-		elif healthy_level_at(global_position + step) > 0.0:
-			step = Vector2.ZERO   # hover at the edge of the light
+	if is_stunned():
+		step = Vector2.ZERO
+	elif not bold and state != State.FLEE:
+		step = step_outside_light(step, delta)   # pushed back out of healthy light, or hovering at its edge
 	global_position += step
 	queue_redraw()
 
@@ -352,9 +205,4 @@ func _draw() -> void:
 		draw_line(Vector2.ZERO, to_local(target.global_position + Vector2(0, lamp_y)), Color(0.05, 0.06, 0.1, 0.7), 2.0)
 	if elite:
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-		if shell > 0.0:
-			# A pale, cracked shell around it; it thins as the beam wears it down.
-			var k := clampf(shell / Tuning.kl_elite_shell, 0.0, 1.0)
-			draw_arc(Vector2(0, -2), 22.0, 0.0, TAU, 28, Color(0.64, 0.74, 0.83, 0.35 + 0.5 * k), 2.0 + 3.0 * k)
-		if _clink > 0.0:
-			draw_arc(Vector2(0, -2), 25.0, -0.6, 0.6, 8, Color(1, 1, 1, _clink * 4.0), 2.0)
+		draw_shell(Vector2(0, -2), 22.0)   # a pale, cracked shell; it thins as the beam wears it down

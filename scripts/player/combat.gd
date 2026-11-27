@@ -13,6 +13,7 @@ var aim := Vector2.RIGHT          # unit vector the beam points along
 var aim_override := Vector2.ZERO  # tests and captures can fix the aim
 var burst_cd := 0.0
 var dash_cd := 0.0
+var dash_charges := 1
 var dash_t := 0.0                 # > 0 while dashing
 var dash_dir := Vector2.ZERO
 var _burst_fx := 0.0              # > 0 while the burst ring is showing
@@ -47,7 +48,7 @@ func beam_segment() -> Array:
 	if not beaming:
 		return []
 	var from := keeper().global_position + Vector2(0, -10)
-	return [from, from + aim * Tuning.kl_beam_len]
+	return [from, from + aim * (310.0 if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len)]
 
 func is_dashing() -> bool:
 	return dash_t > 0.0
@@ -58,13 +59,16 @@ func tick(delta: float, move_dir: Vector2, beam_held: bool, burst_pressed: bool,
 	update_aim(move_dir)
 	burst_cd = maxf(0.0, burst_cd - delta)
 	dash_cd = maxf(0.0, dash_cd - delta)
+	if Progress.has_combat_upgrade("second_step") and dash_cd <= 0.0 and dash_charges == 0:
+		dash_charges = 2
 	dash_t = maxf(0.0, dash_t - delta)
 	_burst_fx = maxf(0.0, _burst_fx - delta)
 	beaming = beam_held and k.lamp_charge > Tuning.kl_min_charge
 	if beam_held or burst_pressed or dash_pressed:
 		k._since_ward = 0.0   # carried fuel never tops the lamp up mid-fight (only once you've stopped)
 	if beaming:
-		k.lamp_charge = maxf(0.0, k.lamp_charge - Tuning.kl_beam_cost * delta)
+		var cost_mult := 0.8 if Progress.has_combat_upgrade("deep_tank") else 1.0
+		k.lamp_charge = maxf(0.0, k.lamp_charge - Tuning.kl_beam_cost * cost_mult * delta)
 		burn_along_beam(delta)
 	if burst_pressed:
 		burst()
@@ -78,7 +82,7 @@ func burn_along_beam(delta: float) -> int:
 	if seg.is_empty():
 		return 0
 	var hit := 0
-	for w in get_tree().get_nodes_in_group("wickling"):
+	for w in get_tree().get_nodes_in_group("foe"):
 		var c: Vector2 = Geometry2D.get_closest_point_to_segment(w.global_position, seg[0], seg[1])
 		if c.distance_to(w.global_position) <= Tuning.kl_beam_half_width + w.body_radius():
 			w.hurt(Tuning.kl_beam_dps * delta, false, "beam")
@@ -94,23 +98,35 @@ func burst() -> int:
 	burst_cd = Tuning.kl_burst_cd
 	_burst_fx = 0.3
 	Sfx.play("relight", -8.0, 0.3)
+	var camera := keeper().get_node_or_null("Camera2D") as Camera2D
+	if camera:
+		camera.offset = Vector2(randf_range(-6.0, 6.0), randf_range(-5.0, 5.0))
+		var shake := camera.create_tween()
+		shake.tween_property(camera, "offset", Vector2.ZERO, 0.16)
 	var hit := 0
-	for w in get_tree().get_nodes_in_group("wickling"):
+	for w in get_tree().get_nodes_in_group("foe"):
 		var v: Vector2 = w.global_position - k.global_position
 		if v.length() <= Tuning.kl_burst_radius + w.body_radius():
 			w.hurt(Tuning.kl_burst_dmg, true, "burst")
 			if is_instance_valid(w) and not w.is_queued_for_deletion():
 				w.knock((v.normalized() if v.length() > 0.5 else Vector2.RIGHT) * Tuning.kl_burst_knock)
+				if Progress.has_combat_upgrade("heavy_flare"):
+					w.stun(0.6)
 			hit += 1
 	return hit
 
 ## A quick dash. Returns false if it couldn't (cooldown or too little charge).
 func dash(move_dir: Vector2) -> bool:
 	var k = keeper()
-	if dash_cd > 0.0 or k.lamp_charge < Tuning.kl_dash_cost:
+	var double_step := Progress.has_combat_upgrade("second_step")
+	if (dash_cd > 0.0 or (double_step and dash_charges <= 0)) or k.lamp_charge < Tuning.kl_dash_cost:
 		return false
 	k.lamp_charge -= Tuning.kl_dash_cost
-	dash_cd = Tuning.kl_dash_cd
+	if double_step:
+		dash_charges -= 1
+		dash_cd = Tuning.kl_dash_cd if dash_charges == 0 else 0.0
+	else:
+		dash_cd = Tuning.kl_dash_cd
 	dash_t = Tuning.kl_dash_time
 	dash_dir = move_dir.normalized() if move_dir.length() > 0.1 else aim
 	return true
@@ -126,7 +142,7 @@ func _draw() -> void:
 	# The beam: a warm core inside a soft glow.
 	if beaming:
 		var from := Vector2(0, -10)
-		var to := from + aim * Tuning.kl_beam_len
+		var to := from + aim * (310.0 if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len)
 		var flick := 0.85 + 0.15 * sin(Time.get_ticks_msec() * 0.03)
 		draw_line(from, to, Color(1.0, 0.85, 0.5, 0.18 * flick), Tuning.kl_beam_half_width * 2.0)
 		draw_line(from, to, Color(1.0, 0.92, 0.7, 0.45 * flick), Tuning.kl_beam_half_width)

@@ -241,3 +241,7 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 - Carried fuel never tops the lamp up mid-fight, only after you've stopped using it. Building moved to Space / X only (left click is the beam).
 
 **Shelled elites.** Every 4th Wickling out of the fog is an elite: bigger, slower (48 px/s), 9 hp behind a 4-point shell, and its touch chills 1.6x harder. Bursts and lantern cores glance off the shell; only a beam wears it down.
+
+### Hollow prototype (branch `proto/kl-hollow`, implemented 2026-11-27; playtest pending)
+
+Slices 1-6 of `docs/PLAN_KEEPERS_LIGHT.md` are now present: six fixed packs (two with Spitwicks), three core-burned nests, the shelled Clinker guarding the Post Lamp find, wick and level-up choices, and the two-phase Ashbrood on the Hollow WayLamp. Fixed enemies and pack clears persist; fainting drops unspent wick where the keeper fell and resets pack clears. The build uses a separate save path. The north and east routes are closed. F1 exposes prototype combat, enemy, progression and boss tuning. The small Leads slice, third boss phase, and polish beyond placeholder shapes/effects remain out of scope. This is implementation status, not a passed playtest; see `docs/PLAYTEST.md` for the handoff and gate questions.
