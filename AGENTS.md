@@ -44,6 +44,8 @@ python3 tools/check_docs.py                                                     
 # A test that fails to parse never quits: wrap runs in `timeout 120`.
 # In a fresh checkout the first --import can crash (Godot 4.7.2) and leave the font unimported, and then every
 # test fails with "Could not preload resource file ...kenney_pixel.ttf". Run --import again until it exits 0.
+# After merging a branch that adds a new `class_name` script, run --import before the tests, or they fail with
+# "Identifier ... not declared in the current scope" (the global class cache is stale).
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800                    # no errors
 ```
 ## Performance benchmark (not a test; `run_tests.sh` doesn't run it)
