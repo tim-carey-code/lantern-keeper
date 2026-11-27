@@ -1,7 +1,7 @@
 extends CanvasLayer
 ## The keeper's journal: J / gamepad Back (View). Three pages, left/right to switch:
 ##   Goals       the current goal and the ones finished
-##   Story       the keeper's own entries ("story so far"), and H.'s letter
+##   Story       the keeper's own entries ("story so far"), and O.'s letter
 ##   Notes       every landmark you have read, in full, to read again
 ## Up/down scrolls. J / Back / B / Esc closes.
 

@@ -35,13 +35,13 @@ const GOALS := [
 
 const ENTRIES := {
 	1: ["Arrival", "I came because of the letter. The old lantern took the flame on the first try. One hook on the rack is empty."],
-	2: ["The ledger", "The keepers counted every lamp they lit. At the end, one mark a night. H. went east."],
+	2: ["The ledger", "The keepers counted every lamp they lit. At the end, one mark a night. O. went east."],
 	3: ["The marsh", "The frames all face east, toward a lake I cannot see."],
 	4: ["The pumphouse", "The chalk shows the lake, bright, then dark. Something coiled around its light. The pump still works."],
-	5: ["The climb", "H. sent me up. The wind pulls at every flame."],
-	6: ["The workshop", "H. could not stay to finish the hood. I did."],
-	7: ["The coat", "H.'s coat, caught in the rocks. Something came up out of the water and drank the great lamp. I hope H. found somewhere warm."],
-	8: ["The station", "H. turned the last mirror toward the lake. That is where H. went."],
+	5: ["The climb", "O. sent me up. The wind pulls at every flame."],
+	6: ["The workshop", "O. could not stay to finish the hood. I did."],
+	7: ["The coat", "O.'s coat, caught in the rocks. Something came up out of the water and drank the great lamp. I hope O. found somewhere warm."],
+	8: ["The station", "O. turned the last mirror toward the lake. That is where O. went."],
 	# WayLamps (prototype; text approved by the owner 2026-11-27, STORY.md section 11).
 	13: ["The first WayLamp", "I held the WayLamp until it took. Now the Hollow keeps its own lamps."],
 	14: ["The marsh WayLamp", "The old keepers left dry wicks for whoever came next. The marsh is held again."],
@@ -49,7 +49,7 @@ const ENTRIES := {
 }
 
 const TITLE_CARD := ["The valley had keepers once.", "Then the lamps went out, one by one.", "Now there is a letter, and you."]
-const LETTER := "To whoever reads this,\n\nThe lamps in the valley are going out. I cannot keep them alone any more.\n\nThere is a hut at the bottom of the Hollow, with an old lantern by the door. Light that first. Then follow my marks. I left them where the light will find them.\n\nStay in the light. The dark is not empty.\n\nIf you came, thank you.\n\n- H., the last keeper"
+const LETTER := "To whoever reads this,\n\nThe lamps in the valley are going out. I cannot keep them alone any more.\n\nThere is a hut at the bottom of the Hollow, with an old lantern by the door. Light that first. Then follow my marks. I left them where the light will find them.\n\nStay in the light. The dark is not empty.\n\nIf you came, thank you.\n\n- O., the last keeper"
 
 const TIPS := {
 	"cold_lantern": "A cold lantern keeps its frame. A little fuel will wake it.",
