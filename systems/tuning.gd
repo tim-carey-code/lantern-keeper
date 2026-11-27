@@ -110,4 +110,27 @@ var waylamp_sap_per_wick := 1.5          # seconds of kindling undone per second
 var dying_frac := 0.25                   # under this share of its tank a lantern is "dying"
 var wick_repel_speed := 160.0            # px/s a Wickling is pushed out of healthy light
 
+# Keeper's Light (PROTOTYPE): the keeper's light as a weapon. Lamp charge is the stamina.
+var kl_min_charge := 0.05
+var kl_beam_len := 240.0                 # px
+var kl_beam_half_width := 12.0           # px
+var kl_beam_dps := 6.0                   # a Wickling (3 hp) in half a second
+var kl_beam_cost := 0.3                  # lamp charge per second (a full lamp: about 3 s of beam)
+var kl_beam_walk := 0.7                  # walk speed while beaming
+var kl_burst_radius := 120.0
+var kl_burst_dmg := 2.0
+var kl_burst_knock := 140.0              # px thrown back
+var kl_burst_cd := 3.0                   # s
+var kl_burst_cost := 0.2
+var kl_dash_dist := 110.0                # px
+var kl_dash_time := 0.16                 # s
+var kl_dash_cd := 0.9                    # s
+var kl_dash_cost := 0.08
+# Shelled elites: only a beam (yours or a mirror's) wears the shell down
+var kl_elite_hp := 9.0
+var kl_elite_shell := 4.0
+var kl_elite_speed := 48.0
+var kl_elite_chill_mult := 1.6           # its touch chills this much harder
+var kl_elite_every := 4                  # every Nth Wickling that comes out of the fog is an elite
+
 var ui_open := false                    # true while a menu has focus (player stops)

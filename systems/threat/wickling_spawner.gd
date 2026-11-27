@@ -14,6 +14,8 @@ func _ready() -> void:
 func _fog() -> FogGrid:
 	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
 
+var _spawned := 0   # how many came out of the fog (every Nth is a shelled elite)
+
 func count() -> int:
 	return get_tree().get_nodes_in_group("wickling").size()
 
@@ -42,7 +44,8 @@ func spawn_near_player() -> Wickling:
 			continue
 		if Progress.is_settled(fog.region[fog.idx(t)]):
 			continue   # nothing comes into a held region
-		return spawn_at(fog.tile_center(t))
+		_spawned += 1
+		return spawn_at(fog.tile_center(t), Tuning.kl_elite_every > 0 and _spawned % Tuning.kl_elite_every == 0)
 	return null
 
 ## PROTOTYPE: a kindling WayLamp draws a swarm of bold Wicklings out of the dark around it.
@@ -71,8 +74,9 @@ func spawn_swarm(lamp: Node2D, n: int) -> Array:
 		out.append(w)
 	return out
 
-func spawn_at(p: Vector2) -> Wickling:
+func spawn_at(p: Vector2, elite: bool = false) -> Wickling:
 	var w := Wickling.new()
+	w.elite = elite
 	w.position = p
 	add_child(w)
 	return w

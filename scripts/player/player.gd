@@ -12,6 +12,7 @@ var fuel_poured := 0.0
 var last_feed := ""          # what happened the last time you fed a WayLamp (for prompts and tests)
 var warmth := 100.0            # PROTOTYPE: the keeper's "health". Never kills; fainting sends you home.
 var warding := false
+var combat: KeeperCombat        # PROTOTYPE: beam, burst and dash
 var _ward_grow := 0.0          # 0..1, how far the glow has swelled
 var _since_ward := 99.0        # seconds since the ward was last used
 var faints := 0
@@ -27,6 +28,8 @@ var _step_t := 0.0
 var _walk_t := 0.0
 
 func _ready() -> void:
+	combat = KeeperCombat.new()
+	add_child(combat)
 	add_to_group("light_source")
 	add_to_group("player")
 	z_index = 20
@@ -58,7 +61,7 @@ func in_lantern_light() -> bool:
 	return false
 
 func update_hand_lamp(delta: float) -> void:
-	if in_lantern_light() and not warding:   # the ward is never free, not even in lantern light
+	if in_lantern_light() and not warding and not (combat and combat.beaming):   # light weapons are never free
 		lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_recharge_per_sec * delta)
 	else:
 		lamp_charge = maxf(0.0, lamp_charge - Progress.lamp_drain_per_sec() * delta)
@@ -79,7 +82,7 @@ func _physics_process(delta: float) -> void:
 		_gather_target = null
 		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	update_ward(delta, Input.is_action_pressed("flare"))
+	combat.tick(delta, dir, Input.is_action_pressed("beam"), Input.is_action_just_pressed("flare"), Input.is_action_just_pressed("dash"))
 	var fog := _fog()
 	var slow := 1.0
 	if fog and dir != Vector2.ZERO:
@@ -88,7 +91,9 @@ func _physics_process(delta: float) -> void:
 		slow *= 0.85   # wading through the marsh
 	if warding:
 		slow *= Tuning.ward_walk_mult
-	velocity = dir * speed * slow
+	if combat.beaming:
+		slow *= Tuning.kl_beam_walk
+	velocity = combat.dash_velocity() if combat.is_dashing() else dir * speed * slow
 	move_and_slide()
 	_footsteps(dir, _physics_delta(), fog)
 	if fog:
@@ -175,6 +180,8 @@ func apply_ward(delta: float) -> int:
 	return hit
 
 func chill(amount: float) -> void:
+	if combat and combat.is_dashing():
+		return   # nothing can chill you mid-dash
 	warmth = maxf(0.0, warmth - amount)
 	if warmth <= 0.0:
 		faint()

@@ -28,6 +28,7 @@ Single-player, no game over. Read `docs/DESIGN.md`, `docs/STORY.md` (owner-revie
 godot --headless --audio-driver Dummy --path . --import
 tools/run_tests.sh                                                                             # every test below; fails on any SCRIPT ERROR too
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_core.tscn   # exit 0 = pass
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_combat.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_save.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_ridge.tscn

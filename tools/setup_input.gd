@@ -34,12 +34,18 @@ func _init() -> void:
 		"move_down": [key(KEY_S), key(KEY_DOWN), pad_axis(JOY_AXIS_LEFT_Y, 1.0), pad_button(JOY_BUTTON_DPAD_DOWN)],
 		# Gamepad face buttons use positional names: A = bottom, B = right, X = left, Y = top.
 		"interact": [key(KEY_E), pad_button(JOY_BUTTON_A)],          # gather / refuel / relight
-		"place_lantern": [key(KEY_SPACE), mouse(MOUSE_BUTTON_LEFT), pad_button(JOY_BUTTON_X)],
+		"place_lantern": [key(KEY_SPACE), pad_button(JOY_BUTTON_X)],
 		"cancel": [key(KEY_Q), mouse(MOUSE_BUTTON_RIGHT), pad_button(JOY_BUTTON_B)],
 		"build_menu": [key(KEY_TAB), pad_button(JOY_BUTTON_Y)],
 		"pause": [key(KEY_ESCAPE), pad_button(JOY_BUTTON_START)],
 		"map": [key(KEY_M), pad_button(JOY_BUTTON_LEFT_SHOULDER)],
-		"flare": [key(KEY_F), pad_button(JOY_BUTTON_RIGHT_SHOULDER), pad_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)],   # hold: warding glow
+		"flare": [key(KEY_F), pad_button(JOY_BUTTON_RIGHT_SHOULDER)],   # tap: burst (Keeper's Light prototype)
+		"beam": [mouse(MOUSE_BUTTON_LEFT), pad_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)],   # hold: the aimed beam
+		"dash": [key(KEY_SHIFT), pad_axis(JOY_AXIS_TRIGGER_LEFT, 1.0)],
+		"aim_left": [pad_axis(JOY_AXIS_RIGHT_X, -1.0)],
+		"aim_right": [pad_axis(JOY_AXIS_RIGHT_X, 1.0)],
+		"aim_up": [pad_axis(JOY_AXIS_RIGHT_Y, -1.0)],
+		"aim_down": [pad_axis(JOY_AXIS_RIGHT_Y, 1.0)],
 		"toggle_fullscreen": [key(KEY_F11)],
 		"journal": [key(KEY_J), pad_button(JOY_BUTTON_BACK)],
 		"select_1": [key(KEY_1)],

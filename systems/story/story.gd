@@ -57,7 +57,7 @@ const TIPS := {
 	"fog_edge": "Fog comes back where light fades. Light holds the ground.",
 	"gust": "Wind is coming. Rock on the windward side shelters a flame.",
 	"wickling_seen": "Something small moves in the dark. It is drawn to your lights.",
-	"wickling_close": "Hold F / RB / RT to swell your lamp. Wicklings cannot bear it.",
+	"wickling_close": "Hold your beam on them: left click or RT, aimed. F or RB throws them back.",
 	"lamp_empty": "Your lamp is down to an ember. Rest in a lantern's light to fill it.",
 	"warmth_low": "You are getting cold. Stand in a lantern's light.",
 	"faint": "You woke by the nearest light. What you dropped waits where you fell.",

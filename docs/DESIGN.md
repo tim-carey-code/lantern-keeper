@@ -227,3 +227,17 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 - "Dying" starts at 25%, where the HUD already marks lanterns as low.
 - The ward is not free during the hold: the lamp doesn't refill while you ward (0.45 charge per second, about 2 s from a full lamp).
 - Questions: Does holding a region feel like a reward? Is the hold tense but fair? Does frontier-only upkeep keep lanterns meaningful?
+
+---
+
+## 9. Keeper's Light (PROTOTYPE, branch `proto/keepers-light`)
+
+> The owner chose this direction on 2026-11-27: the game becomes an action RPG (DECISIONS). The full design draft is being written for owner markup. This section lists only what is **built on the prototype branch**. Numbers are placeholders in `tuning.gd` (`kl_*`).
+
+**The combat kit** (`scripts/player/combat.gd`). Lamp charge is the stamina for all three, and it is still how far your hand lamp lights.
+- **Beam** (hold left click / RT; aim with the mouse or the right stick, else where you face): 240 px long and 24 px wide. It burns 6 hp per second, so a Wickling goes in half a second. It costs 0.3 charge per second (about 3 s from a full lamp), and you walk at 70% while it's on. It lights the fog along its path like a mirror beam. It is the only thing, with mirror beams, that wears down a shell.
+- **Burst** (tap F / RB): a 120 px flash that does 2 damage and throws things back about 140 px. 3 s cooldown, 0.2 charge. It replaces the hold-to-ward glow.
+- **Dash** (tap Shift / LT): 110 px in 0.16 s, 0.9 s cooldown, 0.08 charge. Nothing can chill you mid-dash.
+- Carried fuel never tops the lamp up mid-fight, only after you've stopped using it. Building moved to Space / X only (left click is the beam).
+
+**Shelled elites.** Every 4th Wickling out of the fog is an elite: bigger, slower (48 px/s), 9 hp behind a 4-point shell, and its touch chills 1.6x harder. Bursts and lantern cores glance off the shell; only a beam wears it down.

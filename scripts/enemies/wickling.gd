@@ -17,6 +17,11 @@ var state := State.WANDER
 var hp := 0.0
 var target: Node2D = null
 var bold := false
+var elite := false              # PROTOTYPE: a bigger, shelled Wickling
+var shell := 0.0                # only a beam (the keeper's or a mirror's) wears it down
+var _knock_v := Vector2.ZERO
+var _knock_t := 0.0
+var _clink := 0.0               # > 0: something just glanced off the shell
 var _flee_t := 0.0
 var _wander_to := Vector2.ZERO
 var _t := 0.0
@@ -27,7 +32,9 @@ var rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	add_to_group("wickling")
 	z_index = 7
-	hp = Tuning.wick_hp
+	hp = Tuning.kl_elite_hp if elite else Tuning.wick_hp
+	if elite:
+		shell = Tuning.kl_elite_shell
 	rng.randomize()
 	_t = rng.randf() * 10.0
 	_pick_wander()
@@ -123,14 +130,36 @@ func _find_prey(max_dist: float) -> Node2D:
 
 # --- Damage --------------------------------------------------------------------
 
-func hurt(amount: float, scare: bool = true) -> void:
+func body_radius() -> float:
+	return 16.0 if elite else 10.0
+
+## Damage from a source: "beam" (the keeper's beam or a mirror beam), "burst", "core", "ward" or "".
+## A shell takes beam damage first and turns everything else aside.
+func hurt(amount: float, scare: bool = true, source: String = "") -> void:
+	if shell > 0.0:
+		if source != "beam":
+			_clink = 0.2
+			return
+		shell -= amount
+		_burning = 0.3
+		if shell > 0.0:
+			return
+		amount = -shell
+		shell = 0.0
+		Sfx.play("ui_tick", -6.0, 0.5)   # the shell cracks
 	hp -= amount
 	_burning = 0.3
-	if scare:
+	if scare and not elite:
 		state = State.FLEE
 		_flee_t = 2.0
 	if hp <= 0.0:
 		_die()
+
+## Thrown back (by the burst): moves over a short moment instead of teleporting.
+func knock(v: Vector2) -> void:
+	var weight := 0.5 if elite else 1.0
+	_knock_v = v * weight / 0.2
+	_knock_t = 0.2
 
 ## Burned away: leave an ember worth a little fuel.
 func _die() -> void:
@@ -177,13 +206,20 @@ func _process(delta: float) -> void:
 	if beam_level_at(global_position) > 0.0 and not smothering:
 		burn += Tuning.wick_beam_burn   # (one clinging to a mirror drinks the beam instead)
 	if burn > 0.0:
-		hp -= burn * delta
-		_burning = 0.2
-		if hp <= 0.0:
-			_die()
+		var beam_part := burn - (Tuning.wick_light_burn if here > Tuning.wick_core else 0.0)
+		var core_part := burn - beam_part
+		if beam_part > 0.0:
+			hurt(beam_part * delta, false, "beam")
+		if core_part > 0.0:
+			hurt(core_part * delta, false, "core")
+		if not is_instance_valid(self) or is_queued_for_deletion():
 			return
+	_clink = maxf(0.0, _clink - delta)
+	if _knock_t > 0.0:
+		_knock_t -= delta
+		global_position += _knock_v * delta
 	var player := _player()
-	var speed := Tuning.wick_speed * (1.25 if bold else 1.0)
+	var speed := (Tuning.kl_elite_speed if elite else Tuning.wick_speed) * (1.25 if bold else 1.0)
 	var goal := global_position
 	# A bold Wickling goes back to normal once its WayLamp is no longer kindling.
 	if bold and (target == null or not is_instance_valid(target) or not (target is WayLamp) or not target.kindling):
@@ -201,8 +237,8 @@ func _process(delta: float) -> void:
 				state = State.WANDER
 			else:
 				goal = player.global_position
-				if player.global_position.distance_to(global_position) < 22.0:
-					player.chill(Tuning.warmth_drain_per_sec * delta)
+				if player.global_position.distance_to(global_position) < 12.0 + body_radius():
+					player.chill(Tuning.warmth_drain_per_sec * (Tuning.kl_elite_chill_mult if elite else 1.0) * delta)
 		State.SEEK_LANTERN, State.SNUFF when target != null and is_instance_valid(target) and target is WayLamp:
 			# A kindling WayLamp: sit on it and drink the new flame.
 			if not target.kindling:
@@ -267,6 +303,8 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	if elite:
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.6, 1.6))
 	var wob := sin(_t * 5.0) * 1.5
 	var body := Color(0.03, 0.035, 0.06, 0.92)
 	# Smoky body: a few overlapping blobs.
@@ -290,3 +328,11 @@ func _draw() -> void:
 	if state == State.SNUFF and target and is_instance_valid(target):
 		var lamp_y := -60.0 if target is WayLamp else -34.0
 		draw_line(Vector2.ZERO, to_local(target.global_position + Vector2(0, lamp_y)), Color(0.05, 0.06, 0.1, 0.7), 2.0)
+	if elite:
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		if shell > 0.0:
+			# A pale, cracked shell around it; it thins as the beam wears it down.
+			var k := clampf(shell / Tuning.kl_elite_shell, 0.0, 1.0)
+			draw_arc(Vector2(0, -2), 22.0, 0.0, TAU, 28, Color(0.64, 0.74, 0.83, 0.35 + 0.5 * k), 2.0 + 3.0 * k)
+		if _clink > 0.0:
+			draw_arc(Vector2(0, -2), 25.0, -0.6, 0.6, 8, Color(1, 1, 1, _clink * 4.0), 2.0)

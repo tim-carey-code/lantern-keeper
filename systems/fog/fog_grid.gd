@@ -149,7 +149,7 @@ func step(dt: float) -> void:
 					_light[i] = maxf(_light[i], s)
 
 	_update_mirrors()
-	for m in get_tree().get_nodes_in_group("mirror"):
+	for m in get_tree().get_nodes_in_group("mirror") + get_tree().get_nodes_in_group("beam_source"):
 		var seg: Array = m.beam_segment()
 		if seg.is_empty():
 			continue

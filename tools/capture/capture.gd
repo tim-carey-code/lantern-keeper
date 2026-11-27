@@ -4,7 +4,7 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held, upgrade. The last frame is the one to look at.
+## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held, upgrade, kl_combat. The last frame is the one to look at.
 ## README views (staged, pop-ups hidden; rendered by tools/capture/readme_shots.sh): readme_hollow, readme_ward,
 ## readme_marsh, readme_ridge, readme_map, readme_lanterns, readme_relight (an animation: use every frame).
 
@@ -115,6 +115,16 @@ func _process(_delta: float) -> void:
 						main.player.position = m.global_position + Vector2(30, 20)
 					if m.id == "lampglass_hollow":
 						_lantern(m.global_position + Vector2(-90, -30))
+			"kl_combat":
+				_lantern(s + Vector2(-260, 60))
+				main.player.position = s + Vector2(-420, 120)
+				var sp3 = main.get_node("FogLayer/Wicklings")
+				var e = sp3.spawn_at(main.player.position + Vector2(170, -30), true)
+				e.state = Wickling.State.CHASE
+				for off in [Vector2(120, 50), Vector2(200, 70), Vector2(-90, 40)]:
+					var w4 = sp3.spawn_at(main.player.position + off)
+					w4.state = Wickling.State.CHASE
+				main.player.combat.aim_override = Vector2(170, -20)
 			"map":
 				_lantern(s + Vector2(-160, 64))
 				for i in 60:
@@ -136,6 +146,10 @@ func _process(_delta: float) -> void:
 			main.fog.step(0.1)
 	if frame >= 30 and view in ["wick", "waylamp_kindle"]:
 		main.player.update_ward(1.0 / 30.0, true)
+	if view == "kl_combat" and frame == 8:
+		Input.action_press("beam")
+	if view == "kl_combat" and frame == 36:
+		main.player.combat.burst()
 	if frame == 6 and view == "map":
 		main.get_node("MapScreen").toggle()
 	# Opening views: step through to the page we want to see.

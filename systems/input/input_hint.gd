@@ -6,9 +6,9 @@ signal device_changed(pad: bool)
 
 var pad := false
 
-const PAD := {"interact": "A", "place_lantern": "X", "cancel": "B", "flare": "RB", "build_menu": "Y",
+const PAD := {"interact": "A", "place_lantern": "X", "cancel": "B", "flare": "RB", "beam": "RT", "dash": "LT", "build_menu": "Y",
 	"map": "LB", "journal": "View", "pause": "Start", "debug_toggle": "L3"}
-const KEYS := {"interact": "E", "place_lantern": "Space", "cancel": "Q", "flare": "F", "build_menu": "Tab",
+const KEYS := {"interact": "E", "place_lantern": "Space", "cancel": "Q", "flare": "F", "beam": "Left click", "dash": "Shift", "build_menu": "Tab",
 	"map": "M", "journal": "J", "pause": "Esc", "debug_toggle": "F1"}
 
 func _ready() -> void:
@@ -31,7 +31,7 @@ func key(action: String) -> String:
 ## Full controls list for the pause menu.
 func controls_text() -> String:
 	var rows := [["Move", "Left stick / D-pad" if pad else "WASD / arrows"], ["Use: read, refuel, turn, gather (hold)", key("interact")],
-		["Build selected lantern", key("place_lantern")], ["Pick up lantern", key("cancel")], ["Ward (hold)", key("flare") + (" / RT" if pad else "")],
+		["Build selected lantern", key("place_lantern")], ["Pick up lantern", key("cancel")], ["Beam (hold, aim with the %s)" % ("right stick" if pad else "mouse"), key("beam")], ["Burst", key("flare")], ["Dash", key("dash")],
 		["Lantern list", key("build_menu")], ["Map", key("map")], ["Journal", key("journal")], ["Pause", key("pause")]]
 	var lines: Array[String] = []
 	for r in rows:

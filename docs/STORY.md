@@ -295,7 +295,7 @@ Shown once each, in a panel near the bottom of the screen, for 6 s, one at a tim
 | `fog_edge` | After 90 s of play (stands in for "first fog edge") | Fog comes back where light fades. Light holds the ground. |
 | `gust` | First gust warning | Wind is coming. Rock on the windward side shelters a flame. |
 | `wickling_seen` | First Wickling within 420 px | Something small moves in the dark. It is drawn to your lights. |
-| `wickling_close` | First Wickling within 130 px | Hold F / RB / RT to swell your lamp. Wicklings cannot bear it. |
+| `wickling_close` | First Wickling within 130 px | Hold your beam on them: left click or RT, aimed. F or RB throws them back. (PROTOTYPE text, Keeper's Light) |
 | `lamp_empty` | Hand lamp down to an ember | Your lamp is down to an ember. Rest in a lantern's light to fill it. |
 | `warmth_low` | Warmth below 35% | You are getting cold. Stand in a lantern's light. |
 | `faint` | First faint | You woke by the nearest light. What you dropped waits where you fell. |

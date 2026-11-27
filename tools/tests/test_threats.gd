@@ -70,20 +70,21 @@ func _process(_delta: float) -> void:
 			check(not is_instance_valid(w_core), "a Wickling in a lantern's bright core burns away")
 			check(is_instance_valid(w_snuff) and w_snuff.light_level_at(w_snuff.global_position) < Tuning.wick_core, "Wicklings keep to the rim, out of the core")
 			# (A dying lantern's light is small, so the core Wickling's ember lies close by: clear it,
-			# so only the ward's kill is counted below.)
+			# so only the beam's kill is counted below.)
 			for e in get_tree().get_nodes_in_group("ember"):
 				e.queue_free()
-			# Warding glow: hold to burn and push back Wicklings; spends lamp charge, not fuel.
-			player.position = w_snuff.global_position + Vector2(-6, 4)   # point blank
+			# The beam (Keeper's Light): hold to burn along your aim; spends lamp charge, not fuel.
+			player.position = w_snuff.global_position + Vector2(-120, 4)   # in range, beyond the ember magnet
 			player.lamp_charge = 1.0
 			Inventory.counts["fuel"] = 3
-			Input.action_press("flare")
+			player.combat.aim_override = w_snuff.global_position - (player.global_position + Vector2(0, -10))
+			Input.action_press("beam")
 		330:
-			check(player.warding, "holding the button swells the warding glow")
-			check(Inventory.get_count("fuel") == 3, "warding never spends carried fuel")
-			check(player.lamp_charge < 1.0, "warding spends hand-lamp charge")
+			check(player.combat.beaming, "holding the button fires the beam")
+			check(Inventory.get_count("fuel") == 3, "the beam never spends carried fuel")
+			check(player.lamp_charge < 1.0, "the beam spends hand-lamp charge")
 		355:
-			check(not is_instance_valid(w_snuff), "the ward burns away a Wickling right on top of you in under a second")
+			check(not is_instance_valid(w_snuff), "the beam burns a Wickling away in about half a second")
 			var embers := get_tree().get_nodes_in_group("ember")
 			check(embers.size() >= 1, "burned Wicklings leave embers (%d)" % embers.size())
 			check(embers.all(func(e): return e.get_parent() == spawner), "drops sit on the fog layer so they glow through the dark")
@@ -105,10 +106,11 @@ func _process(_delta: float) -> void:
 			var scraps := get_tree().get_nodes_in_group("ember").filter(func(e): return e.kind == "scrap")
 			check(scraps.size() >= 1, "a burned Wickling can also drop scrap (%d)" % scraps.size())
 		365:
-			check(not player.warding, "an empty hand lamp can't ward: go back to the light")
-			Input.action_release("flare")
+			check(not player.combat.beaming, "an empty hand lamp can't beam: go back to the light")
+			Input.action_release("beam")
+			player.combat.aim_override = Vector2.ZERO
 		462:
-			check(not player.warding, "releasing the button ends the ward")
+			check(not player.combat.beaming, "releasing the button ends the beam")
 			Inventory.counts["fuel"] = 0
 			Tuning.wick_scrap_chance = 0.35
 			for e in get_tree().get_nodes_in_group("ember"):
