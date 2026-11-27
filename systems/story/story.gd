@@ -215,7 +215,8 @@ func _check_tips(main: Node) -> void:
 	var player = main.player
 	for l in _lanterns(main):
 		if l.needs_fuel() and not l.is_lit():
-			tip("cold_lantern")
+			if done.has("gather_fuel"):
+				tip("cold_lantern")
 		elif l.needs_fuel() and l.fuel_frac() < Tuning.dying_frac and not l.is_held():
 			tip("dying_lantern")   # PROTOTYPE: replaces low_lantern, which fires at the same point
 		if l.kind == "mirror":

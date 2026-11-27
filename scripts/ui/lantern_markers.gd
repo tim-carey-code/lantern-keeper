@@ -21,6 +21,8 @@ func needs_attention() -> Array:
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if not l.needs_fuel() or l.is_held():
 			continue
+		if not l.is_lit() and not Story.done.has("gather_fuel"):
+			continue   # at the very start the pointer shows the woodpile; the cold lamp's ring waits for fuel
 		if not l.is_lit():
 			cold.append(l)
 		elif l.fuel_frac() < LOW:

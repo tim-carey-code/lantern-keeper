@@ -53,10 +53,11 @@ func _process(_delta: float) -> void:
 			Story.update(main)
 			check(Story.current == "gather_fuel", "first goal: take fuel from the woodpile (%s)" % Story.current)
 			check(ptr.target_pos() != null, "the pointer points at the woodpile")
-			check(Story.tips_seen.has("cold_lantern"), "the cold old lantern brings up the first tip")
+			check(not Story.tips_seen.has("cold_lantern") and main.get_node("FogLayer/LanternMarkers").needs_attention().is_empty(), "at the start only the pointer shows: no cold-lamp ring or tip before you have fuel")
 			Inventory.counts["fuel"] = 2
 			Story.update(main)
 			check(Story.done.has("gather_fuel") and Story.current == "relight_first", "carrying fuel moves on to: relight the old lantern")
+			check(Story.tips_seen.has("cold_lantern") and main.get_node("FogLayer/LanternMarkers").needs_attention().size() == 1, "with fuel in hand, the cold lamp gets its ring and the first tip")
 			check(ptr.target_pos() == main.start_lantern_pos, "the pointer moves to the old lantern")
 			main.player.position = lamp.global_position + Vector2(0, 20)
 			main.player.refuel(lamp)
@@ -122,7 +123,7 @@ func _process(_delta: float) -> void:
 			check(j.body.text.contains("To whoever reads this") and j.body.text.contains("The ledger"), "the journal keeps the letter and the story so far")
 			j.page = 2
 			j.refresh()
-			check(j.body.text.contains("Gone east to the marsh"), "the journal keeps every note read, to read again")
+			check(j.body.text.contains("follow the stones east"), "the journal keeps every note read, to read again")
 			j.toggle()
 			check(not j.is_open() and not get_tree().paused, "the journal closes")
 			# The new HUD: prompts over things, the right button for the device, goal banner, chips.

@@ -88,7 +88,7 @@ DEFAULT: the letter as drafted.
 
 | Region | Player learns | Emotional beat | Points onward |
 |--------|---------------|----------------|---------------|
-| **1. The Hollow** | Gather, relight, build. Many keepers once counted their lamps; one stayed longest. | Arriving somewhere abandoned but not hopeless. The first flame is a small welcome. | Ledger: "Gone east to the marsh. Follow the stones." Fresh chalk arrow on the carved stone. Pointer is on. |
+| **1. The Hollow** | Gather, relight, build. Many keepers once counted their lamps; one stayed longest. | Arriving somewhere abandoned but not hopeless. The first flame is a small welcome. | Ledger: "The north lamps first. Wake the WayLamp up there, then follow the stones east." (DRAFT 2026-11-27) Fresh chalk arrow on the carved stone. Pointer is on. |
 | **2. The Reedmarsh** | The way to the water was kept lit. Every frame faces the lake. The lake once shone; then something dark coiled around it. The pump still works. | Curiosity turning to unease. The chalk is the first sign that something *took* the light. | Pumphouse note: "Now go up, past the Hollow. The ridge has glass." |
 | **3. The Windward Ridge** | Keepers made glass and passed light by mirror. The Wick remembers every flame. Oswin lost their coat here and wrote: "It came up out of the water." | Exposure and worry. The loneliest place in the game. | The station's mirror has been turned down toward the lake; steps beside it lead into the fog. |
 | **4. The Still Lake** | Ordinary light dies here; only beams cut through. Oswin camped on the shore and built a mirror with no light to give it. Every keeper's name is on the island steps. | Stillness and dread, then resolve: finishing what Oswin started. | Oswin's mirror faces the island. Build the chain to the great lamp. |
@@ -159,7 +159,8 @@ Each quoted line is one line on screen. The title shows on the note and in "Some
 **`ledger`**, "Keepers' ledger" (Hollow, by the hut)
 > Long columns of tally marks, one for every lamp lit each night.
 > Near the end the columns shrink to a single mark, in a newer hand.
-> Under it: Gone east to the marsh. Follow the stones. - Oswin
+> Under it: The north lamps first. Wake the WayLamp up there, then follow the stones east. - Oswin
+DRAFT (2026-11-27): changed because the Hollow's WayLamp moved north (owner: the notes no longer matched the goals). Was: "Gone east to the marsh. Follow the stones."
 
 **`stone_way`**, "Carved stone" (Hollow, at the passage to the marsh)
 > KEEP THE WAY TO THE WATER LIT.
@@ -167,7 +168,8 @@ Each quoted line is one line on screen. The title shows on the note and in "Some
 
 **`climb_cairn`**, "A stone cairn" (top of the Hollow, at the foot of the climb)
 > A small cairn, a chalk arrow on the top stone, pointing up.
-> The wind is worse up there. Keep your lights sheltered. - Oswin
+> The wind is worse up there. Come back when the marsh is lit. - Oswin
+DRAFT (2026-11-27): the cairn now stands by the Hollow's WayLamp, before the marsh. Was: "Keep your lights sheltered."
 
 **`frames_east`**, "Old lantern frames" (Reedmarsh boardwalk)
 > Three empty frames along the boardwalk, all turned east, toward the lake.

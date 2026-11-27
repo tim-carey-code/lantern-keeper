@@ -197,9 +197,9 @@ func _place_landmarks() -> void:
 	var rack := _add_landmark("rack", "Lantern rack", "rack", start + Vector2(-80, -40), "")
 	rack.scenery = true
 	_add_landmark("climb_cairn", "A stone cairn", "cairn", fog.tile_center(Vector2i(24, 47)),
-		"A small cairn, a chalk arrow on the top stone, pointing up.\nThe wind is worse up there. Keep your lights sheltered. - Oswin")
+		"A small cairn, a chalk arrow on the top stone, pointing up.\nThe wind is worse up there. Come back when the marsh is lit. - Oswin")
 	_add_landmark("ledger", "Keepers' ledger", "ledger", start + Vector2(-96, -64),
-		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns shrink to a single mark, in a newer hand.\nUnder it: Gone east to the marsh. Follow the stones. - Oswin")
+		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns shrink to a single mark, in a newer hand.\nUnder it: The north lamps first. Wake the WayLamp up there, then follow the stones east. - Oswin")
 	_add_landmark("stone_way", "Carved stone", "stone", fog.tile_center(Vector2i(40, 30 + Y)),
 		"KEEP THE WAY TO THE WATER LIT.\nBelow the old letters, a fresh chalk arrow points east.")
 	_add_landmark("frames_east", "Old lantern frames", "frames", fog.tile_center(Vector2i(78, 31 + Y)),
