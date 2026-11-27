@@ -303,6 +303,11 @@ func begin_interact() -> void:
 	var t := nearest_target()
 	if t is WayLamp:
 		last_feed = t.feed()
+		if last_feed == "held":
+			# A lit WayLamp: the fast-travel list (refused, with a sound, while something hunts you).
+			var menu := get_tree().get_first_node_in_group("travel_menu")
+			if menu and not menu.open(t):
+				last_feed = "travel_blocked"
 	elif t is Landmark:
 		t.activate()
 	elif t is Lantern:

@@ -1,6 +1,6 @@
 # Lantern Keeper — Design Document
 
-Synced to commit 9a2b9cc plus the Reservoir refuel fix (2026-11-26); map sizes, regions and performance synced on `proto/kl-big` (2026-11-27). History of decisions: docs/DECISIONS.md.
+Synced to commit 9a2b9cc plus the Reservoir refuel fix (2026-11-26); map sizes, regions and performance synced on `proto/kl-big` (2026-11-27); the loop route and WayLamp fast travel synced on `proto/kl-loop` (2026-11-27). History of decisions: docs/DECISIONS.md.
 
 > Describes the game **as built** at 9a2b9cc. Unbuilt content is marked **planned**; §8 is a prototype. `docs/DECISIONS.md` overrides this file; story text lives in `docs/STORY.md`.
 > Numbers from `systems/tuning.gd` are **placeholders**. Numbers fixed elsewhere in the code are marked *(code)*.
@@ -134,13 +134,13 @@ Text lives in STORY.md, mirrored in `systems/story/story.gd` and `scripts/main/m
 
 One fixed map, built by code from a fixed seed, so it is the same in every game. It never reloads; it only becomes lit. Each region adds one twist.
 
-**Sizes (2026-11-27, owner: "make them all 4x bigger"):** every region is twice as wide and twice as tall as before, about 4x the area, and everything hand-placed kept its relative place. The map is 224 × 200 tiles *(code)*. The Hollow is an oval about 76 × 88 tiles (about 5,500 open tiles); the Reedmarsh about 112 × 96 (about 8,500); the Ridge about 120 × 52 (about 4,800). The passage to the marsh is 10 tiles wide and the climb to the Ridge 10 wide. The north-east quarter, above the marsh, is kept empty for the Lakeshore and the Still Lake. Resource spots, packs and nests are 4x as many, so the bigger space is as full as the old one, and each region has old caches (one-off piles of scrap, fuel or glass) at its dead ends.
+**Sizes (2026-11-27, owner: "make them all 4x bigger"):** every region is twice as wide and twice as tall as before, about 4x the area, and everything hand-placed kept its relative place. The map is 224 × 200 tiles *(code)*. The Hollow is an oval about 76 × 88 tiles (about 5,500 open tiles); the Reedmarsh about 112 × 96 (about 8,500); the Ridge about 120 × 52 (about 4,800). The passage to the marsh is 10 tiles wide, the climb to the Ridge 10 wide, and the marsh climb (the loop's way up, 2026-11-27) about 8 wide. The north-east quarter, above the marsh, is kept empty for the Lakeshore and the Still Lake. Resource spots, packs and nests are 4x as many, so the bigger space is as full as the old one, and each region has old caches (one-off piles of scrap, fuel or glass) at its dead ends.
 
-**1. The Hollow** (start, built). A sheltered bowl around the keeper's hut. The hut lantern starts cold; the woodpile and a scrap pile sit close by; 72 resin trees and 64 ruins *(code)*, and three old caches. Landmarks: the letter, the lantern rack, the ledger, the carved stone at the east passage, a cairn at the foot of the climb. Goals 1-6, with the pointer on.
+**1. The Hollow** (start, built). A sheltered bowl around the keeper's hut. The hut lantern starts cold; the woodpile and a scrap pile sit close by; 72 resin trees and 64 ruins *(code)*, and three old caches. Landmarks: the letter, the lantern rack, the ledger, the carved stone at the east passage. Its WayLamp stands in the north-east, on the way east (the loop, 2026-11-27). The old climb at its top is closed by fallen stones until you push them down from the Ridge (a later shortcut). Goals 1-6, with the pointer on.
 
-**2. The Reedmarsh** (east, built). **Twist: soft ground.** You wade at 85% speed *(code)*, but lanterns stand only on boardwalks and ten islands, and fog returns faster. 96 peat and 24 scrap spots *(code)*, and two old caches. Landmarks: old frames, chalk on the pumphouse wall, the pumphouse (Reservoir Lamp). Goals 6-10.
+**2. The Reedmarsh** (east, built). **Twist: soft ground.** You wade at 85% speed *(code)*, but lanterns stand only on boardwalks and ten islands, and fog returns faster. 96 peat and 24 scrap spots *(code)*, and two old caches. Landmarks: old frames, chalk on the pumphouse wall, the pumphouse (Reservoir Lamp), and a cairn at the foot of the marsh climb, the path that leaves its north-west corner for the Ridge (the loop). Goals 6-11.
 
-**3. The Windward Ridge** (north, built). Up a narrow climb from the Hollow. **Twist: wind.** 56 glass, 32 fuel and 28 scrap spots *(code)*, 88 rock outcrops, and two caches of glass. Landmarks, west to east: the glazier's workshop (Hooded Lamp), a broken lens, a keeper's coat, the signal station (Mirror Post), old steps going down. Goals 11-18.
+**3. The Windward Ridge** (north, built). Up the marsh climb to its east end (the loop, 2026-11-27; the old climb from the Hollow is a later shortcut). **Twist: wind.** 56 glass, 32 fuel and 28 scrap spots *(code)*, 88 rock outcrops, and two caches of glass. Landmarks, one way from the marsh climb to the old steps: the glazier's workshop (Hooded Lamp), a broken lens, a keeper's coat, the signal station (Mirror Post), its WayLamp, old steps going down. The far west is optional. Goals 11-18.
 
 **4. The Still Lake** (planned). Down the old steps. **Twist: fog too thick for ordinary light.** Only beams cut through, so the player chains mirrors from the shore to the island. Oswin's camp holds a half-built mirror frame and a crate of glass; the player builds every mirror. 8 landmarks and goals 19-24 are in STORY.md.
 
@@ -205,9 +205,10 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 **Why.** As built, lighting all regions would take ~40-50 lanterns, each refuelled every ~3 minutes: a refuel every ~4 s. And neglect had no consequence.
 
 **One WayLamp per region**, left by the old keepers:
-- **The Hollow:** at the north end, below the climb (moved 2026-11-27: too close to the hut).
+- **The Hollow:** in the north-east, on the way east to the marsh (the loop, 2026-11-27; before that at the north end, below the climb, and first too close to the hut).
 - **The Reedmarsh:** on the pumphouse island.
-- **The Windward Ridge:** by the signal station.
+- **The Windward Ridge:** by the signal station, toward the old steps (the loop moved it 10 tiles east).
+- **Lit WayLamps are fast travel** (2026-11-27, branch `proto/kl-loop`; see §9 "The loop").
 - **The Still Lake:** the great lamp is the last one.
 
 **Kindling one**
@@ -252,7 +253,7 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 
 ### Hollow prototype (branch `proto/kl-hollow`, implemented 2026-11-27; playtest pending)
 
-Slices 1-6 of `docs/PLAN_KEEPERS_LIGHT.md` are now present: 24 fixed packs (since the 4x Hollow; Spitwicks in the middle and north), twelve core-burned nests, the shelled Clinker guarding the Post Lamp find, wick and level-up choices, and the two-phase Ashbrood on the Hollow WayLamp. Fixed enemies and pack clears persist; fainting drops unspent wick where the keeper fell and resets pack clears. The build uses a separate save path. The north and east routes are closed. F1 exposes prototype combat, enemy, progression and boss tuning. The small Leads slice, third boss phase, and polish beyond placeholder shapes/effects remain out of scope. This is implementation status, not a passed playtest; see `docs/PLAYTEST.md` for the handoff and gate questions.
+Slices 1-6 of `docs/PLAN_KEEPERS_LIGHT.md` are now present: 24 fixed packs (since the 4x Hollow; Spitwicks in the middle and north), twelve core-burned nests, the shelled Clinker guarding the Post Lamp find, wick and level-up choices, and the two-phase Ashbrood on the Hollow WayLamp. Fixed enemies and pack clears persist; fainting drops unspent wick where the keeper fell and resets pack clears. The build uses a separate save path. Since the loop (branch `proto/kl-loop`), the passage east is open in normal play; the marsh and the Ridge have no Keeper's Light foes yet. F1 exposes prototype combat, enemy, progression and boss tuning. The small Leads slice, third boss phase, and polish beyond placeholder shapes/effects remain out of scope. This is implementation status, not a passed playtest; see `docs/PLAYTEST.md` for the handoff and gate questions.
 
 **Feedback (2026-11-27):** foes flash when hit; the burst, kills and big hits shake the screen (`kl_shake_px`); a short freeze on a kill. Hurt foes, and big ones nearby, show a name and a health bar, with the shell as a pale bar above it. The Ashbrood has a boss bar across the bottom of the screen. The "Quick fill" upgrade is replaced by "Kindled kills" (each kill gives back 10% lamp charge).
 
@@ -378,3 +379,54 @@ Both routes backtrack through the low south late, which now pays almost nothing;
 The Hollow's fixed wick changed little (25 packs of 88 foes). The farming check still stalls (L5 only at 25 minutes); the forward run reaches L8 in about 13 minutes on the test's estimate (was 12).
 
 **Not done:** no balance change to the guard or the Clinker (the Clinker now meets an L3 keeper, as before). Pack and nest lures still look alike above the fog (plan §9). Timings are estimates, not a playtest.
+
+The loop (below) moved rows 6-8 of the table: pack 2, the Clinker and the WayLamp now sit east of nest A.
+
+#### The loop and WayLamp fast travel (2026-11-27, branch `proto/kl-loop`)
+
+**Why:** the owner chose one clockwise loop with no backtracking, and lit WayLamps as fast travel (DECISIONS, "route: one loop"). Before, you went north to the WayLamp, walked back south and east to the marsh, then back west through the Hollow to climb to the Ridge's west end, and walked its whole length east.
+
+**The route:** the hut, the onboarding road north (unchanged: the lone Wickling, the north path's lamp, the pack of 3, the crook and its guard, nest A), then east: pack 2, the Clinker, the Hollow's WayLamp and the Ashbrood, out past the carved stone into the passage. Through the Reedmarsh eastward as before (frames, chalk, pumphouse, its WayLamp on the south-east island). Up the **marsh climb** from the marsh's north-west corner to the Ridge's east end. Across the Ridge one way, toward the north-east: the glazier, the lens, the coat, the signal station, its WayLamp, the old steps. The Lakeshore (still empty rock) begins about 8 tiles past the steps.
+
+**What moved** (tiles; `scripts/main/main.gd`; snapped positions; `test_prototype_loop.tscn` prints them):
+
+| What | Was | Now |
+|---|---|---|
+| The Hollow's WayLamp (`HOLLOW_WAYLAMP`) | (63, 91), the north end | **(78, 124)**: hut offset (+30, -12), 32.3 tiles; 8.2 tiles above the carved stone |
+| The Clinker (`CLINKER_TILE`) | (55, 96) | **(70, 119)**: 9.4 tiles before the WayLamp (more than its 7-tile wake plus a tile, out of the Ashbrood fight) |
+| Pack 2 (the route's Spitwick and elite, Lv 4) | (61, 104) | **(60, 113)**: 12.2 tiles past nest A, 11.7 before the Clinker |
+| Pack 4 (Lv 5, elite) | (76, 112) | (66, 99), the north-east corner, above the road |
+| Pack 8 (Lv 4) | (72, 120) | (36, 112), the west middle |
+| Pack 9 (Lv 2) | (66, 122) | (24, 128), the west middle |
+| Pack 11 (Lv 2) | (82, 126) | (52, 93), the old climb's foot |
+| Pack 13 (Lv 1) | (68, 132) | (66, 140), the quiet south-east |
+| Pack 15 (Lv 1) | (84, 144) | (66, 146), the quiet south-east |
+| Nest 7 (Lv 3) | (79, 119) | (60, 91), the old climb's foot |
+| Nest 9 (Lv 1) | (84, 136), the passage mouth | (80, 150), the south |
+| The cairn (`climb_cairn`) | (48, 94), the old climb's foot | **(127, 92)**, the marsh climb's foot |
+| The glazier (Hooded Lamp) | (28, 30), the far west | **(99, 51)**, 5.1 tiles from the marsh climb's top |
+| The lens | (60, 18) | **(103, 46)**, 10.4 tiles from the top |
+| The coat | (84, 44) | **(108, 40)** |
+| The signal station | (116, 26) | (116, 26), unchanged |
+| The Ridge's WayLamp | (110, 30) | **(120, 30)**, 5.7 tiles from the steps |
+| The old steps | (124, 34) | (124, 34), unchanged |
+
+Levels and counts didn't change (25 packs with the guard, 12 nests). Packs 1, 3, 5, 6, 7 and nest 3 (the north-west and north-east elites) stay where they were; the far west of the Ridge (the satchel, a lamp glass, a glass cache) is optional.
+
+**The marsh climb:** about 8 tiles wide, from (130, 99) at the marsh's north-west corner by way of (124, 86) and (112, 72) to the Ridge's south rim at (100, 56) (`MARSH_CLIMB`, `RIDGE_ENTRY`). Ridge ground above y 76, marsh ground below, like the old climb. It stays at x 131 or less, west of the Lakeshore's space. **Gate: none. It is walkable as soon as you reach the marsh** (the brief allowed either; chosen because it can never lock you out and needs no new art). The goal order (`climb_north` comes after `kindle_marsh`) and the cairn's line ("Light the marsh before you climb") ask you to light the marsh first. The Ridge outcrops keep clear of its top.
+
+**The old climb, a later shortcut:** fallen stones (two rows of rock, drawn as Ridge stone, at y 84-85; `ClimbStones`, `scripts/world/climb_stones.gd`) close it. They have their own collision body. Coming down from the Ridge (within 3 tiles, from the north side) the keeper pushes them down: they become ground, the body goes, and `Progress.cleared["climb_stones"]` keeps it open in the save. From the Hollow side nothing happens. The Hollow-only prototype's walls (the passage at x 94-95 and the climb at y 84-85) are gone.
+
+**WayLamp fast travel** (`scripts/ui/travel_menu.gd`, `TravelMenu` in the main scene):
+- Interact with a **lit** WayLamp. Its prompt says "Travel" (and "WayLamp: this region is held"); a cold one still takes fuel as before.
+- A small code-built `UiStyle` list opens: every lit WayLamp by name, in region order. The one you stand at is greyed "(you are here)" and can't be focused. "Stay" closes it. With only one lamp lit, it says to light another. The world pauses while it is open.
+- **Gamepad:** focus starts on the first place to go; the D-pad moves it; A travels; B or Start closes. **Keyboard:** arrows, E or Enter, Q or Escape. **Mouse:** click. Old buttons are removed from the list before the new ones take focus (the level-up bug); closing releases focus and blocks the closing press from reaching the game. Ark Pixel at 40 (title), 30 (buttons) and 20 (notes).
+- Picking one fades to black (0.25 s), puts the keeper just below that WayLamp, in reach of it, and fades back (0.35 s).
+- **Blocked** (the list won't open, a sound plays, and the WayLamp's prompt says why): while a foe hunts the keeper within 12 tiles (`travel_hunt_radius` 384 px: a chasing Wickling, any Spitwick, an awake Clinker), while any WayLamp kindles, and while a guardian (the Ashbrood) is in play.
+- **Save:** which WayLamps are lit was already saved (`Progress.settled`). The only new entry is the stones' `cleared` key, so saves stay version 4 and older saves load (the stones are simply still down).
+
+**Tests:** `test_prototype_loop.tscn` (81 checks) covers the Hollow stretch, the marsh climb and the stones, the one-way Ridge, goal and pointer order, fast travel (only lit WayLamps listed; travel moves the keeper; blocked while hunted, during kindling and during a guardian fight; pad mapping, focus, B, Escape, mouse; clean close; font sizes) and save round trips (a reloaded world, and an older save without the stones key). Changed with a reason: `test_prototype_onboarding` measures "the Clinker comes after nest A" from the crook instead of the hut, since the road turns east after nest A. `test_prototype_hollow`'s toughness check keeps "the third of the packs nearest the WayLamp outweighs the farthest third" (44 vs 32), and its "no elites in the farthest third" became "no elites south of the crook", because the WayLamp now sits beside the quiet south-east. `test_leveling`'s beeline now stops at nest A (a goal) before the Clinker.
+
+**Leveling after the loop** (same targets, both pass): beeline and explorer L2 at the find, L3 at pack 2, L4 on the Clinker, **L7 into the Ashbrood, L8 on its kill**; the forward run takes about 13 minutes on the test's estimate (unchanged). Farming still stalls (L5 only at 25 minutes).
+
+**Performance:** `tools/bench/bench.tscn` (headless, 30 lanterns, 20 foes, 400 frames): game logic averages 3.03-3.10 ms over three runs (worst frame about 6.0-6.4 ms), against 2.96-3.06 ms on `proto/kl-hollow` f126af7 on the same machine: no change beyond run-to-run noise, within the 4 ms budget. The travel menu only works out its block reason when you are next to a lit WayLamp; the stones check one distance a frame until they open.

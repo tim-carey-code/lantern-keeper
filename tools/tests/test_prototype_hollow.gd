@@ -118,6 +118,9 @@ func _process(_delta: float) -> void:
 			for i in third:
 				near_w += weight.call(packs[i])
 				far_w += weight.call(packs[packs.size() - 1 - i])
-			check(near_w > far_w and packs.slice(packs.size() - third).all(func(p): return p.elites == 0), "packs get tougher toward the WayLamp (%d vs %d)" % [near_w, far_w])
+			# The loop (2026-11-27) moved the WayLamp east, beside the quiet south-east, so the far third now holds the
+			# north-west's optional elites: elites stay in the north half (north of the crook), never in the south.
+			var crook_y: float = start.y - 18.0 * FogGrid.TILE
+			check(near_w > far_w and packs.filter(func(p): return p.global_position.y > crook_y).all(func(p): return p.elites == 0 or p.guard), "packs get tougher toward the WayLamp (%d vs %d), and the south holds no elites" % [near_w, far_w])
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)

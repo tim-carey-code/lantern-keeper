@@ -39,6 +39,8 @@ var start := Vector2.ZERO
 var start_lantern_pos := Vector2.ZERO
 var waypost_lantern_pos := Vector2.ZERO   # the second cold lantern on the north path (onboarding)
 var loaded_save := false
+var stone_tiles: Array[Vector2i] = []       # the old climb's fallen stones (the later shortcut)
+var climb_stones: ClimbStones
 var rng := RandomNumberGenerator.new()
 var _taken: Array[Vector2] = []
 
@@ -91,6 +93,14 @@ func _ready() -> void:
 	_place_hollow_prototype()
 	_scatter()
 	_build_terrain()
+	climb_stones = ClimbStones.new()
+	climb_stones.name = "ClimbStones"
+	add_child(climb_stones)
+	climb_stones.setup(self, stone_tiles)
+	var travel := CanvasLayer.new()
+	travel.set_script(load("res://scripts/ui/travel_menu.gd"))
+	travel.name = "TravelMenu"
+	add_child(travel)
 	# Continue from the save unless "New game" was just chosen.
 	if SaveGame.skip_load_once:
 		SaveGame.skip_load_once = false
@@ -157,14 +167,47 @@ func _generate() -> void:
 					fog.set_tile(Vector2i(x, y), FogGrid.T_GROUND, FogGrid.R_MARSH)
 
 	_generate_ridge()
-	# The first prototype ends in the Hollow; keep the east and north routes shut in normal play.
-	if not Story.skip_opening:
-		for y in range(128, 148):
-			for x in [94, 95]:
-				fog.set_tile(Vector2i(x, y), FogGrid.T_ROCK, FogGrid.R_HOLLOW)
-		for x in range(32, 66):
-			for y in [84, 85]:
-				fog.set_tile(Vector2i(x, y), FogGrid.T_ROCK, FogGrid.R_HOLLOW)
+	_generate_marsh_climb()
+	# The loop (owner 2026-11-27): the east passage is open in normal play too (the Hollow-only prototype walled it).
+	# The old climb is the later shortcut: fallen stones close it until the keeper pushes them down from above.
+	stone_tiles = climb_stone_tiles()
+	for t in stone_tiles:
+		fog.set_tile(t, FogGrid.T_ROCK, FogGrid.R_RIDGE)   # Ridge rock is drawn as bare stone, not pines
+
+## The loop's way up (owner 2026-11-27): a path climbs north out of the Reedmarsh's north-west corner to the
+## Ridge's south rim, east of the old climb. Walkable as soon as you reach the marsh (no gate); the goals and
+## the cairn at its foot ask you to light the marsh first. Its top (y < 76) is Ridge ground, its foot marsh ground.
+const MARSH_CLIMB := [Vector2(130, 99), Vector2(124, 86), Vector2(112, 72), Vector2(100, 56)]
+const MARSH_CLIMB_HALF := 4.0   # half width in tiles
+const MARSH_CLIMB_FOOT := Vector2i(127, 92)   # the cairn, where the path leaves the reeds
+const RIDGE_ENTRY := Vector2i(100, 56)        # where the path reaches the Ridge (route test, pointer)
+
+func _generate_marsh_climb() -> void:
+	for y in range(48, 104):
+		for x in range(88, 142):
+			var t := Vector2i(x, y)
+			if fog.terrain_of(t) != FogGrid.T_ROCK:
+				continue
+			var p := Vector2(x + 0.5, y + 0.5)
+			var wiggle := sin(y * 0.25) * 1.2
+			if _dist_to_line(p + Vector2(wiggle, 0), MARSH_CLIMB) <= MARSH_CLIMB_HALF:
+				fog.set_tile(t, FogGrid.T_GROUND, FogGrid.R_RIDGE if y < 76 else FogGrid.R_MARSH)
+
+static func _dist_to_line(p: Vector2, line: Array) -> float:
+	var best := INF
+	for i in line.size() - 1:
+		best = minf(best, p.distance_to(Geometry2D.get_closest_point_to_segment(p, line[i], line[i + 1])))
+	return best
+
+## The old climb's fallen stones: two rows across it, a little below where it turns into the Ridge.
+func climb_stone_tiles() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for y in ClimbStones.ROWS:
+		for x in range(36, 64):
+			var t := Vector2i(x, y)
+			if fog.terrain_of(t) == FogGrid.T_GROUND or (fog.terrain_of(t) == FogGrid.T_ROCK and fog.region[fog.idx(t)] == FogGrid.R_RIDGE):
+				out.append(t)
+	return out
 
 ## Region 3: a long windswept ridge north of the Hollow, reached by a narrow climb.
 ## Rock outcrops give shelter from the west wind.
@@ -186,8 +229,8 @@ func _generate_ridge() -> void:
 		var c := Vector2i(orng.randi_range(16, 120), orng.randi_range(14, 54))
 		if fog.terrain_of(c) != FogGrid.T_GROUND or fog.region[fog.idx(c)] != FogGrid.R_RIDGE:
 			continue
-		if absi(c.y - int(RIDGE_C.y)) < 3 or (c.x >= 38 and c.x <= 60 and c.y > 40):
-			continue   # keep the spine and the top of the climb open
+		if absi(c.y - int(RIDGE_C.y)) < 3 or (c.x >= 38 and c.x <= 60 and c.y > 40) or (c.x >= 90 and c.x <= 110 and c.y > 44):
+			continue   # keep the spine, the top of the old climb and the top of the marsh climb open
 		for t in [Vector2i.ZERO, Vector2i(0, 1), Vector2i(0, -1)] if orng.randf() < 0.6 else [Vector2i.ZERO, Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
 			if fog.region[fog.idx(c + t)] == FogGrid.R_RIDGE:
 				fog.set_tile(c + t, FogGrid.T_ROCK, FogGrid.R_RIDGE)
@@ -212,14 +255,18 @@ func _boardwalk(a: Vector2i, b: Vector2i) -> void:
 func _build_rock_collision() -> void:
 	var body := StaticBody2D.new()
 	add_child(body)
+	# The climb's fallen stones get their own body (ClimbStones), so they can be cleared later.
+	var mask := fog.solid.duplicate()
+	for t in stone_tiles:
+		mask[fog.idx(t)] = 0
 	for y in fog.rows:
 		var x := 0
 		while x < fog.cols:
-			if fog.solid[y * fog.cols + x] == 0:
+			if mask[y * fog.cols + x] == 0:
 				x += 1
 				continue
 			var x0 := x
-			while x < fog.cols and fog.solid[y * fog.cols + x] == 1:
+			while x < fog.cols and mask[y * fog.cols + x] == 1:
 				x += 1
 			var shape := CollisionShape2D.new()
 			var rect := RectangleShape2D.new()
@@ -236,10 +283,11 @@ func _place_landmarks() -> void:
 	# The rack by the hut is scenery now (owner: too much to read at the start); the letter is the opening.
 	var rack := _add_landmark("rack", "Lantern rack", "rack", start + Vector2(-80, -40), "")
 	rack.scenery = true
-	_add_landmark("climb_cairn", "A stone cairn", "cairn", fog.tile_center(Vector2i(48, 94)),
-		"A small cairn, a chalk arrow on the top stone, pointing up.\nThe wind is worse up there. Come back when the marsh is lit. - Oswin")
+	# The loop (2026-11-27): the cairn stands at the foot of the marsh climb now; texts DRAFT in STORY.md.
+	_add_landmark("climb_cairn", "A stone cairn", "cairn", _spot_in_region(MARSH_CLIMB_FOOT, FogGrid.R_MARSH),
+		"A small cairn, a chalk arrow on the top stone, pointing up.\nThe wind is worse up there. Light the marsh before you climb. - Oswin")
 	_add_landmark("ledger", "Keepers' ledger", "ledger", start + Vector2(-96, -64),
-		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns shrink to a single mark, in a newer hand.\nUnder it: My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, at the top. - Oswin")
+		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns shrink to a single mark, in a newer hand.\nUnder it: My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, on the way east. - Oswin")
 	_add_landmark("stone_way", "Carved stone", "stone", fog.tile_center(Vector2i(80, 60 + Y)),
 		"KEEP THE WAY TO THE WATER LIT.\nBelow the old letters, a fresh chalk arrow points east.")
 	_add_landmark("frames_east", "Old lantern frames", "frames", fog.tile_center(Vector2i(156, 62 + Y)),
@@ -247,31 +295,37 @@ func _place_landmarks() -> void:
 	_add_landmark("chalk_lake", "Chalk on the pumphouse wall", "chalk", fog.tile_center(Vector2i(200, 60 + Y)),
 		"Two drawings of the same lake. In the first it shines.\nIn the second, something dark is coiled around the light.\nBeside them, newer chalk: I went to look. - Oswin")
 	var pump := _add_landmark("pumphouse", "The pumphouse", "pumphouse", fog.tile_center(Vector2i(206, 66 + Y)),
-		"The old pump still turns when you push it. Its tank could feed a lamp for a long time.\nScratched on the tank: Light has to be fed from somewhere.\nNow go up, past the Hollow. The ridge has glass. - Oswin")
+		"The old pump still turns when you push it. Its tank could feed a lamp for a long time.\nScratched on the tank: Light has to be fed from somewhere.\nNow go up, north of the reeds. The ridge has glass. - Oswin")
 	pump.unlock_kind = "reservoir"
 
+## The Ridge, one way (owner 2026-11-27): you come up from the marsh at RIDGE_ENTRY and walk north-east to the
+## old steps: the glazier and the lens by the entry, then the coat, the signal station, its WayLamp, the steps.
+## Each one is nearer the steps than the one before. The far west is optional.
+const RIDGE_TRAIL := {"glazier": Vector2i(99, 51), "lens": Vector2i(103, 46), "coat": Vector2i(108, 40),
+	"station": Vector2i(116, 26), "waylamp": Vector2i(120, 30), "ridge_steps": Vector2i(124, 34)}
+
 func _place_ridge_landmarks() -> void:
-	var glazier := _add_landmark("glazier", "The glazier's workshop", "workshop", _ridge_spot(Vector2i(28, 30)),
+	var glazier := _add_landmark("glazier", "The glazier's workshop", "workshop", _ridge_spot(RIDGE_TRAIL["glazier"]),
 		"Cold kilns and racks of cut glass. A half-finished hood sits on the bench,\nshaped to keep a flame alive in any wind.\nA note under it: Finish it. I could not stay. - Oswin")
 	glazier.unlock_kind = "hooded"
-	var station := _add_landmark("station", "The signal station", "station", _ridge_spot(Vector2i(116, 26)),
+	var station := _add_landmark("station", "The signal station", "station", _ridge_spot(RIDGE_TRAIL["station"]),
 		"A tall post with a cracked mirror. Keepers passed light from post to post, all the way to the lake.\nSomeone has turned the mirror down, toward the water.\nOld steps beside it go down into the fog.")
 	station.unlock_kind = "mirror"
-	_add_landmark("coat", "A keeper's coat", "coat", _ridge_spot(Vector2i(84, 44)),
+	_add_landmark("coat", "A keeper's coat", "coat", _ridge_spot(RIDGE_TRAIL["coat"]),
 		"Snagged on the rocks, stiff with frost. An O is stitched inside the collar.\nIn the pocket: \"It came up out of the water. It drank the great lamp.\nNow it is hungry for the rest. Only mirrors reach the lake.\"")
-	_add_landmark("ridge_steps", "Old steps", "steps", _ridge_spot(Vector2i(124, 34)),
+	_add_landmark("ridge_steps", "Old steps", "steps", _ridge_spot(RIDGE_TRAIL["ridge_steps"]),
 		"Old steps, worn smooth, going down.\nBelow, the fog does not move, even in the wind.")
-	_add_landmark("lens", "A broken lens", "lens", _ridge_spot(Vector2i(60, 18)),
+	_add_landmark("lens", "A broken lens", "lens", _ridge_spot(RIDGE_TRAIL["lens"]),
 		"A great curved lens, split down the middle. Scratched into the frame:\nTHE WICK REMEMBERS EVERY FLAME.\nBelow, in a newer hand: Then it will remember ours. - Oswin")
 
 ## PROTOTYPE: one old WayLamp per region (texts are drafts until the owner approves STORY.md).
 func _place_waylamps() -> void:
 	# Texts approved by the owner on 2026-11-27 (STORY.md section 11).
-	_add_waylamp("hollow", FogGrid.R_HOLLOW, Vector2i(64, 90), "WayLamp of the Hollow",
+	_add_waylamp("hollow", FogGrid.R_HOLLOW, HOLLOW_WAYLAMP, "WayLamp of the Hollow",
 		"A tall lamp with a wide iron bowl, cold and full of old ash.\nCut into the base: WHILE THIS BURNS, THE HOLLOW IS KEPT.\nTied to the post: This has to be held until it takes. I could not hold it and keep the rest. - Oswin")
 	_add_waylamp("marsh", FogGrid.R_MARSH, Vector2i(200, 140), "WayLamp of the Reedmarsh",
 		"A WayLamp on a stone footing, above the damp. Its bowl is dry.\nCut into the base: WHILE THIS BURNS, THE MARSH IS KEPT.\nUnder it, a tin of dry wicks and a tag in an old hand: For whoever comes next.")
-	_add_waylamp("ridge", FogGrid.R_RIDGE, Vector2i(110, 30), "WayLamp of the Ridge",
+	_add_waylamp("ridge", FogGrid.R_RIDGE, RIDGE_TRAIL["waylamp"], "WayLamp of the Ridge",
 		"A WayLamp in the lee of the station wall. Frost has cracked its hood.\nCut into the base: WHILE THIS BURNS, THE RIDGE IS KEPT.\nUnder a stone: When this went out, the small dark ones came up the steps. - Oswin")
 
 func _add_waylamp(id: String, region_id: int, want: Vector2i, title: String, text: String) -> WayLamp:
@@ -416,10 +470,12 @@ func _build_terrain() -> void:
 ## The first 10 minutes (docs/PLAN_ONBOARDING.md, owner answers 2026-11-27, Option B). Tile offsets from the
 ## hut's start tile, +x east, -y north. The main route: the lone Wickling (pack 20, -1,-10), this cold lantern
 ## (+2,-12), a pack of 3 (pack 23, +5,-17), Oswin's crook with its small guard and a 6-scrap cache (-1,-19),
-## nest A (nest 4, +2,-30), one pack (pack 2, +13,-32), the Clinker (+7,-40), the WayLamp (+15,-45 once snapped).
+## nest A (nest 4, +2,-30). The loop (owner 2026-11-27): from nest A the road turns east, to one pack (pack 2,
+## +12,-23), the Clinker (+22,-17) and the WayLamp (+30,-12), then out by the carved stone and the passage east.
 const WAYPOST_OFFSET := Vector2i(2, -12)
 const CROOK_OFFSET := Vector2i(-1, -19)
-const CLINKER_TILE := Vector2i(55, 96)   # a mid-boss near the WayLamp, before the Ashbrood (out of its wake range from the WayLamp)
+const CLINKER_TILE := Vector2i(70, 119)    # a mid-boss before the WayLamp, about 9.4 tiles from it: out of the Ashbrood fight
+const HOLLOW_WAYLAMP := Vector2i(78, 124)  # north-east of the hut, 8 tiles above the carved stone and the passage east
 
 ## Keeper's Light prototype content, limited to the Hollow.
 func _place_hollow_prototype() -> void:
@@ -465,30 +521,31 @@ func _place_hollow_prototype() -> void:
 
 ## Nests (4x for the 4x Hollow): one on the main route (nest 4, nest A: the first thing the Post Lamp unlocks,
 ## more than its wake radius past the crook), the rest optional on the flanks and in the south, all at least
-## 30 tiles from the hut. [tile, foe level]: 1 on the hut row and south, rising to 6 by the WayLamp;
-## hatchlings take their nest's level (DESIGN §9, level-gap wick).
+## 30 tiles from the hut. [tile, foe level]: 1 on the hut row and south, 2-6 in the north half;
+## hatchlings take their nest's level (DESIGN §9, level-gap wick). The loop moved nest 7 (to the old climb's foot)
+## and nest 9 (out of the passage mouth, south) off the road east.
 const HOLLOW_NESTS := [
-	[Vector2i(32, 100), 5], [Vector2i(42, 90), 6], [Vector2i(76, 98), 6],     # the north flanks; nest 3 is clear of the WayLamp fight
+	[Vector2i(32, 100), 5], [Vector2i(42, 90), 6], [Vector2i(76, 98), 6],     # the north flanks; nest 3 in the north-east corner, above the road
 	[Vector2i(50, 106), 2], [Vector2i(22, 106), 3],                           # nest A on the route; nest 5 out west
-	[Vector2i(20, 112), 3], [Vector2i(80, 118), 3], [Vector2i(14, 130), 1], [Vector2i(84, 136), 1],
+	[Vector2i(20, 112), 3], [Vector2i(60, 91), 3], [Vector2i(14, 130), 1], [Vector2i(80, 150), 1],
 	[Vector2i(30, 160), 1], [Vector2i(66, 162), 1], [Vector2i(48, 172), 1],
 ]
 
 ## Fixed packs (4x for the 4x Hollow). [tile, how many, Spitwicks, shelled elites, foe level, (wake radius in tiles)]:
-## tougher the closer to the WayLamp (north), quiet in the south. Levels (DESIGN §9): 1 on the hut row and south
-## of it, 2-4 through the middle, 5-6 by the WayLamp. The main route (onboarding) holds three: pack 20 (the lone
-## Wickling) and pack 23 (3 Wicklings) wake closer than the rest, so nothing wakes at the hut; pack 2 is the
-## first Spitwick and elite, after nest A. The rest are optional side content: no Spitwick or elite within
-## 25 tiles of the hut, and none wakes from the route.
+## tough in the north half, quiet in the south. Levels (DESIGN §9): 1 on the hut row and south of it, 2-4 through
+## the middle, 5-6 in the north. The main route (onboarding) holds three: pack 20 (the lone Wickling) and pack 23
+## (3 Wicklings) wake closer than the rest, so nothing wakes at the hut; pack 2 is the first Spitwick and elite,
+## after nest A, on the road east. The rest are optional side content: no Spitwick or elite within 25 tiles of
+## the hut, and none wakes from the route. The loop (2026-11-27) moved packs 4, 8, 9, 11, 13 and 15 off the road east.
 const HOLLOW_PACKS := [
-	# Near the WayLamp: elites.
-	[Vector2i(74, 102), 5, 1, 1, 6], [Vector2i(61, 104), 4, 1, 1, 4], [Vector2i(36, 94), 4, 0, 1, 5],
-	[Vector2i(76, 112), 4, 1, 1, 5], [Vector2i(34, 104), 4, 1, 0, 4], [Vector2i(26, 100), 4, 0, 1, 5],
+	# The north: elites.
+	[Vector2i(74, 102), 5, 1, 1, 6], [Vector2i(60, 113), 4, 1, 1, 4], [Vector2i(36, 94), 4, 0, 1, 5],
+	[Vector2i(66, 99), 4, 1, 1, 5], [Vector2i(34, 104), 4, 1, 0, 4], [Vector2i(26, 100), 4, 0, 1, 5],
 	# The middle: Spitwicks on the flanks.
-	[Vector2i(24, 110), 4, 1, 0, 4], [Vector2i(72, 120), 4, 1, 0, 4], [Vector2i(66, 122), 4, 0, 0, 2],
-	[Vector2i(30, 120), 4, 0, 0, 3], [Vector2i(82, 126), 4, 1, 0, 2],
-	[Vector2i(16, 122), 4, 0, 0, 2], [Vector2i(68, 132), 4, 0, 0, 1], [Vector2i(72, 150), 4, 0, 0, 1],
-	[Vector2i(86, 146), 4, 0, 0, 1], [Vector2i(80, 160), 4, 0, 0, 1],
+	[Vector2i(24, 110), 4, 1, 0, 4], [Vector2i(36, 112), 4, 1, 0, 4], [Vector2i(24, 128), 4, 0, 0, 2],
+	[Vector2i(30, 120), 4, 0, 0, 3], [Vector2i(52, 93), 4, 1, 0, 2],
+	[Vector2i(16, 122), 4, 0, 0, 2], [Vector2i(66, 140), 4, 0, 0, 1], [Vector2i(72, 150), 4, 0, 0, 1],
+	[Vector2i(66, 146), 4, 0, 0, 1], [Vector2i(80, 160), 4, 0, 0, 1],
 	# The quiet south and the west.
 	[Vector2i(16, 160), 3, 0, 0, 1], [Vector2i(34, 176), 3, 0, 0, 1], [Vector2i(60, 176), 3, 0, 0, 1],
 	[Vector2i(47, 126), 1, 0, 0, 1, 5],   # pack 20: the main route's lone first Wickling, 10 tiles north
