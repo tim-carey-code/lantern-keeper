@@ -20,6 +20,7 @@ func _ready() -> void:
 	wick_value = Tuning.kl_clinker_wick
 	level = Tuning.kl_clinker_level
 	knock_weight = 0.35
+	oil_step = true   # a mid-boss: 1 lamp oil at half health (GAME_PLAN §5)
 	z_index = 8
 
 func _process(delta: float) -> void:
@@ -29,7 +30,7 @@ func _process(delta: float) -> void:
 	if fade_if_held(delta):
 		return
 	var p := _player()
-	if p == null:
+	if p == null or _hitstop_t > 0.0:   # a big hit freezes it, mid-roll too
 		queue_redraw()
 		return
 	if home == Vector2.ZERO:

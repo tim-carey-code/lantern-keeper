@@ -6,7 +6,9 @@ extends Node
 ## what has been seen). Not saved: Wicklings, embers and wind (they come back on their own).
 ## File: user://save.json  (on Linux: ~/.local/share/godot/app_userdata/Lantern Keeper/)
 
-const VERSION := 4   # 3: isolated Keeper's Light prototype progression; 4: the map is 224 x 200 (regions 4x)
+const VERSION := 5   # 3: isolated Keeper's Light prototype progression; 4: the map is 224 x 200 (regions 4x);
+                     # 5: M1a, the action bar and lamp-oil flasks
+const MIN_VERSION := 4   # older saves are for the small map and start fresh; version 4 is migrated on load (migrate_data)
 const AUTOSAVE_SEC := 60.0
 
 const SLOTS := 3
@@ -43,7 +45,7 @@ func slot_info(n: int) -> Dictionary:
 	var names := ["", "The Hollow", "The Reedmarsh", "The Windward Ridge", "The Still Lake"]
 	return {"name": str(st.get("name", "")), "region": names[clampi(region, 1, names.size() - 1)],
 		"time": float(st.get("time", 0.0)), "saved_at": str(data.get("saved_at", "")),
-		"old": int(data.get("version", 0)) != VERSION}
+		"old": int(data.get("version", 0)) < MIN_VERSION}
 
 func delete_slot(n: int) -> void:
 	var p := ProjectSettings.globalize_path(slot_path(n))
@@ -90,7 +92,7 @@ func save(main: Node) -> bool:
 		"version": VERSION,
 		"saved_at": Time.get_datetime_string_from_system(),
 		"player": {"x": player.global_position.x, "y": player.global_position.y,
-			"warmth": player.warmth, "lamp_charge": player.lamp_charge, "faints": player.faints},
+			"warmth": player.warmth, "lamp_charge": player.lamp_charge, "faints": player.faints, "flasks": player.flasks},
 		"inventory": Inventory.counts.duplicate(),
 		"progress": {
 			"unlocks": Progress.unlocks.duplicate(),
@@ -103,6 +105,7 @@ func save(main: Node) -> bool:
 			"wick": Progress.wick, "wick_frac": Progress.wick_frac, "level": Progress.level,
 			"cleared": Progress.cleared.duplicate(),
 			"combat_upgrades": Progress.combat_upgrades.duplicate(),
+			"bar": Progress.bar.duplicate(), "lance_given": Progress.lance_given,
 		},
 		"lanterns": [],
 		"resources": [],
@@ -126,6 +129,26 @@ func save(main: Node) -> bool:
 	f.close()
 	return true
 
+## Brings an older save up to this version (only version 4 can be loaded at all: older ones are for the small
+## map). 4 -> 5 (M1a): the action bar starts as the default one, with Lance on slot 3 if the keeper is already
+## level 2 or more, and all flasks full. Nothing else changed shape. Public for tests.
+static func migrate_data(data: Dictionary) -> Dictionary:
+	var v := int(data.get("version", 0))
+	if v == 4:
+		var p: Dictionary = data.get("progress", {})
+		var bar := Progress.default_bar()
+		var lvl := int(p.get("level", 1))
+		if lvl >= Tuning.kl_lance_level:
+			bar["skill_3"] = "lance"
+		p["bar"] = bar
+		p["lance_given"] = lvl >= Tuning.kl_lance_level
+		data["progress"] = p
+		var pl: Dictionary = data.get("player", {})
+		pl["flasks"] = Tuning.kl_flask_max
+		data["player"] = pl
+		data["version"] = 5
+	return data
+
 func _pack_density(d: PackedFloat32Array) -> String:
 	var b := PackedByteArray()
 	b.resize(d.size())
@@ -144,9 +167,10 @@ func load_into(main: Node) -> bool:
 		return false
 	var data = JSON.parse_string(f.get_as_text())
 	f.close()
-	if typeof(data) != TYPE_DICTIONARY or int(data.get("version", 0)) != VERSION:
+	if typeof(data) != TYPE_DICTIONARY or int(data.get("version", 0)) < MIN_VERSION or int(data.get("version", 0)) > VERSION:
 		push_warning("Save file is missing or from another version; starting fresh.")
 		return false
+	data = migrate_data(data)
 	var fog: FogGrid = main.fog
 	var fd: Dictionary = data["fog"]
 	if int(fd["cols"]) != fog.cols or int(fd["rows"]) != fog.rows:
@@ -199,6 +223,13 @@ func load_into(main: Node) -> bool:
 	Progress.combat_upgrades = []
 	for upgrade in p.get("combat_upgrades", []):
 		Progress.combat_upgrades.append(str(upgrade))
+	Progress.bar = Progress.default_bar()
+	var saved_bar: Dictionary = p.get("bar", {})
+	for slot in Progress.SLOTS:
+		if saved_bar.has(slot):
+			Progress.bar[slot] = str(saved_bar[slot])
+	Progress.bar["skill_1"] = "lampfire"
+	Progress.lance_given = bool(p.get("lance_given", false))
 	# Lanterns: replace the generated ones.
 	var lroot: Node = main.get_node("Lanterns")
 	for c in lroot.get_children():
@@ -244,6 +275,7 @@ func load_into(main: Node) -> bool:
 	main.player.warmth = float(pd["warmth"])
 	main.player.lamp_charge = float(pd["lamp_charge"])
 	main.player.faints = int(pd["faints"])
+	main.player.flasks = clampi(int(pd.get("flasks", Tuning.kl_flask_max)), 0, main.player.flask_max())
 	main.player.reset_physics_interpolation()
 	fog.queue_redraw()
 	return true

@@ -27,7 +27,7 @@ func lines_for(t: Node) -> Array:
 			# Fast travel: what interact does here, or why it can't now.
 			var menu := get_tree().get_first_node_in_group("travel_menu")
 			var why: String = menu.block_reason() if menu else ""
-			return [["", why] if why != "" else [InputHint.key("interact"), "Travel"], ["", "WayLamp: this region is held"]]
+			return [["", why] if why != "" else [InputHint.key("interact"), "Rest or travel"], ["", "WayLamp: this region is held"]]
 		if t.kindling:
 			return [["", "Kindling %ds: keep the dark off it" % ceili(t.seconds_left())]]
 		return [[InputHint.key("interact"), "Feed fuel  %d / %d" % [t.fuel_units(), t.needs()]]]
@@ -37,7 +37,7 @@ func lines_for(t: Node) -> Array:
 		return [[InputHint.key("interact"), "Read again" if t.is_read() else "Read"]]
 	if t is Lantern and t.kind == "mirror":
 		var state := "smothered!" if t.is_smothered() else ("" if t.is_lit() else "dark: needs a lantern's light")
-		var out := [[InputHint.key("interact"), "Turn right"], [InputHint.key("place_lantern"), "Turn left"], [InputHint.key("cancel"), "Pick up"]]
+		var out := [[InputHint.key("interact"), "Turn right"], [InputHint.key("place_lantern"), "Turn left"], [InputHint.key("interact"), "Hold: pick up"]]
 		if state != "":
 			out.push_front(["", state])
 		return out
@@ -48,7 +48,7 @@ func lines_for(t: Node) -> Array:
 			extra = "  wind-proof"
 		elif t.in_ridge_wind() or t.in_gust():
 			extra = "  in the wind"
-		var out := [[InputHint.key("interact"), "Refuel  " + state + extra], [InputHint.key("cancel"), "Pick up"]]
+		var out := [[InputHint.key("interact"), "Refuel  " + state + extra], [InputHint.key("interact"), "Hold: pick up"]]
 		var r = player.nearest_resource() if player else null
 		if r:
 			out.append([InputHint.key("interact"), "Hold to gather %s  %d left" % [r.kind, r.amount]])

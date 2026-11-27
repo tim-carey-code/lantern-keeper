@@ -28,10 +28,11 @@ func _draw_bar() -> void:
 		return
 	var w := 640.0
 	var x := (1280.0 - w) / 2.0
-	var y := 600.0
-	var hint := "crack its shell with your beam" if b.shell > 0.0 else "burn it now, before the shell grows back"
+	var y := 556.0   # above the action bar (M1a)
+	# M1a: Lance and Lampfire wear shells now, not only the beam (DRAFT hint text).
+	var hint := "crack its shell with Lance or Lampfire" if b.shell > 0.0 else "burn it now, before the shell grows back"
 	if b.phase == 2:
-		hint = "it dives at your lanterns: hit it while it sits" if b.shell <= 0.0 else "crack its shell with your beam, then hit it while it sits"
+		hint = "it dives at your lanterns: hit it while it sits" if b.shell <= 0.0 else "crack its shell with Lance, then hit it while it sits"
 	var title := "%s   phase %d / 2: %s" % [b.foe_name, b.phase, hint]
 	holder.draw_string(FONT, Vector2(x + 2, y - 10), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0, 0, 0, 0.8))
 	holder.draw_string(FONT, Vector2(x, y - 12), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UiStyle.GOLD)

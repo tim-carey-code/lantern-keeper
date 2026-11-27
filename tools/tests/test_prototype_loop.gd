@@ -424,6 +424,8 @@ func _travel_steps() -> void:
 			var pause := main.get_node("PauseMenu")
 			check(not pause.is_open(), "and doesn't open the pause menu behind it")
 			# Gamepad: A on the focused WayLamp travels.
+			main.player.flasks = 1
+			main.player.warmth = 37.0
 			main.player.begin_interact()
 			_action("interact")
 		7:
@@ -431,6 +433,7 @@ func _travel_steps() -> void:
 			_wait(int((menu.FADE_OUT + menu.FADE_IN) * 60.0) + 6)
 		8:
 			check(main.player.global_position.distance_to(marsh.global_position) <= 64.0, "the keeper is at the Reedmarsh's WayLamp (%.0f px away)" % main.player.global_position.distance_to(marsh.global_position))
+			check(main.player.flasks == 1 and main.player.warmth < Tuning.warmth_max, "fast travel doesn't refill flasks or warmth (%.1f)" % main.player.warmth)
 			check(not menu.travelling and not menu.fade.visible, "the fade is done")
 			_closed_clean("and the game is back in play, no focus held")
 			check(main.player.nearest_target() == marsh, "standing in reach of the WayLamp you came to")

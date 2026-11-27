@@ -137,9 +137,12 @@ func tip(id: String) -> void:
 	tip_shown.emit(tip_text(id))
 
 ## A tip with its button names filled in for the device in use: [beam], [burst], [dash], [aim], [build].
+## M1a: [beam] is the basic attack's button (slot 1, Lampfire: "Hold RT to shine on it"), and [burst] is the
+## button of the slot Hearth ring (the old burst) is on. The tip texts themselves are unchanged (STORY.md).
 func tip_text(id: String) -> String:
 	var t: String = TIPS.get(id, "")
-	t = t.replace("[beam]", InputHint.key("beam")).replace("[burst]", InputHint.key("flare"))
+	var ring_slot := Progress.slot_of("hearth_ring")
+	t = t.replace("[beam]", InputHint.key("skill_1")).replace("[burst]", InputHint.key(ring_slot if ring_slot != "" else "skill_4"))
 	t = t.replace("[dash]", InputHint.key("dash")).replace("[build]", InputHint.key("place_lantern"))
 	return t.replace("[aim]", "the right stick" if InputHint.pad else "the mouse")
 
@@ -270,8 +273,8 @@ func _check_tips(main: Node) -> void:
 		if d < 130.0:
 			tip("wickling_close")
 			close += 1
-	if close >= 2:
-		tip("burst")
+	if close >= 2 and Progress.slot_of("hearth_ring") != "":
+		tip("burst")   # M1a: only once Hearth ring (the old burst) is on the bar, or the tip names an empty button
 	if main.waypost_lantern_pos != Vector2.ZERO:
 		for l in _lanterns(main):
 			if l.global_position.distance_to(main.waypost_lantern_pos) < 8.0 and l.is_lit():

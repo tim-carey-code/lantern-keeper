@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Map: M / gamepad LB. Shows lit ground bright, remembered ground dim,
+## Map: M / gamepad D-pad up (M1a: LB is a skill slot). Opens only while no other menu is open. Shows lit ground bright, remembered ground dim,
 ## never-seen as black, lanterns (amber lit, grey cold), the keeper (white),
 ## and the names of regions you have found.
 
@@ -24,7 +24,7 @@ func _ready() -> void:
 	bg.size = Vector2(1280, 720)
 	root.add_child(bg)
 	var title := Label.new()
-	title.text = "Map   (M / LB to close)      amber = lit lantern   yellow = low fuel   red = cold   white = you"
+	title.text = "Map   (M / D-pad up to close)      amber = lit lantern   yellow = low fuel   red = cold   white = you"
 	title.position = Vector2(24, 16)
 	root.add_child(title)
 	map_rect = TextureRect.new()

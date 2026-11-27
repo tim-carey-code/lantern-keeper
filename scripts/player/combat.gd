@@ -1,23 +1,52 @@
 class_name KeeperCombat
 extends Node2D
-## PROTOTYPE (Keeper's Light): the keeper's light as a weapon. A child of the player.
-##   Beam  (hold left click / RT): a focused beam along your aim. Burns what it touches and is the
-##         only thing that cracks a shell. Drains lamp charge while held; you walk slower.
-##   Burst (tap F / RB): a flash around you that burns and throws back everything close. Cooldown.
-##   Dash  (tap Shift / LT): a quick dash; nothing can chill you while you dash. Cooldown.
-## Lamp charge is the stamina for all three, and it is also how far your hand lamp lights.
+## The keeper's fire (M1a, "Fire in the Hollow"; GAME_PLAN §3, §4). A child of the player.
+## The action bar (Progress.bar) puts a skill on each slot:
+##   slot 1  RT / left click (hold)  Lampfire, always: fireballs of light that burst on impact
+##   slot 2  RB / right click        an aimed skill (Fireglobe by default)
+##   slot 3  LB / Q                  an aimed skill (the Beam at level 1, then Lance)
+##   slot 4  Y / F                   a self-cast skill only (empty by default; Hearth ring fits)
+##   Dash    LT / Space or Shift     a quick dash; nothing can chill you while you dash. Cooldown.
+## One script per skill in scripts/player/skills/; bolts and globes in flight live in FireBolts.
+## Lamp charge is the stamina, and it is also how far your hand lamp lights.
 ## Aim: the mouse when you last used mouse and keyboard, else the right stick, else where you face.
+## On a pad, while slot 1, 2 or 3 is held, a released right stick keeps its last aim (Tuning.kl_aim_hold), so
+## drinking (B) mid-stream doesn't swing your fire; Lampfire and Lance get a gentle aim assist (kl_aim_assist_deg).
 
+const SKILL_SCRIPTS := {
+	"lampfire": preload("res://scripts/player/skills/lampfire.gd"),
+	"fireglobe": preload("res://scripts/player/skills/fireglobe.gd"),
+	"lance": preload("res://scripts/player/skills/lance.gd"),
+	"beam": preload("res://scripts/player/skills/beam.gd"),
+	"hearth_ring": preload("res://scripts/player/skills/hearth_ring.gd"),
+}
+
+var skills := {}                  # id -> Skill
 var beaming := false
-var aim := Vector2.RIGHT          # unit vector the beam points along
-var aim_override := Vector2.ZERO  # tests and captures can fix the aim
-var burst_cd := 0.0
+var aim := Vector2.RIGHT          # unit vector the fire points along
+var aim_override := Vector2.ZERO  # tests and captures can fix the aim (its length, if over 1 px, is the Fireglobe's reach)
+var stick_tilt := 1.0             # 0..1: how far the right stick was pushed (the Fireglobe's reach on a pad)
 var dash_cd := 0.0
 var dash_charges := 1
 var dash_t := 0.0                 # > 0 while dashing
 var dash_dir := Vector2.ZERO
-var _burst_fx := 0.0              # > 0 while the burst ring is showing
+var _burst_fx := 0.0              # > 0 while the Hearth ring is showing
 var _face := Vector2.RIGHT
+var _stick_aim := false           # the aim came from the right stick (the aim hold keeps it)
+var _stick_len := 0.0
+
+## The old burst's cooldown, kept for tools and tests that set it (it is Hearth ring's).
+var burst_cd: float:
+	get:
+		return skills["hearth_ring"].cd
+	set(v):
+		skills["hearth_ring"].cd = v
+
+func _init() -> void:
+	for id in SKILL_SCRIPTS:
+		var s: Skill = SKILL_SCRIPTS[id].new()
+		s.combat = self
+		skills[id] = s
 
 func _ready() -> void:
 	add_to_group("beam_source")
@@ -26,55 +55,126 @@ func _ready() -> void:
 func keeper() -> Node2D:
 	return get_parent() as Node2D
 
-## Where the beam would point now.
-func update_aim(move_dir: Vector2) -> void:
+func skill(id: String) -> Skill:
+	return skills.get(id)
+
+## The skill on a bar slot ("skill_1".."skill_4"), or null when it is empty.
+func slot_skill(slot: String) -> Skill:
+	return skills.get(Progress.bar.get(slot, ""))
+
+# --- Aim -----------------------------------------------------------------------------------------------
+
+## Where the fire would point now. fire_held: slot 1, 2 or 3 is held (the aim hold).
+func update_aim(move_dir: Vector2, fire_held: bool = false) -> void:
 	if move_dir.length() > 0.1:
 		_face = move_dir.normalized()
 	if aim_override != Vector2.ZERO:
 		aim = aim_override.normalized()
 		return
 	var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
-	if stick.length() > 0.3:
+	_stick_len = stick.length()
+	if _stick_len > 0.3:
 		aim = stick.normalized()
+		stick_tilt = clampf((_stick_len - 0.3) / 0.6, 0.0, 1.0)
+		_stick_aim = true
+	elif InputHint.pad and fire_held and Tuning.kl_aim_hold and _stick_aim:
+		pass   # the aim hold: a released stick keeps its last aim while a fire button is down
 	elif not InputHint.pad and get_viewport() != null:
+		_stick_aim = false
 		var to_mouse := get_global_mouse_position() - keeper().global_position
 		if to_mouse.length() > 4.0:
 			aim = to_mouse.normalized()
 	else:
+		_stick_aim = false
 		aim = _face
+
+## Aim assist on a pad (Lampfire and Lance): a gentle pull onto a foe within kl_aim_assist_deg of the aim.
+func assisted(dir: Vector2, reach: float) -> Vector2:
+	if not InputHint.pad or Tuning.kl_aim_assist_deg <= 0.0:
+		return dir
+	var origin := keeper().global_position + Vector2(0, -10)
+	var best := Vector2.ZERO
+	var best_ang := deg_to_rad(Tuning.kl_aim_assist_deg)
+	for f in get_tree().get_nodes_in_group("foe"):
+		if f is WickNest or f._dead or f.is_queued_for_deletion():
+			continue
+		var v: Vector2 = f.global_position - origin
+		var d := v.length()
+		if d < 1.0 or d > reach + f.body_radius():
+			continue
+		var ang := absf(dir.angle_to(v))
+		if ang < best_ang:
+			best_ang = ang
+			best = v
+	return best.normalized() if best != Vector2.ZERO else dir
+
+## Where a Fireglobe thrown now lands: 120-280 px along the aim (stick tilt on a pad, the cursor's distance
+## with a mouse), pulled back off rock.
+func globe_target() -> Vector2:
+	var origin := keeper().global_position
+	var dist := Tuning.kl_fireglobe_max
+	if aim_override != Vector2.ZERO:
+		dist = aim_override.length() if aim_override.length() > 1.0 else Tuning.kl_fireglobe_max
+	elif InputHint.pad:
+		dist = lerpf(Tuning.kl_fireglobe_min, Tuning.kl_fireglobe_max, stick_tilt)
+	elif get_viewport() != null:
+		dist = (get_global_mouse_position() - origin).length()
+	dist = clampf(dist, Tuning.kl_fireglobe_min, Tuning.kl_fireglobe_max)
+	var fog := get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	if fog:
+		while dist > 16.0 and fog.is_solid_at(origin + aim * dist):
+			dist -= 16.0
+	return origin + aim * dist
+
+# --- Each frame ----------------------------------------------------------------------------------------
+
+## Called by the keeper every physics frame with what the player is pressing (after the menu guard: a press that
+## closed a menu never reaches here). held / pressed map "skill_1".."skill_4" to true.
+func tick(delta: float, move_dir: Vector2, held: Dictionary = {}, pressed: Dictionary = {}, dash_pressed: bool = false) -> void:
+	var k = keeper()
+	var fire_held: bool = held.get("skill_1", false) or held.get("skill_2", false) or held.get("skill_3", false)
+	update_aim(move_dir, fire_held)
+	var down := held
+	if Settings.autofire and InputHint.pad and aim_override == Vector2.ZERO and _stick_len > Tuning.kl_autofire_stick:
+		down = held.duplicate()
+		down["skill_1"] = true   # the auto-fire option: Lampfire streams while the right stick is pushed far
+	for s in skills.values():
+		s.tick(delta)
+	dash_cd = maxf(0.0, dash_cd - delta)
+	if Progress.has_combat_upgrade("second_step") and dash_cd <= 0.0 and dash_charges == 0:
+		dash_charges = 2
+	dash_t = maxf(0.0, dash_t - delta)
+	_burst_fx = maxf(0.0, _burst_fx - delta)
+	var beam_on_bar := false
+	for slot in Progress.SLOTS:
+		var s := slot_skill(slot)
+		if s == null:
+			continue
+		if s.held():
+			s.hold(delta, down.get(slot, false))
+			if s is BeamSkill:
+				beam_on_bar = true
+		elif pressed.get(slot, false):
+			s.press()
+	if not beam_on_bar:
+		beaming = false
+	if fire_held or not pressed.is_empty() or dash_pressed:
+		k._since_ward = 0.0
+	if dash_pressed:
+		dash(move_dir)
+	queue_redraw()
+
+# --- The Beam (kept here: FogGrid lights it as a "beam_source") -----------------------------------------
 
 ## Start and end of the beam in world space (empty when not beaming). FogGrid lights it like a mirror beam.
 func beam_segment() -> Array:
 	if not beaming:
 		return []
 	var from := keeper().global_position + Vector2(0, -10)
-	return [from, from + aim * (Tuning.kl_long_throw_len if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len)]
+	return [from, from + aim * beam_len()]
 
-func is_dashing() -> bool:
-	return dash_t > 0.0
-
-## Called by the keeper every physics frame with what the player is pressing.
-func tick(delta: float, move_dir: Vector2, beam_held: bool, burst_pressed: bool, dash_pressed: bool) -> void:
-	var k = keeper()
-	update_aim(move_dir)
-	burst_cd = maxf(0.0, burst_cd - delta)
-	dash_cd = maxf(0.0, dash_cd - delta)
-	if Progress.has_combat_upgrade("second_step") and dash_cd <= 0.0 and dash_charges == 0:
-		dash_charges = 2
-	dash_t = maxf(0.0, dash_t - delta)
-	_burst_fx = maxf(0.0, _burst_fx - delta)
-	beaming = beam_held and k.lamp_charge > Tuning.kl_min_charge
-	if beam_held or burst_pressed or dash_pressed:
-		k._since_ward = 0.0   # carried fuel never tops the lamp up mid-fight (only once you've stopped)
-	if beaming:
-		var cost_mult := Tuning.kl_deep_tank_mult if Progress.has_combat_upgrade("deep_tank") else 1.0
-		k.lamp_charge = maxf(0.0, k.lamp_charge - Tuning.kl_beam_cost * cost_mult * delta)
-		burn_along_beam(delta)
-	if burst_pressed:
-		burst()
-	if dash_pressed:
-		dash(move_dir)
-	queue_redraw()
+func beam_len() -> float:
+	return Tuning.kl_long_throw_len if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len
 
 ## Burns everything inside the beam. Returns how many it touched.
 func burn_along_beam(delta: float) -> int:
@@ -89,39 +189,17 @@ func burn_along_beam(delta: float) -> int:
 			hit += 1
 	return hit
 
-## The flash. Returns how many it hit, or -1 if it couldn't fire (cooldown or too little charge).
+func is_dashing() -> bool:
+	return dash_t > 0.0
+
+## The old burst, now Hearth ring. Returns how many it hit, or -1 if it couldn't fire. Tools and tests call it
+## directly (whether or not it is on the bar).
 func burst() -> int:
-	var k = keeper()
-	if burst_cd > 0.0 or k.lamp_charge < Tuning.kl_burst_cost:
-		return -1
-	k.lamp_charge -= Tuning.kl_burst_cost
-	burst_cd = burst_cooldown()
-	if k.has_method("shake"):
-		k.shake(0.35)
-	_burst_fx = 0.3
-	Sfx.play("relight", -8.0, 0.3)
-	var camera := keeper().get_node_or_null("Camera2D") as Camera2D
-	if camera:
-		camera.offset = Vector2(randf_range(-6.0, 6.0), randf_range(-5.0, 5.0))
-		var shake := camera.create_tween()
-		shake.tween_property(camera, "offset", Vector2.ZERO, 0.16)
-	var hit := 0
-	for w in get_tree().get_nodes_in_group("foe"):
-		var v: Vector2 = w.global_position - k.global_position
-		if v.length() <= Tuning.kl_burst_radius + w.body_radius():
-			w.hurt(Tuning.kl_burst_dmg, true, "burst")
-			if is_instance_valid(w) and not w.is_queued_for_deletion():
-				w.knock((v.normalized() if v.length() > 0.5 else Vector2.RIGHT) * Tuning.kl_burst_knock)
-				if Progress.has_combat_upgrade("heavy_flare"):
-					w.stun(Tuning.kl_heavy_flare_stun)
-			hit += 1
-	if hit > 0 and Progress.has_combat_upgrade("spill"):
-		k.lamp_charge = minf(1.0, k.lamp_charge + Tuning.kl_spill_charge * hit)
-	return hit
+	return skills["hearth_ring"].ring()
 
 ## The burst's cooldown, after "Spill".
 func burst_cooldown() -> float:
-	return Tuning.kl_spill_cd if Progress.has_combat_upgrade("spill") else Tuning.kl_burst_cd
+	return skills["hearth_ring"].cooldown()
 
 ## A quick dash. Returns false if it couldn't (cooldown or too little charge).
 func dash(move_dir: Vector2) -> bool:
@@ -150,21 +228,17 @@ func _draw() -> void:
 	# The beam: a warm core inside a soft glow.
 	if beaming:
 		var from := Vector2(0, -10)
-		var to := from + aim * (Tuning.kl_long_throw_len if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len)
+		var to := from + aim * beam_len()
 		var flick := 0.85 + 0.15 * sin(Time.get_ticks_msec() * 0.03)
 		draw_line(from, to, Color(1.0, 0.85, 0.5, 0.18 * flick), Tuning.kl_beam_half_width * 2.0)
 		draw_line(from, to, Color(1.0, 0.92, 0.7, 0.45 * flick), Tuning.kl_beam_half_width)
 		draw_line(from, to, Color(1.0, 1.0, 0.92, 0.9), 3.0)
-	# The burst: a ring flung outwards.
+	# Hearth ring: a ring of flame flung outwards.
 	if _burst_fx > 0.0:
 		var t := 1.0 - _burst_fx / 0.3
-		draw_arc(Vector2(0, -6), Tuning.kl_burst_radius * (0.4 + 0.6 * t), 0.0, TAU, 48, Color(1.0, 0.9, 0.6, 0.8 * (1.0 - t)), 4.0)
-		draw_circle(Vector2(0, -6), Tuning.kl_burst_radius * (0.4 + 0.6 * t), Color(1.0, 0.85, 0.5, 0.12 * (1.0 - t)))
-	# Cooldowns as two small arcs under the keeper (burst gold, dash blue), only while recharging.
-	if burst_cd > 0.0:
-		draw_arc(Vector2(-8, 14), 5.0, -PI / 2.0, -PI / 2.0 + TAU * (1.0 - burst_cd / burst_cooldown()), 12, Color(1.0, 0.8, 0.4, 0.9), 2.0)
-	if dash_cd > 0.0:
-		draw_arc(Vector2(8, 14), 5.0, -PI / 2.0, -PI / 2.0 + TAU * (1.0 - dash_cd / Tuning.kl_dash_cd), 12, Color(0.64, 0.74, 0.83, 0.9), 2.0)
-	# A faint aim line when not beaming, so you can see where the beam will go.
-	if not beaming and k.lamp_charge > Tuning.kl_min_charge:
+		var fm := Settings.flash_mult()
+		draw_arc(Vector2(0, -6), Tuning.kl_burst_radius * (0.4 + 0.6 * t), 0.0, TAU, 48, Color(1.0, 0.7, 0.35, 0.8 * (1.0 - t)), 5.0)
+		draw_circle(Vector2(0, -6), Tuning.kl_burst_radius * (0.4 + 0.6 * t), Color(1.0, 0.6, 0.3, 0.14 * (1.0 - t) * fm))
+	# A faint aim mark, so you can see where your fire will go.
+	if not beaming:
 		draw_line(Vector2(0, -10) + aim * 18.0, Vector2(0, -10) + aim * 34.0, Color(1.0, 0.9, 0.6, 0.35), 2.0)

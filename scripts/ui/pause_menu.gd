@@ -1,12 +1,22 @@
 extends CanvasLayer
 ## Pause menu: Esc / Start. Resume, Save, New game (press twice to confirm), Save and quit.
 ## Works with a controller (D-pad + A) and with the mouse. Pauses the world while open.
+## M1a options (GAME_PLAN §14, brief §4): a screen-shake slider, "reduce flashes", and the optional Lampfire
+## auto-fire on the right stick. They are saved for this PC in user://settings.cfg (Settings), not in a slot.
 
 var root: Control
 var buttons: Array[Button] = []
 var info: Label
 var controls: Label
+var shake_slider: HSlider
+var shake_label: Label
+var flashes_check: CheckButton
+var autofire_check: CheckButton
 var _confirm_new := false
+
+const SHAKE_TEXT := "Screen shake: %d%%"
+const FLASHES_TEXT := "Reduce flashes"
+const AUTOFIRE_TEXT := "Lampfire fires when you push the right stick"
 
 func _ready() -> void:
 	layer = 20
@@ -36,6 +46,30 @@ func _ready() -> void:
 	right.add_child(ctitle)
 	controls = UiStyle.label(20, UiStyle.PALE)
 	right.add_child(controls)
+	var otitle := UiStyle.label(30, UiStyle.GOLD)
+	otitle.text = "Options"
+	right.add_child(otitle)
+	shake_label = UiStyle.label(20, UiStyle.CREAM)
+	right.add_child(shake_label)
+	shake_slider = HSlider.new()
+	shake_slider.min_value = 0.0
+	shake_slider.max_value = 100.0
+	shake_slider.step = 10.0
+	shake_slider.custom_minimum_size = Vector2(320, 24)
+	shake_slider.value_changed.connect(_on_shake)
+	right.add_child(shake_slider)
+	flashes_check = CheckButton.new()
+	flashes_check.text = FLASHES_TEXT
+	flashes_check.toggled.connect(func(on: bool) -> void:
+		Settings.reduce_flashes = on
+		Settings.save())
+	right.add_child(flashes_check)
+	autofire_check = CheckButton.new()
+	autofire_check.text = AUTOFIRE_TEXT
+	autofire_check.toggled.connect(func(on: bool) -> void:
+		Settings.autofire = on
+		Settings.save())
+	right.add_child(autofire_check)
 	var title := Label.new()
 	title.text = "Paused"
 	title.add_theme_font_size_override("font_size", 40)
@@ -63,6 +97,10 @@ func open() -> void:
 	buttons[2].text = "New game"
 	info.text = "Last save: " + _last_save_text()
 	controls.text = InputHint.controls_text()
+	shake_slider.set_value_no_signal(roundf(Settings.shake * 100.0))
+	shake_label.text = SHAKE_TEXT % roundi(Settings.shake * 100.0)
+	flashes_check.set_pressed_no_signal(Settings.reduce_flashes)
+	autofire_check.set_pressed_no_signal(Settings.autofire)
 	_pointer_label()
 	buttons[0].grab_focus()
 	Sfx.play("ui_open", -14.0)
@@ -82,7 +120,10 @@ func _input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("interact") and not event.is_action_pressed("ui_accept"):
 		var f := get_viewport().gui_get_focus_owner()
-		if f is Button:
+		if f is CheckButton:
+			get_viewport().set_input_as_handled()
+			(f as CheckButton).button_pressed = not (f as CheckButton).button_pressed
+		elif f is Button:
 			# Mark it handled first: the button may reload the whole scene (New game), and then
 			# this menu is no longer in the tree (that error froze the game in the debugger).
 			get_viewport().set_input_as_handled()
@@ -98,6 +139,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif root.visible and event.is_action_pressed("cancel"):
 		close()
 		get_viewport().set_input_as_handled()
+
+func _on_shake(v: float) -> void:
+	Settings.shake = clampf(v / 100.0, 0.0, 1.0)
+	shake_label.text = SHAKE_TEXT % roundi(v)
+	Settings.save()
 
 func _main() -> Node:
 	return get_tree().get_first_node_in_group("main")

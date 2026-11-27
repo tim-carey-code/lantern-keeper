@@ -248,7 +248,8 @@ func _goals() -> void:
 	w.hurt(0.5, false, "beam")
 	check(Story.tips_seen.has("shell"), "beaming a shell shows the shell tip")
 	w.queue_free()
-	# The burst tip: two Wicklings close.
+	# The burst tip: two Wicklings close. M1a: the old burst is Hearth ring, an optional skill that isn't on the
+	# default bar, so the tip waits until it is on a slot (it would name an empty button otherwise).
 	var pair := []
 	for i in 2:
 		var x := Wickling.new()
@@ -256,7 +257,11 @@ func _goals() -> void:
 		main.get_node("FogLayer/Wicklings").add_child(x)
 		pair.append(x)
 	Story.update(main)
-	check(Story.tips_seen.has("burst"), "two Wicklings close show the burst tip")
+	check(not Story.tips_seen.has("burst"), "with Hearth ring off the bar, two Wicklings close don't show the burst tip yet")
+	Progress.bind("skill_4", "hearth_ring")
+	Story.update(main)
+	check(Story.tips_seen.has("burst") and Story.tip_text("burst").contains(InputHint.key("skill_4")), "with it on slot 4, two Wicklings close show the burst tip, naming its button")
+	Progress.bar = Progress.default_bar()
 	for x in pair:
 		x.queue_free()
 	# The nest tips: in reach of a nest; with the Post Lamp and its scrap, the build tip too.

@@ -48,6 +48,10 @@ func _process(_delta: float) -> void:
 	match frame:
 		2:
 			check(not main.loaded_save, "a fresh start has no save to load")
+			var v4 := {"version": 4, "progress": {"level": 2}, "player": {"warmth": 73.0}}
+			var v5: Dictionary = SaveGame.migrate_data(v4)
+			check(v5.version == 5 and v5.progress.bar.skill_3 == "lance" and v5.progress.lance_given, "version 4 saves migrate to v5 with Lance on LB at level 2")
+			check(v5.player.flasks == Tuning.kl_flask_max and v5.player.warmth == 73.0, "migration fills flasks and preserves the old keeper state")
 		120:
 			# Change everything a save should keep.
 			var fog: FogGrid = main.fog
@@ -63,6 +67,9 @@ func _process(_delta: float) -> void:
 			Progress.selected = "reservoir"
 			Progress.wick = 7
 			Progress.level = 2
+			Progress.bar = {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "lance", "skill_4": ""}
+			Progress.lance_given = true
+			main.player.flasks = 2
 			Progress.cleared["nest_hollow_1"] = true
 			Progress.choose_combat_upgrade("long_throw")
 			var wick_drop := WickDrop.new()
@@ -89,6 +96,7 @@ func _process(_delta: float) -> void:
 		124:
 			_new_main()   # loads the save synchronously in _ready
 			check(absf(main.player.warmth - 42.0) < 0.5 and absf(main.player.lamp_charge - 0.5) < 0.01, "warmth and hand lamp come back")
+			check(main.player.flasks == 2 and Progress.bar.skill_3 == "lance", "the v5 action bar and flask count come back")
 		128:
 			check(main.loaded_save, "starting the game loads the save")
 			var lamps := get_tree().get_nodes_in_group("lantern")

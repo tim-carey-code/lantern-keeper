@@ -6,12 +6,16 @@ extends CanvasLayer
 ## Travel is blocked while foes hunt the keeper, while any WayLamp kindles, and during a guardian fight.
 ## Which WayLamps are lit is Progress.settled (saved), so the network needs nothing new in the save.
 ## Texts are DRAFT in docs/STORY.md section 11.
+## M1a: the same list offers Rest first (GAME_PLAN §5): flasks and warmth back to full. It can't open while
+## something hunts you, so Rest is blocked then too; arriving by fast travel never rests (texts DRAFT in
+## docs/replan/M1A_BUILD_NOTES.md).
 
 const TITLE := "WayLamps"
 const SUBTITLE := "Travel to a lit WayLamp."
 const HERE := "%s (you are here)"
 const ALONE := "Light another WayLamp to travel to it."
 const STAY := "Stay"
+const REST := "Rest: fill your flasks and warmth"
 const BLOCK_HUNTED := "Can't travel while something hunts you"
 const BLOCK_KINDLING := "Can't travel while a WayLamp kindles"
 const BLOCK_GUARDIAN := "Can't travel during a guardian fight"
@@ -25,6 +29,7 @@ var list: VBoxContainer
 var note: Label
 var fade: ColorRect
 var buttons: Array[Button] = []
+var rest_button: Button          # M1a: Rest, above the travel list (not one of `buttons`)
 var from_lamp: WayLamp
 var travelling := false
 
@@ -57,6 +62,12 @@ func _ready() -> void:
 	sub.text = SUBTITLE
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(sub)
+	rest_button = Button.new()
+	rest_button.add_theme_font_size_override("font_size", 30)
+	rest_button.custom_minimum_size = Vector2(500, 52)
+	rest_button.text = REST
+	rest_button.pressed.connect(_rest)
+	col.add_child(rest_button)
 	list = VBoxContainer.new()
 	list.add_theme_constant_override("separation", 8)
 	col.add_child(list)
@@ -99,15 +110,11 @@ func block_reason() -> String:
 			return BLOCK_KINDLING
 	var keeper: Node2D = main.player
 	for f in get_tree().get_nodes_in_group("foe"):
-		if f.is_queued_for_deletion() or f._dead or f is WickNest:
-			continue
-		if f is Ashbrood:
+		if f is Ashbrood and not f.is_queued_for_deletion() and not f._dead:
 			return BLOCK_GUARDIAN
-		var near: bool = f.global_position.distance_to(keeper.global_position) <= Tuning.travel_hunt_radius
-		if not near:
-			continue
-		if (f is Clinker and f.awake) or f is Spitwick or (f is Wickling and f.state == Wickling.State.CHASE):
-			return BLOCK_HUNTED
+	# The one "hunted" rule (systems/combat/hunt.gd): also blocks Rest, light's warmth and the Skills list.
+	if Hunt.is_hunted(get_tree(), keeper.global_position):
+		return BLOCK_HUNTED
 	return ""
 
 func arrive_pos(w: WayLamp) -> Vector2:
@@ -132,7 +139,7 @@ func open(at: WayLamp) -> bool:
 		list.remove_child(b)
 		b.queue_free()
 	buttons.clear()
-	var first: Button = null
+	var first_travel: Button = null
 	for w in lit_waylamps():
 		var b := Button.new()
 		b.add_theme_font_size_override("font_size", 30)
@@ -144,8 +151,8 @@ func open(at: WayLamp) -> bool:
 		else:
 			b.text = w.title
 			b.pressed.connect(_pick.bind(w))
-			if first == null:
-				first = b
+			if first_travel == null:
+				first_travel = b
 		list.add_child(b)
 		buttons.append(b)
 	var stay := Button.new()
@@ -155,12 +162,12 @@ func open(at: WayLamp) -> bool:
 	stay.pressed.connect(close)
 	list.add_child(stay)
 	buttons.append(stay)
-	note.text = ALONE if first == null else ""
-	note.visible = first == null
+	note.text = ALONE if first_travel == null else ""
+	note.visible = first_travel == null
 	root.visible = true
 	Tuning.ui_open = true
 	get_tree().paused = true
-	(first if first else stay).grab_focus()
+	(first_travel if first_travel else rest_button).grab_focus()
 	Sfx.play_ui("ui_open", -14.0)
 	return true
 
@@ -190,11 +197,23 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed("interact") and not event.is_action_pressed("ui_accept"):
 		var f := get_viewport().gui_get_focus_owner()
 		get_viewport().set_input_as_handled()
-		if f is Button and buttons.has(f):
+		if f is Button and (buttons.has(f) or f == rest_button):
 			(f as Button).pressed.emit()
 
 func _pick(w: WayLamp) -> void:
 	travel_to(w)
+
+## Rest here: flasks and warmth back to full (the keeper refuses while hunted), then the list closes.
+func _rest() -> void:
+	var main := _main()
+	var why: String = main.player.rest() if main else "no keeper"
+	close()
+	if why == "":
+		var hud := get_tree().get_first_node_in_group("hud")
+		if hud:
+			hud.show_rest()
+	else:
+		Sfx.play_ui("ui_error", -14.0)
 
 ## Fades out, moves the keeper to the WayLamp, fades back in. Returns false if blocked.
 func travel_to(w: WayLamp) -> bool:

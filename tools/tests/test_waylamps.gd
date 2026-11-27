@@ -183,7 +183,7 @@ func _process(_delta: float) -> void:
 			check(other_lit == 0, "a WayLamp's light only clears its own region (%d tiles elsewhere)" % other_lit)
 			var lit_lines: Array = wp.lines_for(hollow)
 			check(hollow.feed() == "held" and lit_lines.any(func(ln): return String(ln[1]).contains("held")), "and says its region is held")
-			check(lit_lines.any(func(ln): return String(ln[1]) == "Travel" or String(ln[1]).begins_with("Can't travel")), "and offers fast travel, or says why not (%s)" % str(lit_lines))
+			check(lit_lines.any(func(ln): return String(ln[1]) == "Rest or travel" or String(ln[1]).begins_with("Can't travel")), "and offers fast travel, or says why not (%s)" % str(lit_lines))
 			check(hud.banner.text == "The Hollow is held", "a banner says so (%s)" % hud.banner.text)
 			var held_msg := "The WayLamp took. Its lanterns won't burn down now, and nothing comes here."
 			check(hud.tip.text == held_msg or hud._tips.has(held_msg), "and a queued line explains what held means (not overwritten by the goal toast)")

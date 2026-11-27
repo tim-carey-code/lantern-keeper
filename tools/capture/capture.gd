@@ -5,7 +5,9 @@ extends Node
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
 ## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held, upgrade, kl_combat,
-## kl_level (the HUD's level and wick row, then a level-up's card screen), onboard_start, onboard_north, onboard_haven,
+## kl_level (the HUD's level and wick row, then a level-up's card screen), m1a_bar (HUD and action bar),
+## m1a_lampfire (a stream with impacts), m1a_fireglobe_marker (in-flight landing marker),
+## m1a_fireglobe_ground (burning ground), m1a_skills (plain Skills list), onboard_start, onboard_north, onboard_haven,
 ## onboard_crook (the first 10 minutes' main route, nothing staged), loop_waylamp, loop_marsh_climb,
 ## loop_ridge_entry, loop_travel (the loop and WayLamp fast travel). The last frame is the one to look at.
 ## README views (staged, pop-ups hidden; rendered by tools/capture/readme_shots.sh): readme_hollow, readme_ward,
@@ -29,6 +31,8 @@ func _ready() -> void:
 	Story.skip_opening = not view.begins_with("opening")
 	if view == "readme_relight":
 		end_frame = 110
+	elif view == "m1a_lampfire":
+		end_frame = 48   # the stream has landed, and one bolt is still in flight
 	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
@@ -122,6 +126,8 @@ func _process(_delta: float) -> void:
 				_onboard_setup()
 			"loop_waylamp", "loop_marsh_climb", "loop_ridge_entry", "loop_travel":
 				_loop_setup()
+			"m1a_bar", "m1a_lampfire", "m1a_fireglobe_marker", "m1a_fireglobe_ground", "m1a_skills":
+				_m1a_setup()
 			"kl_combat":
 				_lantern(s + Vector2(-260, 60))
 				main.player.position = s + Vector2(-420, 120)
@@ -166,6 +172,10 @@ func _process(_delta: float) -> void:
 	if view == "pause" and frame == 30:
 		main.get_node("PauseMenu").open()
 		main.get_node("PauseMenu").info.text = "Last save: 2026-11-27 16:52:50 (autosaves every minute)"
+	if view == "m1a_skills" and frame == 30:
+		main.get_node("SkillsList").open()
+	if view == "m1a_lampfire" and frame in [14, 24, 34]:
+		main.player.combat.skill("lampfire").fire()
 	if view == "loop_travel" and frame == 30:
 		var tm = main.get_node("TravelMenu")
 		for w in get_tree().get_nodes_in_group("waylamp"):
@@ -210,6 +220,12 @@ func _process(_delta: float) -> void:
 		hud.tip.visible = false
 		if view != "readme_hollow":
 			main.get_node("FogLayer/WorldPrompt").visible = false
+	if view.begins_with("m1a_") and frame >= 3:
+		var hud = main.get_node("HUD")
+		hud.banner.visible = false
+		hud.toast.visible = false
+		hud.tip.visible = false
+		main.get_node("FogLayer/WorldPrompt").visible = false
 	if view == "readme_ward" and frame >= 30:
 		main.player.update_ward(1.0 / 30.0, true)
 	if view == "readme_map" and frame == 6:
@@ -387,3 +403,25 @@ func _readme_setup() -> void:
 		"readme_relight":
 			main.player.position = old.global_position + Vector2(-34, 44)
 			Inventory.counts["fuel"] = 10
+
+
+func _m1a_setup() -> void:
+	var s: Vector2 = main.start
+	main.player.position = s + Vector2(-20, 30)
+	main.player.lamp_charge = 1.0
+	if view == "m1a_lampfire":
+		var foes := main.get_node("FogLayer/Wicklings")
+		for off in [Vector2(180, -24), Vector2(260, 10), Vector2(300, 40)]:
+			var w = foes.spawn_at(main.player.global_position + off)
+			w.stun(8.0)
+		main.player.combat.aim_override = Vector2.RIGHT
+		for i in 4: main.player.combat.skill("lampfire").fire()
+	elif view in ["m1a_fireglobe_marker", "m1a_fireglobe_ground"]:
+		var combat = main.player.combat
+		combat.aim_override = Vector2(210, 0)
+		combat.update_aim(Vector2.ZERO)
+		combat.skill("fireglobe").press()
+		var target: Vector2 = combat.globe_target()
+		if view == "m1a_fireglobe_ground":
+			var w = main.get_node("FogLayer/Wicklings").spawn_at(target + Vector2(24, 0))
+			w.stun(8.0)

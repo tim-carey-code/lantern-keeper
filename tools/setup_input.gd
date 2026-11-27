@@ -26,22 +26,30 @@ func mouse(b: MouseButton) -> InputEventMouseButton:
 	e.button_index = b
 	return e
 
+## The map is GAME_PLAN §3 (approved 2026-11-27). The D-pad is not movement: it holds the map, the lamp
+## kinds and the Skills list, which are read only while no menu is open (M1a input fixes).
 func _init() -> void:
 	var actions := {
-		"move_left": [key(KEY_A), key(KEY_LEFT), pad_axis(JOY_AXIS_LEFT_X, -1.0), pad_button(JOY_BUTTON_DPAD_LEFT)],
-		"move_right": [key(KEY_D), key(KEY_RIGHT), pad_axis(JOY_AXIS_LEFT_X, 1.0), pad_button(JOY_BUTTON_DPAD_RIGHT)],
-		"move_up": [key(KEY_W), key(KEY_UP), pad_axis(JOY_AXIS_LEFT_Y, -1.0), pad_button(JOY_BUTTON_DPAD_UP)],
-		"move_down": [key(KEY_S), key(KEY_DOWN), pad_axis(JOY_AXIS_LEFT_Y, 1.0), pad_button(JOY_BUTTON_DPAD_DOWN)],
+		"move_left": [key(KEY_A), key(KEY_LEFT), pad_axis(JOY_AXIS_LEFT_X, -1.0)],
+		"move_right": [key(KEY_D), key(KEY_RIGHT), pad_axis(JOY_AXIS_LEFT_X, 1.0)],
+		"move_up": [key(KEY_W), key(KEY_UP), pad_axis(JOY_AXIS_LEFT_Y, -1.0)],
+		"move_down": [key(KEY_S), key(KEY_DOWN), pad_axis(JOY_AXIS_LEFT_Y, 1.0)],
 		# Gamepad face buttons use positional names: A = bottom, B = right, X = left, Y = top.
-		"interact": [key(KEY_E), pad_button(JOY_BUTTON_A)],          # gather / refuel / relight
-		"place_lantern": [key(KEY_SPACE), pad_button(JOY_BUTTON_X)],
-		"cancel": [key(KEY_Q), mouse(MOUSE_BUTTON_RIGHT), pad_button(JOY_BUTTON_B)],
-		"build_menu": [key(KEY_TAB), pad_button(JOY_BUTTON_Y)],
+		"interact": [key(KEY_E), pad_button(JOY_BUTTON_A)],          # read, refuel, travel, rest; hold: gather or pick up a lamp
+		"place_lantern": [key(KEY_C), pad_button(JOY_BUTTON_X)],     # plant a lamp; next to a mirror, turn it left
+		"cancel": [pad_button(JOY_BUTTON_B)],                         # closes menus (Esc closes them too, as pause)
+		"flask": [key(KEY_R), pad_button(JOY_BUTTON_B)],              # drink lamp oil; read after the menu guard
+		"build_menu": [key(KEY_TAB), pad_button(JOY_BUTTON_DPAD_RIGHT)],   # tap: next lamp kind; hold: the lamp list
+		"lamp_prev": [pad_button(JOY_BUTTON_DPAD_LEFT)],              # previous lamp kind
 		"pause": [key(KEY_ESCAPE), pad_button(JOY_BUTTON_START)],
-		"map": [key(KEY_M), pad_button(JOY_BUTTON_LEFT_SHOULDER)],
-		"flare": [key(KEY_F), pad_button(JOY_BUTTON_RIGHT_SHOULDER)],   # tap: burst (Keeper's Light prototype)
-		"beam": [mouse(MOUSE_BUTTON_LEFT), pad_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)],   # hold: the aimed beam
-		"dash": [key(KEY_SHIFT), pad_axis(JOY_AXIS_TRIGGER_LEFT, 1.0)],
+		"map": [key(KEY_M), pad_button(JOY_BUTTON_DPAD_UP)],
+		"skills": [key(KEY_K), pad_button(JOY_BUTTON_DPAD_DOWN)],     # the Skills list
+		# The action bar: slot 1 is always Lampfire (hold); 2 and 3 take aimed skills; 4 takes self-cast skills.
+		"skill_1": [mouse(MOUSE_BUTTON_LEFT), pad_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)],
+		"skill_2": [mouse(MOUSE_BUTTON_RIGHT), pad_button(JOY_BUTTON_RIGHT_SHOULDER)],
+		"skill_3": [key(KEY_Q), pad_button(JOY_BUTTON_LEFT_SHOULDER)],
+		"skill_4": [key(KEY_F), pad_button(JOY_BUTTON_Y)],
+		"dash": [key(KEY_SPACE), key(KEY_SHIFT), pad_axis(JOY_AXIS_TRIGGER_LEFT, 1.0)],
 		"aim_left": [pad_axis(JOY_AXIS_RIGHT_X, -1.0)],
 		"aim_right": [pad_axis(JOY_AXIS_RIGHT_X, 1.0)],
 		"aim_up": [pad_axis(JOY_AXIS_RIGHT_Y, -1.0)],
@@ -56,6 +64,10 @@ func _init() -> void:
 	}
 	for name in actions:
 		ProjectSettings.set_setting("input/" + name, {"deadzone": DEADZONE, "events": actions[name]})
+	# Retired with M1a: the beam and the burst are skills on the bar now (skill_1..skill_4).
+	for old in ["beam", "flare"]:
+		if ProjectSettings.has_setting("input/" + old):
+			ProjectSettings.set_setting("input/" + old, null)
 	var err := ProjectSettings.save()
 	print("setup_input: saved %d actions, err=%d" % [actions.size(), err])
 	quit(0 if err == OK else 1)

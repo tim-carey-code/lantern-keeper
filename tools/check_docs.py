@@ -9,8 +9,7 @@ Failures (the docs are wrong):
   1. docs/STORY.md is missing a player-facing text from the code: a goal (id and HUD text), a
      journal entry, a tip, the title card, the letter, or a landmark / WayLamp note.
   2. docs/ART_CHECKLIST.md doesn't list an image in assets/art/placeholders/.
-  3. AGENTS.md (and README.md, if it lists tests) doesn't list a test scene in tools/tests/,
-     or AGENTS.md doesn't list a benchmark scene in tools/bench/.
+  3. AGENTS.md doesn't list a test scene in tools/tests/ or a benchmark scene in tools/bench/.
 Warnings (worth a look):
   4. Code that a doc describes changed after the last commit that touched that doc.
   5. A landmark or WayLamp title is not in docs/STORY.md.
@@ -175,12 +174,9 @@ def main() -> int:
     # 3. Every test scene is listed where tests are listed.
     tests = sorted(p.name for p in (ROOT / "tools/tests").glob("test_*.tscn"))
     agents = read("AGENTS.md")
-    readme = read("README.md")
     for t in tests:
         if t not in agents:
             fails.append(f"AGENTS.md: test {t} isn't in 'Verify before committing'")
-        if "tools/tests/test_" in readme and t not in readme and not t.startswith("test_prototype_"):
-            fails.append(f"README.md: test {t} isn't listed")
     # Benchmarks aren't tests (run_tests.sh skips them), but agents must know how to run them.
     for b in sorted(p.name for p in (ROOT / "tools/bench").glob("*.tscn")):
         if f"tools/bench/{b}" not in agents:

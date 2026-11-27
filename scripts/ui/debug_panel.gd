@@ -20,17 +20,66 @@ const ROWS := [
 	["wick_speed", "Wickling speed", 20.0, 160.0, 5.0],
 	["wick_drain_per_sec", "Wickling drain (fuel/s)", 0.0, 15.0, 0.5],
 	["warmth_drain_per_sec", "Warmth loss on touch (/s)", 0.0, 100.0, 5.0],
-	# Keeper's Light combat kit
+	# M1a: fire in the Hollow (GAME_PLAN §4.1, §5, §15)
+	["kl_lampfire_dmg", "Lampfire damage (the hit)", 0.0, 10.0, 0.25],
+	["kl_lampfire_splash_dmg", "Lampfire splash damage", 0.0, 5.0, 0.25],
+	["kl_lampfire_splash", "Lampfire splash (px)", 0.0, 120.0, 2.0],
+	["kl_lampfire_period", "Lampfire s per bolt", 0.05, 1.5, 0.01],
+	["kl_lampfire_speed", "Lampfire speed (px/s)", 100.0, 1200.0, 10.0],
+	["kl_lampfire_range", "Lampfire range (px)", 80.0, 800.0, 10.0],
+	["kl_lampfire_charge", "Lampfire charge per hit", 0.0, 0.2, 0.005],
+	["kl_lampfire_hit_radius", "Lampfire bolt size (px)", 1.0, 20.0, 1.0],
+	["kl_lampfire_pop", "Lampfire light pop (px)", 0.0, 200.0, 4.0],
+	["kl_lampfire_pop_clear", "Lampfire pop clears fog", 0.0, 1.0, 0.05],
+	["kl_fireglobe_dmg", "Fireglobe damage", 0.0, 30.0, 0.5],
+	["kl_fireglobe_radius", "Fireglobe radius (px)", 20.0, 200.0, 5.0],
+	["kl_fireglobe_burn_dps", "Burning ground (hp/s)", 0.0, 10.0, 0.25],
+	["kl_fireglobe_burn_time", "Burning ground lasts (s)", 0.0, 10.0, 0.25],
+	["kl_fireglobe_min", "Fireglobe nearest landing (px)", 40.0, 400.0, 10.0],
+	["kl_fireglobe_max", "Fireglobe farthest landing (px)", 60.0, 500.0, 10.0],
+	["kl_fireglobe_flight", "Fireglobe flight (s)", 0.1, 2.0, 0.05],
+	["kl_fireglobe_arc", "Fireglobe arc height (px)", 0.0, 120.0, 2.0],
+	["kl_fireglobe_cost", "Fireglobe charge cost", 0.0, 1.0, 0.05],
+	["kl_fireglobe_cd", "Fireglobe cooldown (s)", 0.0, 15.0, 0.25],
+	["kl_fireglobe_pop_clear", "Fireglobe burst clears fog", 0.0, 1.0, 0.05],
+	["kl_lance_dmg", "Lance damage", 0.0, 20.0, 0.5],
+	["kl_lance_pierce", "Lance pierces (foes)", 1.0, 10.0, 1.0],
+	["kl_lance_speed", "Lance speed (px/s)", 200.0, 1500.0, 10.0],
+	["kl_lance_range", "Lance range (px)", 80.0, 800.0, 10.0],
+	["kl_lance_cost", "Lance charge cost", 0.0, 1.0, 0.05],
+	["kl_lance_cd", "Lance cooldown (s)", 0.0, 5.0, 0.05],
+	["kl_lance_hit_radius", "Lance bolt size (px)", 1.0, 20.0, 1.0],
+	["kl_lance_level", "Lance comes at level", 1.0, 12.0, 1.0],
+	["kl_bolt_light", "Fire lights the fog (px)", 0.0, 120.0, 4.0],
+	["kl_aim_assist_deg", "Pad aim assist (degrees)", 0.0, 45.0, 1.0],
+	["kl_aim_hold", "Pad aim hold while firing", 0.0, 1.0, 1.0],
+	["kl_autofire_stick", "Auto-fire: stick past", 0.3, 1.0, 0.05],
+	["kl_charge_regen", "Charge regen anywhere (/s)", 0.0, 0.5, 0.01],
+	["kl_light_charge_hunted", "Charge in light while hunted (/s)", 0.0, 1.0, 0.01],
+	["kl_warmth_regen", "Warmth in light, not hunted (/s)", 0.0, 60.0, 1.0],
+	["kl_flask_max", "Lamp-oil flasks", 0.0, 5.0, 1.0],
+	["kl_flask_heal", "Flask heals (share of warmth)", 0.0, 1.0, 0.05],
+	["kl_flask_charge", "Flask gives charge", 0.0, 1.0, 0.05],
+	["kl_flask_lockout", "Flask lockout (s)", 0.0, 5.0, 0.1],
+	["kl_elite_oil_chance", "Elite oil drop chance", 0.0, 1.0, 0.05],
+	["kl_boss_oil_step", "Boss oil at health share", 0.0, 1.0, 0.05],
+	["kl_hitstop", "Hit-stop (s)", 0.0, 0.2, 0.005],
+	["kl_hitstop_big", "Hit-stop from damage", 0.0, 20.0, 0.5],
+	["kl_shake_px", "Screen shake at full (px)", 0.0, 40.0, 1.0],
+	["kl_trauma_decay", "Shake decay (/s)", 0.2, 5.0, 0.1],
+	# Keeper's Light combat kit (the Beam and Hearth ring are optional skills since M1a)
 	["kl_beam_dps", "Beam damage (hp/s)", 1.0, 20.0, 0.5],
 	["kl_beam_len", "Beam length (px)", 80.0, 480.0, 10.0],
 	["kl_beam_half_width", "Beam half-width (px)", 4.0, 40.0, 1.0],
 	["kl_beam_cost", "Beam charge cost (/s)", 0.0, 1.0, 0.05],
 	["kl_beam_walk", "Walk speed while beaming", 0.2, 1.0, 0.05],
-	["kl_burst_radius", "Burst radius (px)", 40.0, 300.0, 5.0],
-	["kl_burst_dmg", "Burst damage", 0.0, 10.0, 0.25],
-	["kl_burst_knock", "Burst knockback (px)", 0.0, 400.0, 10.0],
-	["kl_burst_cd", "Burst cooldown (s)", 0.2, 10.0, 0.1],
-	["kl_burst_cost", "Burst charge cost", 0.0, 1.0, 0.05],
+	["kl_burst_radius", "Hearth ring radius (px)", 40.0, 300.0, 5.0],
+	["kl_burst_dmg", "Hearth ring damage", 0.0, 10.0, 0.25],
+	["kl_burst_burn_dps", "Hearth ring burn (hp/s)", 0.0, 10.0, 0.25],
+	["kl_burst_burn_time", "Hearth ring burn (s)", 0.0, 10.0, 0.25],
+	["kl_burst_knock", "Hearth ring push (px)", 0.0, 400.0, 10.0],
+	["kl_burst_cd", "Hearth ring cooldown (s)", 0.2, 10.0, 0.1],
+	["kl_burst_cost", "Hearth ring charge cost", 0.0, 1.0, 0.05],
 	["kl_dash_dist", "Dash distance (px)", 30.0, 300.0, 5.0],
 	["kl_dash_cd", "Dash cooldown (s)", 0.1, 5.0, 0.05],
 	["kl_dash_cost", "Dash charge cost", 0.0, 0.5, 0.01],
@@ -51,7 +100,7 @@ const ROWS := [
 	["kl_spit_charge", "Spit lamp drain", 0.0, 0.5, 0.01],
 	["kl_spit_life", "Spit lifetime (s)", 0.5, 8.0, 0.1],
 	["kl_spit_hit_radius", "Spit hit radius", 2.0, 40.0, 1.0],
-	["kl_clinker_hp", "Clinker hp", 4.0, 60.0, 1.0],
+	["kl_clinker_hp", "Clinker hp", 4.0, 160.0, 1.0],
 	["kl_clinker_shell", "Clinker shell", 0.0, 30.0, 1.0],
 	["kl_clinker_roll_speed", "Clinker roll speed", 80.0, 500.0, 10.0],
 	["kl_clinker_roll_dist", "Clinker roll distance", 80.0, 500.0, 10.0],
@@ -63,7 +112,7 @@ const ROWS := [
 	["kl_nest_hatch_count", "Nest Wicklings per hatch", 1.0, 7.0, 1.0],
 	["kl_nest_core_dps", "Nest core damage (hp/s)", 0.0, 10.0, 0.25],
 	["kl_nest_hatch_sec", "Nest hatch interval (s)", 2.0, 30.0, 0.5],
-	["kl_ashbrood_hp", "Ashbrood hp per phase", 5.0, 100.0, 1.0],
+	["kl_ashbrood_hp", "Ashbrood hp per phase", 5.0, 400.0, 5.0],
 	["kl_ashbrood_shell", "Ashbrood shell per phase", 0.0, 40.0, 1.0],
 	["kl_ashbrood_puff_period", "Ashbrood puff interval (s)", 2.0, 20.0, 0.5],
 	["kl_ashbrood_puff_tell", "Ashbrood puff tell (s)", 0.2, 2.0, 0.1],
@@ -136,11 +185,12 @@ func _ready() -> void:
 		s.max_value = row[3]
 		s.step = row[4]
 		s.custom_minimum_size = Vector2(280, 22)
-		s.value = Tuning.get(key)
-		lbl.text = "%s: %s" % [label_text, str(snappedf(Tuning.get(key), 0.001))]
+		var is_bool: bool = typeof(Tuning.get(key)) == TYPE_BOOL   # a toggle (0 / 1), e.g. the aim hold
+		s.value = (1.0 if Tuning.get(key) else 0.0) if is_bool else float(Tuning.get(key))
+		lbl.text = "%s: %s" % [label_text, str(Tuning.get(key)) if is_bool else str(snappedf(Tuning.get(key), 0.001))]
 		s.value_changed.connect(func(v: float) -> void:
-			Tuning.set(key, v)
-			lbl.text = "%s: %s" % [label_text, str(snappedf(v, 0.001))])
+			Tuning.set(key, v >= 0.5 if is_bool else v)
+			lbl.text = "%s: %s" % [label_text, str(v >= 0.5) if is_bool else str(snappedf(v, 0.001))])
 		box.add_child(lbl)
 		box.add_child(s)
 		if first_slider == null:

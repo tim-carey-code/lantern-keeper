@@ -3,10 +3,16 @@ extends CanvasLayer
 ##   top left   one panel: fuel / scrap / glass with icons, hand-lamp and warmth meters
 ##   top centre the current goal in a banner
 ##   top right  status chips, only while something needs you (wind, cold lanterns, cold keeper)
-##   bottom     a quiet key reminder that fades after a minute; tips and toasts in panels
+##   bottom     the action bar with warmth and charge above it (M1a, action_bar.gd); a quiet key reminder
+##              that fades after a minute; tips and toasts in panels above the bar
 ## What you can do with the thing in front of you is shown over it (see world_prompt.gd).
 
 const KEY_HINT_SECS := 60.0
+# M1a texts (DRAFT, docs/replan/M1A_BUILD_NOTES.md).
+const LANCE_TOAST := "Lance takes %s. %s is in your Skills (%s)."
+const LANCE_TOAST_PLAIN := "Lance takes %s."
+const REST_TOAST := "You rest by the WayLamp. Your flasks and warmth are full."
+const HUNTED_CHIP := "Something hunts you: light won't warm you"
 const LEVEL_UP_SCRIPT := preload("res://scripts/ui/level_up.gd")
 
 var banner: Label
@@ -16,8 +22,7 @@ var goal_panel: PanelContainer
 var goal_label: Label
 var counts := {}          # kind -> Label
 var glass_row: Control
-var lamp_bar: ProgressBar
-var warm_bar: ProgressBar
+var action_bar: ActionBar
 var wick_bar: ProgressBar
 var wick_level: Label
 var wick_count: Label          # "12/24": wick toward the next level
@@ -55,11 +60,15 @@ func _ready() -> void:
 	chips.add_theme_constant_override("separation", 6)
 	add_child(chips)
 	banner = _centered_label(60, 150)
-	toast = _boxed_label(30, 630, UiStyle.CREAM)
-	tip = _boxed_label(20, 580, UiStyle.PALE)
+	toast = _boxed_label(30, 470, UiStyle.CREAM)
+	tip = _boxed_label(20, 424, UiStyle.PALE)
 	keys = UiStyle.label(20, Color(0.43, 0.56, 0.7))
-	keys.position = Vector2(18, 690)
+	keys.position = Vector2(18, 632)
 	add_child(keys)
+	action_bar = ActionBar.new()
+	action_bar.name = "ActionBar"
+	add_child(action_bar)
+	Progress.skill_learned.connect(_on_skill_learned)
 	InputHint.device_changed.connect(func(_pad: bool) -> void: _keys_t = 10.0)
 	_connect_events()
 
@@ -87,8 +96,7 @@ func _build_resource_panel() -> void:
 		row.add_child(item)
 		if kind == "glass":
 			glass_row = item
-	lamp_bar = _meter(col, "icon_lamp", UiStyle.AMBER)
-	warm_bar = _meter(col, "icon_warmth", Color(0.85, 0.89, 0.94))
+	# Warmth and lamp charge moved to the action bar (M1a, GAME_PLAN §14).
 	# Level and wick (balance pass): "Lv 3", a bar toward the next level, and the count.
 	wick_row = HBoxContainer.new()
 	wick_row.add_theme_constant_override("separation", 8)
@@ -195,6 +203,25 @@ func _connect_events() -> void:
 		_show_toast("New lantern unlocked: %s   [%s]" % [Lantern.display(k), InputHint.key("build_menu")], 5.0)
 		Sfx.play("unlock", -6.0))
 
+## Level 2: Lance takes slot 3, and the toast says where the skill it replaced went (GAME_PLAN §4.1).
+func _on_skill_learned(id: String) -> void:
+	if id != "lance":
+		return
+	var gone := Progress.last_displaced
+	var player = get_tree().get_first_node_in_group("player")
+	var gone_title := ""
+	if gone != "" and player:
+		var s: Skill = player.combat.skill(gone)
+		gone_title = s.title() if s else gone
+	if gone_title != "":
+		_show_toast(LANCE_TOAST % [InputHint.key("skill_3"), gone_title, InputHint.key("skills")], 6.0)
+	else:
+		_show_toast(LANCE_TOAST_PLAIN % InputHint.key("skill_3"), 5.0)
+	Sfx.play_ui("unlock", -8.0)
+
+func show_rest() -> void:
+	_show_toast(REST_TOAST, 4.0)
+
 func _show_toast(text: String, secs: float) -> void:
 	toast.text = text
 	_toast_t = secs
@@ -237,6 +264,8 @@ func status_items() -> Array:
 			out.append(["icon_goal", "Kindling: %ds. Keep the dark off it" % ceili(w.seconds_left()), UiStyle.GOLD])
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
+		if player.hunted:
+			out.append(["icon_cold", HUNTED_CHIP, UiStyle.WARN])
 		if player.warmth < Tuning.warmth_max * 0.35:
 			out.append(["icon_warmth", "You're getting cold", UiStyle.WARN])
 		if player.lamp_charge <= Tuning.ward_min_charge:
@@ -287,8 +316,6 @@ func _process(delta: float) -> void:
 	var sel := Progress.selected
 	building.text = "%s   [%s] switch" % [Lantern.display(sel), InputHint.key("build_menu")]
 	building_pic.texture = Art.placeholder({"post": "post_lamp_lit.png", "reservoir": "reservoir_lamp_lit.png", "hooded": "hooded_lamp_lit.png", "mirror": "mirror_post_lit.png"}.get(sel, "post_lamp_lit.png"))
-	lamp_bar.value = player.lamp_charge
-	warm_bar.value = player.warmth / Tuning.warmth_max
 	_update_wick()
 	# Status chips: rebuilt only when what they say changes.
 	var items := status_items()
@@ -297,7 +324,10 @@ func _process(delta: float) -> void:
 		_rebuild_chips(items)
 	# Key reminder: fades after the first minute (and briefly returns when you switch device).
 	_keys_t = maxf(0.0, _keys_t - delta)
-	keys.text = "%s journal    %s map    %s lanterns    %s pause" % [InputHint.key("journal"), InputHint.key("map"), InputHint.key("build_menu"), InputHint.key("pause")]
+	if InputHint.pad:
+		keys.text = "View journal    Start pause\nD-pad up map    down skills\nD-pad left / right lamps"
+	else:
+		keys.text = "%s journal    %s map\n%s lamps    %s skills\n%s pause" % [InputHint.key("journal"), InputHint.key("map"), InputHint.key("build_menu"), InputHint.key("skills"), InputHint.key("pause")]
 	keys.modulate.a = clampf(_keys_t / 3.0, 0.0, 0.8)
 
 ## The level, the bar toward the next level and the count; a short gold flash when the level goes up.

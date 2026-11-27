@@ -89,17 +89,18 @@ func _process(_delta: float) -> void:
 			check(get_tree().get_nodes_in_group("lantern").size() == 2, "pick up removes the lantern (the hut's and the north path's old lamps stay)")
 			check(Inventory.get_count("scrap") == 3, "pick up refunds half the scrap")
 			check(Inventory.get_count("fuel") >= 9, "pick up returns the tank's fuel (%d)" % Inventory.get_count("fuel"))
-			# Hand lamp: walk deep into the dark with no fuel.
+			# Hand lamp (M1a, GAME_PLAN §5): out in the dark, an empty lamp refills slowly by itself (kl_charge_regen).
+			# The old dimming in the dark and the top-up from carried fuel are gone: the regen table replaces them.
 			Inventory.counts["fuel"] = 0
-			Tuning.hand_lamp_drain_per_sec = 1.0
 			player.position = start + Vector2(-420, 0)
+			player.lamp_charge = 0.0
 		320:
-			check(player.lamp_charge == 0.0, "hand lamp dims in the dark")
-			check(is_equal_approx(player.get_light_radius(), Tuning.hand_lamp_ember_radius) and player.get_light_radius() > 0.0, "hand lamp never goes out (ember)")
+			var want: float = Tuning.kl_charge_regen * 72.0 / 60.0
+			check(absf(player.lamp_charge - want) < 0.02, "in the dark an empty hand lamp refills slowly by itself (%.3f, want %.3f)" % [player.lamp_charge, want])
+			check(player.get_light_radius() >= Tuning.hand_lamp_ember_radius and player.get_light_radius() < Progress.lamp_max_radius(), "hand lamp never goes out (ember)")
 			Inventory.add("fuel", 5)
 		330:
-			check(Inventory.get_count("fuel") < 5 and player.lamp_charge > 0.0, "hand lamp burns carried fuel when low")
-			Tuning.hand_lamp_drain_per_sec = 1.0 / 45.0
+			check(Inventory.get_count("fuel") == 5 and player.lamp_charge > 0.0, "carried fuel no longer tops the hand lamp up (M1a)")
 			# Soft-lock scenario: every lantern cold, nothing carried, woodpile empty.
 			lamp.fuel = 0.0
 			Inventory.counts["fuel"] = 0

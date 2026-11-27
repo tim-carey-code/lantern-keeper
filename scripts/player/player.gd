@@ -1,10 +1,14 @@
 extends CharacterBody2D
 ## The keeper (grey-box circle). Moves, carries the hand lamp, gathers,
 ## builds, refuels and picks up lanterns. Keyboard/mouse and gamepad.
+## M1a: throws fire (KeeperCombat), drinks lamp oil (B / R), rests at a lit WayLamp. Every combat input and the
+## flask are read after the menu guard (Progress.input_blocked), so the B that closes a menu never drinks.
+## Light and regen follow GAME_PLAN §5 (update_hand_lamp, _update_warmth).
 
 @export var speed := 160.0
 const REACH := 52.0   # px to interact with a lantern or resource
 const HOLD_TO_GATHER := 0.3   # s: holding interact this long gathers the nearest resource (tap still refuels)
+const HOLD_TO_PICK_UP := 0.8  # s: holding interact this long by a lantern (no resource in reach) picks it up
 
 var lamp: PointLight2D
 var lamp_charge := 1.0          # 0 = ember, 1 = full hand lamp
@@ -26,8 +30,15 @@ var _dir_row := 0          # Puny sheet row: 0 S, 1 SE, 2 E, 3 NE, 4 N, 5 NW, 6 
 var _idle_t := 0.0
 var _step_t := 0.0
 var _walk_t := 0.0
+var flasks := 3                # lamp-oil flask charges (GAME_PLAN §5)
+var flask_lock := 0.0          # s before the next drink
+var drinks := 0                # flasks drunk (tests)
+var hunted := false            # something hunts the keeper (Hunt), worked out once a physics frame
+var _hitstop_t := 0.0          # > 0: a big hit freezes the keeper for a moment
+var _pick_t := 0.0             # how long interact has been held by a lantern (picks it up at HOLD_TO_PICK_UP)
 
 func _ready() -> void:
+	flasks = Tuning.kl_flask_max
 	combat = KeeperCombat.new()
 	add_child(combat)
 	add_to_group("light_source")
@@ -60,18 +71,74 @@ func in_lantern_light() -> bool:
 			return true
 	return false
 
+## Lamp charge (GAME_PLAN §5): +kl_charge_regen everywhere; in light +hand_lamp_recharge_per_sec out of a fight
+## or +kl_light_charge_hunted while hunted; no charge from light while the Beam is on. (M1a cut the passive
+## dimming in the dark and the top-up from carried fuel: the regen table replaces them.)
 func update_hand_lamp(delta: float) -> void:
+	var gain := Tuning.kl_charge_regen
 	if in_lantern_light() and not warding and not (combat and combat.beaming):   # light weapons are never free
-		lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_recharge_per_sec * delta)
-	else:
-		lamp_charge = maxf(0.0, lamp_charge - Progress.lamp_drain_per_sec() * delta)
-		# Auto top-up from carried fuel keeps the lamp alive on long walks, but never feeds the ward.
-		if lamp_charge < 0.25 and _since_ward > 4.0 and Inventory.spend("fuel", 1):
-			lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_charge_per_fuel)
+		gain += Tuning.kl_light_charge_hunted if hunted else Tuning.hand_lamp_recharge_per_sec
+	lamp_charge = clampf(lamp_charge + gain * delta, 0.0, 1.0)
+
+## Charge a second the keeper would gain here and now (for tests and the HUD).
+func charge_rate() -> float:
+	var gain := Tuning.kl_charge_regen
+	if in_lantern_light() and not warding and not (combat and combat.beaming):
+		gain += Tuning.kl_light_charge_hunted if hunted else Tuning.hand_lamp_recharge_per_sec
+	return gain
+
+# --- Lamp oil, rest -------------------------------------------------------
+
+func flask_max() -> int:
+	return Tuning.kl_flask_max
+
+func add_flask(n: int = 1) -> int:
+	var before := flasks
+	flasks = mini(flask_max(), flasks + n)
+	return flasks - before
+
+## Drinks one flask: 40% of max warmth back at once and +0.4 charge, then a 1 s lockout. False if it can't.
+func _handle_flask_input(pressed: bool, blocked: bool) -> bool:
+	if blocked or not pressed:
+		return false
+	return drink()
+
+func drink() -> bool:
+	if flasks <= 0 or flask_lock > 0.0:
+		if flasks <= 0:
+			Sfx.play("ui_error", -16.0)
+		return false
+	flasks -= 1
+	drinks += 1
+	flask_lock = Tuning.kl_flask_lockout
+	warmth = minf(Tuning.warmth_max, warmth + Tuning.warmth_max * Tuning.kl_flask_heal)
+	lamp_charge = minf(1.0, lamp_charge + Tuning.kl_flask_charge)
+	Sfx.play("refuel", -8.0, 0.1)
+	var arena := get_tree().get_first_node_in_group("wickling_spawner")
+	if arena:
+		FloatText.spawn(arena, global_position + Vector2(0, -34), "+%d warmth" % roundi(Tuning.warmth_max * Tuning.kl_flask_heal), UiStyle.AMBER)
+	return true
+
+## Rest at a lit WayLamp (GAME_PLAN §5): flasks and warmth back to full. Refused while hunted. Arriving by
+## fast travel doesn't rest. Returns "" on success, else why not.
+func rest() -> String:
+	hunted = Hunt.is_hunted(get_tree(), global_position)
+	if hunted:
+		return "Can't rest while something hunts you"
+	flasks = flask_max()
+	warmth = Tuning.warmth_max
+	Sfx.play_ui("unlock", -10.0)
+	return ""
+
+## A big hit freezes the keeper for a moment (per-target hit-stop, GAME_PLAN §15).
+func hit_stop(seconds: float) -> void:
+	_hitstop_t = maxf(_hitstop_t, seconds)
 
 # --- Frame -----------------------------------------------------------------
 
 func _physics_process(delta: float) -> void:
+	hunted = Hunt.is_hunted(get_tree(), global_position)
+	flask_lock = maxf(0.0, flask_lock - delta)
 	update_hand_lamp(delta)
 	_update_warmth(delta)
 	lamp.texture_scale = LightTex.scale_for(get_light_radius())
@@ -82,7 +149,20 @@ func _physics_process(delta: float) -> void:
 		_gather_target = null
 		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	combat.tick(delta, dir, Input.is_action_pressed("beam"), Input.is_action_just_pressed("flare"), Input.is_action_just_pressed("dash"))
+	# The menu guard comes first (GAME_PLAN §3, M6): for a moment after a menu closes, no combat input and no
+	# flask, so the B (or click) that closed it never drinks or fires. Cooldowns and bolts in flight go on.
+	var blocked := Progress.input_blocked()
+	var held := {}
+	var pressed := {}
+	if not blocked:
+		for slot in Progress.SLOTS:
+			if Input.is_action_pressed(slot):
+				held[slot] = true
+			if Input.is_action_just_pressed(slot):
+				pressed[slot] = true
+		_handle_flask_input(Input.is_action_just_pressed("flask"), false)
+	combat.tick(delta, dir, held, pressed, not blocked and Input.is_action_just_pressed("dash"))
+	_hitstop_t = maxf(0.0, _hitstop_t - delta)
 	var fog := _fog()
 	var slow := 1.0
 	if fog and dir != Vector2.ZERO:
@@ -94,22 +174,22 @@ func _physics_process(delta: float) -> void:
 	if combat.beaming:
 		slow *= Tuning.kl_steady_hand_walk if Progress.has_combat_upgrade("steady_hand") else Tuning.kl_beam_walk
 	velocity = combat.dash_velocity() if combat.is_dashing() else dir * speed * slow
+	if _hitstop_t > 0.0 and not combat.is_dashing():
+		velocity = Vector2.ZERO
 	move_and_slide()
 	_footsteps(dir, _physics_delta(), fog)
 	if fog:
 		position = position.clamp(Vector2.ZERO, fog.world_size())
-	if Progress.input_blocked():
+	if blocked:
 		_gather_target = null
 		return
 	if Input.is_action_just_pressed("place_lantern"):
 		var near := nearest_target()
 		if near is Lantern and near.kind == "mirror":
-			near.turn(-1)   # X / Space next to a mirror turns it left
+			near.turn(-1)   # X / C next to a mirror turns it left
 			Sfx.play("ui_tick", -10.0)
 		else:
 			try_place()
-	elif Input.is_action_just_pressed("cancel"):
-		pick_up_nearest()
 	elif Input.is_action_just_pressed("interact"):
 		begin_interact()
 	build_hint_t = maxf(0.0, build_hint_t - delta)
@@ -121,9 +201,22 @@ func _physics_process(delta: float) -> void:
 				_gather_target = r
 				_gather_acc = 0.0
 		continue_gather(delta)
+		# Hold by a lantern (with nothing to gather in reach): pick it up (GAME_PLAN §3: right mouse is a skill now).
+		if not is_gathering() and nearest_resource() == null and nearest_lantern() != null:
+			_pick_t += delta
+			if _pick_t >= HOLD_TO_PICK_UP:
+				_pick_t = -1000.0   # one pick-up per hold
+				pick_up_nearest()
+		else:
+			_pick_t = minf(_pick_t, 0.0)
 	else:
 		_hold_t = 0.0
+		_pick_t = 0.0
 		_gather_target = null
+
+## 0..1 while interact is held by a lantern (the pick-up ring).
+func pick_up_progress() -> float:
+	return clampf(_pick_t / HOLD_TO_PICK_UP, 0.0, 1.0)
 
 func _physics_delta() -> float:
 	return get_physics_process_delta_time()
@@ -179,18 +272,33 @@ func apply_ward(delta: float) -> int:
 			hit += 1
 	return hit
 
-var _shake := 0.0
+var _shake := 0.0          # trauma, 0..1
+var _shake_noise: FastNoiseLite
+var _shake_t := 0.0
 
-## Screen shake: 0..1. Fades on its own.
+## Screen shake (GAME_PLAN §15: the trauma recipe, KidsCanCode, ported to Godot 4): events add trauma, it
+## decays on its own, and the offset is kl_shake_px x trauma squared x smooth noise, times the player's
+## screen-shake setting (Settings.shake, the pause menu's slider; 0 turns it off).
 func shake(amount: float) -> void:
-	_shake = maxf(_shake, amount)
+	_shake = clampf(_shake + amount, 0.0, 1.0)
+
+func shake_offset() -> Vector2:
+	if _shake <= 0.0 or Settings.shake <= 0.0:
+		return Vector2.ZERO
+	if _shake_noise == null:
+		_shake_noise = FastNoiseLite.new()
+		_shake_noise.seed = 7
+		_shake_noise.frequency = 0.9
+	var amt := _shake * _shake * Tuning.kl_shake_px * Settings.shake
+	return Vector2(_shake_noise.get_noise_2d(_shake_t * 60.0, 0.0), _shake_noise.get_noise_2d(0.0, _shake_t * 60.0)) * 2.0 * amt
 
 func _process(delta: float) -> void:
 	var cam := get_node_or_null("Camera2D") as Camera2D
 	if cam == null:
 		return
-	_shake = maxf(0.0, _shake - delta * 2.5)
-	cam.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _shake * Tuning.kl_shake_px if _shake > 0.0 else Vector2.ZERO
+	_shake = maxf(0.0, _shake - delta * Tuning.kl_trauma_decay)
+	_shake_t += delta
+	cam.offset = shake_offset()
 
 func chill(amount: float) -> void:
 	if combat and combat.is_dashing():
@@ -201,9 +309,10 @@ func chill(amount: float) -> void:
 	if warmth <= 0.0:
 		faint()
 
+## Warmth comes back in light only when nothing hunts you (GAME_PLAN §5). In a fight, flasks heal.
 func _update_warmth(delta: float) -> void:
-	if in_lantern_light():
-		warmth = minf(Tuning.warmth_max, warmth + Tuning.warmth_regen_per_sec * delta)
+	if not hunted and in_lantern_light():
+		warmth = minf(Tuning.warmth_max, warmth + Tuning.kl_warmth_regen * delta)
 
 ## Out of warmth: drop part of what you carry where you fell, wake at the nearest lit lantern (or the hut).
 func faint() -> void:
@@ -436,6 +545,12 @@ func _draw() -> void:
 	if is_gathering():
 		var t := to_local(_gather_target.global_position)
 		draw_arc(t, 18.0, -PI / 2.0, -PI / 2.0 + TAU * (_gather_acc / Tuning.gather_interval), 24, Color(1, 0.85, 0.5, 0.9), 2.0)
+	# Picking up a lantern (hold interact): a ring fills over it.
+	var pick := pick_up_progress()
+	if pick > 0.05:
+		var nl := nearest_lantern()
+		if nl:
+			draw_arc(to_local(nl.global_position) + Vector2(0, -20), 20.0, -PI / 2.0, -PI / 2.0 + TAU * pick, 28, Color(0.64, 0.74, 0.83, 0.95), 3.0)
 
 	# Placement outline: only for a moment after a build that couldn't happen.
 	if build_hint_t <= 0.0:

@@ -9,8 +9,15 @@ signal landmark_spotted(title: String)
 signal region_settled(region_id: int, region_name: String)
 signal wick_changed(current: int, needed: int, level: int)
 signal level_up(level: int)
+signal bar_changed
+signal skill_learned(id: String)
 
 const LANTERN_ORDER := ["post", "reservoir", "hooded", "mirror"]
+## The action bar (M1a, GAME_PLAN §3): input action -> skill id ("" = empty). Slot 1 is always Lampfire.
+const SLOTS := ["skill_1", "skill_2", "skill_3", "skill_4"]
+## Skills in the Skills list, in order. Lance comes at Tuning.kl_lance_level; the rest from level 1.
+const SKILL_ORDER := ["lampfire", "fireglobe", "lance", "beam", "hearth_ring"]
+const SELF_CAST := ["hearth_ring"]
 
 var upgrades := {}   # upgrade landmark id -> "carry" (keeper's satchel) or "lamp" (lamp glass), once taken
 var unlocks := {"post": false}
@@ -25,6 +32,9 @@ var level := 1
 var cleared := {}           # fixed prototype enemies and packs that stay beaten
 var combat_upgrades: Array[String] = []
 var pending_level_ups := 0
+var bar := default_bar()    # the action bar: slot action -> skill id (saved, version 5)
+var lance_given := false    # Lance has taken slot 3 once (at level 2); after that the bar is the player's
+var last_displaced := ""    # what Lance pushed off slot 3 (the level-2 toast names it)
 var _input_block_until := 0
 
 func reset() -> void:
@@ -42,6 +52,70 @@ func reset() -> void:
 	cleared = {}
 	combat_upgrades = []
 	pending_level_ups = 0
+	bar = default_bar()
+	lance_given = false
+	last_displaced = ""
+
+# --- The action bar (M1a) ------------------------------------------------------
+
+## Level 1: RT Lampfire, RB Fireglobe, LB the Beam, Y empty (GAME_PLAN §4.1).
+static func default_bar() -> Dictionary:
+	return {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "beam", "skill_4": ""}
+
+## Skills the keeper has now.
+func knows(id: String) -> bool:
+	if id == "lance":
+		return lance_given or level >= Tuning.kl_lance_level
+	return SKILL_ORDER.has(id)
+
+## "" if `id` may go on `slot`, otherwise why not (shown in the Skills list). "" for id clears the slot.
+func bind_reason(slot: String, id: String) -> String:
+	if not SLOTS.has(slot):
+		return "no such slot"
+	if slot == "skill_1":
+		return "" if id == "lampfire" else "Slot 1 is always Lampfire."
+	if id == "":
+		return ""
+	if id == "lampfire":
+		return "Lampfire stays on slot 1."
+	if not knows(id):
+		return "Not learned yet."
+	if slot == "skill_4" and not SELF_CAST.has(id):
+		return "This slot takes skills that need no aim."
+	if slot != "skill_4" and SELF_CAST.has(id):
+		return "This one needs no aim: it goes on slot 4."
+	return ""
+
+## Puts a skill on a slot (moving it off any other slot). Returns "" on success, else the reason.
+func bind(slot: String, id: String) -> String:
+	var why := bind_reason(slot, id)
+	if why != "":
+		return why
+	for s in SLOTS:
+		if s != slot and bar.get(s, "") == id and id != "":
+			bar[s] = ""
+	bar[slot] = id
+	bar_changed.emit()
+	return ""
+
+## The slot a skill is on, or "".
+func slot_of(id: String) -> String:
+	for s in SLOTS:
+		if bar.get(s, "") == id:
+			return s
+	return ""
+
+## At level 2, Lance takes slot 3 (once); whatever was there goes back to the Skills list.
+func _grant_level_skills() -> void:
+	if not lance_given and level >= Tuning.kl_lance_level:
+		lance_given = true
+		for s in SLOTS:
+			if bar.get(s, "") == "lance":
+				bar[s] = ""
+		last_displaced = bar.get("skill_3", "")
+		bar["skill_3"] = "lance"
+		bar_changed.emit()
+		skill_learned.emit("lance")
 
 ## Wick to go from level `lv` to the next: a rising curve, kl_wick_base * lv ^ kl_wick_exp (DESIGN §9).
 func wick_for_level(lv: int) -> int:
@@ -88,6 +162,7 @@ func add_wick(amount: int) -> void:
 		wick -= wick_needed()
 		level += 1
 		pending_level_ups += 1
+		_grant_level_skills()
 		level_up.emit(level)
 	if at_level_cap():
 		wick = 0

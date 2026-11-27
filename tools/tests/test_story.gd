@@ -86,7 +86,8 @@ func _process(_delta: float) -> void:
 			var names_ok := true
 			for k in ["wickling_close", "burst", "dash"]:
 				names_ok = names_ok and not Story.tip_text(k).contains("[")
-			check(names_ok and Story.tip_text("wickling_close").begins_with("Hold %s " % InputHint.key("beam")) and Story.tip_text("burst").contains(InputHint.key("flare")), "tips name the button in use (%s)" % Story.tip_text("wickling_close"))
+			# M1a: [beam] is slot 1 (Lampfire), [burst] the slot Hearth ring is on (slot 4 when it isn't on the bar).
+			check(names_ok and Story.tip_text("wickling_close").begins_with("Hold %s " % InputHint.key("skill_1")) and Story.tip_text("burst").contains(InputHint.key("skill_4")), "tips name the button in use (%s)" % Story.tip_text("wickling_close"))
 			Progress.cleared["nest_hollow_4"] = true
 			_read("stone_way")
 			Story.update(main)
@@ -152,7 +153,8 @@ func _process(_delta: float) -> void:
 			var lamp_lines: Array = wp.lines_for(lamp)
 			check(lamp_lines[0][0] == "E" and String(lamp_lines[0][1]).begins_with("Refuel"), "a lantern shows '[E] Refuel' on keyboard (%s)" % str(lamp_lines))
 			InputHint.pad = true
-			check(wp.lines_for(lamp)[0][0] == "A" and wp.lines_for(lamp)[1][0] == "B", "and '[A] Refuel  [B] Pick up' on a controller")
+			# M1a: B is the flask now, so a lantern is picked up by holding A (GAME_PLAN §3).
+			check(wp.lines_for(lamp)[0][0] == "A" and wp.lines_for(lamp)[1][0] == "A" and String(wp.lines_for(lamp)[1][1]) == "Hold: pick up", "and '[A] Refuel  [A] Hold: pick up' on a controller")
 			check(wp.lines_for(_landmark("ledger"))[0][1] == "Read again", "a read note says 'Read again'")
 			InputHint.pad = false
 			var hud = main.get_node("HUD")

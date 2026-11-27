@@ -152,24 +152,12 @@ func step(dt: float) -> void:
 		var r: float = src.get_light_radius()
 		if r <= 0.0:
 			continue
-		var c: Vector2 = src.global_position
 		# A WayLamp holds back the fog of its own region only (it must not light the next one for free).
-		var only: int = (src as WayLamp).region_id if src is WayLamp else 0
-		var t0 := tile_of(c - Vector2(r, r))
-		var t1 := tile_of(c + Vector2(r, r))
-		for y in range(maxi(t0.y, 0), mini(t1.y, rows - 1) + 1):
-			for x in range(maxi(t0.x, 0), mini(t1.x, cols - 1) + 1):
-				if only > 0 and region[y * cols + x] != only:
-					continue
-				var d := tile_center(Vector2i(x, y)).distance_to(c)
-				if d < r:
-					# Strong plateau in the middle, soft edge near the rim.
-					var s := clampf((1.0 - d / r) * 1.6, 0.0, 1.0)
-					var i := y * cols + x
-					if s > _light[i]:
-						if _light[i] == 0.0:
-							_lit.append(i)
-						_light[i] = s
+		_light_disc(src.global_position, r, (src as WayLamp).region_id if src is WayLamp else 0)
+	# M1a: your fire lights the fog while it flies (GAME_PLAN §7). Providers return (x, y, radius) triples.
+	for src in get_tree().get_nodes_in_group("light_points"):
+		for lp in src.light_points():
+			_light_disc(Vector2(lp.x, lp.y), lp.z, 0)
 
 	_update_mirrors()
 	for m in get_tree().get_nodes_in_group("mirror") + get_tree().get_nodes_in_group("beam_source"):
@@ -246,6 +234,49 @@ func step(dt: float) -> void:
 			if region[i] > 0 and region[i] < REGION_NAMES.size():
 				Progress.reveal_region(region[i], REGION_NAMES[region[i]])
 	_active = still
+
+func _light_disc(c: Vector2, r: float, only: int) -> void:
+	var t0 := tile_of(c - Vector2(r, r))
+	var t1 := tile_of(c + Vector2(r, r))
+	for y in range(maxi(t0.y, 0), mini(t1.y, rows - 1) + 1):
+		for x in range(maxi(t0.x, 0), mini(t1.x, cols - 1) + 1):
+			if only > 0 and region[y * cols + x] != only:
+				continue
+			var d := tile_center(Vector2i(x, y)).distance_to(c)
+			if d < r:
+				# Strong plateau in the middle, soft edge near the rim.
+				var s := clampf((1.0 - d / r) * 1.6, 0.0, 1.0)
+				var i := y * cols + x
+				if s > _light[i]:
+					if _light[i] == 0.0:
+						_lit.append(i)
+					_light[i] = s
+
+## A light pop (Lampfire's impact, a Fireglobe's burst): clears fog around a point at once, by up to
+## `amount` at the centre. The fog creeps back as usual. Returns how many tiles it touched.
+func clear_burst(c: Vector2, r: float, amount: float) -> int:
+	var n := 0
+	var t0 := tile_of(c - Vector2(r, r))
+	var t1 := tile_of(c + Vector2(r, r))
+	for y in range(maxi(t0.y, 0), mini(t1.y, rows - 1) + 1):
+		for x in range(maxi(t0.x, 0), mini(t1.x, cols - 1) + 1):
+			var d := tile_center(Vector2i(x, y)).distance_to(c)
+			if d >= r:
+				continue
+			var i := y * cols + x
+			var v := maxf(0.0, density[i] - amount * clampf((1.0 - d / r) * 1.5, 0.0, 1.0))
+			if v < density[i]:
+				density[i] = v
+				_changed.append(i)
+				if _in_active[i] == 0:
+					_in_active[i] = 1
+					_active.append(i)
+				if v < REMEMBER_BELOW and remembered[i] == 0:
+					remembered[i] = 1
+					if region[i] > 0 and region[i] < REGION_NAMES.size():
+						Progress.reveal_region(region[i], REGION_NAMES[region[i]])
+				n += 1
+	return n
 
 ## A mirror catches light when it stands well inside a burning lantern's light, or in
 ## another catching mirror's beam. Repeats so chains of mirrors pass light along.

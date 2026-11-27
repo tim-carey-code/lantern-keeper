@@ -5,6 +5,11 @@ extends Node2D
 ## the beam and the burst look through.
 ## Shared here: hp and shell, how a hit lands, being thrown back or stunned, a shell growing back,
 ## what is left behind, and the light senses.
+## M1a: every foe carries a small hurtbox (an Area2D on HURT_LAYER) so the keeper's fire can find it with
+## shape queries (brief §7). The shell rule is GAME_PLAN §4.5 (shell_factor). Big hits freeze the foe for a
+## moment (per-target hit-stop, instead of freezing the whole game). Summoned foes drop nothing.
+
+const HURT_LAYER := 1 << 4      # physics layer 5: foe hurtboxes, found by the keeper's fire
 
 var hp := 0.0
 var hp_max := 0.0               # set from hp the first time it ticks (for health bars)
@@ -28,12 +33,36 @@ var _impact_t := 0.0
 var _burning := 0.0             # > 0: light just burned it
 var _linger_t := 0.0
 var _stun_t := 0.0
-var _since_beam := 99.0         # seconds since a beam last touched it
+var _hitstop_t := 0.0           # > 0: frozen by a big hit (counts as stunned)
+var _ignite_t := 0.0            # > 0: set alight (Hearth ring): burns at _ignite_dps
+var _ignite_dps := 0.0
+var _num_acc := 0.0             # damage from steady sources (beam, burning) waiting to show as one number
+var _num_t := 0.0
+var _oil_step_given := false    # mid-boss and guardian: this phase's oil has dropped
+var oil_step := false           # drops 1 oil when its health falls past Tuning.kl_boss_oil_step (Clinker, Ashbrood)
+var hurtbox: Area2D
+var _since_beam := 99.0         # seconds since anything that wears a shell last touched it
 var _fading := 0.0
 var _dead := false
 
 func _enter_tree() -> void:
 	add_to_group("foe")
+
+## The hurtbox is made once the foe is ready (body_radius() may depend on fields set before add_child).
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_READY and hurtbox == null:
+		hurtbox = Area2D.new()
+		hurtbox.name = "Hurtbox"
+		hurtbox.monitoring = false
+		hurtbox.monitorable = true
+		hurtbox.collision_layer = HURT_LAYER
+		hurtbox.collision_mask = 0
+		var shape := CollisionShape2D.new()
+		var circle := CircleShape2D.new()
+		circle.radius = body_radius()
+		shape.shape = circle
+		hurtbox.add_child(shape)
+		add_child(hurtbox)
 
 # --- Senses ------------------------------------------------------------------
 
@@ -138,50 +167,98 @@ func body_radius() -> float:
 	return 10.0
 
 func is_stunned() -> bool:
-	return _stun_t > 0.0
+	return _stun_t > 0.0 or _hitstop_t > 0.0
 
-## Damage from a source: "beam" (the keeper's beam or a mirror beam), "burst", "core", "ward" or "".
-## A shell takes beam damage first and turns everything else aside.
+## A big hit: frozen for a moment (it can't move or act), flashing. Only this foe, not the whole game.
+func hit_stop(seconds: float) -> void:
+	_hitstop_t = maxf(_hitstop_t, seconds)
+
+## Set alight: burns for a while (it glances off a shell like any fire that isn't a hit).
+func ignite(dps: float, seconds: float) -> void:
+	_ignite_dps = maxf(_ignite_dps if _ignite_t > 0.0 else 0.0, dps)
+	_ignite_t = maxf(_ignite_t, seconds)
+
+## How much of a hit wears a shell (GAME_PLAN §4.5). Full: the Beam (yours or a mirror's) and Lance.
+## Half: Lampfire's hit. None (it glances off): Fireglobe, Hearth ring, splash, burning ground, lamp cores.
+static func shell_factor(source: String) -> float:
+	match source:
+		"beam", "lance":
+			return 1.0
+		"lampfire":
+			return 0.5
+	return 0.0
+
+## Sources that come in a steady stream: their damage numbers are summed and shown a few times a second.
+const STEADY := ["beam", "burn", "ground", "core", "light", "linger"]
+
+## Damage from a source: "lampfire", "lance", "splash", "fireglobe", "ground" (burning ground), "ring" (Hearth
+## ring), "burn", "beam" (the keeper's beam or a mirror beam), "burst", "core", "light", "ward" or "".
+## A shell takes what shell_factor allows first and turns the rest aside.
 func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	if _dead:
 		return
 	since_hurt = 0.0
-	if source == "beam":
+	var flash := 0.1
+	if source in STEADY:
+		flash = 0.0
 		if _beam_flash_cd <= 0.0:
-			_flash = 0.06
+			flash = 0.06
 			_beam_flash_cd = 0.16
-	else:
-		_flash = 0.1
+	_flash = maxf(_flash, flash)
 	if source == "beam":
-		_since_beam = 0.0
 		if Progress.has_combat_upgrade("tight_focus") and shell > 0.0:
 			amount *= Tuning.kl_focus_shell_mult
 		if Progress.has_combat_upgrade("lingering_burn"):
 			_linger_t = Tuning.kl_linger_duration
+	var wear := shell_factor(source)
+	if wear > 0.0:
+		_since_beam = 0.0
 	if shell > 0.0:
-		if source == "beam":
-			Story.tip("shell")   # the first beam on a shell (onboarding: the Post Lamp's guard)
-		if source != "beam":
+		if wear > 0.0:
+			Story.tip("shell")   # the first fire that wears a shell (onboarding: the Post Lamp's guard)
+		else:
 			_clink = 0.2
 			if _impact_t <= 0.0:
 				Sfx.play("ui_tick", -18.0, 0.1)
 				_impact_t = 0.3
 			return
-		shell -= amount
+		var worn := amount * wear
+		_number(minf(worn, shell), source, true)
+		shell -= worn
 		_burning = 0.3
 		if shell > 0.0:
 			return
-		amount = -shell
+		amount = -shell / wear   # what got through the shell goes on to its health
 		shell = 0.0
 		_on_shell_cracked()
+		if amount <= 0.0:
+			return
 	hp -= amount
 	_burning = 0.3
+	_number(amount, source, false)
 	_on_hurt(scare, source)
-	if source != "beam" and _impact_t <= 0.0:
+	if not (source in STEADY) and _impact_t <= 0.0:
 		Sfx.play("ui_tick", -20.0, 0.12)
 		_impact_t = 0.3
+	_check_oil_step()
 	if hp <= 0.0:
 		_die()
+
+## A damage number over the foe (DamageNumbers): at once for a hit, summed for steady damage.
+func _number(amount: float, source: String, on_shell: bool) -> void:
+	if amount <= 0.0 or not is_inside_tree():
+		return
+	if source in STEADY:
+		_num_acc += amount
+		return
+	DamageNumbers.add(global_position + Vector2(0, -body_radius() - 10.0), amount, "shell" if on_shell else ("small" if source == "splash" else "hit"))
+
+## Mid-boss and guardian: 1 oil as health falls past the oil step (once a phase; GAME_PLAN §5).
+func _check_oil_step() -> void:
+	if not oil_step or _oil_step_given or hp_max <= 0.0 or hp > hp_max * Tuning.kl_boss_oil_step or hp <= 0.0:
+		return
+	_oil_step_given = true
+	drop_oil(global_position + Vector2(0, body_radius() + 6.0))
 
 ## For each kind of foe: what a hit does besides the damage.
 func _on_hurt(_scare: bool, _source: String) -> void:
@@ -206,19 +283,33 @@ func tick_foe(delta: float) -> void:
 	since_hurt += delta
 	_flash = maxf(0.0, _flash - delta)
 	_beam_flash_cd = maxf(0.0, _beam_flash_cd - delta)
-	self_modulate = Color(2.6, 2.4, 2.0) if _flash > 0.0 else Color.WHITE
+	_hitstop_t = maxf(0.0, _hitstop_t - delta)
+	# The white hit flash (built), held through a hit-stop; dimmer with "reduce flashes".
+	self_modulate = Color.WHITE.lerp(Color(2.6, 2.4, 2.0), Settings.flash_mult()) if (_flash > 0.0 or _hitstop_t > 0.0) else Color.WHITE
 	_burning = maxf(0.0, _burning - delta)
 	_impact_t = maxf(0.0, _impact_t - delta)
 	_clink = maxf(0.0, _clink - delta)
 	_stun_t = maxf(0.0, _stun_t - delta)
 	_since_beam += delta
+	_num_t -= delta
+	if _num_t <= 0.0:
+		_num_t = 0.4
+		if _num_acc >= 0.5:
+			DamageNumbers.add(global_position + Vector2(0, -body_radius() - 10.0), _num_acc, "steady")
+			_num_acc = 0.0
+	if _ignite_t > 0.0 and not _dead:
+		_ignite_t = maxf(0.0, _ignite_t - delta)
+		hurt(_ignite_dps * delta, false, "burn")
+		if _dead or is_queued_for_deletion():
+			return
 	if _linger_t > 0.0 and not _dead:
 		_linger_t = maxf(0.0, _linger_t - delta)
 		hp -= Tuning.kl_linger_dps * delta
+		_num_acc += Tuning.kl_linger_dps * delta
 		if hp <= 0.0:
 			_die()
 			return
-	if _knock_t > 0.0:
+	if _knock_t > 0.0 and _hitstop_t <= 0.0:
 		_knock_t -= delta
 		global_position += _knock_v * delta
 	if shell_regrows and shell > 0.0 and shell < shell_max and _since_beam >= Tuning.kl_shell_regrow_wait:
@@ -269,12 +360,17 @@ func _die() -> void:
 	_dead = true
 	Sfx.play("relight", -14.0, 0.2)
 	var keeper := _player()
+	var big := hp_max >= Tuning.kl_elite_hp or shell_max > 0.0
 	if keeper and keeper.has_method("shake"):
-		keeper.shake(0.25)
+		keeper.shake(0.35 if big else 0.15)
+	# Per-target hit-stop (GAME_PLAN §15): a big kill freezes the keeper for a moment, never the whole game
+	# (the old global Engine.time_scale freeze would stutter at Lampfire's rate).
+	if keeper and big and keeper.has_method("hit_stop"):
+		keeper.hit_stop(Tuning.kl_hitstop)
 	if keeper and Progress.has_combat_upgrade("kindled_kills"):
 		keeper.lamp_charge = minf(1.0, keeper.lamp_charge + Tuning.kl_kindled_kill_charge)
-	Engine.time_scale = 0.08
-	get_tree().create_timer(0.045, true, false, true).timeout.connect(func(): Engine.time_scale = 1.0)
+	if is_inside_tree():
+		FireFx.kill_burst(global_position, body_radius(), big)
 	if foe_id != "":
 		if Progress.cleared.has(foe_id):
 			queue_free()
@@ -311,9 +407,39 @@ func wick_earned() -> float:
 func bar_name() -> String:
 	return "%s Lv %d" % [foe_name, level] if foe_name != "" else ""
 
-## What it leaves: by default one ember worth a little fuel, and sometimes a bit of scrap.
+## What it leaves: by default one ember worth a little fuel, and sometimes a bit of scrap (lamps still burn in
+## M1a). Lamp oil: a cleared pack's last foe always drops 1, an elite sometimes (GAME_PLAN §5).
+## Summoned foes (nest hatchlings, a guardian's adds) drop nothing at all (GAME_PLAN §10, M10); they still pay wick.
 func _drop() -> void:
+	if summoned:
+		return
 	drop_embers(1, Tuning.wick_scrap_chance)
+	drop_pack_oil()
+
+## Oil from a pack's last foe, and sometimes from an elite.
+func drop_pack_oil() -> void:
+	if summoned:
+		return
+	if pack_id != "" and is_last_of_pack():
+		drop_oil(global_position + Vector2(-14, 8))
+	if self is Wickling and self.elite and randf() < Tuning.kl_elite_oil_chance:
+		drop_oil(global_position + Vector2(10, 12))
+
+## True when no other member of its fixed pack is still alive.
+func is_last_of_pack() -> bool:
+	for f in get_tree().get_nodes_in_group("foe"):
+		if f != self and f.pack_id == pack_id and not f._dead and not f.is_queued_for_deletion():
+			return false
+	return true
+
+## A lamp-oil drop (an Ember of kind "oil"): walk over it to fill a flask.
+func drop_oil(at: Vector2) -> void:
+	if get_parent() == null:
+		return
+	var e := Ember.new()
+	e.kind = "oil"
+	e.position = walkable_near(at)
+	get_parent().add_child(e)
 
 ## Drops land on the fog layer (our parent) so they glow through the dark.
 func drop_embers(embers: int, scrap_chance: float) -> void:

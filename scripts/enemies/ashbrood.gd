@@ -23,6 +23,7 @@ func _ready() -> void:
 	wick_value = Tuning.kl_ashbrood_wick
 	level = Tuning.kl_ashbrood_level
 	knock_weight = 0.15
+	oil_step = true   # 1 lamp oil at the half of each phase (Tuning.kl_boss_oil_step; GAME_PLAN §5)
 	z_index = 9
 
 func _process(delta: float) -> void:
@@ -120,6 +121,7 @@ func _die() -> void:
 		shell = Tuning.kl_ashbrood_shell
 		shell_max = shell
 		_since_beam = 0.0
+		_oil_step_given = false   # the next phase drops its own oil at its half
 		_puff_t = 99.0
 		_dive_t = 2.0
 		Sfx.play("unlock", -4.0)

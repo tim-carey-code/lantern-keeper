@@ -1,9 +1,10 @@
 extends CanvasLayer
 ## Lanterns: choosing what to build.
-##   Tap Y / Tab: switch to the next lantern you have (no menu).
-##   Hold Y / Tab: open the list of cards. Left/right to choose, A / E / X / Space / B / Y to close.
+##   Tap Tab / D-pad right: switch to the next lantern you have (no menu). D-pad left: the previous one.
+##   Hold Tab / D-pad right: open the list of cards. Left/right to choose, A / E / X / C / B / Tab to close.
 ##   Keys 1-4: pick a lantern directly.
-## The world is paused while the list is open.
+## The world is paused while the list is open. M1a: Y is a skill slot now, and the D-pad keys are read only
+## while no menu is open (GAME_PLAN §3).
 
 const HOLD := 0.35   # seconds held before the list opens instead of switching
 
@@ -64,12 +65,12 @@ func close() -> void:
 	get_tree().paused = false
 	Progress.block_input()
 
-## Next unlocked lantern after the selected one (wraps). Public for tests.
-func cycle() -> void:
+## Next unlocked lantern after the selected one (wraps); dir -1 goes back. Public for tests.
+func cycle(dir: int = 1) -> void:
 	var order: Array = Progress.LANTERN_ORDER
 	var i := order.find(Progress.selected)
 	for step in range(1, order.size() + 1):
-		var k: String = order[(i + step) % order.size()]
+		var k: String = order[posmod(i + step * dir, order.size())]
 		if Progress.is_unlocked(k):
 			if k != Progress.selected:
 				Progress.selected = k
@@ -84,11 +85,16 @@ func select_slot(n: int) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if root.visible:
-		if event.is_action_pressed("build_menu") or event.is_action_pressed("interact") or event.is_action_pressed("place_lantern") or event.is_action_pressed("cancel"):
+		# (D-pad right is "build_menu" too, but in the list it moves the cursor: only the Tab key closes it.)
+		if (event.is_action_pressed("build_menu") and event is InputEventKey) or event.is_action_pressed("interact") or event.is_action_pressed("place_lantern") or event.is_action_pressed("cancel"):
 			close()
 			get_viewport().set_input_as_handled()
 		return
 	if Tuning.ui_open:
+		return
+	if event.is_action_pressed("lamp_prev"):
+		cycle(-1)
+		get_viewport().set_input_as_handled()
 		return
 	for n in 4:
 		if event.is_action_pressed("select_%d" % (n + 1)):
@@ -107,7 +113,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if _held >= 0.0 and not root.visible:
 		_held += delta
-		if _held >= HOLD:
+		if Tuning.ui_open:
+			_held = -1.0   # another menu opened mid-hold: the hold is off (its release never reaches us)
+		elif _held >= HOLD:
 			_held = -1.0
 			open()   # a hold opens the list
 	if not root.visible:
@@ -132,7 +140,7 @@ func _refresh() -> void:
 		_fill_card(cards[i], order[i], i == index)
 	var hint: Label = root.find_child("Hint", true, false)
 	if InputHint.pad:
-		hint.text = "Left / Right choose    A select    tap Y to switch without opening this list"
+		hint.text = "Left / Right choose    A select    tap D-pad right or left to switch without this list"
 	else:
 		hint.text = "A / D choose    E select    tap Tab to switch without opening    keys 1-4 pick directly"
 

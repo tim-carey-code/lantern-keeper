@@ -95,7 +95,7 @@ var ember_life := 30.0              # seconds before an ember fades
 var wick_scrap_chance := 0.35       # chance a burned Wickling also drops 1 scrap
 var warmth_max := 100.0
 var warmth_drain_per_sec := 30.0    # while a Wickling touches the keeper
-var warmth_regen_per_sec := 20.0    # in lantern light
+var kl_warmth_regen := 20.0         # in lantern light when nothing hunts (GAME_PLAN §5)
 var faint_drop := 0.5               # share of carried resources dropped on fainting
 
 # WayLamps (PROTOTYPE): kindle one and its whole region is held
@@ -115,13 +115,16 @@ var wick_repel_speed := 160.0            # px/s a Wickling is pushed out of heal
 var kl_min_charge := 0.05
 var kl_beam_len := 240.0                 # px
 var kl_beam_half_width := 12.0           # px
-var kl_beam_dps := 6.0                   # a Wickling (3 hp) in half a second
+var kl_beam_dps := 7.5                   # was 6 (GAME_PLAN §4.1: 25 damage per charge, the same as Lance)
 var kl_beam_cost := 0.3                  # lamp charge per second (a full lamp: about 3 s of beam)
 var kl_beam_walk := 0.7                  # walk speed while beaming
+# Hearth ring (M1a): the old burst, reworked. A ring of flame that sets foes alight, with a small push.
 var kl_burst_radius := 120.0
 var kl_burst_dmg := 2.0
-var kl_burst_knock := 140.0              # px thrown back
-var kl_burst_cd := 3.0                   # s
+var kl_burst_burn_dps := 1.0             # it sets what it hits alight (new)
+var kl_burst_burn_time := 2.0            # s (new)
+var kl_burst_knock := 60.0               # px thrown back (was 140)
+var kl_burst_cd := 4.0                   # s (was 3)
 var kl_burst_cost := 0.2
 var kl_dash_dist := 110.0                # px
 var kl_dash_time := 0.16                 # s
@@ -150,7 +153,7 @@ var kl_spit_warmth := 12.0
 var kl_spit_charge := 0.1
 var kl_spit_life := 3.5
 var kl_spit_hit_radius := 12.0
-var kl_clinker_hp := 24.0
+var kl_clinker_hp := 48.0               # was 24: about 30 s against the M1a kit (GAME_PLAN §4.6; test_skills does the sums)
 var kl_clinker_shell := 12.0
 var kl_clinker_speed := 40.0
 var kl_clinker_roll_speed := 280.0
@@ -171,7 +174,7 @@ var kl_nest_wake_radius := 320.0
 var kl_nest_hatch_count := 3
 var kl_nest_hatch_sec := 10.0
 var kl_nest_core_radius := 16.0
-var kl_ashbrood_hp := 40.0
+var kl_ashbrood_hp := 220.0             # per phase; 2 phases in M1a, hand-set to the 2-minute target (GAME_PLAN §4.6)
 var kl_ashbrood_shell := 12.0
 var kl_ashbrood_puff_period := 7.0
 var kl_ashbrood_puff_tell := 0.8
@@ -234,8 +237,61 @@ var kl_pack_wake_radius := 320.0
 var kl_post_guard_wake_radius := 128.0  # px (4 tiles): the shelled Wickling on Oswin's crook sleeps until you come this close
 var kl_post_guard_level := 2            # its foe level: the first elite, one above the route's Wicklings
 
+# M1a: fire in the Hollow (GAME_PLAN §4.1, §5, §15; owner-approved starting values).
+# Lampfire, the basic attack (slot 1, held): a fireball of light that bursts on impact.
+var kl_lampfire_dmg := 2.0               # on the foe it hits (half of it wears a shell)
+var kl_lampfire_splash_dmg := 1.0        # to everything else within the splash (never a shell)
+var kl_lampfire_splash := 40.0           # px
+var kl_lampfire_period := 0.35           # s between bolts while held (5.7 dps)
+var kl_lampfire_speed := 480.0           # px/s
+var kl_lampfire_range := 320.0           # px
+var kl_lampfire_charge := 0.03           # lamp charge back per hit
+var kl_lampfire_hit_radius := 6.0        # px: the bolt's own size for hits
+var kl_lampfire_pop := 72.0              # px: the light pop on impact, which clears fog
+var kl_lampfire_pop_clear := 0.45        # fog density the pop clears at its centre
+# Fireglobe (slot 2): the big lobbed fireball. Leaves burning ground.
+var kl_fireglobe_dmg := 8.0
+var kl_fireglobe_radius := 90.0
+var kl_fireglobe_burn_dps := 2.0         # burning ground
+var kl_fireglobe_burn_time := 3.0        # s
+var kl_fireglobe_min := 120.0            # px: it lands this far out at least...
+var kl_fireglobe_max := 280.0            # ...and at most (stick tilt or the cursor)
+var kl_fireglobe_flight := 0.6           # s in the air, with a marker where it lands
+var kl_fireglobe_arc := 46.0             # px at the top of the lob
+var kl_fireglobe_cost := 0.3
+var kl_fireglobe_cd := 5.0
+var kl_fireglobe_pop_clear := 0.7        # fog density its burst clears
+# Lance (slot 3 from level 2): a fast piercing bolt, the shell-breaker.
+var kl_lance_dmg := 5.0
+var kl_lance_pierce := 3                 # foes it hits on its way through
+var kl_lance_speed := 700.0
+var kl_lance_range := 360.0
+var kl_lance_cost := 0.2
+var kl_lance_cd := 0.5
+var kl_lance_hit_radius := 5.0
+var kl_lance_level := 2                  # the level that brings it (it takes LB, with a toast)
+var kl_bolt_light := 40.0                # px: your fire lights the fog around it while it flies
+# Aim (pad): a gentle pull toward a foe for Lampfire and Lance, and the aim hold.
+var kl_aim_assist_deg := 12.0
+var kl_aim_hold := true                  # while slot 1, 2 or 3 is held, a released right stick keeps its last aim
+var kl_autofire_stick := 0.8             # the auto-fire option: Lampfire fires while the right stick is past this
+# Light and regen (GAME_PLAN §5): out of a fight light refills fast; while hunted only slowly.
+var kl_charge_regen := 0.06              # lamp charge/s anywhere (the Beam doesn't stop it)
+var kl_light_charge_hunted := 0.1        # lamp charge/s in light while hunted (out of a fight: hand_lamp_recharge_per_sec)
+# Lamp-oil flasks (B / R).
+var kl_flask_max := 3
+var kl_flask_heal := 0.4                 # share of max warmth
+var kl_flask_charge := 0.4
+var kl_flask_lockout := 1.0              # s before you can drink again
+var kl_elite_oil_chance := 0.3           # an elite drops oil this often; a cleared pack's last foe always drops 1
+var kl_boss_oil_step := 0.5              # mid-boss and guardian: 1 oil when health falls past this share (each phase)
+# Juice (GAME_PLAN §15, brief §4).
+var kl_hitstop := 0.06                   # s: a big hit freezes the keeper and its target only (40-80 ms)
+var kl_hitstop_big := 5.0                # damage that counts as a big hit (Lance, Fireglobe); kills always do
+var kl_trauma_decay := 1.8               # screen-shake trauma lost per second
+
 # Feedback (PROTOTYPE)
-var kl_shake_px := 6.0                   # screen shake at full strength
+var kl_shake_px := 16.0                  # px of shake at full trauma (offset = this x trauma squared; was 6 x linear)
 var kl_kindled_kill_charge := 0.1        # "Kindled kills": lamp charge back per kill
 
 # Lanterns and the dark (PROTOTYPE, owner 2026-11-27)

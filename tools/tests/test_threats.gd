@@ -77,11 +77,11 @@ func _process(_delta: float) -> void:
 			for e in get_tree().get_nodes_in_group("ember"):
 				e.queue_free()
 			# The beam (Keeper's Light): hold to burn along your aim; spends lamp charge, not fuel.
-			player.position = w_snuff.global_position + Vector2(-120, 4)   # in range, beyond the ember magnet
+			player.position = w_snuff.global_position + Vector2(-200, 4)   # in beam range, outside the ember magnet
 			player.lamp_charge = 1.0
 			Inventory.counts["fuel"] = 3
 			player.combat.aim_override = w_snuff.global_position - (player.global_position + Vector2(0, -10))
-			Input.action_press("beam")
+			Input.action_press("skill_3")   # M1a: the Beam is an optional skill, on LB / Q (slot 3) at level 1
 		330:
 			check(player.combat.beaming, "holding the button fires the beam")
 			check(Inventory.get_count("fuel") == 3, "the beam never spends carried fuel")
@@ -110,7 +110,7 @@ func _process(_delta: float) -> void:
 			check(scraps.size() >= 1, "a burned Wickling can also drop scrap (%d)" % scraps.size())
 		365:
 			check(not player.combat.beaming, "an empty hand lamp can't beam: go back to the light")
-			Input.action_release("beam")
+			Input.action_release("skill_3")
 			player.combat.aim_override = Vector2.ZERO
 		462:
 			check(not player.combat.beaming, "releasing the button ends the beam")

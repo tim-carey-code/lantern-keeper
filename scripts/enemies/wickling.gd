@@ -18,6 +18,7 @@ var target: Node2D = null
 var bold := false
 var elite := false              # PROTOTYPE: a bigger, shelled Wickling (hp, shell and the rest live in Foe)
 var _flee_t := 0.0
+var waiting_for_keeper := false   # it was chasing the keeper, who stepped into light: it waits at the edge (counts as hunting, Hunt)
 var _wander_to := Vector2.ZERO
 var _t := 0.0
 var rng := RandomNumberGenerator.new()
@@ -118,6 +119,7 @@ func _process(delta: float) -> void:
 		State.CHASE:
 			if player == null or player.in_lantern_light() or player.global_position.distance_to(global_position) > Tuning.wick_sense * 1.4:
 				state = State.WANDER
+				waiting_for_keeper = player != null and player.in_lantern_light() and player.global_position.distance_to(global_position) <= Tuning.travel_hunt_radius
 			else:
 				goal = player.global_position
 				if player.global_position.distance_to(global_position) < 12.0 + body_radius():
@@ -164,6 +166,8 @@ func _process(delta: float) -> void:
 				if to.length() < 1.0:
 					goal = global_position
 		_:
+			if waiting_for_keeper and (player == null or not player.in_lantern_light() or player.global_position.distance_to(global_position) > Tuning.travel_hunt_radius):
+				waiting_for_keeper = false
 			if (_wander_to - global_position).length() < 8.0 or int(_t * 10) % 40 == 0:
 				_pick_wander()
 			goal = _wander_to
@@ -176,6 +180,8 @@ func _process(delta: float) -> void:
 				if prey:
 					target = prey
 					state = State.SEEK_LANTERN
+	if state != State.WANDER:
+		waiting_for_keeper = false
 	var step := (goal - global_position).limit_length(speed * delta)
 	if is_stunned():
 		step = Vector2.ZERO

@@ -1,6 +1,6 @@
 extends Node
 ## Performance benchmark (not a test). Loads the game, places 30 lanterns and keeps 20 foes alive
-## around the keeper, then measures a few hundred frames and prints a short table.
+## around the keeper, adds 40 in-flight fire bolts, then measures a few hundred frames and prints a short table.
 ## Headless (game logic only):
 ##   godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/bench/bench.tscn
 ## With rendering (adds the whole-frame time and draw calls; silent, on a virtual display):
@@ -148,9 +148,24 @@ func _setup() -> void:
 				main.get_node("Lanterns").add_child(l)
 				placed += 1
 	lanterns = placed
+	# Forty simultaneous bolts at a remote walkable tile; they remain alive and exercise the pool's hot path.
+	var projectile_tile := Vector2i(-1, -1)
+	for y in range(fog.rows):
+		for x in range(fog.cols):
+			var tile := Vector2i(x, y)
+			if fog.solid[fog.idx(tile)] == 0 and fog.tile_center(tile).distance_to(main.start) > 700.0:
+				projectile_tile = tile
+				break
+		if projectile_tile.x >= 0: break
+	var origin := fog.tile_center(projectile_tile)
+	for i in 40:
+		var b = FireBolts.inst.fire_lampfire(origin + Vector2(float(i % 8) * 3.0, float(i / 8) * 3.0), Vector2.RIGHT)
+		b.speed = 0.0
+		b.reach = 1000000.0
+
 	_keep_foes()
 
-## Keeps the foe count steady around the keeper (lantern cores burn some of them away).
+## Keeps the foe count steady around the keeper (lantern cores burn some of them).
 func _keep_foes() -> void:
 	var alive := 0
 	for f in get_tree().get_nodes_in_group("foe"):
@@ -194,7 +209,7 @@ func _report() -> void:
 	for f in get_tree().get_nodes_in_group("foe"):
 		n_foes += 1
 	print("")
-	print("BENCH map %dx%d tiles, %d lanterns, %d foes in play (%d foe nodes incl. nests), %d frames" % [fog.cols, fog.rows, lanterns, foes, n_foes, _proc.size()])
+	print("BENCH map %dx%d tiles, %d lanterns, %d foes in play (%d foe nodes incl. nests), %d projectiles in flight, %d frames" % [fog.cols, fog.rows, lanterns, foes, n_foes, FireBolts.inst.in_flight(), _proc.size()])
 	print("%-26s %9s %9s" % ["", "avg", "worst"])
 	_row("process (all _process)", _proc)
 	_row("physics (all _physics)", _phys)

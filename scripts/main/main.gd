@@ -90,6 +90,20 @@ func _ready() -> void:
 	boss_bar.set_script(load("res://scripts/ui/boss_bar.gd"))
 	boss_bar.name = "BossBar"
 	add_child(boss_bar)
+	# M1a: the keeper's fire in flight, its feedback and damage numbers, all on the fog layer (over the dark).
+	var bolts := FireBolts.new()
+	bolts.name = "FireBolts"
+	$FogLayer.add_child(bolts)
+	var fx := FireFx.new()
+	fx.name = "FireFx"
+	$FogLayer.add_child(fx)
+	var numbers := DamageNumbers.new()
+	numbers.name = "DamageNumbers"
+	$FogLayer.add_child(numbers)
+	var skills_list := CanvasLayer.new()
+	skills_list.set_script(load("res://scripts/ui/skills_list.gd"))
+	skills_list.name = "SkillsList"
+	add_child(skills_list)
 	_place_hollow_prototype()
 	_scatter()
 	_build_terrain()

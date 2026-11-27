@@ -28,7 +28,9 @@ Single-player, no game over. Read `docs/DESIGN.md`, `docs/STORY.md` (owner-revie
 godot --headless --audio-driver Dummy --path . --import
 tools/run_tests.sh                                                                             # every test below; fails on any SCRIPT ERROR too
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_core.tscn   # exit 0 = pass
-godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_combat.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_skills.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_flasks.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_input.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_save.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_slots.tscn
@@ -55,7 +57,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
   --path . res://tools/bench/bench.tscn                                                              # adds frame time and draw calls
 # optional: -- <lanterns> <foes> <frames>   (default 30 20 400)
 ```
-- It places 30 lanterns around the start, keeps 20 foes in play, and prints a table (average and worst
+- It places 30 lanterns around the start, keeps 20 foes in play, maintains 40 fire projectiles in flight, and prints a table (average and worst
   process / physics time, fog step, fog texture update, node count; draw calls when rendering).
 - **Budget:** game logic (process + physics) averages well under 4 ms a frame at 30 lanterns and 20 foes
   (DECISIONS.md). Run it after changing the fog, foes, lanterns, the map or anything that redraws every frame.
