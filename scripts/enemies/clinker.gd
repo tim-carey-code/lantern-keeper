@@ -7,6 +7,8 @@ var _rolling_t := 0.0
 var _roll_dir := Vector2.RIGHT
 var _roll_hit := false
 var _cooldown := 1.0
+var home := Vector2.ZERO        # its post: it sleeps here until you come close, and goes back if you leave
+var awake := false
 
 func _ready() -> void:
 	foe_name = "Clinker"
@@ -27,6 +29,22 @@ func _process(delta: float) -> void:
 		return
 	var p := _player()
 	if p == null:
+		queue_redraw()
+		return
+	if home == Vector2.ZERO:
+		home = global_position
+	var from_home: float = p.global_position.distance_to(home)
+	if not awake:
+		if from_home > Tuning.kl_clinker_wake_radius:
+			queue_redraw()
+			return   # asleep on its post
+		awake = true
+	elif from_home > Tuning.kl_clinker_leash and _rolling_t <= 0.0 and _roll_t <= 0.0:
+		# You left: it trundles back to its post and settles (its shell regrows on its own).
+		var back := home - global_position
+		global_position += back.limit_length(Tuning.kl_clinker_speed * delta)
+		if back.length() < 4.0:
+			awake = false
 		queue_redraw()
 		return
 	var to_player := p.global_position - global_position
