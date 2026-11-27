@@ -92,4 +92,16 @@ var warmth_drain_per_sec := 30.0    # while a Wickling touches the keeper
 var warmth_regen_per_sec := 20.0    # in lantern light
 var faint_drop := 0.5               # share of carried resources dropped on fainting
 
+# WayLamps (PROTOTYPE): kindle one and its whole region is held
+var waylamp_fuel_need := 15              # carried fuel to feed it
+var waylamp_kindle_sec := 15.0           # how long it must be kept clear of the dark
+var waylamp_radius := 420.0
+var waylamp_swarm := 4                   # bold Wicklings drawn to a kindling WayLamp
+var waylamp_clear_radius := 160.0        # px: no building this close, so no lantern's bright core covers it
+var waylamp_sap_per_wick := 1.5          # seconds of kindling undone per second, per Wickling on it
+
+# Light repels Wicklings; only a dying lantern can be drained (PROTOTYPE)
+var dying_frac := 0.25                   # under this share of its tank a lantern is "dying"
+var wick_repel_speed := 160.0            # px/s a Wickling is pushed out of healthy light
+
 var ui_open := false                    # true while a menu has focus (player stops)

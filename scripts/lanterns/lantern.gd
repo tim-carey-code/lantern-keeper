@@ -130,6 +130,18 @@ func fuel_frac() -> float:
 		return 1.0
 	return clampf(fuel / max_fuel(), 0.0, 1.0)
 
+## Held by its region's WayLamp: it never burns down (PROTOTYPE).
+func is_held() -> bool:
+	if not needs_fuel():
+		return false
+	var fog := _fog()
+	return fog != null and Progress.is_settled(fog.region_at(global_position))
+
+## Under a quarter of its tank and not held: healthy light no longer protects it,
+## and Wicklings can drain it (PROTOTYPE).
+func is_dying() -> bool:
+	return needs_fuel() and is_lit() and not is_held() and fuel_frac() < Tuning.dying_frac
+
 # --- Wind --------------------------------------------------------------------
 
 func _fog() -> FogGrid:
@@ -167,6 +179,8 @@ func in_ridge_wind() -> bool:
 	return fog != null and fog.region_at(global_position) == FogGrid.R_RIDGE and not is_sheltered_from(PREVAILING)
 
 func burn_rate() -> float:
+	if is_held():
+		return 0.0
 	var f := 1.0
 	if in_ridge_wind():
 		f *= Tuning.ridge_burn_mult
@@ -249,6 +263,8 @@ func _process(delta: float) -> void:
 	if r > 0.0:
 		light.texture_scale = LightTex.scale_for(r)
 		var flicker := 0.15 if (in_gust() or in_ridge_wind()) else 0.06
+		if is_dying():
+			flicker = 0.35   # a dying lantern sputters
 		var base := 0.6 if kind == "reservoir" else 0.85
 		light.energy = base + sin(Time.get_ticks_msec() * 0.011 + get_instance_id() % 97) * flicker
 	if beam_light:
@@ -304,8 +320,16 @@ func _draw() -> void:
 		var wx := -18.0 + wt * 10.0
 		draw_line(Vector2(wx, -58), Vector2(wx + 10, -58), Color(0.75, 0.84, 0.92, 0.9), 2.0)
 		draw_line(Vector2(wx + 4, -53), Vector2(wx + 16, -53), Color(0.75, 0.84, 0.92, 0.7), 2.0)
+	if is_held():
+		# Held by the WayLamp: a small gold diamond instead of a fuel bar.
+		draw_colored_polygon(PackedVector2Array([Vector2(0, 17), Vector2(4, 21), Vector2(0, 25), Vector2(-4, 21)]), Color(1.0, 0.82, 0.48, 0.9))
+		return
 	var bar := Color(1.0, 0.7, 0.3)
-	if (in_gust() or in_ridge_wind()) and int(Time.get_ticks_msec() / 250) % 2 == 0:
+	if is_dying():
+		bar = Color(1.0, 0.35, 0.25)   # dying: the dark can reach it now
+	elif (in_gust() or in_ridge_wind()) and int(Time.get_ticks_msec() / 250) % 2 == 0:
 		bar = Color(1.0, 0.35, 0.25)   # flashing: burning fast in the wind
 	draw_rect(Rect2(-12, 19, 24, 4), Color(0, 0, 0, 0.7))
 	draw_rect(Rect2(-12, 19, 24 * fuel_frac(), 4), bar)
+	# The quarter mark: below it, the lantern is dying.
+	draw_rect(Rect2(-12 + 24 * Tuning.dying_frac, 18, 1, 6), Color(0.95, 0.95, 0.88, 0.8))

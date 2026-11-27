@@ -133,10 +133,14 @@ func step(dt: float) -> void:
 		if r <= 0.0:
 			continue
 		var c: Vector2 = src.global_position
+		# A WayLamp holds back the fog of its own region only (it must not light the next one for free).
+		var only: int = (src as WayLamp).region_id if src is WayLamp else 0
 		var t0 := tile_of(c - Vector2(r, r))
 		var t1 := tile_of(c + Vector2(r, r))
 		for y in range(maxi(t0.y, 0), mini(t1.y, rows - 1) + 1):
 			for x in range(maxi(t0.x, 0), mini(t1.x, cols - 1) + 1):
+				if only > 0 and region[y * cols + x] != only:
+					continue
 				var d := tile_center(Vector2i(x, y)).distance_to(c)
 				if d < r:
 					# Strong plateau in the middle, soft edge near the rim.
@@ -204,6 +208,9 @@ func _update_mirrors() -> void:
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if l.kind != "mirror" and l.is_lit():
 			burning.append(l)
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.is_lit():
+			burning.append(w)
 	for pass_i in mirrors.size() + 1:
 		var changed := false
 		for m in mirrors:

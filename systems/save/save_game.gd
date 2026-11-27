@@ -44,6 +44,8 @@ func save(main: Node) -> bool:
 			"selected": Progress.selected,
 			"regions_seen": Progress.regions_seen.keys(),
 			"notes_read": Progress.notes_read.keys(),
+			"settled": Progress.settled.keys(),
+			"waylamp_fuel": Progress.waylamp_fuel.duplicate(),
 		},
 		"lanterns": [],
 		"resources": [],
@@ -114,6 +116,13 @@ func load_into(main: Node) -> bool:
 	Progress.notes_read = {}
 	for n in p["notes_read"]:
 		Progress.notes_read[n] = true
+	Progress.settled = {}
+	for r in p.get("settled", []):
+		Progress.settled[int(r)] = true
+	Progress.waylamp_fuel = {}
+	var wf: Dictionary = p.get("waylamp_fuel", {})
+	for k in wf:
+		Progress.waylamp_fuel[str(k)] = int(wf[k])
 	# Lanterns: replace the generated ones.
 	var lroot: Node = main.get_node("Lanterns")
 	for c in lroot.get_children():

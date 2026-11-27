@@ -149,6 +149,10 @@ func _connect_events() -> void:
 	Progress.region_revealed.connect(func(n: String) -> void:
 		banner.text = n
 		_banner_t = 4.0)
+	Progress.region_settled.connect(func(_r: int, n: String) -> void:
+		banner.text = "%s is held" % n
+		_banner_t = 5.0
+		_show_toast("The WayLamp caught. Its lanterns won't burn down, and nothing comes here now.", 6.0))
 	Progress.landmark_spotted.connect(func(title: String) -> void:
 		_show_toast("Something catches the light: %s" % title, 4.0))
 	Progress.lantern_unlocked.connect(func(k: String) -> void:
@@ -172,7 +176,7 @@ func status_items() -> Array:
 	if wind and wind.state != Wind.State.CALM:
 		var hit := 0
 		for l in get_tree().get_nodes_in_group("lantern"):
-			if l.is_lit() and l.needs_fuel() and not l.wind_proof() and not l.is_sheltered_from(wind.direction):
+			if l.is_lit() and l.needs_fuel() and not l.is_held() and not l.wind_proof() and not l.is_sheltered_from(wind.direction):
 				hit += 1
 		if hit > 0:
 			var what := "Gust" if wind.state == Wind.State.GUST else "Wind rising"
@@ -191,7 +195,10 @@ func status_items() -> Array:
 		if cold > 0:
 			out.append(["icon_cold", "%d lantern%s gone cold" % [cold, "" if cold == 1 else "s"], UiStyle.WARN])
 		if low > 0:
-			out.append(["icon_fuel", "%d lantern%s low on fuel" % [low, "" if low == 1 else "s"], UiStyle.GOLD])
+			out.append(["icon_fuel", "%d lantern%s dying (under a quarter)" % [low, "" if low == 1 else "s"], UiStyle.WARN])
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.kindling:
+			out.append(["icon_goal", "Kindling: %ds. Keep the dark off it" % ceili(w.seconds_left()), UiStyle.GOLD])
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
 		if player.warmth < Tuning.warmth_max * 0.35:

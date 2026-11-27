@@ -8,6 +8,7 @@ const REACH := 52.0   # px to interact with a lantern or resource
 var lamp: PointLight2D
 var lamp_charge := 1.0          # 0 = ember, 1 = full hand lamp
 var fuel_poured := 0.0
+var last_feed := ""          # what happened the last time you fed a WayLamp (for prompts and tests)
 var warmth := 100.0            # PROTOTYPE: the keeper's "health". Never kills; fainting sends you home.
 var warding := false
 var _ward_grow := 0.0          # 0..1, how far the glow has swelled
@@ -44,6 +45,9 @@ func get_light_radius() -> float:
 	return maxf(r, Tuning.ward_radius * _ward_grow)   # the ward also pushes the fog back
 
 func in_lantern_light() -> bool:
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.is_lit() and w.global_position.distance_to(global_position) < w.get_light_radius() * 0.85:
+			return true
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if l.is_lit() and l.global_position.distance_to(global_position) < l.get_light_radius() * 0.85:
 			return true
@@ -198,8 +202,13 @@ func faint() -> void:
 func nearest_target() -> Node2D:
 	var best: Node2D = null
 	var best_d := REACH
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		var dw: float = w.global_position.distance_to(global_position)
+		if dw < maxf(best_d, 64.0):
+			best = w
+			best_d = dw
 	for m in get_tree().get_nodes_in_group("landmark"):
-		if not m.is_revealed():
+		if not (m is Landmark) or not m.is_revealed():
 			continue
 		var d: float = m.global_position.distance_to(global_position)
 		if d < best_d:
@@ -234,7 +243,9 @@ func is_gathering() -> bool:
 
 func begin_interact() -> void:
 	var t := nearest_target()
-	if t is Landmark:
+	if t is WayLamp:
+		last_feed = t.feed()
+	elif t is Landmark:
 		t.activate()
 	elif t is Lantern:
 		if t.kind == "mirror":
@@ -296,6 +307,9 @@ func place_block_reason(p: Vector2) -> String:
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if l.global_position.distance_to(p) < FogGrid.TILE * 1.5:
 			return "too close to a lantern"
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.global_position.distance_to(p) < Tuning.waylamp_clear_radius:
+			return "too close to the WayLamp"
 	var k := Progress.selected
 	if Inventory.get_count("scrap") < Lantern.cost(k) or Inventory.get_count("glass") < Lantern.glass_cost(k):
 		return "needs " + Lantern.cost_text(k)

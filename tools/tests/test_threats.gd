@@ -53,6 +53,10 @@ func _process(_delta: float) -> void:
 				w.queue_free()
 		60:
 			# One Wickling at the rim of the starting lantern's light, one dropped into its bright core.
+			# Only a dying lantern (under a quarter) can be drained, so let this one burn low first.
+			lamp.fuel = Tuning.lantern_max_fuel * Tuning.dying_frac - 1.0
+			Tuning.wick_drain_per_sec = 2.0   # drain slowly, so it is still lit (and dying) for the ward checks
+			check(lamp.is_dying(), "a lantern under a quarter of its tank is dying")
 			var r: float = lamp.get_light_radius()
 			w_snuff = spawner.spawn_at(lamp.global_position + Vector2(0, r * 0.85))
 			w_snuff.target = lamp
@@ -62,8 +66,13 @@ func _process(_delta: float) -> void:
 			player.position = main.start + Vector2(-500, 0)   # far away, in the dark
 		300:
 			check(lamp.fuel < lamp_fuel_before - 5.0, "a Wickling at the rim drains the lantern (%.0f -> %.0f)" % [lamp_fuel_before, lamp.fuel])
+			Tuning.wick_drain_per_sec = 5.0
 			check(not is_instance_valid(w_core), "a Wickling in a lantern's bright core burns away")
 			check(is_instance_valid(w_snuff) and w_snuff.light_level_at(w_snuff.global_position) < Tuning.wick_core, "Wicklings keep to the rim, out of the core")
+			# (A dying lantern's light is small, so the core Wickling's ember lies close by: clear it,
+			# so only the ward's kill is counted below.)
+			for e in get_tree().get_nodes_in_group("ember"):
+				e.queue_free()
 			# Warding glow: hold to burn and push back Wicklings; spends lamp charge, not fuel.
 			player.position = w_snuff.global_position + Vector2(-6, 4)   # point blank
 			player.lamp_charge = 1.0
@@ -86,7 +95,7 @@ func _process(_delta: float) -> void:
 			if best:
 				player.position = best.global_position
 		360:
-			check(Inventory.get_count("fuel") == 3 + Tuning.ember_fuel, "collecting an ember gives fuel")
+			check(Inventory.get_count("fuel") == 3 + Tuning.ember_fuel, "collecting an ember gives fuel (%d)" % Inventory.get_count("fuel"))
 			# Scrap drops: force the chance to 100% and burn one more.
 			Tuning.wick_scrap_chance = 1.0
 			var extra = spawner.spawn_at(player.global_position + Vector2(200, 0))
@@ -104,7 +113,8 @@ func _process(_delta: float) -> void:
 			Tuning.wick_scrap_chance = 0.35
 			for e in get_tree().get_nodes_in_group("ember"):
 				e.queue_free()   # leftover drops would be magnet-collected after waking
-			# Chase and chill in the dark.
+			# Chase and chill in the dark. (Top the old lantern up so there is a light to wake by.)
+			lamp.fuel = Tuning.lantern_max_fuel
 			player.position = main.start + Vector2(-480, 0)
 			player.warmth = Tuning.warmth_max
 			w_chase = spawner.spawn_at(player.global_position + Vector2(10, 0))

@@ -4,7 +4,7 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter. The last frame is the one to look at.
+## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held. The last frame is the one to look at.
 
 var main: Node
 var frame := 0
@@ -81,6 +81,26 @@ func _process(_delta: float) -> void:
 				_lantern(c + Vector2(40, 96))
 				Progress.unlock("hooded")
 				Progress.unlock("mirror")
+			"waylamp_kindle", "waylamp_held":
+				var wl: WayLamp = null
+				for w in get_tree().get_nodes_in_group("waylamp"):
+					if w.id == "hollow":
+						wl = w
+				Progress.notes_read["waylamp_hollow"] = true
+				_lantern(wl.global_position + Vector2(-176, 30))
+				if view == "waylamp_held":
+					_lantern(wl.global_position + Vector2(-300, 220))
+					_lantern(wl.global_position + Vector2(-60, 330))
+					main.player.position = wl.global_position + Vector2(-50, 70)
+				else:
+					main.player.position = wl.global_position + Vector2(46, 44)
+					Progress.waylamp_fuel["hollow"] = Tuning.waylamp_fuel_need
+					wl.start_kindling()
+					wl.kindle_t = Tuning.waylamp_kindle_sec * 0.45
+					var k := 0
+					for w in get_tree().get_nodes_in_group("wickling"):
+						w.global_position = wl.global_position + Vector2.from_angle(0.6 + k * 1.7) * (40.0 + 34.0 * k)
+						k += 1
 			"map":
 				_lantern(s + Vector2(-160, 64))
 				for i in 60:
@@ -95,7 +115,11 @@ func _process(_delta: float) -> void:
 				main.player.position = s + Vector2(-20, 30)
 		for i in 30:
 			main.fog.step(0.1)   # let the light push the fog back before the shot
-	if frame >= 30 and view == "wick":
+	if frame == 4 and view == "waylamp_held":
+		Progress.settle(FogGrid.R_HOLLOW, "The Hollow")   # after the Hollow's own banner
+		for i in 30:
+			main.fog.step(0.1)
+	if frame >= 30 and view in ["wick", "waylamp_kindle"]:
 		main.player.update_ward(1.0 / 30.0, true)
 	if frame == 6 and view == "map":
 		main.get_node("MapScreen").toggle()

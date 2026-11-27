@@ -20,6 +20,16 @@ func _process(_delta: float) -> void:
 ## The lines shown over the current target: [[button, text], ...]. Public for tests.
 func lines_for(t: Node) -> Array:
 	var player = _player()
+	if t is WayLamp:
+		if not Progress.notes_read.has("waylamp_" + t.id):
+			return [[InputHint.key("interact"), "Look closer"]]
+		if t.is_lit():
+			return [["", "WayLamp: this region is held"]]
+		if t.kindling:
+			return [["", "Kindling %ds: keep the dark off it" % ceili(t.seconds_left())]]
+		if not t.is_reached():
+			return [["", "WayLamp: your own light must reach it first"]]
+		return [[InputHint.key("interact"), "Feed fuel  %d / %d" % [t.fuel_units(), t.needs()]]]
 	if t is Landmark:
 		return [[InputHint.key("interact"), "Read again" if t.is_read() else "Read"]]
 	if t is Lantern and t.kind == "mirror":
@@ -47,7 +57,7 @@ func _draw() -> void:
 		return
 	var t = player.nearest_target()
 	if t:
-		var top: float = -64.0 if t is Lantern else (-74.0 if (t is Landmark and t.look in ["pumphouse", "workshop", "station"]) else -48.0)
+		var top: float = -64.0 if t is Lantern else (-104.0 if t is WayLamp else (-74.0 if (t is Landmark and t.look in ["pumphouse", "workshop", "station"]) else -48.0))
 		_draw_lines(t.global_position + Vector2(0, top), lines_for(t))
 		return
 	# Nothing to use: say what building here would do.

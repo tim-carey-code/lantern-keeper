@@ -151,6 +151,9 @@ func _notes_text() -> String:
 	for m in get_tree().get_nodes_in_group("landmark"):
 		if Progress.notes_read.has(m.id):
 			parts.append("%s\n%s" % [m.title, m.text])
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if Progress.notes_read.has("waylamp_" + w.id):
+			parts.append("%s\n%s" % [w.title, w.text])
 	if parts.is_empty():
 		return "No notes yet. Look closer at what your light finds."
 	return "\n\n".join(parts)

@@ -122,6 +122,10 @@ func render() -> void:
 			elif l.fuel_frac() < 0.25:
 				c = Color(1.0, 0.95, 0.4)
 			img.set_pixel(t.x, t.y, c)
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		var wt := fog.tile_of(w.global_position)
+		if fog.in_bounds(wt) and fog.remembered[fog.idx(wt)] == 1:
+			img.set_pixel(wt.x, wt.y, Color(1.0, 0.95, 0.6) if w.is_lit() else Color(0.75, 0.5, 0.25))
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
 		var pt := fog.tile_of(player.global_position)

@@ -66,8 +66,15 @@ func _ready() -> void:
 		SaveGame.skip_load_once = false
 	else:
 		loaded_save = SaveGame.load_into(self)
+	Progress.region_settled.connect(_on_region_settled)
 	if not loaded_save and not Story.skip_opening:
 		$Opening.start.call_deferred()
+
+## A WayLamp caught: every lantern in its region flares back to a full tank and is held from now on.
+func _on_region_settled(region_id: int, _name: String) -> void:
+	for l in get_tree().get_nodes_in_group("lantern"):
+		if l.needs_fuel() and fog.region_at(l.global_position) == region_id:
+			l.fuel = l.max_fuel()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -184,6 +191,7 @@ func _build_rock_collision() -> void:
 
 func _place_landmarks() -> void:
 	_place_ridge_landmarks()
+	_place_waylamps()
 	_add_landmark("letter", "The letter on the hut door", "letter", start + Vector2(0, -40),
 		"The letter that brought you here. The ink has run a little.\nLight that first. Then follow my marks. - H.")
 	_add_landmark("rack", "Lantern rack", "rack", start + Vector2(-80, -40),
@@ -215,6 +223,37 @@ func _place_ridge_landmarks() -> void:
 		"Old steps, worn smooth, going down.\nBelow, the fog does not move, even in the wind.")
 	_add_landmark("lens", "A broken lens", "lens", _ridge_spot(Vector2i(30, 9)),
 		"A great curved lens, split down the middle. Scratched into the frame:\nTHE WICK REMEMBERS EVERY FLAME.\nBelow, in a newer hand: Then it will remember ours. - H.")
+
+## PROTOTYPE: one old WayLamp per region (texts are drafts until the owner approves STORY.md).
+func _place_waylamps() -> void:
+	_add_waylamp("hollow", FogGrid.R_HOLLOW, Vector2i(37, 68), "The Hollow's WayLamp",
+		"An old WayLamp on a stone plinth, cold. Its cage could hold a fire for a whole valley.\nCut into the plinth: KEPT, THE LAMPS ARE KEPT.")
+	_add_waylamp("marsh", FogGrid.R_MARSH, Vector2i(100, 70), "The Reedmarsh's WayLamp",
+		"A WayLamp on the pumphouse island, its base green with damp.\nA rag tied to the cage: Feed it and stay with it. It draws them. - H.")
+	_add_waylamp("ridge", FogGrid.R_RIDGE, Vector2i(55, 15), "The Ridge's WayLamp",
+		"A WayLamp by the signal station, braced against the wind.\nScratched on the cage: One keeper cannot hold them all. They never meant us to.")
+
+func _add_waylamp(id: String, region_id: int, want: Vector2i, title: String, text: String) -> WayLamp:
+	var w := WayLamp.new()
+	w.id = id
+	w.region_id = region_id
+	w.title = title
+	w.text = text
+	w.position = _region_spot(want, region_id)
+	_taken.append(w.position)
+	$Landmarks.add_child(w)
+	return w
+
+## The nearest open, firm tile of a region to a wanted spot.
+func _region_spot(want: Vector2i, region_id: int) -> Vector2:
+	for r in 8:
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				var t := want + Vector2i(dx, dy)
+				var ter := fog.terrain_of(t)
+				if (ter == FogGrid.T_GROUND or ter == FogGrid.T_BOARDWALK) and fog.region[fog.idx(t)] == region_id:
+					return fog.tile_center(t)
+	return fog.tile_center(want)
 
 ## The nearest open Ridge tile to a wanted spot (outcrops are random).
 func _ridge_spot(want: Vector2i) -> Vector2:

@@ -19,7 +19,7 @@ func needs_attention() -> Array:
 	var cold := []
 	var low := []
 	for l in get_tree().get_nodes_in_group("lantern"):
-		if not l.needs_fuel():
+		if not l.needs_fuel() or l.is_held():
 			continue
 		if not l.is_lit():
 			cold.append(l)

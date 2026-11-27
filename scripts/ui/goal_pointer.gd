@@ -32,6 +32,10 @@ func target_pos() -> Variant:
 			return main.fog.tile_center(Vector2i(44, 68))
 		"marsh_entry":
 			return main.fog.tile_center(Vector2i(54, 68))
+	if key.begins_with("waylamp_"):
+		for w in get_tree().get_nodes_in_group("waylamp"):
+			if "waylamp_" + w.id == key:
+				return w.global_position
 	for m in get_tree().get_nodes_in_group("landmark"):
 		if m.id == key:
 			return m.global_position

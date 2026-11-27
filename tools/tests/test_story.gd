@@ -69,7 +69,16 @@ func _process(_delta: float) -> void:
 			Story.note_built("post")
 			_read("stone_way")
 			Story.update(main)
-			check(Story.current == "enter_marsh", "after building a lamp and reading the stone: go into the marsh (%s)" % Story.current)
+			check(Story.current == "kindle_hollow", "after building a lamp and reading the stone: kindle the Hollow's WayLamp (%s)" % Story.current)
+			var wl: Node2D = null
+			for w in get_tree().get_nodes_in_group("waylamp"):
+				if w.id == "hollow":
+					wl = w
+			check(wl != null and ptr.target_pos() == wl.global_position, "the pointer points at the Hollow's WayLamp")
+			Progress.settle(FogGrid.R_HOLLOW, "The Hollow")
+			Story.update(main)
+			check(Story.done.has("kindle_hollow") and Story.entries.has(21), "kindling it completes the goal and writes 'The first WayLamp'")
+			check(Story.current == "enter_marsh", "next: go into the marsh (%s)" % Story.current)
 			check(ptr.target_pos() != null, "the pointer is still on in the Hollow")
 			# Walk into the marsh.
 			main.player.global_position = main.fog.tile_center(Vector2i(60, 68))
