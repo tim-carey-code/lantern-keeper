@@ -4,7 +4,8 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held, upgrade, kl_combat. The last frame is the one to look at.
+## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held, upgrade, kl_combat,
+## kl_level (the HUD's level and wick row, then a level-up's card screen). The last frame is the one to look at.
 ## README views (staged, pop-ups hidden; rendered by tools/capture/readme_shots.sh): readme_hollow, readme_ward,
 ## readme_marsh, readme_ridge, readme_map, readme_lanterns, readme_relight (an animation: use every frame).
 
@@ -146,6 +147,12 @@ func _process(_delta: float) -> void:
 			main.fog.step(0.1)
 	if frame >= 30 and view in ["wick", "waylamp_kindle"]:
 		main.player.update_ward(1.0 / 30.0, true)
+	if view == "kl_level" and frame == 3:
+		Progress.level = 6
+		Progress.wick = 0
+		Progress.add_wick(31)   # Lv 6, 31/56
+	if view == "kl_level" and frame == 20:
+		Progress.add_wick(40)   # to Lv 7: the card screen
 	if view == "kl_combat" and frame == 8:
 		Input.action_press("beam")
 	if view == "kl_combat" and frame == 36:

@@ -10,11 +10,17 @@ const OPTIONS := [
 	{"id":"heavy_flare", "title":"Heavy flare", "body":"Your burst throws foes farther and stuns them."},
 	{"id":"deep_tank", "title":"Deep tank", "body":"Your beam costs 20% less lamp charge."},
 	{"id":"kindled_kills", "title":"Kindled kills", "body":"Every kill gives back 10% of your lamp charge."},
+	# Balance pass (2026-11-27): one more from each line of PLAN §5.2, so every Hollow offer has three cards.
+	{"id":"hot_core", "title":"Hot core", "body":"Your lanterns' cores burn twice as hard."},
+	{"id":"steady_hand", "title":"Steady hand", "body":"You walk at 90% speed while beaming."},
+	{"id":"lee", "title":"Lee", "body":"A Wickling's touch chills you 25% less."},
+	{"id":"spill", "title":"Spill", "body":"Burst cooldown 2.2 s; each foe it hits gives back 3% lamp charge."},
 ]
 
 var root: Control
 var cards: HBoxContainer
 var note: Label
+var level_label: Label
 var _queue := 0
 var _offer: Array[Dictionary] = []
 
@@ -38,6 +44,9 @@ func _ready() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 14)
 	frame.add_child(col)
+	level_label = UiStyle.label(30, UiStyle.CREAM)
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(level_label)
 	var title := UiStyle.label(40, UiStyle.GOLD)
 	title.text = "Trim the wick"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -52,6 +61,7 @@ func _ready() -> void:
 
 func _on_level_up(_new_level: int) -> void:
 	_queue += 1
+	Sfx.play_ui("unlock", -4.0)
 	call_deferred("_present_next")
 
 func _present_next() -> void:
@@ -81,10 +91,21 @@ func _present_next() -> void:
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.pressed.connect(_choose.bind(option.id))
 		cards.add_child(button)
+	# Which level this card is for (with several queued, count up to the current one).
+	level_label.text = "Level %d" % (Progress.level - _queue)
 	root.visible = true
+	_flash()
 	Tuning.ui_open = true
 	get_tree().paused = true
 	(cards.get_child(0) as Button).grab_focus()
+
+## A short warm flash as the screen opens.
+func _flash() -> void:
+	root.modulate = Color(1.8, 1.5, 1.0, 0.0)
+	var tw := create_tween()
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_property(root, "modulate", Color(1.8, 1.5, 1.0, 1.0), 0.08)
+	tw.tween_property(root, "modulate", Color.WHITE, 0.35)
 
 func _input(event: InputEvent) -> void:
 	if not root.visible or not event.is_action_pressed("interact"):

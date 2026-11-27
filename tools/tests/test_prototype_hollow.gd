@@ -34,9 +34,9 @@ func _process(_delta: float) -> void:
 			var find := get_tree().get_nodes_in_group("landmark").filter(func(m): return m.id == "crook_post")
 			check(find.size() == 1, "the Post Lamp find is placed north of the hut")
 			check(Story.goal_target("build_post") == "crook_post", "the goal pointer leads to the Hollow find")
-			Progress.add_wick(15)
+			Progress.add_wick(Progress.wick_for_level(1))
 		3:
-			check(Progress.level == 2 and Progress.pending_level_ups == 1, "15 wick raises the keeper to level 2")
+			check(Progress.level == 2 and Progress.pending_level_ups == 1, "the first level's wick raises the keeper to level 2")
 			check(get_tree().paused and level_ui.root.visible, "level-up choice pauses the world")
 			var choice: Button = level_ui.cards.get_child(0)
 			var chosen_id: String = level_ui._offer[0].id

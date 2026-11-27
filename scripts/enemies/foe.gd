@@ -18,6 +18,8 @@ var shell_regrows := false      # an unbroken shell grows back once it has been 
 var foe_id := ""                # fixed foes (the Clinker, nests): marked in Progress.cleared when burned away
 var pack_id := ""               # fixed pack membership, used to keep a beaten pack beaten
 var wick_value := 1
+var summoned := false           # hatched by a nest or called by a guardian: worth Tuning.kl_wick_summoned
+var wick_key := ""              # pack members: wick is paid once per member, even if a faint brings the pack back
 var knock_weight := 1.0         # how far the burst throws it (1 = the full distance)
 var _knock_v := Vector2.ZERO
 var _knock_t := 0.0
@@ -188,7 +190,7 @@ func _on_shell_cracked() -> void:
 
 ## Thrown back (by the burst): moves over a short moment instead of teleporting.
 func knock(v: Vector2) -> void:
-	var boost := 1.5 if Progress.has_combat_upgrade("heavy_flare") else 1.0
+	var boost := Tuning.kl_heavy_flare_knock_mult if Progress.has_combat_upgrade("heavy_flare") else 1.0
 	_knock_v = v * knock_weight * boost / 0.2
 	_knock_t = 0.2
 
@@ -232,6 +234,8 @@ func tick_foe(delta: float) -> void:
 			var radius := LightSense.radius[i]
 			if radius > 0.0 and global_position.distance_to(LightSense.pos[i]) < radius * (1.0 - Tuning.wick_core):
 				var core_dps := Tuning.kl_nest_core_dps if self is WickNest else Tuning.wick_light_burn
+				if Progress.has_combat_upgrade("hot_core"):
+					core_dps *= Tuning.kl_hot_core_mult
 				hurt(core_dps * delta, false, "core")
 				break
 	if _dead or is_queued_for_deletion():
@@ -274,7 +278,7 @@ func _die() -> void:
 			queue_free()
 			return
 		Progress.cleared[foe_id] = true
-	Progress.add_wick(wick_value)
+	Progress.add_wick(wick_earned())
 	if Progress.has_combat_upgrade("catching"):
 		var closest: Foe = null
 		var closest_d := 61.0
@@ -289,6 +293,16 @@ func _die() -> void:
 			closest.hurt(Tuning.kl_catch_damage, false, "burn")
 	_drop()
 	queue_free()
+
+## Wick this kill pays (balance pass): summoned Wicklings pay little or nothing, and a pack member pays once.
+func wick_earned() -> int:
+	if summoned:
+		return Tuning.kl_wick_summoned
+	if wick_key != "":
+		if Progress.cleared.has(wick_key):
+			return 0
+		Progress.cleared[wick_key] = true
+	return wick_value
 
 ## What it leaves: by default one ember worth a little fuel, and sometimes a bit of scrap.
 func _drop() -> void:

@@ -56,6 +56,7 @@ func _process_bowl(delta: float, player: Node2D) -> void:
 		for i in Tuning.kl_ashbrood_wave_count:
 			var w := Wickling.new()
 			w.bold = true
+			w.summoned = true
 			w.position = global_position + Vector2.from_angle(i * TAU / 3.0) * 52.0
 			get_parent().add_child(w)
 

@@ -136,7 +136,7 @@ var kl_shell_regrow_wait := 3.0
 var kl_shell_regrow_per_sec := 1.0
 # Hollow enemies (prototype placeholders).
 var kl_spitwick_hp := 4.0
-var kl_spitwick_wick := 2
+var kl_spitwick_wick := 2              # wick: 4 hp and ranged (balance pass 2026-11-27: kept)
 var kl_spit_keep_min := 190.0
 var kl_spit_keep_max := 250.0
 var kl_spit_keep_speed := 55.0
@@ -162,10 +162,10 @@ var kl_clinker_wake_radius := 224.0     # px from its post: it sleeps until you 
 var kl_clinker_leash := 480.0           # px from its post: past this it goes home
 var kl_clinker_stop_range := 65.0
 var kl_clinker_roll_cooldown := 3.5
-var kl_clinker_wick := 15
+var kl_clinker_wick := 20               # was 15: 36 hp of shell and body, a roll; about 6 s of beam (balance pass)
 var kl_nest_hp := 12.0
 var kl_nest_core_dps := 2.0
-var kl_nest_wick := 8
+var kl_nest_wick := 5                   # was 8: 12 nests made a third of the Hollow's wick (balance pass)
 var kl_nest_wake_radius := 320.0
 var kl_nest_hatch_count := 3
 var kl_nest_hatch_sec := 10.0
@@ -181,18 +181,36 @@ var kl_ashbrood_dive_period := 6.0
 var kl_ashbrood_dive_tell := 0.7
 var kl_ashbrood_dive_warmth := 25.0
 var kl_ashbrood_sit_sec := 4.0
-var kl_ashbrood_wick := 40
+var kl_ashbrood_wick := 50              # was 40: two phases of 40 hp + 12 shell (balance pass)
 var kl_ashbrood_puff_charge := 0.1
 var kl_ashbrood_wave_count := 3
 var kl_ashbrood_dive_dist := 200.0
 var kl_ashbrood_roll_radius := 36.0
 var kl_ashbrood_hit_radius := 48.0
 var kl_focus_shell_mult := 1.3
+var kl_long_throw_len := 310.0          # "Long throw": beam length (was hard-coded)
+var kl_deep_tank_mult := 0.8            # "Deep tank": beam cost x (was hard-coded)
+var kl_heavy_flare_knock_mult := 1.5    # "Heavy flare": burst throws this much farther (was hard-coded)
+var kl_heavy_flare_stun := 0.6          # ...and stuns this long (s) (was hard-coded)
+# Four more upgrades from PLAN §5.2 (balance pass: 12 in all, so every Hollow offer has three cards)
+var kl_steady_hand_walk := 0.9          # "Steady hand": walk speed while beaming
+var kl_lee_mult := 0.75                 # "Lee": a Wickling's touch chills this much
+var kl_hot_core_mult := 2.0             # "Hot core": your lanterns' cores burn this much harder
+var kl_spill_cd := 2.2                  # "Spill": burst cooldown (s)
+var kl_spill_charge := 0.03             # ...and each thing the burst hits gives back this much charge
 var kl_linger_duration := 2.0
 var kl_linger_dps := 2.0
 var kl_catch_damage := 2.0
-var kl_wick_first_level := 15
-var kl_wick_level_step := 10
+# Wick and levels (balance pass 2026-11-27, DESIGN §9). Wick to go from level L to L+1 is
+# round(kl_wick_base * L ^ kl_wick_exp): 6, 14, 24, 34, 45, 56, 68, 81, 93... (was flat: 15, then +10 a level).
+# A full Hollow clear gives 271 wick: level 2 after the first pack or two, level 3 before the Clinker, level 8 at the end.
+var kl_wick_base := 6.0
+var kl_wick_exp := 1.25
+var kl_level_cap := 12                  # v1 cap (PLAN §5.1): never more level-ups than upgrades to pick
+var kl_wick_kindle := 30                # kindling a WayLamp (was hard-coded in Progress.settle)
+var kl_wickling_wick := 1               # 3 hp, half a second of beam
+var kl_elite_wick := 3                  # was 1 (unset): 9 hp behind a 4-point shell, about 2 s of beam (PLAN §5.1 says 3)
+var kl_wick_summoned := 0               # was 1: Wicklings hatched by a nest or called by a guardian (they never end)
 var kl_wick_drop_radius := 28.0
 var kl_pack_wake_radius := 320.0
 

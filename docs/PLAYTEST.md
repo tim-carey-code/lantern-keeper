@@ -4,11 +4,13 @@
 
 Open the `proto/kl-hollow` worktree in Godot and press F5. This build uses a separate prototype save, so your regular save remains untouched. Automated checks use the Dummy audio driver; normal play keeps audio enabled.
 
-The north/east exits are closed. Start by relighting the hut lantern. Find the red pulse north of the hut, fight the Clinker for the Post Lamp, and burn out the nests with a built lantern's bright core. The blue glints mark two guarded upgrades. Feed the Hollow WayLamp 15 fuel to wake the Ashbrood; break its shell with the beam, then learn its second phase. The level-up screen pauses play and offers three of eight upgrades.
+The north/east exits are closed. Start by relighting the hut lantern. Find the red pulse north of the hut, fight the Clinker for the Post Lamp, and burn out the nests with a built lantern's bright core. The blue glints mark two guarded upgrades. Feed the Hollow WayLamp 15 fuel to wake the Ashbrood; break its shell with the beam, then learn its second phase. The level-up screen pauses play and offers three of twelve upgrades.
 
 **Controls:** beam: hold left click / RT; burst: F / RB; dash: Shift / LT. Move: WASD / left stick. Interact/read/refuel: E / A. Build: Space / X. F1 opens the tuning panel; Esc / Start pauses.
 
 **Bigger regions (2026-11-27, branch `proto/kl-big`):** every region is now 4x the area (224 × 200 tiles). The Hollow holds 24 packs and 12 nests instead of 6 and 3, plus three old caches at dead ends. A save from the smaller map starts fresh. Extra questions: does the Hollow now feel big enough, or too big to walk? Is it too full of packs and nests, or too empty anywhere? Does it still run smoothly with many lanterns out?
+
+**Leveling balance (2026-11-27, branch `proto/kl-balance`):** levels now come on a rising curve (6 wick to level 2, then 14, 24, 34, 45, 56, 68...). Expect level 2 after the first pack or two, level 3 or 4 by the Clinker, about level 7 at the Ashbrood and level 8 once the WayLamp is lit. The HUD shows "Lv 3" and the wick toward the next level ("12/24"); a level-up plays a chime, flashes the card screen, and the wick row glows after you choose. Four more upgrades (Hot core, Steady hand, Lee, Spill) make twelve, so every offer has three cards. Wicklings that a nest hatches or the Ashbrood calls give no wick, and a pack that comes back after you faint gives no wick the second time. Extra questions: did levels come at a good pace, early and late? Did any stretch feel like a long wait for the next one? Is the Ashbrood still a real fight at level 7?
 
 **Prototype limits:** creatures and effects are code-drawn placeholders. Leads, journal changes, the third boss phase, regions beyond the Hollow, and full animation/audio polish are not included. Values are prototypes and can be adjusted in F1.
 

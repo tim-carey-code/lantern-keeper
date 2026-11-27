@@ -32,6 +32,7 @@ func _ready() -> void:
 	add_to_group("foe")
 	z_index = 7
 	hp = Tuning.kl_elite_hp if elite else Tuning.wick_hp
+	wick_value = Tuning.kl_elite_wick if elite else Tuning.kl_wickling_wick
 	if elite:
 		shell = Tuning.kl_elite_shell
 		shell_max = shell
@@ -120,7 +121,8 @@ func _process(delta: float) -> void:
 			else:
 				goal = player.global_position
 				if player.global_position.distance_to(global_position) < 12.0 + body_radius():
-					player.chill(Tuning.warmth_drain_per_sec * (Tuning.kl_elite_chill_mult if elite else 1.0) * delta)
+					var lee := Tuning.kl_lee_mult if Progress.has_combat_upgrade("lee") else 1.0
+					player.chill(Tuning.warmth_drain_per_sec * (Tuning.kl_elite_chill_mult if elite else 1.0) * lee * delta)
 		State.SEEK_LANTERN, State.SNUFF when target != null and is_instance_valid(target) and target is WayLamp:
 			# A kindling WayLamp: sit on it and drink the new flame.
 			if not target.kindling:

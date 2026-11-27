@@ -263,3 +263,47 @@ Slices 1-6 of `docs/PLAN_KEEPERS_LIGHT.md` are now present: 24 fixed packs (sinc
 **A calm start (2026-11-27):** nothing hostile within 16 tiles of the hut. The two nearest packs moved to the southern corners; the Clinker's post is now 17 tiles north (its 330 px charge range no longer reaches the hut); nests and the other packs moved out to match.
 
 **4x Hollow (2026-11-27):** with the bigger map, the Hollow holds 24 packs and 12 nests, all at least 20 tiles from the hut. Six packs in the north, around the WayLamp, have shelled elites (4-5 Wicklings, most with a Spitwick); the middle ten have Spitwicks or 4 Wicklings; the eight in the south and west are 3 Wicklings each. Three nests sit on the road north, the rest on the flanks and in the south. The Clinker's post is under 10 tiles from the WayLamp and about 40 from the hut. Three old caches (scrap, fuel) lie at dead ends. One red lure still marks the post.
+
+#### Leveling balance pass (2026-11-27, branch `proto/kl-balance`)
+
+**Targets** (owner asked for a balance pass after the 4x map): about 6-8 levels across a full Hollow clear; level 2 after the first pack or two; level 3 before the Clinker; one or two levels from the Ashbrood fight (the guardian and kindling its WayLamp); no level-up wasted, so every offer shows three real cards. `tools/tests/test_leveling.tscn` measures this on the placed map. It walks two full clears: a beeline that follows the pointer to the Clinker, and an explorer who takes the nearest pack first.
+
+**Measured wick in the Hollow** (24 packs of 90 foes, 12 nests, the Clinker, the Ashbrood, kindling):
+
+| Source | Before | After |
+|---|---|---|
+| Packs: 75 Wicklings, 9 Spitwicks, 6 shelled | 99 | 111 |
+| 12 nests | 96 | 60 |
+| Clinker | 15 | 20 |
+| Ashbrood | 40 | 50 |
+| Kindling the WayLamp | 30 | 30 |
+| **Fixed total** | **280** | **271** |
+| Hatched and called Wicklings | about 48 more, and no limit | 0 |
+
+**Wick per kill** (`kl_*_wick`; set by danger): Wickling 1 (unchanged); Spitwick 2 (unchanged); shelled Wickling 3 (was 1: it fell back to Foe's default; PLAN §5.1 says 3); nest 5 (was 8: twelve nests were a third of all wick, for 6 s of lantern core); Clinker 20 (was 15); Ashbrood 50 (was 40); kindling 30 (`kl_wick_kindle`, was hard-coded in `Progress.settle`). Wicklings hatched by a nest, called by the Ashbrood or drawn to a kindling WayLamp pay `kl_wick_summoned` = 0 (was 1): nests and phase 1 hatch for as long as you stay, so they were an endless source. A pack member pays its wick once (`Progress.cleared["wick_<pack>_<n>"]`), so a pack that a faint brings back pays nothing the second time.
+
+**The curve.** Before: flat steps, 15 wick to level 2 and 10 more each level (15, 25, 35, 45...). After: wick from level L to L+1 is `round(kl_wick_base * L ^ kl_wick_exp)` with base 6 and exponent 1.25 (`Progress.wick_for_level`): 6, 14, 24, 34, 45, 56, 68, 81, 94... (total to reach L8: 247). Capped at `kl_level_cap` = 12 (PLAN §5.1); at the cap wick stops and the HUD says "max".
+
+| | Old curve, old values | New |
+|---|---|---|
+| After the 2nd pack | still level 1 | level 2 (beeline and explorer) |
+| Before the Clinker | level 2 | level 3 (beeline), 4 (explorer) |
+| Before the Ashbrood | level 7 | level 7 |
+| End of the Hollow | level 7 (8 with hatches and adds; more by farming) | level 8 (7 level-ups) |
+
+Why: the old flat 15 made the first level slow (5 small packs), then nests and the north came in a rush. Hatchlings and re-fought packs could push past the 8 upgrades. The rising curve gives a level after the first fight and spaces the later ones out. The total is fixed, so the upgrades can't run out.
+
+**Upgrades: twelve.** Four more from PLAN §5.2, one per line, so every Hollow offer shows three cards and five are left for the Reedmarsh: *Hot core* (lantern cores burn 2x, `kl_hot_core_mult`), *Steady hand* (walk 90% while beaming, `kl_steady_hand_walk`), *Lee* (a Wickling's touch chills 25% less, `kl_lee_mult`), *Spill* (burst cooldown 2.2 s, and each foe hit gives back 0.03 charge, `kl_spill_cd`, `kl_spill_charge`). Four hard-coded upgrade numbers moved to tuning.gd: `kl_long_throw_len` 310, `kl_deep_tank_mult` 0.8, `kl_heavy_flare_knock_mult` 1.5, `kl_heavy_flare_stun` 0.6. Ranks (II, III) were not needed.
+
+**Time to kill** (beam 6 hp/s, 0.3 charge/s, refill 0.5/s in lantern light). "Stacked" means Tight focus, Lingering burn and Deep tank, the three damage upgrades that stack on one target. Shown as seconds of beam, then seconds with refills:
+
+| Foe | Fresh | Stacked |
+|---|---|---|
+| Wickling (3 hp) | 0.5 s / 0.8 s | 0.4 s / 0.6 s |
+| Shelled Wickling (9 + 4) | 2.2 s / 3.5 s | 1.5 s / 2.2 s |
+| Clinker (24 + 12) | 6.0 s / 9.6 s | 4.2 s / 6.1 s |
+| Ashbrood, a phase (40 + 12) | 8.7 s / 13.9 s | 6.2 s / 9.1 s |
+
+Even fully stacked, the Ashbrood still takes about two thirds of a fresh keeper's damage time (the test checks at least 60%). Dodging, puffs and dives come on top of that. So no per-level enemy scaling was added. Packs melt faster as you level, which is the ARPG reward.
+
+**Showing progress.** The HUD row reads "Lv 3", then a 14 px wick bar, then "12/24" (Ark Pixel 20). A level-up plays the `unlock` chime (`Sfx.play_ui`, which plays through the pause). The card screen flashes in with "Level N" over "Trim the wick", and the wick row glows gold for about a second after you choose. Every number is in tuning.gd, and the curve, cap and wick values are in F1.

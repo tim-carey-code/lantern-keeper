@@ -48,7 +48,7 @@ func beam_segment() -> Array:
 	if not beaming:
 		return []
 	var from := keeper().global_position + Vector2(0, -10)
-	return [from, from + aim * (310.0 if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len)]
+	return [from, from + aim * (Tuning.kl_long_throw_len if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len)]
 
 func is_dashing() -> bool:
 	return dash_t > 0.0
@@ -67,7 +67,7 @@ func tick(delta: float, move_dir: Vector2, beam_held: bool, burst_pressed: bool,
 	if beam_held or burst_pressed or dash_pressed:
 		k._since_ward = 0.0   # carried fuel never tops the lamp up mid-fight (only once you've stopped)
 	if beaming:
-		var cost_mult := 0.8 if Progress.has_combat_upgrade("deep_tank") else 1.0
+		var cost_mult := Tuning.kl_deep_tank_mult if Progress.has_combat_upgrade("deep_tank") else 1.0
 		k.lamp_charge = maxf(0.0, k.lamp_charge - Tuning.kl_beam_cost * cost_mult * delta)
 		burn_along_beam(delta)
 	if burst_pressed:
@@ -95,7 +95,7 @@ func burst() -> int:
 	if burst_cd > 0.0 or k.lamp_charge < Tuning.kl_burst_cost:
 		return -1
 	k.lamp_charge -= Tuning.kl_burst_cost
-	burst_cd = Tuning.kl_burst_cd
+	burst_cd = burst_cooldown()
 	if k.has_method("shake"):
 		k.shake(0.35)
 	_burst_fx = 0.3
@@ -113,9 +113,15 @@ func burst() -> int:
 			if is_instance_valid(w) and not w.is_queued_for_deletion():
 				w.knock((v.normalized() if v.length() > 0.5 else Vector2.RIGHT) * Tuning.kl_burst_knock)
 				if Progress.has_combat_upgrade("heavy_flare"):
-					w.stun(0.6)
+					w.stun(Tuning.kl_heavy_flare_stun)
 			hit += 1
+	if hit > 0 and Progress.has_combat_upgrade("spill"):
+		k.lamp_charge = minf(1.0, k.lamp_charge + Tuning.kl_spill_charge * hit)
 	return hit
+
+## The burst's cooldown, after "Spill".
+func burst_cooldown() -> float:
+	return Tuning.kl_spill_cd if Progress.has_combat_upgrade("spill") else Tuning.kl_burst_cd
 
 ## A quick dash. Returns false if it couldn't (cooldown or too little charge).
 func dash(move_dir: Vector2) -> bool:
@@ -144,7 +150,7 @@ func _draw() -> void:
 	# The beam: a warm core inside a soft glow.
 	if beaming:
 		var from := Vector2(0, -10)
-		var to := from + aim * (310.0 if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len)
+		var to := from + aim * (Tuning.kl_long_throw_len if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len)
 		var flick := 0.85 + 0.15 * sin(Time.get_ticks_msec() * 0.03)
 		draw_line(from, to, Color(1.0, 0.85, 0.5, 0.18 * flick), Tuning.kl_beam_half_width * 2.0)
 		draw_line(from, to, Color(1.0, 0.92, 0.7, 0.45 * flick), Tuning.kl_beam_half_width)
@@ -156,7 +162,7 @@ func _draw() -> void:
 		draw_circle(Vector2(0, -6), Tuning.kl_burst_radius * (0.4 + 0.6 * t), Color(1.0, 0.85, 0.5, 0.12 * (1.0 - t)))
 	# Cooldowns as two small arcs under the keeper (burst gold, dash blue), only while recharging.
 	if burst_cd > 0.0:
-		draw_arc(Vector2(-8, 14), 5.0, -PI / 2.0, -PI / 2.0 + TAU * (1.0 - burst_cd / Tuning.kl_burst_cd), 12, Color(1.0, 0.8, 0.4, 0.9), 2.0)
+		draw_arc(Vector2(-8, 14), 5.0, -PI / 2.0, -PI / 2.0 + TAU * (1.0 - burst_cd / burst_cooldown()), 12, Color(1.0, 0.8, 0.4, 0.9), 2.0)
 	if dash_cd > 0.0:
 		draw_arc(Vector2(8, 14), 5.0, -PI / 2.0, -PI / 2.0 + TAU * (1.0 - dash_cd / Tuning.kl_dash_cd), 12, Color(0.64, 0.74, 0.83, 0.9), 2.0)
 	# A faint aim line when not beaming, so you can see where the beam will go.

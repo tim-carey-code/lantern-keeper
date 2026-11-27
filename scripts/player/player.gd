@@ -92,7 +92,7 @@ func _physics_process(delta: float) -> void:
 	if warding:
 		slow *= Tuning.ward_walk_mult
 	if combat.beaming:
-		slow *= Tuning.kl_beam_walk
+		slow *= Tuning.kl_steady_hand_walk if Progress.has_combat_upgrade("steady_hand") else Tuning.kl_beam_walk
 	velocity = combat.dash_velocity() if combat.is_dashing() else dir * speed * slow
 	move_and_slide()
 	_footsteps(dir, _physics_delta(), fog)

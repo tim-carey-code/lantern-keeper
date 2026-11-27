@@ -35,6 +35,7 @@ func _process(delta: float) -> void:
 				return
 			for i in Tuning.kl_nest_hatch_count:
 				var w := Wickling.new()
+				w.summoned = true
 				w.position = global_position + Vector2.from_angle(i * TAU / 3) * 24.0
 				get_parent().add_child(w)
 	queue_redraw()

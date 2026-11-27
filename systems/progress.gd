@@ -41,18 +41,27 @@ func reset() -> void:
 	combat_upgrades = []
 	pending_level_ups = 0
 
+## Wick to go from level `lv` to the next: a rising curve, kl_wick_base * lv ^ kl_wick_exp (DESIGN §9).
+func wick_for_level(lv: int) -> int:
+	return maxi(1, roundi(Tuning.kl_wick_base * pow(float(lv), Tuning.kl_wick_exp)))
+
 func wick_needed() -> int:
-	return Tuning.kl_wick_first_level + Tuning.kl_wick_level_step * (level - 1)
+	return wick_for_level(level)
+
+func at_level_cap() -> bool:
+	return level >= Tuning.kl_level_cap
 
 func add_wick(amount: int) -> void:
-	if amount <= 0:
+	if amount <= 0 or at_level_cap():
 		return
 	wick += amount
-	while wick >= wick_needed():
+	while not at_level_cap() and wick >= wick_needed():
 		wick -= wick_needed()
 		level += 1
 		pending_level_ups += 1
 		level_up.emit(level)
+	if at_level_cap():
+		wick = 0
 	wick_changed.emit(wick, wick_needed(), level)
 
 func choose_combat_upgrade(id: String) -> void:
@@ -80,7 +89,7 @@ func settle(region_id: int, region_name: String) -> void:
 	if settled.has(region_id):
 		return
 	settled[region_id] = true
-	add_wick(30)
+	add_wick(Tuning.kl_wick_kindle)
 	region_settled.emit(region_id, region_name)
 
 # --- Upgrades ----------------------------------------------------------------

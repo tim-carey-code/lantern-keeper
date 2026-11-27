@@ -31,6 +31,7 @@ func _process(delta: float) -> void:
 				w.elite = i >= count - elites
 				foe = w
 			foe.pack_id = id
+			foe.wick_key = "wick_%s_%d" % [id, i]
 			foe.position = global_position + Vector2.from_angle(i * TAU / count) * (22.0 + i * 6.0)
 			get_parent().add_child(foe)
 	if awake:

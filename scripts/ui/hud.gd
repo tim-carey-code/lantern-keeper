@@ -20,6 +20,9 @@ var lamp_bar: ProgressBar
 var warm_bar: ProgressBar
 var wick_bar: ProgressBar
 var wick_level: Label
+var wick_count: Label          # "12/24": wick toward the next level
+var wick_row: HBoxContainer
+var _level_flash_pending := false
 var level_up_screen: Node
 var chips: VBoxContainer
 var keys: Label
@@ -34,6 +37,7 @@ var _status: Array = []   # [[icon, text, color], ...] currently shown
 var _keys_t := KEY_HINT_SECS
 
 func _ready() -> void:
+	Progress.level_up.connect(func(_lv: int): _level_flash_pending = true)
 	add_to_group("hud")
 	layer = 5
 	_build_resource_panel()
@@ -85,14 +89,15 @@ func _build_resource_panel() -> void:
 			glass_row = item
 	lamp_bar = _meter(col, "icon_lamp", UiStyle.AMBER)
 	warm_bar = _meter(col, "icon_warmth", Color(0.85, 0.89, 0.94))
-	var wick_row := HBoxContainer.new()
+	# Level and wick (balance pass): "Lv 3", a bar toward the next level, and the count.
+	wick_row = HBoxContainer.new()
 	wick_row.add_theme_constant_override("separation", 8)
 	col.add_child(wick_row)
-	wick_level = UiStyle.label(18, UiStyle.PALE)
-	wick_level.custom_minimum_size = Vector2(32, 0)
+	wick_level = UiStyle.label(20, UiStyle.GOLD)
+	wick_level.custom_minimum_size = Vector2(52, 0)
 	wick_row.add_child(wick_level)
 	wick_bar = ProgressBar.new()
-	wick_bar.custom_minimum_size = Vector2(192, 10)
+	wick_bar.custom_minimum_size = Vector2(120, 14)
 	wick_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	wick_bar.show_percentage = false
 	wick_bar.max_value = 1.0
@@ -100,6 +105,9 @@ func _build_resource_panel() -> void:
 	wick_bar.add_theme_stylebox_override("background", wick_styles[0])
 	wick_bar.add_theme_stylebox_override("fill", wick_styles[1])
 	wick_row.add_child(wick_bar)
+	wick_count = UiStyle.label(20, UiStyle.PALE)
+	wick_count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	wick_row.add_child(wick_count)
 	var b := HBoxContainer.new()
 	b.add_theme_constant_override("separation", 8)
 	col.add_child(b)
@@ -281,9 +289,7 @@ func _process(delta: float) -> void:
 	building_pic.texture = Art.placeholder({"post": "post_lamp_lit.png", "reservoir": "reservoir_lamp_lit.png", "hooded": "hooded_lamp_lit.png", "mirror": "mirror_post_lit.png"}.get(sel, "post_lamp_lit.png"))
 	lamp_bar.value = player.lamp_charge
 	warm_bar.value = player.warmth / Tuning.warmth_max
-	wick_level.text = "L%d" % Progress.level
-	wick_bar.value = float(Progress.wick) / float(maxi(1, Progress.wick_needed()))
-	wick_bar.tooltip_text = "Wick: %d / %d" % [Progress.wick, Progress.wick_needed()]
+	_update_wick()
 	# Status chips: rebuilt only when what they say changes.
 	var items := status_items()
 	if str(items) != str(_status):
@@ -293,3 +299,20 @@ func _process(delta: float) -> void:
 	_keys_t = maxf(0.0, _keys_t - delta)
 	keys.text = "%s journal    %s map    %s lanterns    %s pause" % [InputHint.key("journal"), InputHint.key("map"), InputHint.key("build_menu"), InputHint.key("pause")]
 	keys.modulate.a = clampf(_keys_t / 3.0, 0.0, 0.8)
+
+## The level, the bar toward the next level and the count; a short gold flash when the level goes up.
+func _update_wick() -> void:
+	wick_level.text = "Lv %d" % Progress.level
+	if Progress.at_level_cap():
+		wick_bar.value = 1.0
+		wick_count.text = "max"
+	else:
+		wick_bar.value = float(Progress.wick) / float(maxi(1, Progress.wick_needed()))
+		wick_count.text = "%d/%d" % [Progress.wick, Progress.wick_needed()]
+	wick_bar.tooltip_text = "Wick: %s" % wick_count.text
+	# Only a real level-up flashes (not loading a save); this runs once the choice closes.
+	if _level_flash_pending:
+		_level_flash_pending = false
+		wick_row.modulate = Color(2.0, 1.7, 1.0)
+		var tw := wick_row.create_tween()
+		tw.tween_property(wick_row, "modulate", Color.WHITE, 1.2)
