@@ -165,7 +165,7 @@ There is one goal at a time in the banner, the pointer is on, and a tip shows on
 1. **The crook and the Clinker:** `_spot_in_region(Vector2i(58, 96), …)` becomes `HOLLOW_C + (+1,−22)`, which is tile **(49, 114)**. Update its comment ("owner: near the WayLamp").
 2. **The haven:** add `_add_lantern(start + Vector2(2, −12) * FogGrid.TILE)` with `fuel = 0.0`, as for the hut lantern. Keep a reference to it (for example `waypost_lantern_pos`) for the goal and the pointer. It is friendly, so the calm rule allows it.
 3. **The cache at the crook:** add a `CACHES` row `[FogGrid.R_HOLLOW, Vector2i(50, 115), "scrap", 6]`, so the keeper can afford a Post Lamp (5 scrap) on the spot.
-4. **`HOLLOW_PACKS` and `HOLLOW_NESTS`:** apply §5. Add a fifth, optional column to `HOLLOW_PACKS` for a wake radius in tiles. Use it only for pack 23 (7 tiles), so it doesn't wake during the lone Wickling's fight.
+4. **`HOLLOW_PACKS` and `HOLLOW_NESTS`:** apply §5. Add a sixth, optional column to `HOLLOW_PACKS` (after the foe level, added 2026-11-27) for a wake radius in tiles. Use it only for pack 23 (7 tiles), so it doesn't wake during the lone Wickling's fight.
 
 ### 7.2 `scripts/enemies/enemy_pack.gd`
 - `var wake_radius := -1.0`. When it is below 0, use `Tuning.kl_pack_wake_radius`.

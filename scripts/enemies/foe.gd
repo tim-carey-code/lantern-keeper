@@ -17,9 +17,9 @@ var shell_max := 0.0
 var shell_regrows := false      # an unbroken shell grows back once it has been out of every beam for a while
 var foe_id := ""                # fixed foes (the Clinker, nests): marked in Progress.cleared when burned away
 var pack_id := ""               # fixed pack membership, used to keep a beaten pack beaten
-var wick_value := 1
-var summoned := false           # hatched by a nest or called by a guardian: worth Tuning.kl_wick_summoned
-var wick_key := ""              # pack members: wick is paid once per member, even if a faint brings the pack back
+var wick_value := 1             # base wick; what a kill pays is scaled by level and the level gap (Progress.kill_wick)
+var level := 1                  # foe level: set by its pack, nest or tuning.gd; hatched and called ones take their maker's
+var summoned := false           # hatched by a nest or called by a guardian (pays like any other foe of its level)
 var knock_weight := 1.0         # how far the burst throws it (1 = the full distance)
 var _knock_v := Vector2.ZERO
 var _knock_t := 0.0
@@ -278,7 +278,13 @@ func _die() -> void:
 			queue_free()
 			return
 		Progress.cleared[foe_id] = true
-	Progress.add_wick(wick_earned())
+	var earned := wick_earned()
+	var reduced := Progress.wick_gap_mult(level) < 1.0
+	Progress.add_wick_f(earned)
+	if earned >= 0.05 and get_parent():
+		# The wick popup: gold at full value, dim grey when the level gap cut it.
+		var txt := ("+%d wick" % roundi(earned)) if earned >= 0.95 else ("+%.1f wick" % earned)
+		FloatText.spawn(get_parent(), global_position + Vector2(0, -26), txt, Color(0.62, 0.6, 0.56, 0.75) if reduced else Color(1.0, 0.82, 0.4))
 	if Progress.has_combat_upgrade("catching"):
 		var closest: Foe = null
 		var closest_d := 61.0
@@ -294,15 +300,14 @@ func _die() -> void:
 	_drop()
 	queue_free()
 
-## Wick this kill pays (balance pass): summoned Wicklings pay little or nothing, and a pack member pays once.
-func wick_earned() -> int:
-	if summoned:
-		return Tuning.kl_wick_summoned
-	if wick_key != "":
-		if Progress.cleared.has(wick_key):
-			return 0
-		Progress.cleared[wick_key] = true
-	return wick_value
+## Wick this kill pays (level-gap pass, DESIGN §9): base wick grown by the foe's level, times the level-gap factor.
+## Hatched, called and re-fought foes pay the same way; the gap is what stops farming.
+func wick_earned() -> float:
+	return Progress.kill_wick(wick_value, level)
+
+## Name over the health bar, with the level: "Wickling Lv 2".
+func bar_name() -> String:
+	return "%s Lv %d" % [foe_name, level] if foe_name != "" else ""
 
 ## What it leaves: by default one ember worth a little fuel, and sometimes a bit of scrap.
 func _drop() -> void:

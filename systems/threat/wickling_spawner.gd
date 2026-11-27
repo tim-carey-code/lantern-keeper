@@ -70,6 +70,7 @@ func spawn_swarm(lamp: Node2D, n: int) -> Array:
 		var w := spawn_at(fog.tile_center(fog.tile_of(p)))
 		w.bold = true
 		w.summoned = true
+		w.level = Tuning.kl_waylamp_swarm_level
 		w.target = lamp
 		w.state = Wickling.State.SEEK_LANTERN
 		out.append(w)

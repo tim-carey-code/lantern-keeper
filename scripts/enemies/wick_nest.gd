@@ -36,6 +36,7 @@ func _process(delta: float) -> void:
 			for i in Tuning.kl_nest_hatch_count:
 				var w := Wickling.new()
 				w.summoned = true
+				w.level = level   # hatchlings are the nest's level: the level gap, not a flat 0, stops farming
 				w.position = global_position + Vector2.from_angle(i * TAU / 3) * 24.0
 				get_parent().add_child(w)
 	queue_redraw()

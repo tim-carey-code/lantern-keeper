@@ -36,8 +36,11 @@ func _draw() -> void:
 		if f.shell_max > 0.0:
 			draw_rect(Rect2(top - Vector2(0, 6), Vector2(w, 4)), Color(0, 0, 0, 0.75))
 			draw_rect(Rect2(top - Vector2(0, 6), Vector2(w * clampf(f.shell / f.shell_max, 0.0, 1.0), 4)), Color(0.7, 0.82, 0.95))
-		if f.foe_name != "":
-			var tw := FONT.get_string_size(f.foe_name, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE).x
+		var label: String = f.bar_name()
+		if label != "":
+			var tw := FONT.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE).x
 			var at := Vector2(f.global_position.x - tw / 2.0, top.y - (10.0 if f.shell_max > 0.0 else 4.0))
-			draw_string(FONT, at + Vector2(1, 1), f.foe_name, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, Color(0, 0, 0, 0.8))
-			draw_string(FONT, at, f.foe_name, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, UiStyle.CREAM)
+			draw_string(FONT, at + Vector2(1, 1), label, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, Color(0, 0, 0, 0.8))
+			# Dimmed when it is too far below the keeper to pay full wick.
+			var col: Color = UiStyle.CREAM if Progress.wick_gap_mult(f.level) >= 1.0 else Color(0.62, 0.6, 0.56)
+			draw_string(FONT, at, label, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, col)

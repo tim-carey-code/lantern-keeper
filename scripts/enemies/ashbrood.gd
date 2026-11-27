@@ -21,6 +21,7 @@ func _ready() -> void:
 	shell_regrows = true
 	foe_id = "ashbrood_hollow"
 	wick_value = Tuning.kl_ashbrood_wick
+	level = Tuning.kl_ashbrood_level
 	knock_weight = 0.15
 	z_index = 9
 
@@ -57,6 +58,7 @@ func _process_bowl(delta: float, player: Node2D) -> void:
 			var w := Wickling.new()
 			w.bold = true
 			w.summoned = true
+			w.level = Tuning.kl_ashbrood_add_level
 			w.position = global_position + Vector2.from_angle(i * TAU / 3.0) * 52.0
 			get_parent().add_child(w)
 

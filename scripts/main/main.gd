@@ -423,7 +423,8 @@ func _place_hollow_prototype() -> void:
 	for i in HOLLOW_NESTS.size():
 		var nest := WickNest.new()
 		nest.foe_id = "nest_hollow_%d" % (i + 1)
-		nest.position = _spot_in_region(HOLLOW_NESTS[i], FogGrid.R_HOLLOW)
+		nest.position = _spot_in_region(HOLLOW_NESTS[i][0], FogGrid.R_HOLLOW)
+		nest.level = int(HOLLOW_NESTS[i][1])
 		$FogLayer/Wicklings.add_child(nest)
 	for i in HOLLOW_PACKS.size():
 		var row: Array = HOLLOW_PACKS[i]
@@ -432,34 +433,37 @@ func _place_hollow_prototype() -> void:
 		pack.count = int(row[1])
 		pack.spitwicks = int(row[2])
 		pack.elites = int(row[3])
+		pack.level = int(row[4])
 		pack.position = _spot_in_region(row[0], FogGrid.R_HOLLOW)
 		$FogLayer/Wicklings.add_child(pack)
 	_place_caches()
 
 ## Nests (4x for the 4x Hollow): three on the road north, the rest out on the flanks and in the south.
-## All at least 20 tiles from the hut.
+## All at least 20 tiles from the hut. [tile, foe level]: 1 on the hut row and south, rising to 6 by the WayLamp;
+## hatchlings take their nest's level (DESIGN §9, level-gap wick).
 const HOLLOW_NESTS := [
-	Vector2i(32, 100), Vector2i(42, 90), Vector2i(70, 96),     # the road north (the first three)
-	Vector2i(56, 112), Vector2i(36, 116),
-	Vector2i(20, 112), Vector2i(80, 118), Vector2i(14, 130), Vector2i(84, 136),
-	Vector2i(30, 160), Vector2i(66, 162), Vector2i(48, 172),
+	[Vector2i(32, 100), 5], [Vector2i(42, 90), 6], [Vector2i(70, 96), 6],     # the road north (the first three)
+	[Vector2i(56, 112), 4], [Vector2i(36, 116), 3],
+	[Vector2i(20, 112), 3], [Vector2i(80, 118), 3], [Vector2i(14, 130), 1], [Vector2i(84, 136), 1],
+	[Vector2i(30, 160), 1], [Vector2i(66, 162), 1], [Vector2i(48, 172), 1],
 ]
 
-## Fixed packs (4x for the 4x Hollow). [tile, how many, Spitwicks, shelled elites]:
+## Fixed packs (4x for the 4x Hollow). [tile, how many, Spitwicks, shelled elites, foe level]:
 ## tougher the closer to the WayLamp (north), quiet in the south. All at least 20 tiles from the hut.
+## Levels (DESIGN §9): 1 on the hut row and south of it, 2-4 through the middle, 5-6 by the WayLamp.
 const HOLLOW_PACKS := [
 	# Near the WayLamp: elites.
-	[Vector2i(70, 100), 5, 1, 1], [Vector2i(60, 106), 5, 1, 1], [Vector2i(36, 94), 4, 0, 1],
-	[Vector2i(76, 112), 4, 1, 1], [Vector2i(46, 104), 4, 1, 1], [Vector2i(26, 100), 4, 0, 1],
+	[Vector2i(70, 100), 5, 1, 1, 6], [Vector2i(60, 106), 5, 1, 1, 6], [Vector2i(36, 94), 4, 0, 1, 5],
+	[Vector2i(76, 112), 4, 1, 1, 5], [Vector2i(46, 104), 4, 1, 1, 5], [Vector2i(26, 100), 4, 0, 1, 5],
 	# The middle: Spitwicks.
-	[Vector2i(24, 110), 4, 1, 0], [Vector2i(48, 112), 4, 1, 0], [Vector2i(62, 118), 4, 1, 0],
-	[Vector2i(30, 120), 4, 1, 0], [Vector2i(82, 126), 4, 1, 0],
-	[Vector2i(16, 122), 4, 0, 0], [Vector2i(68, 132), 4, 0, 0], [Vector2i(72, 150), 4, 0, 0],
-	[Vector2i(86, 146), 4, 0, 0], [Vector2i(80, 160), 4, 0, 0],
+	[Vector2i(24, 110), 4, 1, 0, 4], [Vector2i(48, 112), 4, 1, 0, 4], [Vector2i(62, 118), 4, 1, 0, 4],
+	[Vector2i(30, 120), 4, 1, 0, 3], [Vector2i(82, 126), 4, 1, 0, 2],
+	[Vector2i(16, 122), 4, 0, 0, 2], [Vector2i(68, 132), 4, 0, 0, 1], [Vector2i(72, 150), 4, 0, 0, 1],
+	[Vector2i(86, 146), 4, 0, 0, 1], [Vector2i(80, 160), 4, 0, 0, 1],
 	# The quiet south and the west.
-	[Vector2i(16, 160), 3, 0, 0], [Vector2i(34, 176), 3, 0, 0], [Vector2i(60, 176), 3, 0, 0],
-	[Vector2i(48, 160), 3, 0, 0], [Vector2i(12, 138), 3, 0, 0], [Vector2i(24, 150), 3, 0, 0],
-	[Vector2i(28, 134), 3, 0, 0], [Vector2i(70, 170), 3, 0, 0],
+	[Vector2i(16, 160), 3, 0, 0, 1], [Vector2i(34, 176), 3, 0, 0, 1], [Vector2i(60, 176), 3, 0, 0, 1],
+	[Vector2i(48, 160), 3, 0, 0, 1], [Vector2i(12, 138), 3, 0, 0, 1], [Vector2i(24, 150), 3, 0, 0, 1],
+	[Vector2i(28, 134), 3, 0, 0, 1], [Vector2i(70, 170), 3, 0, 0, 1],
 ]
 
 ## Side caches: an old keeper's stash at a dead end of each region, worth a detour. One-off (no regrowth).

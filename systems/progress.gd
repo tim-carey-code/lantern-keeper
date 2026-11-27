@@ -20,6 +20,7 @@ var notes_read := {}
 var settled := {}          # region id -> true once its WayLamp is lit ("held")
 var waylamp_fuel := {}     # WayLamp id -> carried fuel fed into it so far
 var wick := 0
+var wick_frac := 0.0        # fractions of wick from reduced kills, carried until they make a whole one
 var level := 1
 var cleared := {}           # fixed prototype enemies and packs that stay beaten
 var combat_upgrades: Array[String] = []
@@ -36,6 +37,7 @@ func reset() -> void:
 	settled = {}
 	waylamp_fuel = {}
 	wick = 0
+	wick_frac = 0.0
 	level = 1
 	cleared = {}
 	combat_upgrades = []
@@ -50,6 +52,33 @@ func wick_needed() -> int:
 
 func at_level_cap() -> bool:
 	return level >= Tuning.kl_level_cap
+
+## The level-gap factor (DESIGN §9): 1 within kl_xp_band levels above the foe, then x kl_xp_falloff per level,
+## 0 at kl_xp_zero_gap or more; a small bonus for foes above the keeper.
+func wick_gap_mult(foe_level: int, keeper_level: int = -1) -> float:
+	var gap := (level if keeper_level < 0 else keeper_level) - foe_level
+	if gap < 0:
+		return 1.0 + minf(Tuning.kl_xp_bonus_max, Tuning.kl_xp_bonus * -gap)
+	if gap <= Tuning.kl_xp_band:
+		return 1.0
+	if gap >= Tuning.kl_xp_zero_gap:
+		return 0.0
+	return pow(Tuning.kl_xp_falloff, gap - Tuning.kl_xp_band)
+
+## Wick a kill pays: its base wick, grown by its level, times the level-gap factor.
+func kill_wick(base: int, foe_level: int, keeper_level: int = -1) -> float:
+	var grown := float(base) * (1.0 + Tuning.kl_xp_level_growth * float(maxi(1, foe_level) - 1))
+	return grown * wick_gap_mult(foe_level, keeper_level)
+
+## Adds a kill's (maybe fractional) wick; fractions carry over until they make a whole one.
+func add_wick_f(amount: float) -> void:
+	if amount <= 0.0 or at_level_cap():
+		return
+	wick_frac += amount
+	var whole := floori(wick_frac + 0.0001)
+	wick_frac = maxf(0.0, wick_frac - whole)
+	if whole > 0:
+		add_wick(whole)
 
 func add_wick(amount: int) -> void:
 	if amount <= 0 or at_level_cap():

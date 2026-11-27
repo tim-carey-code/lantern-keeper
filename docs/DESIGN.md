@@ -280,7 +280,7 @@ Slices 1-6 of `docs/PLAN_KEEPERS_LIGHT.md` are now present: 24 fixed packs (sinc
 | **Fixed total** | **280** | **271** |
 | Hatched and called Wicklings | about 48 more, and no limit | 0 |
 
-**Wick per kill** (`kl_*_wick`; set by danger): Wickling 1 (unchanged); Spitwick 2 (unchanged); shelled Wickling 3 (was 1: it fell back to Foe's default; PLAN §5.1 says 3); nest 5 (was 8: twelve nests were a third of all wick, for 6 s of lantern core); Clinker 20 (was 15); Ashbrood 50 (was 40); kindling 30 (`kl_wick_kindle`, was hard-coded in `Progress.settle`). Wicklings hatched by a nest, called by the Ashbrood or drawn to a kindling WayLamp pay `kl_wick_summoned` = 0 (was 1): nests and phase 1 hatch for as long as you stay, so they were an endless source. A pack member pays its wick once (`Progress.cleared["wick_<pack>_<n>"]`), so a pack that a faint brings back pays nothing the second time.
+**Wick per kill** (`kl_*_wick`; set by danger): Wickling 1 (unchanged); Spitwick 2 (unchanged); shelled Wickling 3 (was 1: it fell back to Foe's default; PLAN §5.1 says 3); nest 5 (was 8: twelve nests were a third of all wick, for 6 s of lantern core); Clinker 20 (was 15); Ashbrood 50 (was 40); kindling 30 (`kl_wick_kindle`, was hard-coded in `Progress.settle`). ~~Wicklings hatched by a nest, called by the Ashbrood or drawn to a kindling WayLamp pay `kl_wick_summoned` = 0, and a pack member pays its wick once.~~ Replaced by the level gap (below).
 
 **The curve.** Before: flat steps, 15 wick to level 2 and 10 more each level (15, 25, 35, 45...). After: wick from level L to L+1 is `round(kl_wick_base * L ^ kl_wick_exp)` with base 6 and exponent 1.25 (`Progress.wick_for_level`): 6, 14, 24, 34, 45, 56, 68, 81, 94... (total to reach L8: 247). Capped at `kl_level_cap` = 12 (PLAN §5.1); at the cap wick stops and the HUD says "max".
 
@@ -307,3 +307,37 @@ Why: the old flat 15 made the first level slow (5 small packs), then nests and t
 Even fully stacked, the Ashbrood still takes about two thirds of a fresh keeper's damage time (the test checks at least 60%). Dodging, puffs and dives come on top of that. So no per-level enemy scaling was added. Packs melt faster as you level, which is the ARPG reward.
 
 **Showing progress.** The HUD row reads "Lv 3", then a 14 px wick bar, then "12/24" (Ark Pixel 20). A level-up plays the `unlock` chime (`Sfx.play_ui`, which plays through the pause). The card screen flashes in with "Level N" over "Trim the wick", and the wick row glows gold for about a second after you choose. Every number is in tuning.gd, and the curve, cap and wick values are in F1.
+
+#### Level-gap wick (2026-11-27, branch `proto/kl-xpgap`)
+
+**Why** (owner): "Idk about give no wick. Other games solve this by the XP they give not being proportionate to levels... eventually it doesn't pay to do so and it's too grindy." So, as in Diablo or PoE, every foe has a level, and what a kill pays depends on the gap between the keeper's level and the foe's. Hatched, called and re-fought foes pay like any other foe of their level; the gap is what stops farming. `kl_wick_summoned` and the "a pack member pays once" rule are gone. Cleared packs and "cleared stays cleared" are unchanged.
+
+**Formula** (`Progress.kill_wick`, `Progress.wick_gap_mult`): wick = base × (1 + `kl_xp_level_growth` × (foe level − 1)) × gap factor, where gap = keeper level − foe level.
+
+| Gap | Factor |
+|---|---|
+| foe above the keeper | 1 + `kl_xp_bonus` (0.1) per level, at most +`kl_xp_bonus_max` (0.3) |
+| 0 to `kl_xp_band` (1) | 1 |
+| 2 / 3 / 4 | × `kl_xp_falloff` (0.25) per level past the band: 1/4, 1/16, 1/64 |
+| `kl_xp_zero_gap` (5) or more | 0 |
+
+`kl_xp_level_growth` = 0.25: a Lv 5 Wickling is worth 2 wick, a Lv 6 one 2.25. Fractions carry over (`Progress.wick_frac`, saved). All of these are in tuning.gd and F1.
+
+**Foe levels** (data: the fifth column of `HOLLOW_PACKS`, the second of `HOLLOW_NESTS` in `scripts/main/main.gd`; the rest in tuning.gd). Lv 1 on the hut row and south of it (12 packs, 5 nests), 2-4 through the middle, 5-6 at the elite packs and nests by the WayLamp. The Clinker is Lv 4 (`kl_clinker_level`), the Ashbrood Lv 7 (`kl_ashbrood_level`), and its phase-1 adds Lv 5 (`kl_ashbrood_add_level`, two below it, so standing in phase 1 isn't a farm). Hatchlings take their nest's level. Wicklings drawn to a guardian-less WayLamp are Lv 6 (`kl_waylamp_swarm_level`). Later regions start higher.
+
+**The Hollow's last level comes on the Ashbrood kill** (owner): Ashbrood base 32 (was 50; ×2.5 at Lv 7 = 80), kindling 10 (was 30). Base wick per kill is otherwise unchanged (Wickling 1, Spitwick 2, shelled 3, nest 5, Clinker 20).
+
+**Measured** (`test_leveling.tscn`, now counting one hatch of 3 per nest and 12 Ashbrood adds):
+
+| | Beeline | Explorer |
+|---|---|---|
+| Level 2 | after pack 1 | after pack 2 |
+| Before the Clinker | L4 | L5 |
+| Into the Ashbrood | L7 | L7 |
+| After its adds | L7 (30/68) | L7 (31/68) |
+| The kill | L8 | L8 |
+| After kindling | L8 | L8 |
+
+Both routes backtrack through the low south late, which now pays almost nothing; that is the point. A farmer who camps the hut row and the south (a Lv 1 nest's 18 hatchlings a minute, and every south pack fought again after a faint every 5 minutes) reaches L4 in 4 minutes, then L5 only at 25 minutes, and earns about 1 wick a minute in the last 10 (18 at the start). The beeline reaches L8 in roughly 12 minutes on the test's walk-and-fight estimate. Why band 1 and ×0.25, not the first suggestion (band 2, ×0.5): measured on the same map, band 2 with ×0.5 lets the farmer reach L5 in 5 minutes and L6 in 10, and band 2 with ×0.25 reaches L5 in 7. Both also over-pay the forward run, which then reaches L9 by the end of the Hollow.
+
+**What you see:** name bars read "Wickling Lv 2", dimmed when the foe is too low to pay full wick. A kill floats "+2 wick" in gold, or in dim grey when the gap cut it.

@@ -18,6 +18,7 @@ func _ready() -> void:
 	shell_regrows = true
 	foe_id = "clinker_hollow_post"
 	wick_value = Tuning.kl_clinker_wick
+	level = Tuning.kl_clinker_level
 	knock_weight = 0.35
 	z_index = 8
 

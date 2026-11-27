@@ -6,6 +6,7 @@ var id := ""
 var count := 4
 var spitwicks := 0
 var elites := 0                 # shelled Wicklings in the pack
+var level := 1                  # foe level of every member (HOLLOW_PACKS in main.gd; wick scales with the level gap)
 var awake := false
 var _pulse := 0.0
 
@@ -31,7 +32,7 @@ func _process(delta: float) -> void:
 				w.elite = i >= count - elites
 				foe = w
 			foe.pack_id = id
-			foe.wick_key = "wick_%s_%d" % [id, i]
+			foe.level = level
 			foe.position = global_position + Vector2.from_angle(i * TAU / count) * (22.0 + i * 6.0)
 			get_parent().add_child(foe)
 	if awake:
