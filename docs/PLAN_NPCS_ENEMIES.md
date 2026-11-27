@@ -1,5 +1,7 @@
 # Lantern Keeper: people and new creatures (plan)
 
+> **TO BE MERGED in M4** (GAME_PLAN §17, approved 2026-11-27). This draft is not the plan of record. At M4 its people (lines, errands, guardrails) go into STORY and DESIGN, and its creatures are refitted region by region (M5-M7); then this file moves to `docs/archive/`. Until then, where it disagrees with `docs/replan/GAME_PLAN.md` (for example the home-made talk panel, which Dialogue Manager replaces, the creature rules built on lamp upkeep, and milestones M5c-M5e), the game plan wins. Pronouns: Oswin is "he" and Ebba "she"; Amos, Maud, Kit and Ivo get none until the owner chooses.
+
 **DRAFT v1 plan, revised 2026-11-27 with the owner's answers.** Nothing here is built. This is the plan to build from once the owner settles the lines still marked OWNER (listed in section 8).
 
 Sources: docs and scripts on branch `proto/waylamps` at 0ee4633. That commit merged the upgrades and the 2026-11-27 decisions from `main` while this draft was being written. The WayLamp rules come from DESIGN §8 and the WayLamp text from STORY §11. The owner's answers of 2026-11-27 win over older docs. Otherwise DECISIONS wins.
