@@ -8,6 +8,10 @@ this checks that the docs still describe it.
 Failures (the docs are wrong):
   1. docs/STORY.md is missing a player-facing text from the code: a goal (id and HUD text), a
      journal entry, a tip, the title card, the letter, or a landmark / WayLamp note.
+     Also (STORY.md section 12; AUDIT M23): the level-up cards (title and text on one line) and the
+     level-up screen's lines, the Ashbrood's toast, its boss-bar hints, the faint note and the
+     fast-travel texts. Each of these sources is optional: if its file is gone, it is skipped, and if
+     the file is there but nothing can be read from it, that is a warning, not a failure.
   2. docs/ART_CHECKLIST.md doesn't list an image in assets/art/placeholders/.
   3. AGENTS.md (and README.md, if it lists tests) doesn't list a test scene in tools/tests/,
      or AGENTS.md doesn't list a benchmark scene in tools/bench/.
@@ -119,6 +123,65 @@ def notes(main_gd: str) -> list:
     return out
 
 
+def extra_texts() -> tuple[list, list]:
+    """Other player-facing texts (STORY.md section 12). Returns (checks, warnings).
+    A check is (label, [lines]); every line must appear in STORY.md. For a card, title and text must
+    share one line of STORY.md (its table row). Format strings (with %) and empty strings are skipped."""
+    checks, warns = [], []
+
+    def plain(s: str) -> bool:
+        return s.strip() != "" and "%" not in s
+
+    def source(rel: str):
+        src = read(rel)
+        return src if src else None
+
+    # Level-up cards and screen (the card screen goes in M2; then this file is gone and is skipped).
+    src = source("scripts/ui/level_up.gd")
+    if src is not None:
+        cards = re.findall(r'"title":\s*' + STRING + r',\s*"body":\s*' + STRING, src)
+        lines = [gd_unescape(t) for t in re.findall(r'\.text = ' + STRING, src) if plain(gd_unescape(t))]
+        if not cards:
+            warns.append("check_docs: no level-up cards found in scripts/ui/level_up.gd (did its format change?)")
+        for title, body in cards:
+            checks.append(("card", f"level-up card {gd_unescape(title)!r}", [gd_unescape(title), gd_unescape(body)]))
+        for line in lines:
+            checks.append(("line", "level-up screen", [line]))
+    # The Ashbrood's toast and its boss-bar hints.
+    src = source("scripts/enemies/ashbrood.gd")
+    if src is not None:
+        toasts = [gd_unescape(t) for t in re.findall(r'_show_toast\(' + STRING, src) if plain(gd_unescape(t))]
+        if not toasts:
+            warns.append("check_docs: no toast found in scripts/enemies/ashbrood.gd (did its format change?)")
+        for t in toasts:
+            checks.append(("line", "Ashbrood toast", [t]))
+    src = source("scripts/ui/boss_bar.gd")
+    if src is not None:
+        hints = []
+        for m in re.finditer(r'(?m)^\s*(?:var\s+)?hint\s*:?=\s*(.*)$', src):
+            hints += [gd_unescape(h) for h in re.findall(STRING, m.group(1)) if plain(gd_unescape(h))]
+        if not hints:
+            warns.append("check_docs: no boss-bar hints found in scripts/ui/boss_bar.gd (did its format change?)")
+        for h in hints:
+            checks.append(("line", "boss-bar hint", [h]))
+    # Notes the keeper is shown that aren't landmarks (the faint note).
+    src = source("scripts/player/player.gd")
+    if src is not None:
+        for title, body in re.findall(r'note_opened\.emit\(\s*' + STRING + r',\s*' + STRING + r'\s*\)', src):
+            parts = [gd_unescape(title)] + [l for l in gd_unescape(body).split("\n") if plain(l)]
+            checks.append(("line", f"note {gd_unescape(title)!r} in player.gd", [p for p in parts if plain(p)]))
+    # Fast-travel texts.
+    src = source("scripts/ui/travel_menu.gd")
+    if src is not None:
+        consts = [gd_unescape(c) for c in re.findall(r'(?m)^const [A-Z_]+ := ' + STRING, src)]
+        consts = [c for c in consts if plain(c)]
+        if not consts:
+            warns.append("check_docs: no text constants found in scripts/ui/travel_menu.gd (did its format change?)")
+        for c in consts:
+            checks.append(("line", "fast-travel text", [c]))
+    return checks, warns
+
+
 def git(*args: str) -> str:
     try:
         return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout
@@ -165,6 +228,17 @@ def main() -> int:
                 fails.append(f"STORY.md: {kind} `{nid}` note line missing or differs; the game says {line!r}")
         if norm(title) not in hay:
             warns.append(f"STORY.md: {kind} `{nid}` title {title!r} isn't mentioned")
+
+    checks, extra_warns = extra_texts()
+    warns += extra_warns
+    for kind, label, parts in checks:
+        if kind == "card":
+            if not any(all(norm(p) in l for p in parts) for l in lines):
+                fails.append(f"STORY.md: {label} is missing or differs; the game says {parts[0]!r}: {parts[1]!r}")
+        else:
+            for p in parts:
+                if norm(p) not in hay:
+                    fails.append(f"STORY.md: {label} missing or differs; the game says {p!r}")
 
     # 2. ART_CHECKLIST.md lists every placeholder image.
     checklist = read("docs/ART_CHECKLIST.md")
