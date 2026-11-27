@@ -2,6 +2,13 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-26 (lantern upkeep, docs, people and creatures)
+- **WayLamps (prototype; the owner named them).** One old WayLamp per region. Reach it with your own light, feed it fuel, and hold it while it kindles. Once lit, it **holds its region**: lanterns there are refilled and stop burning down, and no Wicklings come. Why: lighting the built regions takes about 40-50 lanterns, which means a refuel about every 4 s, and letting lanterns go cold had no stakes. Built on branch `proto/waylamps`. Its playtest is the gate before the Still Lake. Design: DESIGN §8; draft text: STORY §11.
+- **Light repels Wicklings (same prototype).** Healthy light pushes Wicklings back into the dark. They can only drain a **dying** lantern, one under a quarter of its tank that no healthy light covers.
+- **People and more creatures are wanted** (owner). The proposal is `docs/PLAN_NPCS_ENEMIES.md`, waiting for owner markup. Until it is approved, people and spoken lines stay out of scope, and STORY's "no dialogue" rule stands.
+- **Docs follow the code.** The code is the authority on what is in the game. Docs change in the same branch as the code they describe. `tools/check_docs.py` and the docs skill (`.agents/skills/lantern-keeper-docs/`) keep them in step. The README was rewritten with screenshots.
+- **Fix:** hand refuelling now fills a Reservoir Lamp's whole tank (it used to stop at 100 of 200).
+
 ## 2026-11-26 (HUD playtest follow-ups)
 - **Mirror beams burn Wicklings fast** (about 1 s), and Wicklings can't sense beams, so they walk into them.
 - **Wicklings smother mirrors** (no mirror health): one clinging to a mirror turns it dark and cuts the chain after it; it drinks any beam that reaches it, so only your ward drives it off. A status chip counts smothered mirrors.

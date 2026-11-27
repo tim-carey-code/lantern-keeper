@@ -31,6 +31,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_save.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_ridge.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_story.tscn
+python3 tools/check_docs.py                                                                    # docs match the code
 # A test that fails to parse never quits: wrap runs in `timeout 120`.
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800                    # no errors
 ```
@@ -40,6 +41,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800 
 - Automated runs are silent (`--audio-driver Dummy`). Don't play sound through the owner's speakers.
 - Visual check without the owner's screen: render frames on a virtual display with `tools/capture/capture.tscn`
   (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
+- README images: `tools/capture/readme_shots.sh` renders the staged `readme_*` views into `docs/screenshots/` (look at each one before committing).
 - Art: 16x16 sprites drawn at 2x, palette in `source/palette/`. Kenney sheets are recoloured from `source/vendor/`; placeholders come from `tools/art/make_placeholders.py`.
 
 ## Storage, git, licensing
@@ -47,6 +49,10 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800 
 - Public repo: github.com/tim-carey-code/lantern-keeper. Commit with the GitHub noreply address; never commit secrets or personal data.
 - Code is MIT (`LICENSE`); art, audio, story, docs and the name are all rights reserved (`LICENSE-ASSETS.md`).
 - Every third-party asset needs a row in `assets/CREDITS.md` (source, author, license) in the same commit.
+
+## Docs
+- Docs change in the same branch as the code they describe. Follow `.agents/skills/lantern-keeper-docs/SKILL.md`
+  (which doc owns what, when it changes, owner approval for story text) and run `python3 tools/check_docs.py` before committing.
 
 ## Story and guidance
 - All player-facing story text lives in `docs/STORY.md` (owner-reviewed) and is mirrored in `systems/story/story.gd` (goals, journal entries, tips, letter) and `scripts/main/main.gd` (landmark texts). Change both together.
