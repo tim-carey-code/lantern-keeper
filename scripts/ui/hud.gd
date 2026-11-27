@@ -39,7 +39,7 @@ func _ready() -> void:
 	chips.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	chips.offset_left = -316
 	chips.offset_right = -16
-	chips.offset_top = 16
+	chips.offset_top = 84   # below the goal banner, which can be wide with long goals
 	chips.custom_minimum_size = Vector2(300, 0)
 	chips.add_theme_constant_override("separation", 6)
 	add_child(chips)
