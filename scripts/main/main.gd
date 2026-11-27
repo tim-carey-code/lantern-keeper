@@ -186,36 +186,36 @@ func _build_rock_collision() -> void:
 func _place_landmarks() -> void:
 	_place_ridge_landmarks()
 	_add_landmark("letter", "The letter on the hut door", "letter", start + Vector2(0, -40),
-		"The letter that brought you here. The ink has run a little.\nLight that first. Then follow my marks. - H.")
+		"The letter that brought you here. The ink has run a little.\nLight that first. Then follow my marks. - O.")
 	_add_landmark("rack", "Lantern rack", "rack", start + Vector2(-80, -40),
 		"Five hooks, five worn marks where lamps hung.\nOnly one hook is empty. Its mark is the cleanest.")
 	_add_landmark("climb_cairn", "A stone cairn", "cairn", fog.tile_center(Vector2i(24, 47)),
-		"A small cairn, a chalk arrow on the top stone, pointing up.\nThe wind is worse up there. Keep your lights sheltered. - H.")
+		"A small cairn, a chalk arrow on the top stone, pointing up.\nThe wind is worse up there. Keep your lights sheltered. - O.")
 	_add_landmark("ledger", "Keepers' ledger", "ledger", start + Vector2(-96, -64),
-		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns shrink to a single mark, in a newer hand.\nUnder it: Gone east to the marsh. Follow the stones. - H.")
+		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns shrink to a single mark, in a newer hand.\nUnder it: Gone east to the marsh. Follow the stones. - O.")
 	_add_landmark("stone_way", "Carved stone", "stone", fog.tile_center(Vector2i(40, 30 + Y)),
 		"KEEP THE WAY TO THE WATER LIT.\nBelow the old letters, a fresh chalk arrow points east.")
 	_add_landmark("frames_east", "Old lantern frames", "frames", fog.tile_center(Vector2i(78, 31 + Y)),
-		"Three empty frames along the boardwalk, all turned east, toward the lake.\nA rag is tied to the last one: The pump still works. Wake it. - H.")
+		"Three empty frames along the boardwalk, all turned east, toward the lake.\nA rag is tied to the last one: The pump still works. Wake it. - O.")
 	_add_landmark("chalk_lake", "Chalk on the pumphouse wall", "chalk", fog.tile_center(Vector2i(100, 30 + Y)),
-		"Two drawings of the same lake. In the first it shines.\nIn the second, something dark is coiled around the light.\nBeside them, newer chalk: I went to look. - H.")
+		"Two drawings of the same lake. In the first it shines.\nIn the second, something dark is coiled around the light.\nBeside them, newer chalk: I went to look. - O.")
 	var pump := _add_landmark("pumphouse", "The pumphouse", "pumphouse", fog.tile_center(Vector2i(103, 33 + Y)),
-		"The old pump still turns when you push it. Its tank could feed a lamp for a long time.\nScratched on the tank: Light has to be fed from somewhere.\nNow go up, past the Hollow. The ridge has glass. - H.")
+		"The old pump still turns when you push it. Its tank could feed a lamp for a long time.\nScratched on the tank: Light has to be fed from somewhere.\nNow go up, past the Hollow. The ridge has glass. - O.")
 	pump.unlock_kind = "reservoir"
 
 func _place_ridge_landmarks() -> void:
 	var glazier := _add_landmark("glazier", "The glazier's workshop", "workshop", _ridge_spot(Vector2i(14, 15)),
-		"Cold kilns and racks of cut glass. A half-finished hood sits on the bench,\nshaped to keep a flame alive in any wind.\nA note under it: Finish it. I could not stay. - H.")
+		"Cold kilns and racks of cut glass. A half-finished hood sits on the bench,\nshaped to keep a flame alive in any wind.\nA note under it: Finish it. I could not stay. - O.")
 	glazier.unlock_kind = "hooded"
 	var station := _add_landmark("station", "The signal station", "station", _ridge_spot(Vector2i(58, 13)),
 		"A tall post with a cracked mirror. Keepers passed light from post to post, all the way to the lake.\nSomeone has turned the mirror down, toward the water.\nOld steps beside it go down into the fog.")
 	station.unlock_kind = "mirror"
 	_add_landmark("coat", "A keeper's coat", "coat", _ridge_spot(Vector2i(42, 22)),
-		"Snagged on the rocks, stiff with frost. An H is stitched inside the collar.\nIn the pocket: \"It came up out of the water. It drank the great lamp.\nNow it is hungry for the rest. Only mirrors reach the lake.\"")
+		"Snagged on the rocks, stiff with frost. An O is stitched inside the collar.\nIn the pocket: \"It came up out of the water. It drank the great lamp.\nNow it is hungry for the rest. Only mirrors reach the lake.\"")
 	_add_landmark("ridge_steps", "Old steps", "steps", _ridge_spot(Vector2i(62, 17)),
 		"Old steps, worn smooth, going down.\nBelow, the fog does not move, even in the wind.")
 	_add_landmark("lens", "A broken lens", "lens", _ridge_spot(Vector2i(30, 9)),
-		"A great curved lens, split down the middle. Scratched into the frame:\nTHE WICK REMEMBERS EVERY FLAME.\nBelow, in a newer hand: Then it will remember ours. - H.")
+		"A great curved lens, split down the middle. Scratched into the frame:\nTHE WICK REMEMBERS EVERY FLAME.\nBelow, in a newer hand: Then it will remember ours. - O.")
 
 ## The nearest open Ridge tile to a wanted spot (outcrops are random).
 func _ridge_spot(want: Vector2i) -> Vector2:

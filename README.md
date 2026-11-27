@@ -22,9 +22,9 @@
 
 ## About
 
-You are the new keeper of a dark, foggy valley. It had keepers once, until the lamps went out one by one. Now there is a letter from H., the last keeper: light the old lantern by the hut, then follow their marks.
+You are the new keeper of a dark, foggy valley. It had keepers once, until the lamps went out one by one. Now there is a letter from O., the last keeper: light the old lantern by the hut, then follow their marks.
 
-So you build lanterns, relight the ones that go cold, gather what the light reveals, and push the fog back a little at a time. H.'s notes lead you across the valley, toward the Still Lake. The fun is in deciding where the light goes.
+So you build lanterns, relight the ones that go cold, gather what the light reveals, and push the fog back a little at a time. O.'s notes lead you across the valley, toward the Still Lake. The fun is in deciding where the light goes.
 
 The game is calm and moody, with a quiet unease. Light is safety: in it you warm up, your hand lamp refills and nothing chases you. But the dark is not empty. Small shadows called Wicklings drain your lanterns and chill you. There is no death and no game over. If the cold gets you, you faint and wake by the nearest light.
 
@@ -77,8 +77,8 @@ Lantern Keeper is in development. It is a single-player game for PC (Linux first
       <br><sub>A new game opens with a title card, then asks your keeper's name.</sub>
     </td>
     <td width="50%" valign="top">
-      <img src="docs/screenshots/journal.png" width="400" alt="The journal open on the Story so far page, showing H.'s letter and the keeper's entry about the ledger.">
-      <br><sub>The journal, open on <i>Story so far</i>: H.'s letter and the keeper's own entries.</sub>
+      <img src="docs/screenshots/journal.png" width="400" alt="The journal open on the Story so far page, showing O.'s letter and the keeper's entry about the ledger.">
+      <br><sub>The journal, open on <i>Story so far</i>: O.'s letter and the keeper's own entries.</sub>
     </td>
   </tr>
 </table>
@@ -96,7 +96,7 @@ Lantern Keeper is in development. It is a single-player game for PC (Linux first
 - **Wind.** Gusts cross the valley after a short warning and make exposed lanterns burn faster. On the Windward Ridge the west wind never stops. Rock on the windward side shelters a lantern.
 - **Wicklings and the warding glow.** Wicklings drift out of the deep fog to drain your lanterns and smother your mirrors. Hold F / RB / RT and your hand lamp swells into a warding glow that burns them and pushes them back. The glow runs on the lamp's own charge, never your fuel. Burned Wicklings leave an ember worth a little fuel.
 - **No game over.** Warmth is your health. It drops when a Wickling touches you and comes back in lantern light. At zero you faint, drop some of what you carry, and wake by the nearest lit lantern (or the hut).
-- **Story and guidance.** A short opening asks your keeper's name and gives you H.'s letter. One goal at a time sits at the top of the screen, and an optional pointer shows the way. The journal keeps your goals, the story so far and every note you have read. H.'s marks wait in the fog for your light to find them.
+- **Story and guidance.** A short opening asks your keeper's name and gives you O.'s letter. One goal at a time sits at the top of the screen, and an optional pointer shows the way. The journal keeps your goals, the story so far and every note you have read. O.'s marks wait in the fog for your light to find them.
 - **Finds worth the walk.** A keeper's satchel in each region lets you carry more, and a lamp glass makes your hand lamp reach further, dim more slowly and ward for longer.
 - **The map.** It shows the ground you have explored, the regions you have found, and your lanterns, colored by how much fuel they have left.
 - **Keyboard and mouse, or a gamepad.** Menus work without a mouse, and on-screen prompts show the buttons for the device you used last.

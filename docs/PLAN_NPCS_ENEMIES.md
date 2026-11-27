@@ -13,24 +13,24 @@ This plan adds four creatures, five people who come back as regions are held, a 
 **What changes.** People and short spoken lines move to IN. DESIGN §5 and STORY's header already say so (commit 40f3406). This plan also adds creature kinds beyond ROADMAP's "Wickling variety per region (kept small)".
 
 **What stays.** These are also the guardrails for every line a person says:
-1. H.'s marks still lead the main path, and no main goal needs a person.
-2. H. is never seen. Nobody saw H. after the letter or knows where H. went.
-3. H. signs notes "- H.", with a plain hyphen. H.'s full name (Oswin Reed) never appears in the game, so people call him "H.". Lines may use "he" for H., but none need to.
+1. O.'s marks still lead the main path, and no main goal needs a person.
+2. O. is never seen. Nobody saw O. after the letter or knows where O. went.
+3. O. signs notes "- O.", with a plain hyphen. O.'s full name (Oswin Reed) never appears in the game, so people call him "O.". Lines may use "he" for O., but none need to.
 4. The Soul of the Wick stays "it", with no name. It has big pale eyes. People call it only "it" or "the dark", and don't describe it.
 5. Why it rose stays unexplained. People know what they saw, not what it means. The great lamp's plate stays the strongest hint.
 6. Light is safe, there is no game over, and amber means safety.
 
 DECIDED (2026-11-27): people and short spoken lines move to IN, under these guardrails. All the people and all the creatures come before the Still Lake.
 
-DECIDED (2026-11-27): the sign-off uses a plain hyphen: "- H.". H.'s full name never appears in the game.
+DECIDED (2026-11-27): the sign-off uses a plain hyphen: "- O.". O.'s full name never appears in the game.
 
 DECIDED (2026-11-27): the Soul of the Wick has big pale eyes. It is still "it", and why it rose is still unexplained. The blanket "no face" rule for creatures is dropped. Section 2 suggests eyes, or none, for each creature.
 
-OWNER: keep people optional, so the game still feels like following H.
+OWNER: keep people optional, so the game still feels like following O.
 
 DECIDED (2026-11-27): the last keeper is **Oswin Reed**, a man ("he"); the name Hester Vane is dropped.
 
-OWNER: with the name Oswin Reed, does he sign "- O." instead of "- H."? Until then, texts keep "H.". If it becomes "- O.", four spoken lines in this plan change.
+DECIDED (2026-11-27): he signs "- O." (it was "- H.", for Hester). The spoken lines in this plan that name him say "O.".
 
 ### Moved from the Lake (proposal)
 The old plan put Ebba and the Fogstilt at the Lake. Everything now comes before the Lake, so each needs an earlier home.
@@ -111,6 +111,8 @@ OWNER: held regions stop every creature, not only Wicklings, and creatures insid
 - **Knobs:** `clinker_max` (1-2), `clinker_speed`, `clinker_hp`, `clinker_push_mult`, `clinker_settle_sec`.
 - **Effort:** M (push handling and soft-lock guards).
 
+OWNER (2026-11-27, proposed): the Ridge is crowded (the Gutterkite, the Fogstilt and, once the Hollow and the Reedmarsh are held, the Clinker). Proposal: add a small **Lakeshore** region between the Ridge and the Lake, down the old steps, in the empty north-east of the map. The Fogstilt and Ebba move there (beams cut its fog: a warm-up for the Lake). The Ridge keeps the Gutterkite; the Clinker roams whatever isn't held. About one milestone of work. Cheaper option: no new region; the Clinker keeps to the Hollow and the Reedmarsh.
+
 ### In v1
 All four, before the Lake. The Gutterkite and the Fogstilt give the Hooded Lamp and the Mirror Post a second job. The Slowwater adds pressure while players are still learning, so it is the gentlest. The Clinker needs soft-lock testing. Difficulty still grows with distance from the hut, as ROADMAP plans: the marsh gets one new creature and the Ridge gets three, so the M5d playtest checks that the Ridge isn't too busy.
 
@@ -139,23 +141,23 @@ OWNER: approve the rule: people come back to a region once its WayLamp is kindle
 - **Who:** a travelling trader with a handcart, who sold the keepers oil and glass.
 - **Where, when, why:** by the hut once the Hollow is held. Lit roads mean customers.
 - **Errand:** "Light the road" (three lanterns lit along the marsh passage, so the cart can pass).
-- **Fragment:** H.'s last order, from before the letter: only glass, no oil.
+- **Fragment:** O.'s last order, from before the letter: only glass, no oil.
 - **Reward:** trading (3 fuel for 1 scrap, and 4 scrap for 1 glass once the Ridge is held) and the Wide Pack: +10 carry of each resource, on top of the satchels (70 with all three).
 - **Personality:** cheerful and practical. Scared of the dark, and pretending not to be.
 - **Lines:**
   - "Lights on the road again. Lights mean people. People mean trade."
-  - "H. ordered glass once. No oil. Just glass, all I had."
+  - "O. ordered glass once. No oil. Just glass, all I had."
 
-### Maud Fallow, old pump keeper (the Reedmarsh), who knew H.
-- **Who:** an old keeper who ran the marsh pump with H. for years, then left as the lamps failed.
+### Maud Fallow, old pump keeper (the Reedmarsh), who knew O.
+- **Who:** an old keeper who ran the marsh pump with O. for years, then left as the lamps failed.
 - **Where, when, why:** at the pumphouse once the Reedmarsh is held. Saw it lit from the hills and came back, ashamed of leaving.
 - **Errand:** "Maud's lamp" (fetch it from the lantern rack by the hut).
-- **Fragment:** Maud and H. argued as the ledger counts fell; Maud left, H. stayed. Maud doesn't know why it came.
+- **Fragment:** Maud and O. argued as the ledger counts fell; Maud left, O. stayed. Maud doesn't know why it came.
 - **Reward:** the old lamp's glass, fitted to your hand lamp. It counts as a fourth lamp glass, on top of the three found in the world. The rack note becomes "Two hooks are empty now."
 - **Personality:** blunt and dry. Guilty, but kind underneath.
 - **Lines:**
-  - "You're the one who answered. H. always did find someone."
-  - "We argued over that ledger. I left. H. stayed. That's all of it."
+  - "You're the one who answered. O. always did find someone."
+  - "We argued over that ledger. I left. O. stayed. That's all of it."
   - "Why did it come? I've had years to think. I still don't know."
 
 ### Kit Brand, glazier's apprentice (the Windward Ridge)
@@ -186,11 +188,11 @@ OWNER: approve the rule: people come back to a region once its WayLamp is kindle
 - **Who:** drew the keepers' lamp maps.
 - **Where, when, why:** at the carved stone on the marsh road once two regions are held, to draw the valley again.
 - **Errand:** "Walk the edges" (read three new survey stones, one each in the Hollow, the Reedmarsh and the Ridge).
-- **Fragment:** no old map shows a lamp past the lake. H. borrowed Ivo's best map and never returned it.
+- **Fragment:** no old map shows a lamp past the lake. O. borrowed Ivo's best map and never returned it.
 - **Reward:** the map shows resource spots and unread notes in held regions.
 - **Personality:** fussy, precise and warm. Measures in paces.
 - **Lines:**
-  - "H. borrowed my best map. Never brought it back. I hope it helped."
+  - "O. borrowed my best map. Never brought it back. I hope it helped."
   - "No lamps past the lake on any map. There was nothing out there to keep."
 - **Landmark count:** with the stones the game has 24 story landmarks (13 built, 8 planned for the Lake, 3 stones). The three WayLamp notes would make 27. The six upgrade finds, also built as readable landmarks, would make 33. The target is 15-25.
 
@@ -266,7 +268,7 @@ DECIDED (2026-11-27): build all of it after the WayLamp playtest and before the 
 - Props: Amos's cart (32x16), three survey stones (16x16) and Ebba's marsh boat (32x16; it can reuse the lake boat already on the art list).
 - Creatures: as in section 2.
 
-OWNER: draw people at 16x16 (as in the brief) or at the keeper's 32x32 scale; no portraits in v1.
+DECIDED (2026-11-27): people are drawn at the keeper's 32x32 scale; no portraits in v1.
 
 **New sounds.** No voices. One soft sound per person when the panel opens (cart bell, pump creak, glass chime, oar knock, paper rustle) and a chime when people come back. Creatures: kite flutter, slow wading, bubbles, a low grind. No stingers.
 
@@ -280,7 +282,7 @@ DECIDED (2026-11-27): people's rewards add to the upgrades and don't replace the
 
 OWNER: may people say the keeper's typed name once, at the first meeting?
 
-OWNER: all names are drafts. Choose pronouns for the five people, or keep avoiding them, as for H.
+OWNER: all names are drafts. Choose pronouns for the five people, or keep avoiding them, as for O.
 
 OWNER: how close may people come to existing hints? Draft: Kit echoes the plate and the lens ("every flame"); nobody says how many kept the great lamp.
 
@@ -295,15 +297,14 @@ Needed before M5c:
 - §3: people come back when a region's WayLamp is kindled.
 - §2: held regions stop every creature, and creatures fade when a region becomes held.
 - §4: the talk panel (a), and Errands and People as their own pages. M5c assumes both.
-- §6: people at 16x16 or 32x32.
 - §1: keep people optional. Guardrail 1 already says no main goal needs a person.
 
 Needed before M5d:
+- §2: add the Lakeshore region for the Fogstilt and Ebba, or spread the creatures instead.
 - §1: the new homes for the Fogstilt and Ebba.
 - §3: which readable things count toward the 15-25 landmarks.
 
 Before lines are written:
-- §1: does Oswin Reed sign "- H." or "- O."?
 - §7: the keeper's typed name, pronouns for the five, how close to the hints, and one soft hint toward the goal.
 - §5: rewards and trade rates (tune in the playtests).
 

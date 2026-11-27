@@ -1,5 +1,5 @@
 extends CanvasLayer
-## New-game opening: title card, then "your name, keeper", then H.'s letter.
+## New-game opening: title card, then "your name, keeper", then O.'s letter.
 ## Pauses the world until it is done. A / E / Enter / click continues.
 
 var root: Control
