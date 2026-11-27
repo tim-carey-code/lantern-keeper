@@ -3,8 +3,12 @@
 Owner decisions that override or settle the design docs. Newest first.
 
 ## 2026-11-27 (playtest: fuel and abilities)
-- **Lamp tending is not wanted** (owner: "fuel is ABUNDANT, its everywhere, its pretty much useless... i dont want that to be a chore i didnt want that anyway but even less so because its an ARPG now"). Fuel and lantern upkeep need a rethink; plan pending owner approval.
-- **The abilities are boring** (owner: "the beam and the ward idk i feel like we need to shoot flaming light fireballs or some shit instead"). Combat needs a skill rework toward projectile/AoE light-fire skills; plan pending owner approval.
+- **Lamp tending is not wanted** (owner: "fuel is ABUNDANT, its everywhere, its pretty much useless... i dont want that to be a chore i didnt want that anyway but even less so because its an ARPG now"). Built lanterns should not need refuelling.
+- **Fuel becomes lamp-oil flasks** (owner: "fuel as flasks"): a few carried charges, Diablo-potion style, instead of a pickup scattered everywhere.
+- **An action bar** (owner: "i guess we need an action bar"): skills and flasks in slots on buttons, with cooldowns shown.
+- **Skills toward flaming light** (owner: "we need to shoot flaming light fireballs or some shit instead"): projectile and AoE light-fire skills replace the beam-and-ward kit as the core.
+- **The beam stays as an optional skill for now** (owner: "keep as optional for now and we will see if i want to get rid of it when i play it").
+- **Re-plan the whole game and rethink all the docs** (owner: "I think we need to re-plan this entire game and rethink all of the docs"). The combat and fuel rework waits for the new plan. The loop route and WayLamp fast travel (already being built) are inputs to it.
 - Level 8 on the Ashbrood kill, as tuned.
 
 ## 2026-11-27 (route: one loop)
