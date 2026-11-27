@@ -141,11 +141,50 @@ func _process(_delta: float) -> void:
 		540:
 			check(main.get_node("FogLayer/WindStreaks").active_count() > 40, "wind streaks blow across the screen in a gust")
 			wind.force(Wind.State.CALM)
+			_interaction_setup()
 		541:
+			Progress._input_block_until = 0   # a note closed earlier blocks input for 200 ms of real time; headless runs faster
+			Input.action_press("interact")   # tap refuels the lantern; holding then gathers
+		580:
+			Input.action_release("interact")
+			check(Inventory.get_count("scrap") > scrap_before, "holding interact beside a lantern gathers the resource (%d -> %d)" % [scrap_before, Inventory.get_count("scrap")])
+			check(hint_lantern.fuel > 50.0, "and the tap still refuelled the lantern (%.0f)" % hint_lantern.fuel)
+		581:
 			Art._ph.clear()   # release cached textures so exit is clean
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)
 
+
+# --- Interaction: lanterns beside resources, quiet building -----------------------
+
+var scrap_before := 0
+var hint_lantern: Lantern
+
+func _interaction_setup() -> void:
+	# A scrap pile with a lantern right beside it (as an old save could have): the lantern is
+	# nearer, so a tap refuels it, but holding the button must still gather.
+	var pile: ResourceNode = null
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.kind == "scrap" and r.can_gather():
+			pile = r
+			break
+	check(pile != null, "found a scrap pile for the interaction checks")
+	check(player.place_block_reason(pile.global_position) == "on a resource", "you can't build right on top of a resource")
+	hint_lantern = Lantern.new()
+	hint_lantern.fuel = 50.0
+	hint_lantern.position = pile.global_position + Vector2(24, 0)
+	main.get_node("Lanterns").add_child(hint_lantern)
+	player.global_position = pile.global_position + Vector2(30, 8)
+	Inventory.counts["fuel"] = 5
+	Inventory.counts["scrap"] = 0
+	scrap_before = 0
+	check(player.nearest_target() == hint_lantern and player.nearest_resource() == pile, "the lantern is the nearest thing, the pile is still in reach")
+	var lines: Array = main.get_node("FogLayer/WorldPrompt").lines_for(hint_lantern)
+	check(lines.any(func(l): return String(l[1]).begins_with("Hold to gather")), "the lantern's prompt also offers 'Hold to gather'")
+	# Building stays quiet until a build fails.
+	check(player.build_hint_t <= 0.0, "no build outline or text by default")
+	player.try_place()
+	check(player.build_hint_t > 0.0 and player.build_hint != "", "a build that can't happen says why, for a moment (%s)" % player.build_hint)
 
 # --- M3 ------------------------------------------------------------------------
 
@@ -184,8 +223,9 @@ func _m3_checks() -> void:
 	check(fog.build_block(fog.tile_center(marsh)).begins_with("soft ground"), "cannot build on soft marsh")
 	check(walk.x >= 0 and fog.build_block(fog.tile_center(walk)) == "", "can build on a boardwalk")
 	var pump := _landmark("pumphouse")
-	var notes := get_tree().get_nodes_in_group("landmark").filter(func(m): return m.upgrade == "")
-	check(notes.size() == 13, "thirteen story landmarks placed (8 Hollow/marsh, 5 Ridge), plus %d upgrade finds" % (get_tree().get_nodes_in_group("landmark").size() - notes.size()))
+	var notes := get_tree().get_nodes_in_group("landmark").filter(func(m): return m.upgrade == "" and not m.scenery)
+	check(notes.size() == 11, "eleven story landmarks to read (6 Hollow/marsh, 5 Ridge); the rack is scenery (%d)" % notes.size())
+	check(_landmark("rack") != null and _landmark("rack").scenery and _landmark("letter") == null, "the rack is just scenery and the door letter is gone (less to read at the start)")
 	check(pump != null and _connected(fog.tile_of(start), fog.tile_of(pump.global_position)), "walkable path from the hut to the pumphouse")
 	var peat := get_tree().get_nodes_in_group("resource").filter(func(r): return r.label == "Peat")
 	check(peat.size() >= 15, "peat in the marsh (%d)" % peat.size())

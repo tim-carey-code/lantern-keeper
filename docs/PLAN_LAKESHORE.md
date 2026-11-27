@@ -189,6 +189,8 @@ Under the note, the game adds the three lines it shows under every WayLamp note,
 
 DECIDED (2026-11-27): try it on the old landing, reached only by a beam; judge it in the M5d playtest.
 
+REOPENED (2026-11-27, later): after the WayLamps playtest the owner wants WayLamps to just take fuel, with no lantern having to reach them. A beam-only landing goes against that. Rethink this with the core-loop rethink (for example: the landing is reached by walking a beam-lit path through the thick fog).
+
 ---
 
 ## 2. Landmarks (DRAFT)

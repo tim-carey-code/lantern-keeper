@@ -1,7 +1,7 @@
 extends Node2D
 ## Prompts drawn over the thing in front of the keeper (instead of HUD text):
 ##   "[A] Read", "[A] Refuel  62%", "[A] Turn", "[A] Hold to gather  3 left", plus "[B] Pick up".
-## Under the placement outline: what the selected lantern costs, or why you can't build there.
+## After a build that couldn't happen: why, under the keeper, for a moment.
 ## Lives on the fog layer so it stays readable in the dark.
 
 const FONT := preload("res://assets/fonts/kenney_pixel.ttf")
@@ -27,8 +27,6 @@ func lines_for(t: Node) -> Array:
 			return [["", "WayLamp: this region is held"]]
 		if t.kindling:
 			return [["", "Kindling %ds: keep the dark off it" % ceili(t.seconds_left())]]
-		if not t.is_reached():
-			return [["", "WayLamp: your own light must reach it first"]]
 		return [[InputHint.key("interact"), "Feed fuel  %d / %d" % [t.fuel_units(), t.needs()]]]
 	if t is Landmark and t.upgrade != "":
 		return [[InputHint.key("interact"), "Look again" if t.is_taken() else "Take"]]
@@ -47,7 +45,11 @@ func lines_for(t: Node) -> Array:
 			extra = "  wind-proof"
 		elif t.in_ridge_wind() or t.in_gust():
 			extra = "  in the wind"
-		return [[InputHint.key("interact"), "Refuel  " + state + extra], [InputHint.key("cancel"), "Pick up"]]
+		var out := [[InputHint.key("interact"), "Refuel  " + state + extra], [InputHint.key("cancel"), "Pick up"]]
+		var r = player.nearest_resource() if player else null
+		if r:
+			out.append([InputHint.key("interact"), "Hold to gather %s  %d left" % [r.kind, r.amount]])
+		return out
 	if t is ResourceNode:
 		var verb := "Gathering..." if player.is_gathering() else "Hold to gather"
 		return [[InputHint.key("interact"), "%s  %d left" % [verb, t.amount]]]
@@ -62,16 +64,9 @@ func _draw() -> void:
 		var top: float = -64.0 if t is Lantern else (-104.0 if t is WayLamp else (-74.0 if (t is Landmark and t.look in ["pumphouse", "workshop", "station"]) else -48.0))
 		_draw_lines(t.global_position + Vector2(0, top), lines_for(t))
 		return
-	# Nothing to use: say what building here would do.
-	var p: Vector2 = player.place_pos()
-	var reason: String = player.place_block_reason(p)
-	if reason == "too close to a lantern":
-		return
-	var k := Progress.selected
-	if reason == "":
-		_draw_lines(p + Vector2(0, 34), [[InputHint.key("place_lantern"), "%s  %s" % [Lantern.display(k), Lantern.cost_text(k)]]], 0.75)
-	else:
-		_draw_lines(p + Vector2(0, 34), [["", "Can't build: " + reason]], 0.6, UiStyle.WARN)
+	# A build that couldn't happen says why, for a moment (nothing otherwise: building stays quiet).
+	if player.build_hint_t > 0.0 and player.build_hint != "":
+		_draw_lines(player.place_pos() + Vector2(0, 34), [["", "Can't build: " + player.build_hint]], 0.8, UiStyle.WARN)
 
 ## A small dark box per line, with the button in a gold key cap, centred on `at` (bottom edge).
 func _draw_lines(at: Vector2, lines: Array, alpha: float = 1.0, color: Color = UiStyle.CREAM) -> void:

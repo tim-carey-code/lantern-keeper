@@ -106,23 +106,22 @@ func _process(_delta: float) -> void:
 			check(ids.size() == 3 and ids.has("hollow") and ids.has("marsh") and ids.has("ridge"), "three WayLamps: Hollow, Reedmarsh, Ridge (%s)" % str(ids.keys()))
 			check(placed_ok, "each WayLamp stands in its own region")
 			hollow = _waylamp("hollow")
-			check(not hollow.is_lit() and not hollow.is_reached(), "a cold WayLamp starts unreached")
+			check(not hollow.is_lit() and not hollow.kindling, "a WayLamp starts cold")
+			check(fog.tile_of(hollow.global_position).distance_to(fog.tile_of(main.start)) > 20.0, "the Hollow's WayLamp is well away from the hut (%.0f tiles)" % fog.tile_of(hollow.global_position).distance_to(fog.tile_of(main.start)))
 			check(wp.lines_for(hollow)[0][1] == "Look closer", "the first prompt is 'Look closer'")
 			player.global_position = hollow.global_position + Vector2(0, 30)
 			Inventory.counts["fuel"] = 20
 			check(hollow.feed() == "read" and get_tree().paused, "the first interaction reads it (and pauses the world)")
 			main.get_node("NoteReader").close()
 			check(Progress.notes_read.has("waylamp_hollow") and Story.tips_seen.has("waylamp_seen"), "it is remembered as read, with a tip")
-			check(hollow.feed() == "not_reached" and Inventory.get_count("fuel") == 20, "it won't take fuel until your own light reaches it")
-			check(String(wp.lines_for(hollow)[0][1]).contains("must reach"), "the prompt says your light must reach it first")
+			check(String(wp.lines_for(hollow)[0][1]).begins_with("Feed fuel"), "then it offers to take fuel straight away: no lantern needed")
 			var hp := hollow.global_position
 			var spot := _spot(FogGrid.R_HOLLOW, func(p: Vector2) -> bool:
 				var d := p.distance_to(hp)
-				return d > Tuning.waylamp_clear_radius + 8.0 and d < 200.0)
+				return d > Tuning.waylamp_clear_radius + 8.0 and d < 200.0 and p.y > hp.y)   # south of it, away from the Ridge
 			check(spot != Vector2.INF, "found a spot to light it from")
 			near = _lamp(spot, Tuning.lantern_max_fuel)
 		4:
-			check(hollow.is_reached(), "a burning lantern whose light covers it reaches it")
 			check(String(wp.lines_for(hollow)[0][1]).begins_with("Feed fuel"), "then the prompt offers to feed it (%s)" % str(wp.lines_for(hollow)))
 			Inventory.counts["fuel"] = 10
 			check(hollow.feed() == "fed" and hollow.fuel_units() == 10 and Inventory.get_count("fuel") == 0, "feeding pours in what you carry (10 / %d)" % Tuning.waylamp_fuel_need)
@@ -150,8 +149,13 @@ func _process(_delta: float) -> void:
 				w.queue_free()   # (the ward's own test lives in test_threats)
 			near.fuel = 50.0
 			# No building right up against it, so no lantern's bright core can guard it for you.
-			var toward := hollow.global_position + (near.global_position - hollow.global_position).normalized() * 96.0
-			check(player.place_block_reason(toward) == "too close to the WayLamp", "no building right next to a WayLamp (%s)" % player.place_block_reason(toward))
+			var blocked_by_waylamp := false
+			var hc := fog.tile_of(hollow.global_position)
+			for dy in range(-4, 5):
+				for dx in range(-4, 5):
+					if player.place_block_reason(fog.tile_center(hc + Vector2i(dx, dy))) == "too close to the WayLamp":
+						blocked_by_waylamp = true
+			check(blocked_by_waylamp, "no building right next to a WayLamp")
 		260:
 			check(Progress.is_settled(FogGrid.R_HOLLOW) and hollow.is_lit() and not hollow.kindling, "kept clear, it catches: the Hollow is held")
 			check(near.fuel == near.max_fuel() and old_lamp.is_lit(), "every lantern in the region is refilled, even cold ones")

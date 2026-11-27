@@ -6,7 +6,7 @@ The project folder is on this branch. Open it in Godot and press F5 (or `godot -
 Your save still loads: the WayLamps start cold, and the first unfinished goal points you back to the Hollow.
 
 **WayLamps.** Each region has one old WayLamp on a stone plinth: the Hollow's is by the carved stone, the Reedmarsh's is on the pumphouse island, and the Ridge's is by the signal station.
-- **Reach it** with your own light: a burning lantern whose light covers it, or a mirror beam. Your hand lamp doesn't count. You can't build right next to it.
+- **Walk up to it** and feed it. No lantern has to reach it any more (changed after your first try). You can't build right next to it.
 - **Feed it** 15 fuel (E / A). You can do it over several trips; what you pour in stays.
 - **It kindles** for 15 s. A swarm of bold Wicklings (reddish rim) comes for it and ignores the push of your lanterns. Each one sitting on it undoes the kindling, so ward them off (F / RB / RT). It never fails, it only stalls.
 - **Lit, it holds the region.** Every lantern there is refilled and stops burning down (a gold diamond replaces its fuel bar), no Wicklings spawn there, and any inside fade away. Its light clears only its own region's fog.

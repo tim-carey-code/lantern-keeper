@@ -148,11 +148,11 @@ DECIDED: the pointer turns off on reaching the Reedmarsh (a setting turns it bac
 ### Built landmarks (13), as in `scripts/main/main.gd`
 Each quoted line is one line on screen. The title shows on the note and in "Something catches the light: ...". A landmark that unlocks a lantern adds a line to its note: "New lantern: <name>. Pick it in the lantern list (Tab / Y)."
 
-**`letter`**, "The letter on the hut door" (Hollow, pinned to the hut door)
+**`letter`**, "The letter on the hut door" (Hollow, pinned to the hut door). **Cut 2026-11-27** (owner: too much to read at the start; the letter is in the opening and the journal).
 > The letter that brought you here. The ink has run a little.
 > Light that first. Then follow my marks. - Oswin
 
-**`rack`**, "Lantern rack" (Hollow, by the hut)
+**`rack`**, "Lantern rack" (Hollow, by the hut). **Scenery only since 2026-11-27** (owner: too much to read at the start): the rack stays, with nothing to read.
 > Five hooks, five worn marks where lamps hung.
 > Only one hook is empty. Its mark is the cleanest.
 
@@ -360,24 +360,24 @@ DEFAULT: the ending as drafted.
 
 > **Approved by the owner on 2026-11-27.** Built on branch `proto/waylamps` (DESIGN.md §8, owner playtest pending) and mirrored in `story.gd` and `main.gd`.
 
-**Story tie.** The old keepers kept the WayLamps; the WayLamps kept the lamps. There is one in each region: by the carved stone at the east passage (Hollow), on the pumphouse island (Reedmarsh) and by the signal station (Ridge). The great lamp on the Lake is the last one. When the keepers left, the WayLamps went cold, and one keeper could not hold them and every lamp too. The great lamp's plate says it plainly at the end: IT WAS NEVER MEANT TO BE KEPT BY ONE.
+**Story tie.** The old keepers kept the WayLamps; the WayLamps kept the lamps. There is one in each region: at the north end of the Hollow below the climb (moved 2026-11-27; it was by the carved stone, too close to the hut), on the pumphouse island (Reedmarsh) and by the signal station (Ridge). The great lamp on the Lake is the last one. When the keepers left, the WayLamps went cold, and one keeper could not hold them and every lamp too. The great lamp's plate says it plainly at the end: IT WAS NEVER MEANT TO BE KEPT BY ONE.
 
 ### Goal rows to insert
 
 | Insert after | id | HUD text | Chars | Completes when | Pointer target |
 |---|---|---|---|---|---|
-| `stone_way` (5) | `kindle_hollow` | Kindle the WayLamp by the carved stone | 38 | The Hollow's WayLamp is kindled (the Hollow is held) | `waylamp_hollow` |
+| `build_post` (4) | `kindle_hollow` | Kindle the WayLamp in the north Hollow | 38 | The Hollow's WayLamp is kindled (the Hollow is held) | `waylamp_hollow` |
 | `build_reservoir` (10) | `kindle_marsh` | Kindle the WayLamp by the pumphouse | 35 | The Reedmarsh's WayLamp is kindled | `waylamp_marsh` |
 | `build_mirror` (17) | `kindle_ridge` | Kindle the WayLamp by the signal station | 40 | The Ridge's WayLamp is kindled | `waylamp_ridge` |
 
 - The Hollow text is the working text. The other two change "on the pumphouse island" and "at the signal station" to "by ...", so all three read alike, and the marsh one is shorter (the player knows the pumphouse by then). The working texts also fit (42 and 40 characters).
 - With these rows the goals run 1-27: 21 for the built regions, 6 planned for the Lake. The pointer rule stays "on until the Reedmarsh" (it would cover goals 1-7). Every kindle goal has a target.
-- `kindle_hollow` comes right after `stone_way`: the carved stone stands beside the WayLamp, so the player reads the stone first and then kindles the lamp next to it. The prototype on branch `proto/waylamps` uses this order.
+- `kindle_hollow` comes right after `build_post`. Its WayLamp stands at the north end of the Hollow, below the climb, so you light your way north first, then east to the carved stone and the marsh. (Moved 2026-11-27: the owner felt it was too close to the hut.) WayLamps take fuel directly; no lantern has to reach them (owner, 2026-11-27).
 
 ### WayLamp inspection texts
 Each quoted line is one line on screen.
 
-**`waylamp_hollow`**, "WayLamp of the Hollow" (by the carved stone at the east passage)
+**`waylamp_hollow`**, "WayLamp of the Hollow" (at the north end of the Hollow, below the climb)
 > A tall lamp with a wide iron bowl, cold and full of old ash.
 > Cut into the base: WHILE THIS BURNS, THE HOLLOW IS KEPT.
 > Tied to the post: This has to be held until it takes. I could not hold it and keep the rest. - Oswin
@@ -393,7 +393,7 @@ Each quoted line is one line on screen.
 > Under a stone: When this went out, the small dark ones came up the steps. - Oswin
 
 Under each inspection text, the note explains the WayLamp (one line on screen each):
-> Reach it with your own light, then feed it 15 fuel.
+> Feed it 15 fuel.
 > While it kindles, the dark will come for it. Keep them off it.
 > Lit, it holds this whole region: its lanterns stop burning down, and nothing comes here.
 
@@ -420,7 +420,7 @@ With it, a line on the tip line at the bottom of the screen:
 
 | id | Trigger | Tip |
 |----|---------|-----|
-| `waylamp_seen` | The light first finds a WayLamp | A WayLamp. Reach it with a lantern's light, feed it fuel, and hold it until it takes. |
+| `waylamp_seen` | The light first finds a WayLamp | A WayLamp. Feed it fuel, then hold it until it takes. |
 | `dying_lantern` | First lantern below a quarter of its tank | A lantern below a quarter is dying. Wicklings can drain it, so keep it fed. |
 | `kindle_attack` | First time Wicklings come for a WayLamp being kindled | Wicklings have come for the WayLamp. Ward them off until it takes. |
 

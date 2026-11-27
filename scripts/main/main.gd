@@ -193,10 +193,9 @@ func _build_rock_collision() -> void:
 func _place_landmarks() -> void:
 	_place_ridge_landmarks()
 	_place_waylamps()
-	_add_landmark("letter", "The letter on the hut door", "letter", start + Vector2(0, -40),
-		"The letter that brought you here. The ink has run a little.\nLight that first. Then follow my marks. - Oswin")
-	_add_landmark("rack", "Lantern rack", "rack", start + Vector2(-80, -40),
-		"Five hooks, five worn marks where lamps hung.\nOnly one hook is empty. Its mark is the cleanest.")
+	# The rack by the hut is scenery now (owner: too much to read at the start); the letter is the opening.
+	var rack := _add_landmark("rack", "Lantern rack", "rack", start + Vector2(-80, -40), "")
+	rack.scenery = true
 	_add_landmark("climb_cairn", "A stone cairn", "cairn", fog.tile_center(Vector2i(24, 47)),
 		"A small cairn, a chalk arrow on the top stone, pointing up.\nThe wind is worse up there. Keep your lights sheltered. - Oswin")
 	_add_landmark("ledger", "Keepers' ledger", "ledger", start + Vector2(-96, -64),
@@ -228,7 +227,7 @@ func _place_ridge_landmarks() -> void:
 ## PROTOTYPE: one old WayLamp per region (texts are drafts until the owner approves STORY.md).
 func _place_waylamps() -> void:
 	# Texts approved by the owner on 2026-11-27 (STORY.md section 11).
-	_add_waylamp("hollow", FogGrid.R_HOLLOW, Vector2i(37, 68), "WayLamp of the Hollow",
+	_add_waylamp("hollow", FogGrid.R_HOLLOW, Vector2i(32, 45), "WayLamp of the Hollow",
 		"A tall lamp with a wide iron bowl, cold and full of old ash.\nCut into the base: WHILE THIS BURNS, THE HOLLOW IS KEPT.\nTied to the post: This has to be held until it takes. I could not hold it and keep the rest. - Oswin")
 	_add_waylamp("marsh", FogGrid.R_MARSH, Vector2i(100, 70), "WayLamp of the Reedmarsh",
 		"A WayLamp on a stone footing, above the damp. Its bowl is dry.\nCut into the base: WHILE THIS BURNS, THE MARSH IS KEPT.\nUnder it, a tin of dry wicks and a tag in an old hand: For whoever comes next.")

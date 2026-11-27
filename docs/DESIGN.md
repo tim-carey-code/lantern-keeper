@@ -55,7 +55,7 @@ Over a session: *light a path → read Oswin's next mark → unlock a lantern �
 - **Upgrades** lie in the far corners of each region, revealed by light like landmarks: a **keeper's satchel** (carry 10 more of each resource, so 30 → 60 with all three) and a **lamp glass** (the hand lamp reaches 12 px further, dims 25% slower and the ward costs 15% less charge, per glass). Read one to take it. Numbers in `tuning.gd` (`carry_*`, `lamp_upgrade_*`).
 
 ### 3.4 The four lanterns
-Space / X (or left click) builds the selected lantern on your tile: firm ground (not rock or soft marsh), lit or at the edge of the light, at least 1.5 tiles from other lanterns *(code)*. The outline shows its light and cost, or why it can't be built. Q / B picks a lantern up for half its cost (rounded down) plus its fuel.
+Space / X (or left click) builds the selected lantern on your tile: firm ground (not rock or soft marsh), lit or at the edge of the light, at least 1.5 tiles from other lanterns *(code)*. Building is quiet: no outline or cost text shows until you try, and if you can't build there, the outline and the reason show for 2 s. You can't build on top of a resource. Q / B picks a lantern up for half its cost (rounded down) plus its fuel.
 
 | | Post Lamp | Reservoir Lamp | Hooded Lamp | Mirror Post |
 |---|---|---|---|---|
@@ -78,7 +78,7 @@ Space / X (or left click) builds the selected lantern on your tile: firm ground 
 - **Wicklings** are small pieces of the dark: 3 hp, 65 px/s, noticing things within 380 px. After 25 s, one comes every 12 s (up to 7 at once) from deep fog 10-18 tiles away *(code)*. The rate is the same everywhere; more of them far from the hut is planned.
 - **Against lanterns:** they creep to the rim of the nearest lit lantern and drain 5 fuel per second (a full Post Lamp in about 20 s); a dark tendril shows which. Lit mirrors get smothered instead (3.7). A lantern's bright core (its inner 45%) burns them at 2 hp per second, and they never step into it on purpose.
 - **Against the keeper:** in the dark they chase you, and their touch drains 30 warmth per second. Lantern light ends the chase.
-- **Warding glow (hold F / RB / RT):** a 110 px circle that burns 4.5 hp per second (about 0.7 s per Wickling) and pushes them back, even point-blank. It spends **hand-lamp charge, never carried fuel**: 0.25 per second, so 4 s from a full lamp and none from an ember. You walk at 60% while warding. In lantern light the lamp refills faster than the ward drains it, so the ward only runs dry in the dark.
+- **Warding glow (hold F / RB / RT):** a 110 px circle that burns 4.5 hp per second (about 0.7 s per Wickling) and pushes them back, even point-blank. It spends **hand-lamp charge, never carried fuel**: 0.45 per second, so about 2 s from a full lamp and none from an ember. You walk at 60% while warding, and the lamp doesn't refill while you ward, even in lantern light (owner, 2026-11-27: combat was too easy). Lamp glasses make it cheaper.
 - **Drops:** an ember worth 1 fuel (it glows, drifts to you and fades after 30 s), and a 35% chance of 1 scrap.
 - **Warmth** is the keeper's health: 100, refilling 20 per second in lantern light only.
 - **Fainting** at 0 warmth: half your carried fuel and scrap drops where you fell (glass is kept), and you wake by the nearest lit lantern (or the hut) at 60% warmth as the Wicklings back off *(code)*. No death, no game over.
@@ -102,7 +102,7 @@ Text lives in STORY.md, mirrored in `systems/story/story.gd` and `scripts/main/m
 
 ### 3.9 HUD and controls
 - **HUD:** top left, resources, the hand-lamp and warmth bars and the lantern you will build; top centre, the goal; top right, status chips only when something needs you (wind, smothered mirrors, cold or low lanterns, getting cold, an ember lamp).
-- **Prompts** sit over the thing you can use ("[E] Refuel 62%", "[E] Read", "[E] Turn right"); the build outline shows the cost, or why you can't build.
+- **Prompts** sit over the thing you can use ("[E] Refuel 62%", "[E] Read", "[E] Turn right"); a failed build shows why, for a moment. Beside a lantern, a tap refuels it and holding gathers the resource next to it.
 - **Device-aware:** button letters follow the device you used last (E on keyboard, A on a controller). The cursor hides when you aren't using the mouse.
 
 | Action | Keyboard / mouse | Gamepad |
@@ -197,13 +197,13 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 **Why.** As built, lighting all regions would take ~40-50 lanterns, each refuelled every ~3 minutes: a refuel every ~4 s. And neglect had no consequence.
 
 **One WayLamp per region**, left by the old keepers:
-- **The Hollow:** by the carved stone at the east passage.
+- **The Hollow:** at the north end, below the climb (moved 2026-11-27: too close to the hut).
 - **The Reedmarsh:** on the pumphouse island.
 - **The Windward Ridge:** by the signal station.
 - **The Still Lake:** the great lamp is the last one.
 
 **Kindling one**
-1. **Reach it** with your own light: a burning lantern, or a mirror beam.
+1. **Walk up to it.** No lantern has to reach it (owner, 2026-11-27: "it should just take fuel and be lit").
 2. **Feed it** about 15 carried fuel.
 3. **Hold it** for about 15 s while a swarm of bold Wicklings tries to sap it. The ward drives them off. It never fails: each Wickling sitting on it only pushes the kindling back.
 
@@ -225,5 +225,5 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 
 **Notes for the playtest**
 - "Dying" starts at 25%, where the HUD already marks lanterns as low.
-- As built, the ward is free inside lantern light (the lamp refills at 0.5 per second; the ward spends 0.25), so during the hold the limit is how much one 110 px circle can cover, not lamp charge.
+- The ward is not free during the hold: the lamp doesn't refill while you ward (0.45 charge per second, about 2 s from a full lamp).
 - Questions: Does holding a region feel like a reward? Is the hold tense but fair? Does frontier-only upkeep keep lanterns meaningful?

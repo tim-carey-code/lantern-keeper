@@ -2,6 +2,15 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (WayLamps playtest feedback)
+- **WayLamps take fuel directly**: no lantern or beam has to reach them ("it should just take fuel and be lit").
+- **The Hollow's WayLamp moves to the north end**, below the climb (it was too close to the hut). Goal order: build a Post Lamp, kindle it, then the carved stone.
+- **Less to read at the start:** the note on the hut door is cut (the letter is the opening) and the rack is scenery.
+- **Quiet building:** no outline or cost text until you try; a failed build says why for 2 s. No building on resources.
+- **Lantern beside a resource:** a tap refuels the lantern; holding gathers the resource.
+- **Combat stopgap:** the ward costs 0.45 charge per second (was 0.25) and the lamp doesn't refill while warding, so it's never free. A proper answer comes from the core-loop rethink.
+- **The game feels boring; rethink the core loop** (owner). Research and 2-3 directions are being prepared, leveling and a real combat system included. People and creatures (M5c-M5e) wait for it.
+
 ## 2026-11-27 (owner answers, afternoon)
 - **Oswin signs "- Oswin"** (it was "- H.", then briefly "- O."; in the game font a capital O looks like a zero), and the journal calls him Oswin. His surname stays out of the game.
 - **The Lakeshore:** thick fog (lanterns only thin it; beams and WayLamps cut it); its WayLamp on the old landing, reached only by a beam (to try in the M5d playtest); a few spots of worn glass on the shore; Ebba is "she"; her boat crosses to the Lake only after the finale.

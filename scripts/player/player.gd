@@ -4,6 +4,7 @@ extends CharacterBody2D
 
 @export var speed := 160.0
 const REACH := 52.0   # px to interact with a lantern or resource
+const HOLD_TO_GATHER := 0.3   # s: holding interact this long gathers the nearest resource (tap still refuels)
 
 var lamp: PointLight2D
 var lamp_charge := 1.0          # 0 = ember, 1 = full hand lamp
@@ -16,6 +17,9 @@ var _since_ward := 99.0        # seconds since the ward was last used
 var faints := 0
 var _gather_target: ResourceNode = null
 var _gather_acc := 0.0
+var _hold_t := 0.0             # how long interact has been held (holding gathers, even beside a lantern)
+var build_hint_t := 0.0        # > 0: a failed build shows its outline and reason for a moment
+var build_hint := ""
 var _facing_left := false
 var _dir_row := 0          # Puny sheet row: 0 S, 1 SE, 2 E, 3 NE, 4 N, 5 NW, 6 W, 7 SW
 var _idle_t := 0.0
@@ -54,7 +58,7 @@ func in_lantern_light() -> bool:
 	return false
 
 func update_hand_lamp(delta: float) -> void:
-	if in_lantern_light():
+	if in_lantern_light() and not warding:   # the ward is never free, not even in lantern light
 		lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_recharge_per_sec * delta)
 	else:
 		lamp_charge = maxf(0.0, lamp_charge - Progress.lamp_drain_per_sec() * delta)
@@ -103,9 +107,17 @@ func _physics_process(delta: float) -> void:
 		pick_up_nearest()
 	elif Input.is_action_just_pressed("interact"):
 		begin_interact()
+	build_hint_t = maxf(0.0, build_hint_t - delta)
 	if Input.is_action_pressed("interact"):
+		_hold_t += delta
+		if not is_gathering() and _hold_t >= HOLD_TO_GATHER:
+			var r := nearest_resource()
+			if r:
+				_gather_target = r
+				_gather_acc = 0.0
 		continue_gather(delta)
 	else:
+		_hold_t = 0.0
 		_gather_target = null
 
 func _physics_delta() -> float:
@@ -208,7 +220,7 @@ func nearest_target() -> Node2D:
 			best = w
 			best_d = dw
 	for m in get_tree().get_nodes_in_group("landmark"):
-		if not (m is Landmark) or not m.is_revealed():
+		if not (m is Landmark) or not m.is_revealed() or m.scenery:
 			continue
 		var d: float = m.global_position.distance_to(global_position)
 		if d < best_d:
@@ -219,6 +231,19 @@ func nearest_target() -> Node2D:
 		if d < best_d:
 			best = l
 			best_d = d
+	for r in get_tree().get_nodes_in_group("resource"):
+		if not r.can_gather():
+			continue
+		var d: float = r.global_position.distance_to(global_position)
+		if d < best_d:
+			best = r
+			best_d = d
+	return best
+
+## Nearest resource you can gather within reach (or null), whatever else is closer.
+func nearest_resource() -> ResourceNode:
+	var best: ResourceNode = null
+	var best_d := REACH
 	for r in get_tree().get_nodes_in_group("resource"):
 		if not r.can_gather():
 			continue
@@ -304,6 +329,9 @@ func place_block_reason(p: Vector2) -> String:
 		return ground
 	if fog.density_at(p) > FogGrid.PLACE_MAX_DENSITY:
 		return "too dark"
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.global_position.distance_to(p) < FogGrid.TILE * 0.75:
+			return "on a resource"
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if l.global_position.distance_to(p) < FogGrid.TILE * 1.5:
 			return "too close to a lantern"
@@ -322,7 +350,10 @@ func try_place() -> Lantern:
 	var p := place_pos()
 	if not can_place(p):
 		Sfx.play("ui_error", -16.0)
+		build_hint = place_block_reason(p)
+		build_hint_t = 2.0   # show the outline and why, just for a moment
 		return null
+	build_hint_t = 0.0
 	Inventory.spend("scrap", Lantern.cost(Progress.selected))
 	Inventory.spend("glass", Lantern.glass_cost(Progress.selected))
 	var lamp_node := Lantern.new()
@@ -362,7 +393,14 @@ func _draw() -> void:
 		var r := Tuning.ward_radius * _ward_grow
 		draw_circle(Vector2(0, -6), r, Color(1.0, 0.85, 0.5, 0.08 * _ward_grow))
 		draw_arc(Vector2(0, -6), r, 0.0, TAU, 48, Color(1.0, 0.88, 0.6, 0.55 * _ward_grow), 2.0)
-	# Placement ghost: the tile and the radius a new lantern would light.
+	# Gathering progress ring.
+	if is_gathering():
+		var t := to_local(_gather_target.global_position)
+		draw_arc(t, 18.0, -PI / 2.0, -PI / 2.0 + TAU * (_gather_acc / Tuning.gather_interval), 24, Color(1, 0.85, 0.5, 0.9), 2.0)
+
+	# Placement outline: only for a moment after a build that couldn't happen.
+	if build_hint_t <= 0.0:
+		return
 	var p := place_pos()
 	var ok := can_place(p)
 	var lp := to_local(p)
@@ -378,7 +416,3 @@ func _draw() -> void:
 			"mirror":
 				preview = 24.0
 		draw_arc(lp, preview, 0.0, TAU, 72, Color(col, 0.35), 1.5)
-	# Gathering progress ring.
-	if is_gathering():
-		var t := to_local(_gather_target.global_position)
-		draw_arc(t, 18.0, -PI / 2.0, -PI / 2.0 + TAU * (_gather_acc / Tuning.gather_interval), 24, Color(1, 0.85, 0.5, 0.9), 2.0)

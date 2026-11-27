@@ -71,13 +71,10 @@ func feed() -> String:
 	if not Progress.notes_read.has(note_id):
 		Progress.notes_read[note_id] = true
 		Story.tip("waylamp_seen")
-		Progress.note_opened.emit(title, text + "\n\nReach it with your own light, then feed it %d fuel.\nWhile it kindles, the dark will come for it. Keep them off it.\nLit, it holds this whole region: its lanterns stop burning down, and nothing comes here." % needs())
+		Progress.note_opened.emit(title, text + "\n\nFeed it %d fuel.\nWhile it kindles, the dark will come for it. Keep them off it.\nLit, it holds this whole region: its lanterns stop burning down, and nothing comes here." % needs())
 		return "read"
 	if is_lit():
 		return "held"
-	if not is_reached():
-		Sfx.play("ui_error", -14.0)
-		return "not_reached"
 	if kindling:
 		return "kindling"
 	var give := mini(needs() - fuel_units(), Inventory.get_count("fuel"))
@@ -113,7 +110,7 @@ func _process(delta: float) -> void:
 			kindling = false
 			Sfx.play("unlock", -4.0)
 			Progress.settle(region_id, FogGrid.REGION_NAMES[region_id])
-	elif not is_lit() and fuel_units() >= needs() and is_reached():
+	elif not is_lit() and fuel_units() >= needs():
 		start_kindling()   # fed before a reload: carry on
 	var r := get_light_radius()
 	light.enabled = r > 0.0

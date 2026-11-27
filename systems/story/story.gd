@@ -14,8 +14,8 @@ const GOALS := [
 	{"id": "relight_first", "text": "Relight the old lantern by the hut", "target": "start_lantern", "entry": 1},
 	{"id": "read_ledger", "text": "Read the ledger by the hut", "target": "ledger", "entry": 2},
 	{"id": "build_post", "text": "Build a Post Lamp at the edge of the light", "target": "passage"},
+	{"id": "kindle_hollow", "text": "Kindle the WayLamp in the north Hollow", "target": "waylamp_hollow", "entry": 13},
 	{"id": "stone_way", "text": "Light the way east to the carved stone", "target": "stone_way"},
-	{"id": "kindle_hollow", "text": "Kindle the WayLamp by the carved stone", "target": "waylamp_hollow", "entry": 13},
 	{"id": "enter_marsh", "text": "Follow the arrow into the marsh", "target": "marsh_entry"},
 	{"id": "frames_east", "text": "Find the old frames on the boardwalk", "target": "frames_east", "entry": 3},
 	{"id": "chalk_lake", "text": "Look at the chalk on the pumphouse", "target": "chalk_lake"},
@@ -65,7 +65,7 @@ const TIPS := {
 	"mirror_placed": "A mirror needs light. Stand it inside a burning lantern's glow.",
 	"mirror_lit": "Interact to turn the beam. Beams pass from mirror to mirror.",
 	# WayLamps (prototype; text approved 2026-11-27, STORY.md section 11)
-	"waylamp_seen": "A WayLamp. Reach it with a lantern's light, feed it fuel, and hold it until it takes.",
+	"waylamp_seen": "A WayLamp. Feed it fuel, then hold it until it takes.",
 	"dying_lantern": "A lantern below a quarter is dying. Wicklings can drain it, so keep it fed.",
 	"kindle_attack": "Wicklings have come for the WayLamp. Ward them off until it takes.",
 }

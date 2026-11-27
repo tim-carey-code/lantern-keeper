@@ -12,6 +12,7 @@ var text := ""
 var look := "stone"        # stone, ledger, frames, chalk, pumphouse
 var unlock_kind := ""
 var upgrade := ""          # "carry" or "lamp": taken the first time it is read
+var scenery := false       # just part of the scene: nothing to read, no glow, not a target
 var glow: PointLight2D
 var _spotted := false
 
@@ -61,6 +62,9 @@ func _process(_delta: float) -> void:
 	var v := is_revealed()
 	if v != visible:
 		visible = v
+	if scenery:
+		glow.enabled = false
+		return
 	if v and not _spotted:
 		_spotted = true
 		Progress.landmark_spotted.emit(title)
@@ -141,7 +145,7 @@ func _draw() -> void:
 			draw_rect(Rect2(-12, 10, 24, 4), Color(0.36, 0.2, 0.14))
 		_:
 			Art.cell_at_foot(self, Art.DUNGEON, Art.GRAVESTONE, Vector2(0, 14))
-	if not is_read():
+	if not is_read() and not scenery:
 		var top := Vector2(0, -66 if look in ["pumphouse", "workshop"] else (-74 if look == "station" else -40))
 		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.004)
 		draw_circle(top, 4.0, Color(1.0, 0.85, 0.4))
