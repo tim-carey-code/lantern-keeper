@@ -4,9 +4,11 @@
 
 Open the `proto/kl-hollow` worktree in Godot and press F5. This build uses a separate prototype save, so your regular save remains untouched. Automated checks use the Dummy audio driver; normal play keeps audio enabled.
 
-The north/east exits are closed. Start by relighting the hut lantern. Find the red pulse north of the hut, fight the Clinker for the Post Lamp, and burn out the three nests with a built lantern's bright core. The blue glints mark two guarded upgrades. Feed the Hollow WayLamp 15 fuel to wake the Ashbrood; break its shell with the beam, then learn its second phase. The level-up screen pauses play and offers three of eight upgrades.
+The north/east exits are closed. Start by relighting the hut lantern. Find the red pulse north of the hut, fight the Clinker for the Post Lamp, and burn out the nests with a built lantern's bright core. The blue glints mark two guarded upgrades. Feed the Hollow WayLamp 15 fuel to wake the Ashbrood; break its shell with the beam, then learn its second phase. The level-up screen pauses play and offers three of eight upgrades.
 
 **Controls:** beam: hold left click / RT; burst: F / RB; dash: Shift / LT. Move: WASD / left stick. Interact/read/refuel: E / A. Build: Space / X. F1 opens the tuning panel; Esc / Start pauses.
+
+**Bigger regions (2026-11-27, branch `proto/kl-big`):** every region is now 4x the area (224 × 200 tiles). The Hollow holds 24 packs and 12 nests instead of 6 and 3, plus three old caches at dead ends. A save from the smaller map starts fresh. Extra questions: does the Hollow now feel big enough, or too big to walk? Is it too full of packs and nests, or too empty anywhere? Does it still run smoothly with many lanterns out?
 
 **Prototype limits:** creatures and effects are code-drawn placeholders. Leads, journal changes, the third boss phase, regions beyond the Hollow, and full animation/audio polish are not included. Values are prototypes and can be adjusted in F1.
 

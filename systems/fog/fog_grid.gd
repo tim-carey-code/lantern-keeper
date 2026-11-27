@@ -27,8 +27,8 @@ const SEEN_OUTLINE := Color(0.32, 0.38, 0.5)
 const UNSEEN_RGB := [int(UNSEEN.r * 255), int(UNSEEN.g * 255), int(UNSEEN.b * 255)]
 const SEEN_RGB := [int(SEEN.r * 255), int(SEEN.g * 255), int(SEEN.b * 255)]
 
-@export var cols := 112
-@export var rows := 100
+@export var cols := 224
+@export var rows := 200
 
 var density := PackedFloat32Array()
 var remembered := PackedByteArray()

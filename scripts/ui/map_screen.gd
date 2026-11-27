@@ -94,23 +94,25 @@ func render() -> void:
 	_scale = clampf(floorf(minf(1180.0 / _view.size.x, 600.0 / _view.size.y)), 2.0, 9.0)
 	map_rect.size = Vector2(_view.size) * _scale
 	map_rect.position = (Vector2(1280, 720) - map_rect.size) / 2.0 + Vector2(0, 20)
-	for y in fog.rows:
-		for x in fog.cols:
-			var i := y * fog.cols + x
-			var c := Color(0.015, 0.015, 0.025)
-			if fog.remembered[i] == 1:
-				match fog.terrain[i]:
-					FogGrid.T_ROCK:
-						c = Color(0.2, 0.2, 0.23)
-					FogGrid.T_MARSH:
-						c = Color(0.22, 0.34, 0.32)
-					FogGrid.T_BOARDWALK:
-						c = Color(0.58, 0.46, 0.3)
-					_:
-						c = Color(0.33, 0.42, 0.28)
-				if fog.terrain[i] != FogGrid.T_ROCK:
-					c = c.lightened(0.25) if fog.density[i] < FogGrid.REMEMBER_BELOW else c.darkened(0.45)
-			img.set_pixel(x, y, c)
+	# Bytes, not set_pixel (performance: the valley is 44,800 tiles since the regions grew 4x).
+	_ensure_palette()
+	var px := PackedByteArray()
+	px.resize(fog.cols * fog.rows * 4)
+	for i in fog.terrain.size():
+		var k := 0   # palette row: 0 unseen; then per terrain, lit and dim
+		if fog.remembered[i] == 1:
+			var ter: int = fog.terrain[i]
+			if ter == FogGrid.T_ROCK:
+				k = 1
+			else:
+				k = 2 + mini(ter, 3) * 2 + (0 if fog.density[i] < FogGrid.REMEMBER_BELOW else 1)
+		var o := i * 4
+		var c: PackedByteArray = _palette[k]
+		px[o] = c[0]
+		px[o + 1] = c[1]
+		px[o + 2] = c[2]
+		px[o + 3] = 255
+	img.set_data(fog.cols, fog.rows, false, Image.FORMAT_RGBA8, px)
 	for l in get_tree().get_nodes_in_group("lantern"):
 		var t := fog.tile_of(l.global_position)
 		if fog.in_bounds(t):
@@ -138,6 +140,22 @@ func render() -> void:
 	else:
 		tex.update(shown)
 	_update_names()
+
+var _palette: Array = []
+
+## The map's colours as bytes: unseen, rock, then each walkable terrain lit and dim (as before).
+func _ensure_palette() -> void:
+	if not _palette.is_empty():
+		return
+	var base := {FogGrid.T_GROUND: Color(0.33, 0.42, 0.28), FogGrid.T_ROCK: Color(0.2, 0.2, 0.23),
+		FogGrid.T_MARSH: Color(0.22, 0.34, 0.32), FogGrid.T_BOARDWALK: Color(0.58, 0.46, 0.3)}
+	var cols: Array[Color] = [Color(0.015, 0.015, 0.025), base[FogGrid.T_ROCK]]
+	for ter in 4:
+		var c: Color = base[ter]
+		cols.append(c.lightened(0.25))
+		cols.append(c.darkened(0.45))
+	for c in cols:
+		_palette.append(PackedByteArray([c.r8, c.g8, c.b8, 255]))
 
 func _compute_centroids(fog: FogGrid) -> void:
 	var sums := {}

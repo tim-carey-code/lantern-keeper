@@ -83,7 +83,7 @@ func _process(_delta: float) -> void:
 			check(Story.current == "enter_marsh", "next: go into the marsh (%s)" % Story.current)
 			check(ptr.target_pos() != null, "the pointer is still on in the Hollow")
 			# Walk into the marsh.
-			main.player.global_position = main.fog.tile_center(Vector2i(60, 68))
+			main.player.global_position = main.fog.tile_center(Vector2i(120, 136))
 			Story.update(main)
 			check(Story.visited.has(FogGrid.R_MARSH) and Story.done.has("enter_marsh"), "entering the marsh completes the goal")
 			check(ptr.target_pos() == null, "the pointer turns off once you reach the marsh (auto)")

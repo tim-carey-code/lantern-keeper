@@ -211,6 +211,45 @@ func _connected(a: Vector2i, b: Vector2i) -> bool:
 				queue.append(n)
 	return false
 
+## Everything reachable on foot from the hut (one flood fill).
+func _reachable_from(a: Vector2i) -> PackedByteArray:
+	var seen := PackedByteArray()
+	seen.resize(fog.cols * fog.rows)
+	seen[fog.idx(a)] = 1
+	var queue: Array[Vector2i] = [a]
+	var head := 0
+	while head < queue.size():
+		var t: Vector2i = queue[head]
+		head += 1
+		for d in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var n: Vector2i = t + d
+			if fog.in_bounds(n) and seen[fog.idx(n)] == 0 and fog.solid[fog.idx(n)] == 0:
+				seen[fog.idx(n)] = 1
+				queue.append(n)
+	return seen
+
+## The bigger map (2026-11-27: every region 4x the area): its size, and that the route still works.
+func _map_size_checks() -> void:
+	check(fog.cols == 224 and fog.rows == 200, "the valley is 224 x 200 tiles (%d x %d)" % [fog.cols, fog.rows])
+	var area := {}
+	for i in fog.region.size():
+		if fog.solid[i] == 0:
+			area[fog.region[i]] = area.get(fog.region[i], 0) + 1
+	print("region open tiles: %s" % str(area))
+	check(area.get(FogGrid.R_HOLLOW, 0) > 4000 and area.get(FogGrid.R_MARSH, 0) > 6500 and area.get(FogGrid.R_RIDGE, 0) > 3500, "every region is about 4x its old area (%s)" % str(area))
+	var reach := _reachable_from(fog.tile_of(start))
+	var cut := []
+	for n in get_tree().get_nodes_in_group("landmark") + get_tree().get_nodes_in_group("waylamp") + get_tree().get_nodes_in_group("resource"):
+		if reach[fog.idx(fog.tile_of(n.global_position))] == 0:
+			cut.append("%s %s" % [n.get("id") if n.get("id") != null else n.display_name(), str(fog.tile_of(n.global_position))])
+	check(cut.is_empty(), "every landmark, WayLamp, find, cache and resource can be reached on foot from the hut (%s)" % str(cut))
+	var ne := 0
+	for y in range(0, 80):
+		for x in range(140, fog.cols):
+			if fog.solid[y * fog.cols + x] == 0:
+				ne += 1
+	check(ne == 0, "the north-east stays free for the Lakeshore and the Still Lake (%d open tiles)" % ne)
+
 func _landmark(id: String) -> Landmark:
 	for m in get_tree().get_nodes_in_group("landmark"):
 		if m.id == id:
@@ -229,6 +268,7 @@ func _m3_checks() -> void:
 	check(notes.size() == 12, "twelve story landmarks to read, including the Hollow find; the rack is scenery (%d)" % notes.size())
 	check(_landmark("rack") != null and _landmark("rack").scenery and _landmark("letter") == null, "the rack is just scenery and the door letter is gone (less to read at the start)")
 	check(pump != null and _connected(fog.tile_of(start), fog.tile_of(pump.global_position)), "walkable path from the hut to the pumphouse")
+	_map_size_checks()
 	var peat := get_tree().get_nodes_in_group("resource").filter(func(r): return r.label == "Peat")
 	check(peat.size() >= 15, "peat in the marsh (%d)" % peat.size())
 	# Reading a landmark.

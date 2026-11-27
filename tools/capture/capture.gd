@@ -47,18 +47,18 @@ func _process(_delta: float) -> void:
 		var s: Vector2 = main.start
 		match view:
 			"marsh":
-				var pump: Vector2 = main.fog.tile_center(Vector2i(100, 68))
+				var pump: Vector2 = main.fog.tile_center(Vector2i(200, 136))
 				main.player.position = pump + Vector2(-40, 40)
-				_lantern(main.fog.tile_center(Vector2i(92, 68)))
-				_lantern(main.fog.tile_center(Vector2i(97, 68)), "reservoir")
-				_lantern(main.fog.tile_center(Vector2i(88, 72)))
+				_lantern(main.fog.tile_center(Vector2i(184, 136)))
+				_lantern(main.fog.tile_center(Vector2i(194, 136)), "reservoir")
+				_lantern(main.fog.tile_center(Vector2i(176, 144)))
 			"cold":
 				_lantern(s + Vector2(-160, 64), "post", 0.0)
 				_lantern(s + Vector2(200, 120), "post", 10.0)
 				main.player.position = s + Vector2(-40, 60)
 			"edge":
-				main.player.position = main.fog.tile_center(Vector2i(8, 68))
-				_lantern(main.fog.tile_center(Vector2i(9, 66)))
+				main.player.position = main.fog.tile_center(Vector2i(16, 136))
+				_lantern(main.fog.tile_center(Vector2i(18, 132)))
 			"wick":
 				var l := _lantern(s + Vector2(-200, 40))
 				var sp = main.get_node("FogLayer/Wicklings")
@@ -78,7 +78,7 @@ func _process(_delta: float) -> void:
 					w2.hurt(99.0)
 			"ridge":
 				var f: FogGrid = main.fog
-				var c := f.tile_center(Vector2i(34, 17))
+				var c := f.tile_center(Vector2i(68, 34))
 				main.player.position = c + Vector2(-40, 40)
 				var src := _lantern(c + Vector2(-160, 0), "hooded")
 				var m := _lantern(c + Vector2(-60, 0), "mirror")
@@ -246,17 +246,17 @@ func _readme_setup() -> void:
 			Inventory.counts["scrap"] = 3
 			_goals_done_until("build_post")
 		"readme_marsh":
-			for t in [Vector2i(80, 68), Vector2i(86, 68), Vector2i(92, 68), Vector2i(88, 73)]:
+			for t in [Vector2i(160, 136), Vector2i(172, 136), Vector2i(184, 136), Vector2i(176, 146)]:
 				_lantern(f.tile_center(t))
-			_lantern(f.tile_center(Vector2i(97, 68)), "reservoir")
+			_lantern(f.tile_center(Vector2i(194, 136)), "reservoir")
 			Progress.unlock("reservoir")
 			old.fuel = Tuning.lantern_max_fuel
-			main.player.position = f.tile_center(Vector2i(89, 68))
+			main.player.position = f.tile_center(Vector2i(178, 136))
 			Inventory.counts["fuel"] = 9
 			Inventory.counts["scrap"] = 4
 			_goals_done_until("climb_north")   # the pump is awake, so the Reservoir Lamp is unlocked
 		"readme_ridge":
-			var c := f.tile_center(Vector2i(34, 17))
+			var c := f.tile_center(Vector2i(68, 34))
 			main.player.position = c + Vector2(-20, 60)
 			_lantern(c + Vector2(-160, 0), "hooded")
 			var m := _lantern(c + Vector2(-60, 0), "mirror")
@@ -274,18 +274,19 @@ func _readme_setup() -> void:
 		"readme_map":
 			for i in f.remembered.size():
 				var reg: int = f.region[i]
-				if reg == FogGrid.R_HOLLOW or reg == FogGrid.R_MARSH or (reg == FogGrid.R_RIDGE and i / f.cols > 18):
+				if reg == FogGrid.R_HOLLOW or reg == FogGrid.R_MARSH or (reg == FogGrid.R_RIDGE and i / f.cols > 36):
 					f.remembered[i] = 1
 					f.density[i] = minf(f.density[i], 0.7)
+			f.mark_all_dirty()   # the fog's sparse update must see tiles written directly
 			old.fuel = Tuning.lantern_max_fuel
-			for t in [Vector2i(36, 66), Vector2i(44, 68), Vector2i(52, 67), Vector2i(60, 68), Vector2i(70, 68), Vector2i(80, 68), Vector2i(92, 68), Vector2i(24, 52), Vector2i(30, 30)]:
+			for t in [Vector2i(72, 132), Vector2i(88, 136), Vector2i(104, 134), Vector2i(120, 136), Vector2i(140, 136), Vector2i(160, 136), Vector2i(184, 136), Vector2i(48, 104), Vector2i(60, 60)]:
 				_lantern(f.tile_center(t))
-			_lantern(f.tile_center(Vector2i(97, 68)), "reservoir")
-			_lantern(f.tile_center(Vector2i(86, 76)), "post", 12.0)
-			_lantern(f.tile_center(Vector2i(40, 26)), "post", 0.0)
+			_lantern(f.tile_center(Vector2i(194, 136)), "reservoir")
+			_lantern(f.tile_center(Vector2i(172, 152)), "post", 12.0)
+			_lantern(f.tile_center(Vector2i(80, 52)), "post", 0.0)
 			for r in [FogGrid.R_HOLLOW, FogGrid.R_MARSH, FogGrid.R_RIDGE]:
 				Progress.reveal_region(r, FogGrid.REGION_NAMES[r])
-			main.player.position = f.tile_center(Vector2i(60, 68))
+			main.player.position = f.tile_center(Vector2i(120, 136))
 		"readme_lanterns":
 			old.fuel = Tuning.lantern_max_fuel
 			_lantern(s + Vector2(-140, 90))

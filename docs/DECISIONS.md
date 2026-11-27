@@ -3,6 +3,7 @@
 Owner decisions that override or settle the design docs. Newest first.
 
 ## 2026-11-27 (performance budget; bigger regions)
+- **Every region 4x bigger** (owner: "we need to expand the regions by a lot, make them all 4x bigger"). Read as 4x the area: twice as wide and twice as tall. The map goes from 112 × 100 to 224 × 200 tiles; the Hollow, Reedmarsh, Ridge and the space kept for the Lakeshore and Still Lake all scale, and every hand-placed thing keeps its relative place. Resource spots, packs and nests are 4x per region so the space isn't emptier; a few side caches were added, no new enemy types. The calm start (16 tiles), the Clinker by the WayLamp, packs tougher toward the WayLamp, cleared stays cleared and the regrowing woodpile all still hold. Saves from before (version 3) start fresh and show "(old save)".
 - **Performance budget:** game logic (process + physics) averages well under 4 ms a frame with 30 lanterns and 20 foes, measured by `tools/bench/bench.tscn`. Before the pass it took about 17 ms. The benchmark is not a test.
 
 ## 2026-11-27 (Hollow prototype playtest)
