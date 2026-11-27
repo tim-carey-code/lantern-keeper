@@ -14,6 +14,7 @@ var _target_lamp: Lantern
 var _pulse := 0.0
 
 func _ready() -> void:
+	foe_name = "The Ashbrood"
 	hp = Tuning.kl_ashbrood_hp
 	shell = Tuning.kl_ashbrood_shell
 	shell_max = shell
@@ -112,6 +113,7 @@ func _die() -> void:
 	if phase == 1:
 		phase = 2
 		hp = Tuning.kl_ashbrood_hp
+		hp_max = hp
 		shell = Tuning.kl_ashbrood_shell
 		shell_max = shell
 		_since_beam = 0.0

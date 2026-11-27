@@ -9,6 +9,7 @@ var _roll_hit := false
 var _cooldown := 1.0
 
 func _ready() -> void:
+	foe_name = "Clinker"
 	hp = Tuning.kl_clinker_hp
 	shell = Tuning.kl_clinker_shell
 	shell_max = shell

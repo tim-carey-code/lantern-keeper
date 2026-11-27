@@ -65,6 +65,14 @@ func _ready() -> void:
 	_add_resource("scrap", start + Vector2(64, -32), 6, 6, 60.0, false)   # beside the hut, clear of its wall
 	_place_landmarks()
 	_place_upgrades()
+	var bars := Node2D.new()
+	bars.set_script(load("res://scripts/ui/foe_bars.gd"))
+	bars.name = "FoeBars"
+	$FogLayer.add_child(bars)
+	var boss_bar := CanvasLayer.new()
+	boss_bar.set_script(load("res://scripts/ui/boss_bar.gd"))
+	boss_bar.name = "BossBar"
+	add_child(boss_bar)
 	_place_hollow_prototype()
 	_scatter()
 	queue_redraw()

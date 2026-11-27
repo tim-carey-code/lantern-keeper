@@ -23,6 +23,7 @@ var _t := 0.0
 var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
+	foe_name = "Shelled Wickling" if elite else "Wickling"
 	add_to_group("wickling")
 	add_to_group("foe")
 	z_index = 7

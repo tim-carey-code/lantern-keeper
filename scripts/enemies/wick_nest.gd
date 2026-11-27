@@ -6,6 +6,7 @@ var _hatch_t := 10.0
 var _pulse := 0.0
 
 func _ready() -> void:
+	foe_name = "Wick nest"
 	hp = Tuning.kl_nest_hp
 	if foe_id == "":
 		foe_id = "nest_hollow"

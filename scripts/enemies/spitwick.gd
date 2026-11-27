@@ -7,6 +7,7 @@ var _tell_t := 0.0
 var _move_dir := Vector2.ZERO
 
 func _ready() -> void:
+	foe_name = "Spitwick"
 	hp = Tuning.kl_spitwick_hp
 	wick_value = Tuning.kl_spitwick_wick
 	z_index = 8

@@ -20,6 +20,14 @@ Questions (decision gate):
 7. Did the lures pull you along? Did the Hollow still feel empty anywhere?
 8. Did you still build lamps, and why?
 
+### Results: 2026-11-27, owner (gamepad only so far)
+1. Aiming and firing the beam feels good. **Hit feedback felt off** → added a hit flash, screen shake on the burst, kills and big hits (a short freeze on a kill was already in).
+2. Dashed on purpose to dodge; hits felt fair.
+3. Didn't know what the Clinker or the Ashbrood were → **names and health bars over foes, a pale shell bar above the red one, and a boss bar for the Ashbrood**.
+4. The Post Lamp felt earned and changed how he fought.
+5. Choices mostly distinct; **"Quick fill" was useless** (the lamp already refills fast) → replaced by **"Kindled kills"** (each kill gives back 10% charge).
+6-8. Not answered yet.
+
 ---
 
 ## PROTOTYPE build (branch `proto/waylamps`): WayLamps hold a region

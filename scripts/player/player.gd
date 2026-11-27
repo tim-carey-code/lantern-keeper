@@ -62,8 +62,7 @@ func in_lantern_light() -> bool:
 
 func update_hand_lamp(delta: float) -> void:
 	if in_lantern_light() and not warding and not (combat and combat.beaming):   # light weapons are never free
-		var fill_mult := 1.5 if Progress.has_combat_upgrade("quick_fill") else 1.0
-		lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_recharge_per_sec * fill_mult * delta)
+		lamp_charge = minf(1.0, lamp_charge + Tuning.hand_lamp_recharge_per_sec * delta)
 	else:
 		lamp_charge = maxf(0.0, lamp_charge - Progress.lamp_drain_per_sec() * delta)
 		# Auto top-up from carried fuel keeps the lamp alive on long walks, but never feeds the ward.
@@ -180,9 +179,24 @@ func apply_ward(delta: float) -> int:
 			hit += 1
 	return hit
 
+var _shake := 0.0
+
+## Screen shake: 0..1. Fades on its own.
+func shake(amount: float) -> void:
+	_shake = maxf(_shake, amount)
+
+func _process(delta: float) -> void:
+	var cam := get_node_or_null("Camera2D") as Camera2D
+	if cam == null:
+		return
+	_shake = maxf(0.0, _shake - delta * 2.5)
+	cam.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _shake * Tuning.kl_shake_px if _shake > 0.0 else Vector2.ZERO
+
 func chill(amount: float) -> void:
 	if combat and combat.is_dashing():
 		return   # nothing can chill you mid-dash
+	if amount >= 5.0:
+		shake(0.45)   # a real hit (a spit, a roll), not the steady touch of a Wickling
 	warmth = maxf(0.0, warmth - amount)
 	if warmth <= 0.0:
 		faint()

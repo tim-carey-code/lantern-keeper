@@ -7,6 +7,11 @@ extends Node2D
 ## what is left behind, and the light senses.
 
 var hp := 0.0
+var hp_max := 0.0               # set from hp the first time it ticks (for health bars)
+var foe_name := ""              # shown over its health bar
+var since_hurt := 99.0          # seconds since anything hurt it (bars show for a while after)
+var _flash := 0.0               # > 0: flashes white (a hit landed)
+var _beam_flash_cd := 0.0
 var shell := 0.0                # only a beam (the keeper's or a mirror's) wears it down
 var shell_max := 0.0
 var shell_regrows := false      # an unbroken shell grows back once it has been out of every beam for a while
@@ -115,6 +120,13 @@ func is_stunned() -> bool:
 func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	if _dead:
 		return
+	since_hurt = 0.0
+	if source == "beam":
+		if _beam_flash_cd <= 0.0:
+			_flash = 0.06
+			_beam_flash_cd = 0.16
+	else:
+		_flash = 0.1
 	if source == "beam":
 		_since_beam = 0.0
 		if Progress.has_combat_upgrade("tight_focus") and shell > 0.0:
@@ -162,6 +174,12 @@ func stun(seconds: float) -> void:
 
 ## Timers every foe shares, the throw-back, and the shell growing back. Call first in _process.
 func tick_foe(delta: float) -> void:
+	if hp_max <= 0.0:
+		hp_max = hp
+	since_hurt += delta
+	_flash = maxf(0.0, _flash - delta)
+	_beam_flash_cd = maxf(0.0, _beam_flash_cd - delta)
+	self_modulate = Color(2.6, 2.4, 2.0) if _flash > 0.0 else Color.WHITE
 	_burning = maxf(0.0, _burning - delta)
 	_impact_t = maxf(0.0, _impact_t - delta)
 	_clink = maxf(0.0, _clink - delta)
@@ -217,6 +235,11 @@ func _die() -> void:
 		return
 	_dead = true
 	Sfx.play("relight", -14.0, 0.2)
+	var keeper := _player()
+	if keeper and keeper.has_method("shake"):
+		keeper.shake(0.25)
+	if keeper and Progress.has_combat_upgrade("kindled_kills"):
+		keeper.lamp_charge = minf(1.0, keeper.lamp_charge + Tuning.kl_kindled_kill_charge)
 	Engine.time_scale = 0.08
 	get_tree().create_timer(0.045, true, false, true).timeout.connect(func(): Engine.time_scale = 1.0)
 	if foe_id != "":

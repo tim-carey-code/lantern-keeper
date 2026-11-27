@@ -41,6 +41,15 @@ func _process(_delta: float) -> void:
 			choice.pressed.emit()
 			check(Progress.has_combat_upgrade(chosen_id), "choosing a card keeps the upgrade")
 			check(not get_tree().paused, "choosing an upgrade resumes play")
+			var fb = main.get_node("FogLayer/FoeBars")
+			var named := Wickling.new()
+			named.elite = true
+			main.get_node("FogLayer/Wicklings").add_child(named)
+			named.tick_foe(0.01)
+			named.hurt(1.0, false, "burst")
+			check(named.foe_name == "Shelled Wickling" and fb.wants_bar(named, main.player), "a hurt foe shows its name and health bar")
+			check(named._flash > 0.0, "a hit makes it flash")
+			named.queue_free()
 			var nest := WickNest.new()
 			nest.foe_id = "test_nest"
 			main.get_node("FogLayer/Wicklings").add_child(nest)
@@ -65,6 +74,8 @@ func _process(_delta: float) -> void:
 			check(bosses.size() == 1, "the Ashbrood appears at the WayLamp")
 			if bosses.size() == 1:
 				var boss: Ashbrood = bosses[0]
+				var bb = main.get_node("BossBar")
+				check(bb.boss() == boss and boss.foe_name == "The Ashbrood", "the guardian gets a named boss bar")
 				boss.hurt(Tuning.kl_ashbrood_hp + Tuning.kl_ashbrood_shell + 1.0, false, "beam")
 				check(boss.phase == 2 and boss.hp == Tuning.kl_ashbrood_hp, "breaking phase one opens the diving phase")
 				boss.hurt(Tuning.kl_ashbrood_hp + Tuning.kl_ashbrood_shell + 1.0, false, "beam")

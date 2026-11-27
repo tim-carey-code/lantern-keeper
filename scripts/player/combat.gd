@@ -96,6 +96,8 @@ func burst() -> int:
 		return -1
 	k.lamp_charge -= Tuning.kl_burst_cost
 	burst_cd = Tuning.kl_burst_cd
+	if k.has_method("shake"):
+		k.shake(0.35)
 	_burst_fx = 0.3
 	Sfx.play("relight", -8.0, 0.3)
 	var camera := keeper().get_node_or_null("Camera2D") as Camera2D

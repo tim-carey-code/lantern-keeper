@@ -194,4 +194,8 @@ var kl_wick_level_step := 10
 var kl_wick_drop_radius := 28.0
 var kl_pack_wake_radius := 320.0
 
+# Feedback (PROTOTYPE)
+var kl_shake_px := 6.0                   # screen shake at full strength
+var kl_kindled_kill_charge := 0.1        # "Kindled kills": lamp charge back per kill
+
 var ui_open := false                    # true while a menu has focus (player stops)

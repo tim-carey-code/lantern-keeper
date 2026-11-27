@@ -9,7 +9,7 @@ const OPTIONS := [
 	{"id":"second_step", "title":"Second step", "body":"Dash twice before its cooldown."},
 	{"id":"heavy_flare", "title":"Heavy flare", "body":"Your burst throws foes farther and stuns them."},
 	{"id":"deep_tank", "title":"Deep tank", "body":"Your beam costs 20% less lamp charge."},
-	{"id":"quick_fill", "title":"Quick fill", "body":"Lantern light refills your charge 50% faster."},
+	{"id":"kindled_kills", "title":"Kindled kills", "body":"Every kill gives back 10% of your lamp charge."},
 ]
 
 var root: Control
