@@ -3,7 +3,7 @@ extends Node2D
 ## A short "+1 fuel" style label that rises and fades. Unaffected by the scene darkness
 ## when spawned on the fog layer.
 
-const FONT := preload("res://assets/fonts/kenney_pixel.ttf")
+const FONT := preload("res://assets/fonts/ark_pixel_10px_proportional_latin.ttf")
 
 var text := ""
 var color := Color.WHITE
@@ -28,5 +28,5 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var a := clampf(1.0 - _t / 0.9, 0.0, 1.0)
-	draw_string(FONT, Vector2(-20, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0, 0, 0, a * 0.8))
-	draw_string(FONT, Vector2(-21, -1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(color, a))
+	draw_string(FONT, Vector2(-20, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0, 0, 0, a * 0.8))
+	draw_string(FONT, Vector2(-21, -1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(color, a))

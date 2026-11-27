@@ -183,7 +183,7 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 ## 7. Art and audio direction
 - **Moody pixel art:** 16×16 tiles drawn at 2× (32 px on screen, one fog tile), nearest-neighbour filtering, hard edges. Tall things are 16×32.
 - **14-colour palette** (`source/palette/lantern-keeper-14.gpl`): cool blues for the world; ambers only for light, fire and wood, so warmth means safety.
-- **CC0 sources, recoloured to the palette:** Kenney Tiny Town and Tiny Dungeon, Puny Characters (the keeper) and Kenney fonts, all listed in `assets/CREDITS.md`.
+- **CC0 sources, recoloured to the palette:** Kenney Tiny Town and Tiny Dungeon, Puny Characters (the keeper), all listed in `assets/CREDITS.md`. The font is Ark Pixel 10px Proportional (OFL 1.1), used at 20, 30, 40 and 60 so it stays on its 10 px grid and sharp at 720p and 1080p.
 - **The owner's own art** (Pixelorama) replaces placeholders over time. The Post Lamp is done; the other lanterns, resources and Ridge landmarks are placeholders, and Wicklings and embers are drawn by code (`docs/ART_CHECKLIST.md`).
 - **Light and dark:** near-black darkness, a flickering 2D point light for every light, and soft-edged fog on its own layer. Not used so far: occluder shadows, a fog shader, mist particles.
 - **Audio:** Kenney CC0 sound effects and a synthesized placeholder ambience; recorded night ambience is still to come. No music yet: it should be quiet and grow fuller as more of the valley is lit. No jump scares.

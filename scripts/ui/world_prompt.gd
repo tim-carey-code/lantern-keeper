@@ -4,8 +4,8 @@ extends Node2D
 ## After a build that couldn't happen: why, under the keeper, for a moment.
 ## Lives on the fog layer so it stays readable in the dark.
 
-const FONT := preload("res://assets/fonts/kenney_pixel.ttf")
-const SIZE := 16
+const FONT := preload("res://assets/fonts/ark_pixel_10px_proportional_latin.ttf")
+const SIZE := 20   # Ark Pixel is drawn on a 10 px grid: use whole multiples (20, 40) to stay sharp
 
 func _ready() -> void:
 	z_index = 10
@@ -70,7 +70,10 @@ func _draw() -> void:
 
 ## A small dark box per line, with the button in a gold key cap, centred on `at` (bottom edge).
 func _draw_lines(at: Vector2, lines: Array, alpha: float = 1.0, color: Color = UiStyle.CREAM) -> void:
-	var y := at.y - lines.size() * 22.0
+	var asc := FONT.get_ascent(SIZE)
+	var h := FONT.get_height(SIZE)
+	var box_h := h + 4.0
+	var y := at.y - lines.size() * (box_h + 2.0)
 	for ln in lines:
 		var key: String = ln[0]
 		var text: String = ln[1]
@@ -80,12 +83,12 @@ func _draw_lines(at: Vector2, lines: Array, alpha: float = 1.0, color: Color = U
 		var text_w := FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE).x
 		var w := key_w + text_w + 14.0 + (6.0 if key != "" else 0.0)
 		var x := at.x - w / 2.0
-		draw_rect(Rect2(x, y, w, 20), Color(0.043, 0.055, 0.1, 0.88 * alpha))
-		draw_rect(Rect2(x, y, w, 20), Color(UiStyle.GOLD, 0.6 * alpha), false, 1.0)
+		draw_rect(Rect2(x, y, w, box_h), Color(0.043, 0.055, 0.1, 0.88 * alpha))
+		draw_rect(Rect2(x, y, w, box_h), Color(UiStyle.GOLD, 0.6 * alpha), false, 1.0)
 		var cx := x + 7.0
 		if key != "":
-			draw_rect(Rect2(cx, y + 3, key_w, 14), Color(UiStyle.GOLD, alpha))
-			draw_string(FONT, Vector2(cx + 5.0, y + 15), key, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, Color(0.043, 0.055, 0.1, alpha))
+			draw_rect(Rect2(cx, y + 3, key_w, box_h - 6.0), Color(UiStyle.GOLD, alpha))
+			draw_string(FONT, Vector2(cx + 5.0, y + 2.0 + asc), key, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, Color(0.043, 0.055, 0.1, alpha))
 			cx += key_w + 6.0
-		draw_string(FONT, Vector2(cx, y + 15), text, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, Color(color, alpha))
-		y += 22.0
+		draw_string(FONT, Vector2(cx, y + 2.0 + asc), text, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, Color(color, alpha))
+		y += box_h + 2.0

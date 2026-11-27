@@ -17,7 +17,7 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	panel.add_child(box)
 	title_label = Label.new()
-	title_label.add_theme_font_size_override("font_size", 32)
+	title_label.add_theme_font_size_override("font_size", 40)
 	box.add_child(title_label)
 	body_label = Label.new()
 	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

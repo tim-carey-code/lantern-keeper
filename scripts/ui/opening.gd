@@ -57,11 +57,11 @@ func _next() -> void:
 	name_box.visible = false
 	match step:
 		0:
-			label.add_theme_font_size_override("font_size", 32)
+			label.add_theme_font_size_override("font_size", 40)
 			label.text = "\n\n".join(Story.TITLE_CARD)
 			hint.text = "[A / E / Enter] continue"
 		1:
-			label.add_theme_font_size_override("font_size", 32)
+			label.add_theme_font_size_override("font_size", 40)
 			label.text = "\n\nYour name, keeper?"
 			name_box.visible = true
 			name_box.text = Story.player_name
@@ -69,7 +69,7 @@ func _next() -> void:
 			hint.text = "Type a name, then [Enter] or [A].  Leave it empty to be called Keeper."
 		2:
 			Story.player_name = name_box.text.strip_edges()
-			label.add_theme_font_size_override("font_size", 24)
+			label.add_theme_font_size_override("font_size", 20)
 			label.position = Vector2(290, 90)
 			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 			label.text = Story.LETTER

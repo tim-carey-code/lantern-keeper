@@ -28,7 +28,7 @@ func _ready() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 14)
 	frame.add_child(col)
-	var title := UiStyle.label(36, UiStyle.GOLD)
+	var title := UiStyle.label(40, UiStyle.GOLD)
 	title.text = "Lanterns"
 	col.add_child(title)
 	var row := HBoxContainer.new()
@@ -156,7 +156,7 @@ func _fill_card(card: PanelContainer, k: String, cursor: bool) -> void:
 	if not unlocked:
 		pic.modulate = Color(0.05, 0.06, 0.1, 0.9)
 	v.add_child(pic)
-	var name_l := UiStyle.label(26, UiStyle.GOLD if unlocked else Color(0.43, 0.56, 0.7))
+	var name_l := UiStyle.label(30, UiStyle.GOLD if unlocked else Color(0.43, 0.56, 0.7))
 	name_l.text = Lantern.display(k) if unlocked else "???"
 	v.add_child(name_l)
 	if unlocked:
@@ -168,20 +168,20 @@ func _fill_card(card: PanelContainer, k: String, cursor: bool) -> void:
 				continue
 			cost.add_child(UiStyle.icon_rect("icon_" + res[0], 22))
 			var have: bool = Inventory.get_count(res[0]) >= res[1]
-			var n := UiStyle.label(22, UiStyle.CREAM if have else UiStyle.WARN)
+			var n := UiStyle.label(20, UiStyle.CREAM if have else UiStyle.WARN)
 			n.text = str(res[1])
 			cost.add_child(n)
-		var blurb := UiStyle.label(18, UiStyle.PALE)
+		var blurb := UiStyle.label(20, UiStyle.PALE)
 		blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		blurb.custom_minimum_size = Vector2(200, 0)
 		blurb.text = Lantern.blurb(k)
 		v.add_child(blurb)
 		if selected:
-			var tag := UiStyle.label(18, UiStyle.AMBER)
+			var tag := UiStyle.label(20, UiStyle.AMBER)
 			tag.text = "Selected"
 			v.add_child(tag)
 	else:
-		var hint := UiStyle.label(18, Color(0.43, 0.56, 0.7))
+		var hint := UiStyle.label(20, Color(0.43, 0.56, 0.7))
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		hint.custom_minimum_size = Vector2(200, 0)
 		hint.text = "Found somewhere in the valley."

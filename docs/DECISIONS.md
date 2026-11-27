@@ -2,6 +2,11 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (new direction and font)
+- **The game becomes an action RPG: direction B, "Keeper's Light".** The hand lamp becomes a weapon (aimed beam, burst, dash), with enemy families and elites, a guardian fight at each WayLamp, levels with pick-1-of-3 upgrades, and gear. **Each region's find is the key to conquering that region and lighting its WayLamp** (owner's rule). Direction C's tides (ebb and flood) are kept for later, if fights need build-up. The owner: the cozy idea "will just end up being too boring". Research: `CORE_LOOP_RESEARCH` (drafts). Next: a design draft for owner markup, and a prototype in the Hollow with a playtest gate. People, creatures and the Lakeshore wait, to be refitted to it.
+- **WayLamps are merged into main** (the WayLamp playtest passed with changes); the new direction builds on them.
+- **Font: Ark Pixel** (OFL 1.1), at sizes on its 10 px grid. Kenney Pixel smeared at in-between sizes and drew O and 0 the same.
+
 ## 2026-11-27 (WayLamps playtest feedback)
 - **WayLamps take fuel directly**: no lantern or beam has to reach them ("it should just take fuel and be lit").
 - **The Hollow's WayLamp moves to the north end**, below the climb (it was too close to the hut). Goal order: build a Post Lamp, kindle it, then the carved stone.

@@ -6,7 +6,8 @@ Every third-party asset gets a row before it is committed. Check the license on 
 |---|---|---|---|---|---|
 | Tiny Town 1.1 | Kenney | https://kenney.nl/assets/tiny-town | CC0 1.0 (License.txt in pack and on page) | `assets/art/kenney/tiny_town.png` (recoloured to our palette); original in `source/vendor/kenney-tiny-town/` | 2026-11-26 |
 | Tiny Dungeon | Kenney | https://kenney.nl/assets/tiny-dungeon | CC0 1.0 | `assets/art/kenney/tiny_dungeon.png` (recoloured); original in `source/vendor/kenney-tiny-dungeon/` | 2026-11-26 |
-| Kenney Fonts (Kenney Pixel, Kenney Mini) | Kenney | https://kenney.nl/assets/kenney-fonts | CC0 1.0 | `assets/fonts/kenney_pixel.ttf`, `assets/fonts/kenney_mini.ttf` | 2026-11-26 |
+| Ark Pixel Font, 10px Proportional (latin), release 2026.11.10 | TakWolf | https://github.com/TakWolf/ark-pixel-font (release zip: https://github.com/TakWolf/ark-pixel-font/releases/download/2026.11.10/ark-pixel-font-10px-proportional-ttf-v2026.11.10.zip) | SIL OFL 1.1 (license shipped as `assets/fonts/ark_pixel_OFL.txt`) | `assets/fonts/ark_pixel_10px_proportional_latin.ttf`: the game's font since 2026-11-27 | 2026-11-27 |
+| Kenney Fonts (Kenney Pixel, Kenney Mini) | Kenney | https://kenney.nl/assets/kenney-fonts | CC0 1.0 | `assets/fonts/kenney_pixel.ttf`, `assets/fonts/kenney_mini.ttf` (no longer used since 2026-11-27) | 2026-11-26 |
 | Impact Sounds | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | `assets/audio/sfx/step_*`, `gather_*`, `place_lantern.ogg`, `pickup_lantern.ogg` | 2026-11-26 |
 | Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | `assets/audio/sfx/ui_*`, `relight.ogg`, `unlock.ogg` | 2026-11-26 |
 | RPG Audio | Kenney | https://kenney.nl/assets/rpg-audio | CC0 1.0 | `assets/audio/sfx/refuel.ogg`, `note_open.ogg`, `note_close.ogg` | 2026-11-26 |

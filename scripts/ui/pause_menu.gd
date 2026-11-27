@@ -31,14 +31,14 @@ func _ready() -> void:
 	cols.add_child(box)
 	var right := VBoxContainer.new()
 	cols.add_child(right)
-	var ctitle := UiStyle.label(28, UiStyle.GOLD)
+	var ctitle := UiStyle.label(30, UiStyle.GOLD)
 	ctitle.text = "Controls"
 	right.add_child(ctitle)
 	controls = UiStyle.label(20, UiStyle.PALE)
 	right.add_child(controls)
 	var title := Label.new()
 	title.text = "Paused"
-	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_font_size_override("font_size", 40)
 	box.add_child(title)
 	for item in [["Resume", _resume], ["Save", _save], ["New game", _new_game], ["Save and quit", _quit], ["Goal pointer", _cycle_pointer], ["Show tips again", _reset_tips]]:
 		var b := Button.new()

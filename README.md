@@ -200,7 +200,7 @@ The script needs Godot 4.7 (with the project imported once), `xvfb-run` and `ffm
 
 ## Credits
 
-The tiles, fonts and sound effects come from [Kenney](https://kenney.nl), and the keeper sprite is from Puny Characters by Shade. All of them are CC0 1.0, and some of the art is recolored to the game's palette. The full list, with sources and licenses, is in [assets/CREDITS.md](assets/CREDITS.md).
+The tiles and sound effects come from [Kenney](https://kenney.nl) and the keeper sprite is from Puny Characters by Shade, all CC0 1.0; some of the art is recolored to the game's palette. The font is [Ark Pixel](https://github.com/TakWolf/ark-pixel-font) by TakWolf, under the SIL Open Font License 1.1. The full list, with sources and licenses, is in [assets/CREDITS.md](assets/CREDITS.md).
 
 ## License
 - **Code** (GDScript, shaders, scenes, project config, tools): MIT, see [LICENSE](LICENSE).

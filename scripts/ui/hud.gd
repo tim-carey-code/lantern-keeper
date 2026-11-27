@@ -34,13 +34,18 @@ func _ready() -> void:
 	_build_resource_panel()
 	_build_goal_banner()
 	chips = VBoxContainer.new()
-	chips.position = Vector2(1280 - 16 - 300, 16)
+	# Pinned to the top-right corner and growing leftwards, so a long chip never runs off screen.
+	chips.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	chips.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	chips.offset_left = -316
+	chips.offset_right = -16
+	chips.offset_top = 16
 	chips.custom_minimum_size = Vector2(300, 0)
 	chips.add_theme_constant_override("separation", 6)
 	add_child(chips)
-	banner = _centered_label(64, 150)
-	toast = _boxed_label(28, 630, UiStyle.CREAM)
-	tip = _boxed_label(22, 580, UiStyle.PALE)
+	banner = _centered_label(60, 150)
+	toast = _boxed_label(30, 630, UiStyle.CREAM)
+	tip = _boxed_label(20, 580, UiStyle.PALE)
 	keys = UiStyle.label(20, Color(0.43, 0.56, 0.7))
 	keys.position = Vector2(18, 690)
 	add_child(keys)
@@ -110,7 +115,7 @@ func _build_goal_banner() -> void:
 	row.add_theme_constant_override("separation", 10)
 	goal_panel.add_child(row)
 	row.add_child(UiStyle.icon_rect("icon_goal", 20))
-	goal_label = UiStyle.label(26, UiStyle.GOLD)
+	goal_label = UiStyle.label(30, UiStyle.GOLD)
 	row.add_child(goal_label)
 
 func _centered_label(size: int, y: float) -> Label:
@@ -218,7 +223,7 @@ func _rebuild_chips(items: Array) -> void:
 		row.add_theme_constant_override("separation", 8)
 		p.add_child(row)
 		row.add_child(UiStyle.icon_rect(it[0], 22))
-		var l := UiStyle.label(22, it[2])
+		var l := UiStyle.label(20, it[2])
 		l.text = it[1]
 		row.add_child(l)
 		chips.add_child(p)

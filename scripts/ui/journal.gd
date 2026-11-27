@@ -45,7 +45,7 @@ func _ready() -> void:
 	scroll.size = Vector2(1000, 500)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
-	body = UiStyle.label(22, UiStyle.CREAM)
+	body = UiStyle.label(20, UiStyle.CREAM)
 	body.add_theme_constant_override("line_spacing", 4)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(980, 0)
@@ -107,7 +107,7 @@ func refresh() -> void:
 		var chip := PanelContainer.new()
 		var on := i == page
 		chip.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.AMBER if on else Color(0.29, 0.42, 0.58, 0.5), Color(0.043, 0.055, 0.1, 0.9), 2 if on else 1, 8))
-		var l := UiStyle.label(22, UiStyle.GOLD if on else UiStyle.PALE)
+		var l := UiStyle.label(20, UiStyle.GOLD if on else UiStyle.PALE)
 		l.text = PAGES[i]
 		chip.add_child(l)
 		tab_row.add_child(chip)
