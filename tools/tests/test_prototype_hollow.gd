@@ -93,6 +93,12 @@ func _process(_delta: float) -> void:
 			check(focus is Button and focus.get_parent() == level_ui.cards and not focus.is_queued_for_deletion(), "and the controller's focus is on one of its new cards")
 		10:
 			check(not Tuning.kl_ambient_spawns, "nothing streams out of the fog: enemies wait in packs and nests")
+			var start: Vector2 = main.start
+			var too_close := []
+			for n in get_tree().get_nodes_in_group("enemy_pack") + get_tree().get_nodes_in_group("foe"):
+				if (n is EnemyPack or n is WickNest or n is Clinker) and n.global_position.distance_to(start) < 16.0 * FogGrid.TILE:
+					too_close.append("%s %s %s" % [n.get_class(), n.get_script().resource_path.get_file(), str(main.fog.tile_of(n.global_position))])
+			check(too_close.is_empty(), "a calm start: no pack, nest or Clinker within 16 tiles of the hut (%s)" % str(too_close))
 			var packs := get_tree().get_nodes_in_group("enemy_pack")
 			check(packs.any(func(p): return p.elites > 0), "the northern packs hold shelled elites")
 			print("RESULT fails=%d" % fails)

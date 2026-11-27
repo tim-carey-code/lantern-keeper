@@ -414,7 +414,8 @@ func _draw() -> void:
 
 ## Keeper's Light prototype content, limited to the Hollow.
 func _place_hollow_prototype() -> void:
-	var post_pos := fog.tile_center(Vector2i(24, 58))
+	# A calm start (owner): nothing hostile within 16 tiles of the hut. The Clinker's post sits just past that.
+	var post_pos := _spot_in_region(Vector2i(24, 51), FogGrid.R_HOLLOW)
 	var post := _add_landmark("crook_post", "A keeper's post", "post", post_pos,
 		"A keeper's crook, fallen across the path. The lamp on it is cold, but whole.\nTied to it: Plant one where you mean to stand. The small ones will not come into it. - Oswin")
 	post.unlock_kind = "post"
@@ -424,7 +425,7 @@ func _place_hollow_prototype() -> void:
 	var clinker := Clinker.new()
 	clinker.position = post_pos
 	$FogLayer/Wicklings.add_child(clinker)
-	var nest_tiles := [Vector2i(21, 53), Vector2i(27, 50), Vector2i(30, 47)]
+	var nest_tiles := [Vector2i(16, 50), Vector2i(27, 49), Vector2i(31, 46)]
 	for i in nest_tiles.size():
 		var nest := WickNest.new()
 		nest.foe_id = "nest_hollow_%d" % (i + 1)
@@ -432,9 +433,9 @@ func _place_hollow_prototype() -> void:
 		$FogLayer/Wicklings.add_child(nest)
 	var packs := [
 		# [tile, how many, Spitwicks, shelled elites]: tougher the further north (toward the WayLamp)
-		[Vector2i(13, 64), 3, 0, 0], [Vector2i(35, 66), 4, 0, 0],
-		[Vector2i(15, 57), 4, 1, 0], [Vector2i(34, 58), 4, 1, 1],
-		[Vector2i(18, 49), 4, 0, 1], [Vector2i(29, 54), 5, 1, 1],
+		[Vector2i(8, 80), 3, 0, 0], [Vector2i(40, 80), 4, 0, 0],      # the quiet southern corners
+		[Vector2i(12, 55), 4, 1, 0], [Vector2i(38, 56), 4, 1, 1],
+		[Vector2i(18, 47), 4, 0, 1], [Vector2i(35, 50), 5, 1, 1],
 	]
 	for i in packs.size():
 		var row: Array = packs[i]

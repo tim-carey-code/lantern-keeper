@@ -251,3 +251,5 @@ Slices 1-6 of `docs/PLAN_KEEPERS_LIGHT.md` are now present: six fixed packs (two
 **Lanterns and the dark (2026-11-27):** about half the Wicklings are timid and stay out of healthy light. The brave ones walk in, start burning after 2.5 s (1.5 hp/s) and run. Elites, the Clinker and the Ashbrood ignore lanterns completely, cores included. Numbers: `kl_timid_share`, `kl_light_tolerance`, `kl_light_burn_dps`. The boss bar shows the phase and a hint for what it wants.
 
 **No endless spawns (2026-11-27):** the old trickle of Wicklings out of the fog is off (`kl_ambient_spawns`). Enemies wait in six fixed packs (tougher further north, two with a shelled elite), three nests and the WayLamp fight. Cleared packs stay cleared.
+
+**A calm start (2026-11-27):** nothing hostile within 16 tiles of the hut. The two nearest packs moved to the southern corners; the Clinker's post is now 17 tiles north (its 330 px charge range no longer reaches the hut); nests and the other packs moved out to match.
