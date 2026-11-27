@@ -17,7 +17,8 @@ const GOALS := [
 	{"id": "relight_waypost", "text": "Relight the old lamp on the north path", "target": "waypost_lantern"},
 	{"id": "build_post", "text": "Take back the lamp from Oswin's crook", "target": "crook_post"},
 	{"id": "burn_nest", "text": "Burn out the nest with a Post Lamp", "target": "nest_a"},
-	{"id": "kindle_hollow", "text": "Kindle the WayLamp in the north Hollow", "target": "waylamp_hollow", "entry": 13},
+	# The loop (owner 2026-11-27): the Hollow's WayLamp is on the way east; the Ridge is climbed from the marsh.
+	{"id": "kindle_hollow", "text": "Kindle the WayLamp on the way east", "target": "waylamp_hollow", "entry": 13},
 	{"id": "stone_way", "text": "Light the way east to the carved stone", "target": "stone_way"},
 	{"id": "enter_marsh", "text": "Follow the arrow into the marsh", "target": "marsh_entry"},
 	{"id": "frames_east", "text": "Find the old frames on the boardwalk", "target": "frames_east", "entry": 3},
@@ -25,7 +26,7 @@ const GOALS := [
 	{"id": "pumphouse", "text": "Wake the old pump", "target": "pumphouse", "entry": 4},
 	{"id": "build_reservoir", "text": "Build a Reservoir Lamp", "target": ""},
 	{"id": "kindle_marsh", "text": "Kindle the WayLamp by the pumphouse", "target": "waylamp_marsh", "entry": 14},
-	{"id": "climb_north", "text": "Climb north from the top of the Hollow", "target": "climb_cairn", "entry": 5},
+	{"id": "climb_north", "text": "Climb north out of the marsh", "target": "climb_cairn", "entry": 5},
 	{"id": "glazier", "text": "Find the glazier's workshop", "target": "glazier", "entry": 6},
 	{"id": "build_hooded", "text": "Build a Hooded Lamp in the wind", "target": ""},
 	{"id": "lens", "text": "Look for the great lens", "target": "lens"},

@@ -24,7 +24,10 @@ func lines_for(t: Node) -> Array:
 		if not Progress.notes_read.has("waylamp_" + t.id):
 			return [[InputHint.key("interact"), "Look closer"]]
 		if t.is_lit():
-			return [["", "WayLamp: this region is held"]]
+			# Fast travel: what interact does here, or why it can't now.
+			var menu := get_tree().get_first_node_in_group("travel_menu")
+			var why: String = menu.block_reason() if menu else ""
+			return [["", why] if why != "" else [InputHint.key("interact"), "Travel"], ["", "WayLamp: this region is held"]]
 		if t.kindling:
 			return [["", "Kindling %ds: keep the dark off it" % ceili(t.seconds_left())]]
 		return [[InputHint.key("interact"), "Feed fuel  %d / %d" % [t.fuel_units(), t.needs()]]]

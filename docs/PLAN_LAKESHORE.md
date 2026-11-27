@@ -38,6 +38,8 @@ How to read it:
 | **The Still Lake** (planned, region 5) | x 83-111, y 0-44 | About 900 tiles, the rest of the north-east. |
 | Rock | | A line of rock at x 83-84 between the shore and the Lake, open only at the causeway. At least 3 rows of rock above the Reedmarsh. |
 
+Note (2026-11-27, the loop, branch `proto/kl-loop`): the map is now 224 × 200, so double the numbers above. The station and the steps did not move ((116, 26) and (124, 34) today). The Ridge's WayLamp moved east to (120, 30), 5.7 tiles from the steps. The marsh climb to the Ridge runs west of this space (x 131 or less), and x 132 and up above the marsh is still rock.
+
 **Map check.** The brief puts the Reedmarsh at about y 49-87, but that is the span of its boardwalks. Its soft ground reaches higher. The marsh oval in `main.gd` (centre (80,68), radii (28,24), with its edge wobble) reaches y 42 at x 72-76, and y 43-48 across x 64-95. So the north-east box (x 66-111, y 0-48) isn't quite empty: its bottom-left corner is marsh. The split leaves 4 rows of rock between the shore and the marsh, and 6 between the Lake and the marsh. (The carve was recomputed with the same formula. In the sketch, the new regions are plain ovals.)
 
 Sketch: one character is 2 x 2 tiles. The rock line at x 83-84 is too thin to show at this scale.

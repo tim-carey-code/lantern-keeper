@@ -6,7 +6,8 @@ extends Node
 ##     res://tools/capture/capture.tscn -- start
 ## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held, upgrade, kl_combat,
 ## kl_level (the HUD's level and wick row, then a level-up's card screen), onboard_start, onboard_north, onboard_haven,
-## onboard_crook (the first 10 minutes' main route, nothing staged). The last frame is the one to look at.
+## onboard_crook (the first 10 minutes' main route, nothing staged), loop_waylamp, loop_marsh_climb,
+## loop_ridge_entry, loop_travel (the loop and WayLamp fast travel). The last frame is the one to look at.
 ## README views (staged, pop-ups hidden; rendered by tools/capture/readme_shots.sh): readme_hollow, readme_ward,
 ## readme_marsh, readme_ridge, readme_map, readme_lanterns, readme_relight (an animation: use every frame).
 
@@ -119,6 +120,8 @@ func _process(_delta: float) -> void:
 						_lantern(m.global_position + Vector2(-90, -30))
 			"onboard_start", "onboard_north", "onboard_haven", "onboard_crook":
 				_onboard_setup()
+			"loop_waylamp", "loop_marsh_climb", "loop_ridge_entry", "loop_travel":
+				_loop_setup()
 			"kl_combat":
 				_lantern(s + Vector2(-260, 60))
 				main.player.position = s + Vector2(-420, 120)
@@ -163,6 +166,11 @@ func _process(_delta: float) -> void:
 	if view == "pause" and frame == 30:
 		main.get_node("PauseMenu").open()
 		main.get_node("PauseMenu").info.text = "Last save: 2026-11-27 16:52:50 (autosaves every minute)"
+	if view == "loop_travel" and frame == 30:
+		var tm = main.get_node("TravelMenu")
+		for w in get_tree().get_nodes_in_group("waylamp"):
+			if w.id == "hollow":
+				tm.open(w)
 	if frame == 6 and view == "map":
 		main.get_node("MapScreen").toggle()
 	# Opening views: step through to the page we want to see.
@@ -244,6 +252,45 @@ func _onboard_setup() -> void:
 			Inventory.counts["scrap"] = 6
 			main.player.position = crook.global_position + Vector2(10, -60)
 			_goals_done_until("burn_nest")
+
+## The loop (2026-11-27): loop_waylamp (the Hollow's WayLamp by the way east, the Clinker before it, the
+## carved stone after), loop_marsh_climb (the path up out of the marsh, from the cairn), loop_ridge_entry
+## (the top of that path on the Ridge, with the glazier's workshop and the lens), loop_travel (three lit
+## WayLamps and the fast-travel list at the Hollow's).
+func _loop_setup() -> void:
+	var f: FogGrid = main.fog
+	for k in Story.TIPS:
+		Story.tips_seen[k] = true
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		Progress.notes_read["waylamp_" + w.id] = true
+	match view:
+		"loop_waylamp":
+			main.player.position = f.tile_center(Vector2i(75, 126))
+			_lantern(f.tile_center(Vector2i(74, 128)))
+			_lantern(f.tile_center(Vector2i(80, 129)))
+			Progress.unlock("post")
+			_goals_done_until("kindle_hollow")
+		"loop_marsh_climb":
+			Progress.settled[FogGrid.R_HOLLOW] = true
+			Progress.settled[FogGrid.R_MARSH] = true
+			main.player.position = f.tile_center(Vector2i(124, 86))
+			for t in [Vector2i(128, 94), Vector2i(121, 82)]:
+				_lantern(f.tile_center(t))
+			_goals_done_until("climb_north")
+		"loop_ridge_entry":
+			Progress.settled[FogGrid.R_HOLLOW] = true
+			Progress.settled[FogGrid.R_MARSH] = true
+			main.player.position = f.tile_center(Vector2i(101, 55))
+			for t in [Vector2i(100, 57), Vector2i(101, 49)]:
+				_lantern(f.tile_center(t), "post")
+			_goals_done_until("glazier")
+		"loop_travel":
+			for r in [FogGrid.R_HOLLOW, FogGrid.R_MARSH, FogGrid.R_RIDGE]:
+				Progress.settled[r] = true
+			for w in get_tree().get_nodes_in_group("waylamp"):
+				if w.id == "hollow":
+					main.player.position = w.global_position + Vector2(0, 48)
+			_goals_done_until("descend")
 
 ## Marks every goal before this one done, so the HUD shows a goal that fits the shot.
 func _goals_done_until(goal_id: String) -> void:

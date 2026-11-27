@@ -116,8 +116,10 @@ func _build_routes() -> void:
 	# crook, the route's nest) to the Clinker, fighting every pack whose wake radius the path crosses and burning
 	# every nest it passes (the Post Lamp comes first now); then everything else nearest-first; the guardian last.
 	var crook: Vector2 = get_tree().get_nodes_in_group("landmark").filter(func(m): return m.id == "crook_post")[0].global_position
-	var path: Array = [start, main.waypost_lantern_pos, crook]
-	path += nests.filter(func(e): return _dist_to_path(e.pos, [crook, clinker.pos]) <= Tuning.kl_nest_wake_radius).map(func(e): return e.pos)
+	# The loop (2026-11-27): the road turns east after nest A (the burn_nest goal), so nest A is a stop on it.
+	var nest_a: Vector2 = get_tree().get_nodes_in_group("foe").filter(func(f): return f is WickNest and f.foe_id == "nest_hollow_4")[0].global_position
+	var path: Array = [start, main.waypost_lantern_pos, crook, nest_a]
+	path += nests.filter(func(e): return e.pos != nest_a and _dist_to_path(e.pos, [nest_a, clinker.pos]) <= Tuning.kl_nest_wake_radius).map(func(e): return e.pos)
 	path.append(clinker.pos)
 	var on_path := packs.filter(func(e): return _dist_to_path(e.pos, path) <= e.wake)
 	on_path += nests.filter(func(e): return path.has(e.pos))

@@ -198,7 +198,9 @@ func _layout() -> void:
 	var d_cw := clinker.global_position.distance_to(wl)
 	check(d_cw < 10.0 * T and d_cw > Tuning.kl_clinker_wake_radius + T, "the Clinker sits near the WayLamp (%.1f tiles), but out of the Ashbrood fight's reach" % tiles(d_cw))
 	check(clinker.global_position.distance_to(crook.global_position) > 15.0 * T and not clinker.awake, "it no longer sits on the crook, and sleeps until you come close")
-	check(clinker.global_position.distance_to(nest_a.global_position) > Tuning.kl_clinker_wake_radius + T and start.distance_to(clinker.global_position) > start.distance_to(nest_a.global_position), "it comes after nest A on the road north")
+	# The loop (2026-11-27): after nest A the road turns east to the WayLamp, so "after nest A" is measured from the
+	# crook, not the hut (the Clinker is now nearer the hut than nest A is, but farther along the road).
+	check(clinker.global_position.distance_to(nest_a.global_position) > Tuning.kl_clinker_wake_radius + T and crook.global_position.distance_to(clinker.global_position) > crook.global_position.distance_to(nest_a.global_position), "it comes after nest A on the road (%.1f vs %.1f tiles from the crook)" % [tiles(crook.global_position.distance_to(clinker.global_position)), tiles(crook.global_position.distance_to(nest_a.global_position))])
 
 	# 9. Level 2 at the find: the wick from the fights before it (Progress.kill_wick, level gap and all).
 	var lv := 1
