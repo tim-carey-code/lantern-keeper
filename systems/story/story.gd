@@ -15,13 +15,13 @@ const GOALS := [
 	{"id": "read_ledger", "text": "Read the ledger by the hut", "target": "ledger", "entry": 2},
 	{"id": "build_post", "text": "Build a Post Lamp at the edge of the light", "target": "passage"},
 	{"id": "stone_way", "text": "Light the way east to the carved stone", "target": "stone_way"},
-	{"id": "kindle_hollow", "text": "Kindle the WayLamp by the carved stone", "target": "waylamp_hollow", "entry": 21},
+	{"id": "kindle_hollow", "text": "Kindle the WayLamp by the carved stone", "target": "waylamp_hollow", "entry": 13},
 	{"id": "enter_marsh", "text": "Follow the arrow into the marsh", "target": "marsh_entry"},
 	{"id": "frames_east", "text": "Find the old frames on the boardwalk", "target": "frames_east", "entry": 3},
 	{"id": "chalk_lake", "text": "Look at the chalk on the pumphouse", "target": "chalk_lake"},
 	{"id": "pumphouse", "text": "Wake the old pump", "target": "pumphouse", "entry": 4},
 	{"id": "build_reservoir", "text": "Build a Reservoir Lamp", "target": ""},
-	{"id": "kindle_marsh", "text": "Kindle the WayLamp on the pumphouse island", "target": "waylamp_marsh", "entry": 22},
+	{"id": "kindle_marsh", "text": "Kindle the WayLamp by the pumphouse", "target": "waylamp_marsh", "entry": 14},
 	{"id": "climb_north", "text": "Climb north from the top of the Hollow", "target": "climb_cairn", "entry": 5},
 	{"id": "glazier", "text": "Find the glazier's workshop", "target": "glazier", "entry": 6},
 	{"id": "build_hooded", "text": "Build a Hooded Lamp in the wind", "target": ""},
@@ -29,7 +29,7 @@ const GOALS := [
 	{"id": "coat", "text": "Follow the ridge east", "target": "coat", "entry": 7},
 	{"id": "station", "text": "Reach the signal station", "target": "station", "entry": 8},
 	{"id": "build_mirror", "text": "Light a Mirror Post from a lantern", "target": ""},
-	{"id": "kindle_ridge", "text": "Kindle the WayLamp at the signal station", "target": "waylamp_ridge", "entry": 23},
+	{"id": "kindle_ridge", "text": "Kindle the WayLamp by the signal station", "target": "waylamp_ridge", "entry": 15},
 	{"id": "descend", "text": "Take the old steps down to the lake", "target": "ridge_steps"},
 ]
 
@@ -42,10 +42,10 @@ const ENTRIES := {
 	6: ["The workshop", "H. could not stay to finish the hood. I did."],
 	7: ["The coat", "H.'s coat, caught in the rocks. Something came up out of the water and drank the great lamp. I hope H. found somewhere warm."],
 	8: ["The station", "H. turned the last mirror toward the lake. That is where H. went."],
-	# DRAFT (WayLamps prototype): owner approval pending in STORY.md.
-	21: ["The first WayLamp", "The WayLamp by the stone took the flame, and every lamp in the Hollow steadied. I don't have to keep them alone."],
-	22: ["The marsh WayLamp", "They came out of the reeds while it kindled. It held. So did I. The boardwalk lamps burn steady now."],
-	23: ["The ridge WayLamp", "Even the wind can't take the ridge lamps now. From up here I can see the fog lying flat on the lake."],
+	# DRAFT (WayLamps prototype, STORY.md section 11): owner approval pending.
+	13: ["The first WayLamp", "I held the WayLamp until it took. Now the Hollow keeps its own lamps."],
+	14: ["The marsh WayLamp", "The old keepers left dry wicks for whoever came next. The marsh is held again."],
+	15: ["The ridge WayLamp", "The ridge is held. Nothing comes up the steps now, and only the lake is left."],
 }
 
 const TITLE_CARD := ["The valley had keepers once.", "Then the lamps went out, one by one.", "Now there is a letter, and you."]
@@ -64,10 +64,10 @@ const TIPS := {
 	"glass": "Glass. The keepers on the ridge made lamps from it.",
 	"mirror_placed": "A mirror needs light. Stand it inside a burning lantern's glow.",
 	"mirror_lit": "Interact to turn the beam. Beams pass from mirror to mirror.",
-	# DRAFT (WayLamps prototype)
-	"waylamp_seen": "An old WayLamp. Reach it with your light, then feed it. It can hold this whole region.",
-	"kindling": "The dark comes for a kindling WayLamp. Ward them off until it catches.",
-	"dying_lantern": "Under a quarter, a lantern is dying. The dark can reach it now.",
+	# DRAFT (WayLamps prototype, STORY.md section 11)
+	"waylamp_seen": "A WayLamp. Reach it with a lantern's light, feed it fuel, and hold it until it takes.",
+	"dying_lantern": "A lantern below a quarter is dying. Wicklings can drain it, so keep it fed.",
+	"kindle_attack": "Wicklings have come for the WayLamp. Ward them off until it takes.",
 }
 
 var player_name := ""
@@ -216,15 +216,16 @@ func _check_tips(main: Node) -> void:
 	for l in _lanterns(main):
 		if l.needs_fuel() and not l.is_lit():
 			tip("cold_lantern")
-		elif l.needs_fuel() and l.fuel_frac() < 0.25 and not l.is_held():
-			tip("low_lantern")
-			for w in main.get_tree().get_nodes_in_group("wickling"):
-				if w.target == l:
-					tip("dying_lantern")
+		elif l.needs_fuel() and l.fuel_frac() < Tuning.dying_frac and not l.is_held():
+			tip("dying_lantern")   # PROTOTYPE: replaces low_lantern, which fires at the same point
 		if l.kind == "mirror":
 			tip("mirror_placed")
 			if l.is_lit():
 				tip("mirror_lit")
+	for w in main.get_tree().get_nodes_in_group("waylamp"):
+		var wt: Vector2i = main.fog.tile_of(w.global_position)
+		if main.fog.in_bounds(wt) and main.fog.remembered[main.fog.idx(wt)] == 1:
+			tip("waylamp_seen")   # the light has found a WayLamp
 	if play_time > 90.0:
 		tip("fog_edge")
 	var wind := main.get_tree().get_first_node_in_group("wind") as Wind

@@ -97,7 +97,7 @@ func start_kindling() -> void:
 	kindling = true
 	kindle_t = 0.0
 	Sfx.play("relight", -6.0)
-	Story.tip("kindling")
+	Story.tip("kindle_attack")
 	var spawner := get_tree().get_first_node_in_group("wickling_spawner")
 	if spawner and Tuning.waylamp_swarm > 0:
 		spawner.spawn_swarm(self, Tuning.waylamp_swarm)

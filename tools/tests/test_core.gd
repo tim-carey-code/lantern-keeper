@@ -211,6 +211,18 @@ func _m3_checks() -> void:
 	fed.position = reservoir.position + Vector2(64, 0)
 	fed.fuel = 10.0
 	main.get_node("Lanterns").add_child(fed)
+	# Hand refuelling fills a Reservoir's whole tank, not just a Post Lamp's worth.
+	var had_fuel := Inventory.get_count("fuel")
+	var empty_res := Lantern.new()
+	empty_res.kind = "reservoir"
+	empty_res.fuel = 0.0
+	empty_res.position = fog.tile_center(fog.tile_of(start + Vector2(-220, 280)))
+	main.get_node("Lanterns").add_child(empty_res)
+	Inventory.counts["fuel"] = 30
+	var units: int = player.refuel(empty_res)
+	check(units == ceili(Tuning.reservoir_max_fuel / Tuning.fuel_per_unit) and is_equal_approx(empty_res.fuel, empty_res.max_fuel()), "hand refuelling fills a Reservoir's whole tank (%d units, %.0f fuel)" % [units, empty_res.fuel])
+	empty_res.queue_free()
+	Inventory.counts["fuel"] = had_fuel
 	# Walk the keeper to the carved stone so its tile gets lit (checked at frame 530).
 	player.position = _landmark("stone_way").global_position + Vector2(0, 20)
 	# Map screen.

@@ -152,7 +152,8 @@ func _connect_events() -> void:
 	Progress.region_settled.connect(func(_r: int, n: String) -> void:
 		banner.text = "%s is held" % n
 		_banner_t = 5.0
-		_show_toast("The WayLamp caught. Its lanterns won't burn down, and nothing comes here now.", 6.0))
+		# On the tip line (queued), so the goal's "Done:" toast that comes with it doesn't replace it.
+		_tips.push_front("The WayLamp took. Its lanterns won't burn down now, and nothing comes here."))
 	Progress.landmark_spotted.connect(func(title: String) -> void:
 		_show_toast("Something catches the light: %s" % title, 4.0))
 	Progress.lantern_unlocked.connect(func(k: String) -> void:

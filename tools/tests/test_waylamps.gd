@@ -136,7 +136,7 @@ func _process(_delta: float) -> void:
 			check(hollow.feed() == "kindling", "feeding while it kindles does nothing more")
 			var items: Array = hud.status_items()
 			check(items.any(func(it): return String(it[1]).begins_with("Kindling")), "the HUD counts the kindling down")
-			check(Story.tips_seen.has("kindling"), "with a tip: ward them off")
+			check(Story.tips_seen.has("kindle_attack"), "with a tip: ward them off")
 			# Two of the swarm reach it; the others are already gone.
 			swarm[0].global_position = hollow.global_position + Vector2(8, 0)
 			swarm[1].global_position = hollow.global_position + Vector2(-8, 0)
@@ -177,7 +177,9 @@ func _process(_delta: float) -> void:
 			check(other_lit == 0, "a WayLamp's light only clears its own region (%d tiles elsewhere)" % other_lit)
 			check(hollow.feed() == "held" and String(wp.lines_for(hollow)[0][1]).contains("held"), "and says its region is held")
 			check(hud.banner.text == "The Hollow is held", "a banner says so (%s)" % hud.banner.text)
-			check(Story.entries.has(21), "the journal gets 'The first WayLamp'")
+			var held_msg := "The WayLamp took. Its lanterns won't burn down now, and nothing comes here."
+			check(hud.tip.text == held_msg or hud._tips.has(held_msg), "and a queued line explains what held means (not overwritten by the goal toast)")
+			check(Story.entries.has(13), "the journal gets 'The first WayLamp'")
 			near.fuel = 10.0   # even low, a held lantern needs nothing
 			check(not main.get_node("FogLayer/LanternMarkers").needs_attention().has(near), "held lanterns never need you, so no edge marker")
 			near.fuel = near.max_fuel()

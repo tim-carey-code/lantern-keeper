@@ -226,12 +226,13 @@ func _place_ridge_landmarks() -> void:
 
 ## PROTOTYPE: one old WayLamp per region (texts are drafts until the owner approves STORY.md).
 func _place_waylamps() -> void:
-	_add_waylamp("hollow", FogGrid.R_HOLLOW, Vector2i(37, 68), "The Hollow's WayLamp",
-		"An old WayLamp on a stone plinth, cold. Its cage could hold a fire for a whole valley.\nCut into the plinth: KEPT, THE LAMPS ARE KEPT.")
-	_add_waylamp("marsh", FogGrid.R_MARSH, Vector2i(100, 70), "The Reedmarsh's WayLamp",
-		"A WayLamp on the pumphouse island, its base green with damp.\nA rag tied to the cage: Feed it and stay with it. It draws them. - H.")
-	_add_waylamp("ridge", FogGrid.R_RIDGE, Vector2i(55, 15), "The Ridge's WayLamp",
-		"A WayLamp by the signal station, braced against the wind.\nScratched on the cage: One keeper cannot hold them all. They never meant us to.")
+	# DRAFT texts (STORY.md section 11): owner approval pending.
+	_add_waylamp("hollow", FogGrid.R_HOLLOW, Vector2i(37, 68), "WayLamp of the Hollow",
+		"A tall lamp with a wide iron bowl, cold and full of old ash.\nCut into the base: WHILE THIS BURNS, THE HOLLOW IS KEPT.\nTied to the post: This has to be held until it takes. I could not hold it and keep the rest. - H.")
+	_add_waylamp("marsh", FogGrid.R_MARSH, Vector2i(100, 70), "WayLamp of the Reedmarsh",
+		"A WayLamp on a stone footing, above the damp. Its bowl is dry.\nCut into the base: WHILE THIS BURNS, THE MARSH IS KEPT.\nUnder it, a tin of dry wicks and a tag in an old hand: For whoever comes next.")
+	_add_waylamp("ridge", FogGrid.R_RIDGE, Vector2i(55, 15), "WayLamp of the Ridge",
+		"A WayLamp in the lee of the station wall. Frost has cracked its hood.\nCut into the base: WHILE THIS BURNS, THE RIDGE IS KEPT.\nUnder a stone: When this went out, the small dark ones came up the steps. - H.")
 
 func _add_waylamp(id: String, region_id: int, want: Vector2i, title: String, text: String) -> WayLamp:
 	var w := WayLamp.new()

@@ -59,6 +59,8 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 | 🟨 | Hooded Lamp, cold | `assets/art/placeholders/hooded_lamp_cold.png` | 16×32 | bottom-centre | drop-in | |
 | 🟨 | Mirror Post, catching light | `assets/art/placeholders/mirror_post_lit.png` | 16×32 | bottom-centre | drop-in | No flame. A tilted mirror on a post, bright. |
 | 🟨 | Mirror Post, dark | `assets/art/placeholders/mirror_post_dark.png` | 16×32 | bottom-centre | drop-in | Same, unlit. |
+| 🟨 | WayLamp, lit (PROTOTYPE) | `assets/art/placeholders/waylamp_lit.png` | 32×48 | bottom-centre | drop-in | The old keepers' lamp, one per region, on a stone base. The light glows from the top (about pixel 16,10). Draft text calls it "a tall lamp with a wide iron bowl". Prototype on `proto/waylamps`. |
+| 🟨 | WayLamp, cold (PROTOTYPE) | `assets/art/placeholders/waylamp_cold.png` | 32×48 | bottom-centre | drop-in | Same, cold: an empty bowl of old ash. |
 | ⬜ | Great Lamp (finale), cold | `assets/art/landmarks/great_lamp_cold.png` | 48×64 | bottom-centre | needs hookup (M5) | The valley's original light on the lake island. |
 | ⬜ | Great Lamp, lit | `assets/art/landmarks/great_lamp_lit.png` | 48×64 | bottom-centre | needs hookup (M5) | |
 

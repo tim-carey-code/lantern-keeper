@@ -276,7 +276,7 @@ func continue_gather(delta: float) -> void:
 
 ## Pours carried fuel into a lantern (relights it if cold). Returns units used.
 func refuel(l: Lantern) -> int:
-	var missing := Tuning.lantern_max_fuel - l.fuel
+	var missing := l.max_fuel() - l.fuel   # a Reservoir's tank is bigger than a Post Lamp's
 	var units := mini(ceili(missing / Tuning.fuel_per_unit), Inventory.get_count("fuel"))
 	if units <= 0:
 		return 0

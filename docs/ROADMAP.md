@@ -15,9 +15,11 @@
 | M3 Reedmarsh + Reservoir Lamp (+ wind moved up) | done, gate passed |
 | M4 Atmosphere (art, fog, font, sound) | mostly done. Left: night ambience recordings (owner, Freesound), owner's lantern art (placeholders in place) |
 | **M4b Light-based conflict** (added by owner decision) | done, playtested: Wicklings, warding glow on lamp charge, warmth, fainting, ember/scrap drops |
-| **M5a Story and guidance** (owner decision) | built: opening (title card, name entry, letter), 18 goals for the current regions with a HUD goal line, journal (goals, story so far, notes), goal pointer (auto: Hollow only), 12 first-time tips, rewritten landmarks + 4 new ones; awaiting owner playtest |
-| **M5b HUD redesign** (owner decision) | built: see DECISIONS; awaiting owner playtest |
-| M5 Full v1 content + save/load | in progress: save/load done; Windward Ridge done (glass, Hooded Lamp, Mirror Post, ridge wind); next the Still Lake |
+| **M5a Story and guidance** (owner decision) | done, playtested by the owner ("that was great"): opening (title card, name entry, letter), 18 goals for the current regions with a HUD goal line, journal (goals, story so far, notes), goal pointer (auto: Hollow only), 12 first-time tips, rewritten landmarks + 4 new ones. Follow-ups: pause while reading, HUD redesign (M5b) |
+| **M5b HUD redesign** (owner decision) | built, plus playtest follow-ups (see DECISIONS); awaiting owner playtest of the follow-ups |
+| **WayLamps prototype** (owner decision) | built on branch `proto/waylamps`: one WayLamp per region holds it; healthy light repels Wicklings; only dying lanterns can be drained. Awaiting owner playtest; this is the gate before the Still Lake |
+| People and new creatures (owner request) | plan drafted in `docs/PLAN_NPCS_ENEMIES.md`; awaiting owner markup; would start after the WayLamp playtest |
+| M5 Full v1 content + save/load | in progress: save/load done; Windward Ridge done (glass, Hooded Lamp, Mirror Post, ridge wind); next the WayLamp playtest, then the Still Lake |
 | M6 Polish, playtest, Linux build | after M5 |
 
 ### What M5 now contains

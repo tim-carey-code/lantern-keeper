@@ -77,7 +77,7 @@ func _process(_delta: float) -> void:
 			check(wl != null and ptr.target_pos() == wl.global_position, "the pointer points at the Hollow's WayLamp")
 			Progress.settle(FogGrid.R_HOLLOW, "The Hollow")
 			Story.update(main)
-			check(Story.done.has("kindle_hollow") and Story.entries.has(21), "kindling it completes the goal and writes 'The first WayLamp'")
+			check(Story.done.has("kindle_hollow") and Story.entries.has(13), "kindling it completes the goal and writes 'The first WayLamp'")
 			check(Story.current == "enter_marsh", "next: go into the marsh (%s)" % Story.current)
 			check(ptr.target_pos() != null, "the pointer is still on in the Hollow")
 			# Walk into the marsh.
