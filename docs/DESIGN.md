@@ -192,7 +192,7 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 
 ## 8. WayLamps (PROTOTYPE, owner playtest pending)
 
-> **Built on branch `proto/waylamps`, not on `main`**; owner playtest pending. "WayLamp" is the owner's name. Placeholder numbers in `tuning.gd`: `waylamp_fuel_need` 15, `waylamp_kindle_sec` 15, `waylamp_swarm` 4, `waylamp_sap_per_wick` 1.5 (seconds undone per second, per Wickling), `waylamp_radius` 420, `waylamp_clear_radius` 160 (no building closer), `dying_frac` 0.25, `wick_repel_speed` 160. If the playtest passes, this changes upkeep (3.1, 3.4) and the Wickling rules (3.6, 3.7). Story text (draft): STORY.md §11.
+> **Built and merged into `main` on 2026-11-27** after the owner's playtest (with changes: WayLamps take fuel directly). "WayLamp" is the owner's name. Placeholder numbers in `tuning.gd`: `waylamp_fuel_need` 15, `waylamp_kindle_sec` 15, `waylamp_swarm` 4, `waylamp_sap_per_wick` 1.5 (seconds undone per second, per Wickling), `waylamp_radius` 420, `waylamp_clear_radius` 160 (no building closer), `dying_frac` 0.25, `wick_repel_speed` 160. If the playtest passes, this changes upkeep (3.1, 3.4) and the Wickling rules (3.6, 3.7). Story text (draft): STORY.md §11.
 
 **Why.** As built, lighting all regions would take ~40-50 lanterns, each refuelled every ~3 minutes: a refuel every ~4 s. And neglect had no consequence.
 
