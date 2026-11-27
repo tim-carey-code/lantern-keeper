@@ -86,6 +86,9 @@ func _process(_delta: float) -> void:
 			var mus = main.get_node("Music")
 			check(mus.player.bus == "Music" and mus.player.stream is AudioStreamMP3 and (mus.player.stream as AudioStreamMP3).loop, "the Hollow's music is a looping track on the Music bus")
 			check(mus.wanted and mus.player.playing, "the Hollow's music plays while the keeper is in the Hollow")
+			var bed = main.get_node("HollowBed")
+			check(bed.players.size() == 2 and bed.players.all(func(p): return p.bus == "Ambience" and p.stream.loop), "the Hollow's wind and crickets are looping layers on the Ambience bus")
+			check(bed.wanted and bed.players.all(func(p): return p.playing), "and they play while the keeper is in the Hollow")
 			check(player.lamp_charge < 1.0, "the beam spends lamp charge")
 			fog.step(0.1)
 			var mid: Vector2 = player.global_position + Vector2(0, -10) + c.aim * Tuning.kl_beam_len * 0.6
