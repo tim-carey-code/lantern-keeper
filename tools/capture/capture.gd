@@ -150,6 +150,9 @@ func _process(_delta: float) -> void:
 		Input.action_press("beam")
 	if view == "kl_combat" and frame == 36:
 		main.player.combat.burst()
+	if view == "pause" and frame == 30:
+		main.get_node("PauseMenu").open()
+		main.get_node("PauseMenu").info.text = "Last save: 2026-11-27 16:52:50 (autosaves every minute)"
 	if frame == 6 and view == "map":
 		main.get_node("MapScreen").toggle()
 	# Opening views: step through to the page we want to see.

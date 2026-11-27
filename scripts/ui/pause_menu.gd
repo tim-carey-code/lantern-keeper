@@ -19,14 +19,14 @@ func _ready() -> void:
 	dim.size = Vector2(1280, 720)
 	root.add_child(dim)
 	var frame := PanelContainer.new()
-	frame.position = Vector2(150, 150)
+	frame.position = Vector2(60, 110)   # room for both columns with the larger font
 	frame.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.WOOD, UiStyle.NAVY, 2, 20))
 	root.add_child(frame)
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override("separation", 48)
 	frame.add_child(cols)
 	var box := VBoxContainer.new()
-	box.custom_minimum_size = Vector2(340, 0)
+	box.custom_minimum_size = Vector2(380, 0)
 	box.add_theme_constant_override("separation", 10)
 	cols.add_child(box)
 	var right := VBoxContainer.new()
@@ -47,6 +47,8 @@ func _ready() -> void:
 		box.add_child(b)
 		buttons.append(b)
 	info = Label.new()
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.custom_minimum_size = Vector2(380, 0)   # wrap long lines instead of widening the menu
 	box.add_child(info)
 	root.visible = false
 

@@ -38,11 +38,11 @@ func _ready() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 14)
 	frame.add_child(col)
-	var title := UiStyle.label(38, UiStyle.GOLD)
+	var title := UiStyle.label(40, UiStyle.GOLD)
 	title.text = "Trim the wick"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
-	note = UiStyle.label(22, UiStyle.PALE)
+	note = UiStyle.label(20, UiStyle.PALE)
 	note.text = "Choose one."
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(note)
@@ -71,6 +71,7 @@ func _present_next() -> void:
 		_present_next()
 		return
 	for child in cards.get_children():
+		cards.remove_child(child)   # out of the row now, so focus lands on the new cards
 		child.queue_free()
 	for i in _offer.size():
 		var option: Dictionary = _offer[i]

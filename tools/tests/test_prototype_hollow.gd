@@ -69,6 +69,17 @@ func _process(_delta: float) -> void:
 				check(boss.phase == 2 and boss.hp == Tuning.kl_ashbrood_hp, "breaking phase one opens the diving phase")
 				boss.hurt(Tuning.kl_ashbrood_hp + Tuning.kl_ashbrood_shell + 1.0, false, "beam")
 				check(Progress.is_settled(FogGrid.R_HOLLOW), "beating phase two holds the Hollow")
-		8:
+		7:
+			# A second level-up: the controller must land on the new cards (owner: the pad stopped working).
+			get_tree().paused = false
+			Tuning.ui_open = false
+			for c in get_tree().get_nodes_in_group("note_reader"):
+				c.close()
+			Progress.add_wick(60)
+		9:
+			var focus := get_viewport().gui_get_focus_owner()
+			check(level_ui.root.visible, "a later level-up opens the choice again")
+			check(focus is Button and focus.get_parent() == level_ui.cards and not focus.is_queued_for_deletion(), "and the controller's focus is on one of its new cards")
+		10:
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)
