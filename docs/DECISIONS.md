@@ -2,6 +2,9 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (performance budget; bigger regions)
+- **Performance budget:** game logic (process + physics) averages well under 4 ms a frame with 30 lanterns and 20 foes, measured by `tools/bench/bench.tscn`. Before the pass it took about 17 ms. The benchmark is not a test.
+
 ## 2026-11-27 (Hollow prototype playtest)
 - **Genre: action RPG.** Lantern Keeper is labelled an ARPG from here on.
 - **No endless trickle of enemies.** Enemies wait in fixed packs, nests and the WayLamp fights; you meet them as you push into new ground and clear it, and cleared ground stays cleared. (`kl_ambient_spawns` is off.) Shelled elites now sit in the northern packs.

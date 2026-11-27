@@ -162,6 +162,7 @@ func load_into(main: Node) -> bool:
 	var rem := Marshalls.base64_to_raw(fd["remembered"])
 	if rem.size() == fog.remembered.size():
 		fog.remembered = rem
+	fog.mark_all_dirty()   # the fog's sparse update and texture must see the loaded map
 	# Inventory and progress.
 	for k in data["inventory"]:
 		Inventory.counts[k] = int(data["inventory"][k])

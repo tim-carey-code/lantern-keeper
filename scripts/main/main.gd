@@ -75,7 +75,7 @@ func _ready() -> void:
 	add_child(boss_bar)
 	_place_hollow_prototype()
 	_scatter()
-	queue_redraw()
+	_build_terrain()
 	# Continue from the save unless "New game" was just chosen.
 	if SaveGame.skip_load_once:
 		SaveGame.skip_load_once = false
@@ -371,46 +371,28 @@ func _add_landmark(id: String, title: String, look: String, p: Vector2, text: St
 
 # --- Drawing -----------------------------------------------------------------
 
-func _hash(x: int, y: int) -> int:
-	return ((x * 73856093) ^ (y * 19349663)) & 0xffff
-
-func _draw() -> void:
-	var t := FogGrid.TILE
-	var ground_tint := Color(0.78, 0.8, 0.9)   # keep lamplit grass from washing out
-	var marsh_tint := Color(0.5, 0.68, 0.74)
-	var plank_tint := Color(1.0, 0.8, 0.6)
-	for y in fog.rows:
-		for x in fog.cols:
-			var pos := Vector2(x * t, y * t)
-			var h := _hash(x, y)
-			match fog.terrain[y * fog.cols + x]:
-				FogGrid.T_ROCK when fog.region[y * fog.cols + x] == FogGrid.R_RIDGE:
-					# Ridge outcrops: bare stone that breaks the wind.
-					Art.cell(self, Art.TOWN, Art.GRASS, pos, Color(0.5, 0.55, 0.65))
-					Art.cell(self, Art.DUNGEON, Art.STONE_WALL, pos, Color(0.75, 0.78, 0.88))
-				FogGrid.T_ROCK:
-					Art.cell(self, Art.TOWN, Art.GRASS, pos, Color(0.22, 0.24, 0.32))
-					if h % 100 < 70:
-						Art.cell(self, Art.TOWN, Art.PINES[h % Art.PINES.size()], pos + Vector2((h % 7) - 3, (h % 5) - 2), Color(0.6, 0.64, 0.78))
-				FogGrid.T_MARSH:
-					Art.cell(self, Art.TOWN, Art.GRASS, pos, marsh_tint)
-					if h % 100 < 45:
-						draw_texture_rect(Art.placeholder("reeds.png"), Rect2(pos, Vector2(t, t)), false)
-				FogGrid.T_BOARDWALK:
-					Art.cell(self, Art.TOWN, Art.GRASS, pos, marsh_tint)
-					Art.cell(self, Art.DUNGEON, Art.PLANKS, pos, plank_tint)
-				_:
-					var c := Art.GRASS
-					if h % 100 < 3:
-						c = Art.GRASS_FLOWERS
-					elif h % 100 < 25:
-						c = Art.GRASS_TUFT
-					Art.cell(self, Art.TOWN, c, pos, ground_tint)
-	# The keeper's hut: 3 tiles wide, roof over walls, just north of the start.
-	var hut := start + Vector2(-48, -112)
-	for i in 3:
-		Art.cell(self, Art.TOWN, Art.HUT_ROOF[i], hut + Vector2(i * t, 0))
-		Art.cell(self, Art.TOWN, Art.HUT_WALL[i], hut + Vector2(i * t, t))
+## The static map, drawn once in chunks (MapChunk) so the renderer can cull what is off screen.
+## The terrain sits behind everything else in the scene; the hut is drawn over it.
+func _build_terrain() -> void:
+	var terrain := Node2D.new()
+	terrain.name = "Terrain"
+	add_child(terrain)
+	move_child(terrain, 0)
+	for cy in range(0, fog.rows, MapChunk.SIZE):
+		for cx in range(0, fog.cols, MapChunk.SIZE):
+			var c := MapChunk.new()
+			c.fog = fog
+			c.t0 = Vector2i(cx, cy)
+			c.position = Vector2(cx, cy) * FogGrid.TILE
+			terrain.add_child(c)
+	var hut := Node2D.new()
+	hut.name = "Hut"
+	hut.position = start + Vector2(-48, -112)   # 3 tiles wide, roof over walls, just north of the start
+	hut.draw.connect(func():
+		for i in 3:
+			Art.cell(hut, Art.TOWN, Art.HUT_ROOF[i], Vector2(i * FogGrid.TILE, 0))
+			Art.cell(hut, Art.TOWN, Art.HUT_WALL[i], Vector2(i * FogGrid.TILE, FogGrid.TILE)))
+	terrain.add_child(hut)
 
 ## Keeper's Light prototype content, limited to the Hollow.
 func _place_hollow_prototype() -> void:

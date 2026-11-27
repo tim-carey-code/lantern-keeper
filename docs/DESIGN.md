@@ -122,6 +122,12 @@ Text lives in STORY.md, mirrored in `systems/story/story.gd` and `scripts/main/m
 - **Pause menu (Esc / Start):** Resume, Save, New game (press twice; deletes the save), Save and quit, Goal pointer, Show tips again, plus the controls.
 - Notes, menus, the map and the journal pause the world.
 
+### 3.11 Performance
+- Budget: game logic (process + physics) averages well under 4 ms a frame with 30 lanterns and 20 foes, measured by `tools/bench/bench.tscn` (see AGENTS.md).
+- The fog steps only tiles that can change: those below full fog, and those in light this tick. The fog texture updates only those tiles.
+- Foes read lantern light from one shared snapshot a frame (`systems/light/light_sense.gd`) instead of asking every lantern.
+- The map is drawn once, in 16 × 16 tile chunks *(code)*, so the renderer culls what is off screen and a light redraws only the chunks under it. Lanterns redraw only when their look changes.
+
 ---
 
 ## 4. Regions

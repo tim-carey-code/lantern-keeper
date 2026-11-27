@@ -35,30 +35,37 @@ func _enter_tree() -> void:
 
 # --- Senses ------------------------------------------------------------------
 
+var _player_ref: Node2D
+var _fog_ref: FogGrid
+
 func _player() -> Node2D:
-	return get_tree().get_first_node_in_group("player") as Node2D
+	if _player_ref == null or not is_instance_valid(_player_ref) or not _player_ref.is_in_group("player"):
+		_player_ref = get_tree().get_first_node_in_group("player") as Node2D
+	return _player_ref
 
 func _fog() -> FogGrid:
-	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	if _fog_ref == null or not is_instance_valid(_fog_ref):
+		_fog_ref = get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	return _fog_ref
 
 ## 0 outside any lantern light, up to 1 at a lantern's centre (mirror glows don't count).
 func lantern_level_at(p: Vector2) -> float:
+	LightSense.refresh(get_tree())
 	var best := 0.0
-	for l in get_tree().get_nodes_in_group("lantern"):
-		if l.kind == "mirror":
-			continue
-		var r: float = l.get_light_radius()
+	for i in LightSense.radius.size():
+		var r := LightSense.radius[i]
 		if r <= 0.0:
 			continue
-		best = maxf(best, 1.0 - l.global_position.distance_to(p) / r)
+		best = maxf(best, 1.0 - LightSense.pos[i].distance_to(p) / r)
 	return best
 
 ## Lights strong enough to push small dark back: burning lanterns that aren't dying, and lit WayLamps.
 func _healthy_lights() -> Array:
+	LightSense.refresh(get_tree())
 	var out := []
-	for l in get_tree().get_nodes_in_group("lantern"):
-		if l.kind != "mirror" and l.is_lit() and not l.is_dying():
-			out.append(l)
+	for i in LightSense.nodes.size():
+		if LightSense.healthy[i] == 1:
+			out.append(LightSense.nodes[i])
 	for w in get_tree().get_nodes_in_group("waylamp"):
 		if w.is_lit():
 			out.append(w)
@@ -66,27 +73,43 @@ func _healthy_lights() -> Array:
 
 ## How deep a point sits in healthy light (0 outside). Optionally ignoring one light.
 func healthy_level_at(p: Vector2, ignore: Node = null) -> float:
+	LightSense.refresh(get_tree())
 	var best := 0.0
-	for l in _healthy_lights():
-		if l == ignore:
+	for i in LightSense.nodes.size():
+		if LightSense.healthy[i] == 0 or LightSense.nodes[i] == ignore:
 			continue
-		var r: float = l.get_light_radius()
+		var r := LightSense.radius[i]
 		if r > 0.0:
-			best = maxf(best, 1.0 - l.global_position.distance_to(p) / r)
+			best = maxf(best, 1.0 - LightSense.pos[i].distance_to(p) / r)
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w == ignore or not w.is_lit():
+			continue
+		var r: float = w.get_light_radius()
+		if r > 0.0:
+			best = maxf(best, 1.0 - w.global_position.distance_to(p) / r)
 	return best
 
 ## The way out of healthy light from a point (zero when outside it).
 func repel_at(p: Vector2) -> Vector2:
+	LightSense.refresh(get_tree())
 	var push := Vector2.ZERO
-	for l in _healthy_lights():
-		var r: float = l.get_light_radius()
-		if r <= 0.0:
+	for i in LightSense.nodes.size():
+		if LightSense.healthy[i] == 0:
 			continue
-		var v: Vector2 = p - l.global_position
-		var d := v.length()
-		if d < r:
-			push += (v / maxf(d, 0.001)) * (1.0 - d / r + 0.2)
+		push += _repel_one(p, LightSense.pos[i], LightSense.radius[i])
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.is_lit():
+			push += _repel_one(p, w.global_position, w.get_light_radius())
 	return push
+
+func _repel_one(p: Vector2, c: Vector2, r: float) -> Vector2:
+	if r <= 0.0:
+		return Vector2.ZERO
+	var v: Vector2 = p - c
+	var d := v.length()
+	if d < r:
+		return (v / maxf(d, 0.001)) * (1.0 - d / r + 0.2)
+	return Vector2.ZERO
 
 ## How deep a point sits in any mirror beam (0 outside). The dark can't sense beams coming.
 func beam_level_at(p: Vector2) -> float:
@@ -201,14 +224,16 @@ func tick_foe(delta: float) -> void:
 	# Every ordinary foe is burned by a lantern's bright core; only Wicklings can drink a mirror beam.
 	# Elites and guardians don't care about lanterns at all (owner, 2026-11-27).
 	var ignores_lanterns: bool = (self is Wickling and self.elite) or self is Clinker or self is Ashbrood
-	for lamp in ([] if ignores_lanterns else get_tree().get_nodes_in_group("lantern")):
-		if lamp.kind == "mirror" or not lamp.is_lit():
-			continue
-		var radius: float = lamp.get_light_radius()
-		if radius > 0.0 and global_position.distance_to(lamp.global_position) < radius * (1.0 - Tuning.wick_core):
-			var core_dps := Tuning.kl_nest_core_dps if self is WickNest else Tuning.wick_light_burn
-			hurt(core_dps * delta, false, "core")
-			break
+	if not ignores_lanterns:
+		LightSense.refresh(get_tree())
+		for i in LightSense.nodes.size():
+			if LightSense.lit[i] == 0:
+				continue
+			var radius := LightSense.radius[i]
+			if radius > 0.0 and global_position.distance_to(LightSense.pos[i]) < radius * (1.0 - Tuning.wick_core):
+				var core_dps := Tuning.kl_nest_core_dps if self is WickNest else Tuning.wick_light_burn
+				hurt(core_dps * delta, false, "core")
+				break
 	if _dead or is_queued_for_deletion():
 		return
 	if not (self is Wickling):

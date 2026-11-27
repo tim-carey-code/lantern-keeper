@@ -24,6 +24,8 @@ const R_RIDGE := 3
 const UNSEEN := Color(0.02, 0.025, 0.04)
 const SEEN := Color(0.09, 0.11, 0.15)
 const SEEN_OUTLINE := Color(0.32, 0.38, 0.5)
+const UNSEEN_RGB := [int(UNSEEN.r * 255), int(UNSEEN.g * 255), int(UNSEEN.b * 255)]
+const SEEN_RGB := [int(SEEN.r * 255), int(SEEN.g * 255), int(SEEN.b * 255)]
 
 @export var cols := 112
 @export var rows := 100
@@ -35,6 +37,15 @@ var terrain := PackedByteArray()
 var region := PackedByteArray()
 var _light := PackedFloat32Array()
 var _acc := 0.0
+# Sparse update (performance): only tiles that can change are stepped. A tile at full fog with no
+# light on it stays at full fog, so the step skips it. _active holds every tile below full fog;
+# lit tiles join it each tick. Anything that writes density wholesale (a save) calls mark_all_dirty().
+var _active := PackedInt32Array()
+var _in_active := PackedByteArray()
+var _lit := PackedInt32Array()          # tiles with _light > 0 (cleared at the start of the next step)
+var _all_dirty := true
+var _changed := PackedInt32Array()      # tiles stepped since the last texture update
+var _tex_full := true
 
 func _ready() -> void:
 	add_to_group("fog_grid")
@@ -51,6 +62,13 @@ func _ready() -> void:
 	terrain.fill(FogGrid.T_GROUND)
 	region.resize(n)
 	region.fill(0)
+	_in_active.resize(n)
+	_in_active.fill(0)
+
+## Density or memory was replaced wholesale (a save loaded): rescan and redraw every tile once.
+func mark_all_dirty() -> void:
+	_all_dirty = true
+	_tex_full = true
 
 # --- Geometry ----------------------------------------------------------------
 
@@ -127,7 +145,9 @@ func _process(delta: float) -> void:
 
 ## Advance the fog simulation by dt seconds. Public so tests can call it.
 func step(dt: float) -> void:
-	_light.fill(0.0)
+	for i in _lit:
+		_light[i] = 0.0
+	_lit.clear()
 	for src in get_tree().get_nodes_in_group("light_source"):
 		var r: float = src.get_light_radius()
 		if r <= 0.0:
@@ -146,7 +166,10 @@ func step(dt: float) -> void:
 					# Strong plateau in the middle, soft edge near the rim.
 					var s := clampf((1.0 - d / r) * 1.6, 0.0, 1.0)
 					var i := y * cols + x
-					_light[i] = maxf(_light[i], s)
+					if s > _light[i]:
+						if _light[i] == 0.0:
+							_lit.append(i)
+						_light[i] = s
 
 	_update_mirrors()
 	for m in get_tree().get_nodes_in_group("mirror") + get_tree().get_nodes_in_group("beam_source"):
@@ -167,34 +190,62 @@ func step(dt: float) -> void:
 					var off := Geometry2D.get_closest_point_to_segment(c, seg[0], seg[1]).distance_to(c)
 					if off <= half:
 						var i := y * cols + x
-						_light[i] = maxf(_light[i], 1.0)
+						if _light[i] == 0.0:
+							_lit.append(i)
+						_light[i] = 1.0
 			d += TILE * 0.5
 
 	var wind := get_tree().get_first_node_in_group("wind") as Wind
 	var gust := Tuning.wind_creep_mult if wind != null and wind.is_gusting() else 1.0
 	var creep_by_region := [Tuning.fog_creep_per_sec, Tuning.fog_creep_per_sec, Tuning.fog_creep_per_sec * Tuning.marsh_creep_mult, Tuning.fog_creep_per_sec]
 	var clear := Tuning.fog_clear_per_sec
-	var next := density.duplicate()
-	for y in rows:
-		for x in cols:
-			var i := y * cols + x
-			var s := _light[i]
-			# Fog spreads from foggy neighbours: isolated lights get eaten at the edges.
-			var foggy := 0
-			foggy += 1 if (x == 0 or density[i - 1] > 0.5) else 0
-			foggy += 1 if (x == cols - 1 or density[i + 1] > 0.5) else 0
-			foggy += 1 if (y == 0 or density[i - cols] > 0.5) else 0
-			foggy += 1 if (y == rows - 1 or density[i + cols] > 0.5) else 0
-			var spread := 0.25 + 0.75 * foggy / 4.0
-			var creep: float = creep_by_region[mini(region[i], creep_by_region.size() - 1)] * gust
-			var v := density[i] + (creep * spread * (1.0 - s) - clear * s) * dt
-			v = clampf(v, 0.0, 1.0)
-			next[i] = v
-			if v < REMEMBER_BELOW and remembered[i] == 0:
-				remembered[i] = 1
-				if region[i] > 0 and region[i] < REGION_NAMES.size():
-					Progress.reveal_region(region[i], REGION_NAMES[region[i]])
-	density = next
+	if _all_dirty:
+		_all_dirty = false
+		_active.clear()
+		_in_active.fill(0)
+		for i in density.size():
+			if density[i] < 1.0:
+				_active.append(i)
+				_in_active[i] = 1
+	for i in _lit:
+		if _in_active[i] == 0:
+			_in_active[i] = 1
+			_active.append(i)
+	# New values are worked out from the old ones first (neighbours read the old fog), then written.
+	var next := PackedFloat32Array()
+	next.resize(_active.size())
+	var k := 0
+	for i in _active:
+		var x := i % cols
+		var y := i / cols
+		var s := _light[i]
+		# Fog spreads from foggy neighbours: isolated lights get eaten at the edges.
+		var foggy := 0
+		foggy += 1 if (x == 0 or density[i - 1] > 0.5) else 0
+		foggy += 1 if (x == cols - 1 or density[i + 1] > 0.5) else 0
+		foggy += 1 if (y == 0 or density[i - cols] > 0.5) else 0
+		foggy += 1 if (y == rows - 1 or density[i + cols] > 0.5) else 0
+		var spread := 0.25 + 0.75 * foggy / 4.0
+		var creep: float = creep_by_region[mini(region[i], creep_by_region.size() - 1)] * gust
+		var v := density[i] + (creep * spread * (1.0 - s) - clear * s) * dt
+		next[k] = clampf(v, 0.0, 1.0)
+		k += 1
+	var still := PackedInt32Array()
+	k = 0
+	for i in _active:
+		var v := next[k]
+		k += 1
+		density[i] = v
+		_changed.append(i)
+		if v < 1.0:
+			still.append(i)
+		else:
+			_in_active[i] = 0
+		if v < REMEMBER_BELOW and remembered[i] == 0:
+			remembered[i] = 1
+			if region[i] > 0 and region[i] < REGION_NAMES.size():
+				Progress.reveal_region(region[i], REGION_NAMES[region[i]])
+	_active = still
 
 ## A mirror catches light when it stands well inside a burning lantern's light, or in
 ## another catching mirror's beam. Repeats so chains of mirrors pass light along.
@@ -250,18 +301,30 @@ func _ensure_texture() -> void:
 
 func _rebuild_texture() -> void:
 	_ensure_texture()
-	var unseen := [int(UNSEEN.r * 255), int(UNSEEN.g * 255), int(UNSEEN.b * 255)]
-	var seen := [int(SEEN.r * 255), int(SEEN.g * 255), int(SEEN.b * 255)]
-	for i in density.size():
-		var v := density[i]
-		var o := i * 4
-		var c: Array = seen if remembered[i] == 1 else unseen
-		_pixels[o] = c[0]
-		_pixels[o + 1] = c[1]
-		_pixels[o + 2] = c[2]
-		_pixels[o + 3] = int(clampf(v * (0.8 if remembered[i] == 1 else 1.0), 0.0, 1.0) * 255.0)
+	if _tex_full:
+		_tex_full = false
+		_changed.clear()
+		for i in density.size():
+			_paint(i)
+	else:
+		for i in _changed:
+			_paint(i)
+		_changed.clear()
 	_img.set_data(cols, rows, false, Image.FORMAT_RGBA8, _pixels)
 	_tex.update(_img)
+
+func _paint(i: int) -> void:
+	var o := i * 4
+	if remembered[i] == 1:
+		_pixels[o] = SEEN_RGB[0]
+		_pixels[o + 1] = SEEN_RGB[1]
+		_pixels[o + 2] = SEEN_RGB[2]
+		_pixels[o + 3] = int(clampf(density[i] * 0.8, 0.0, 1.0) * 255.0)
+	else:
+		_pixels[o] = UNSEEN_RGB[0]
+		_pixels[o + 1] = UNSEEN_RGB[1]
+		_pixels[o + 2] = UNSEEN_RGB[2]
+		_pixels[o + 3] = int(clampf(density[i], 0.0, 1.0) * 255.0)
 
 func _draw() -> void:
 	_rebuild_texture()
