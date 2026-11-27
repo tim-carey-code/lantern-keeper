@@ -129,16 +129,20 @@ The game starts fullscreen; F11 switches to a window. On Linux, your save is kep
 
 | Action | Keyboard / mouse | Gamepad |
 |---|---|---|
-| Move | WASD / arrows | Left stick / D-pad |
-| Read, refuel / relight, turn a Mirror Post right (tap); gather (hold) | E | A (bottom) |
-| Turn a Mirror Post left (next to one) | Space / left click | X (left) |
-| Build the selected lantern where you stand | Space / left click | X (left) |
-| Pick up lantern | Q / right click | B (right) |
-| Ward off Wicklings (hold) | F | RB / RT |
-| Switch lantern (tap) / lantern list (hold) / pick 1-4 | Tab / 1-4 | Y (top) |
-| Pause menu (resume, save, new game, save and quit, goal pointer, tips) | Esc | Start |
-| Map | M | LB |
+| Move | WASD / arrows | Left stick |
+| Aim | Mouse | Right stick |
+| Lampfire (hold) | Left click | RT |
+| Skill slots 2, 3, 4 (Fireglobe, the Beam or Lance, empty) | Right click, Q, F | RB, LB, Y |
+| Dash | Space / Shift | LT |
+| Drink lamp oil | R | B (right) |
+| Read, refuel / relight, turn a Mirror Post right, rest, travel (tap); gather or pick up a lamp (hold) | E | A (bottom) |
+| Plant the selected lamp; next to a Mirror Post, turn it left | C | X (left) |
+| Next lamp kind (tap) / lamp list (hold) / previous kind; pick 1-4 | Tab; 1-4 | D-pad right / left |
+| Skills list | K | D-pad down |
+| Map | M | D-pad up |
 | Journal (goals, story so far, notes) | J | Back / View |
+| Pause menu (resume, save, new game, save and quit, goal pointer, tips, options) | Esc | Start |
+| Close a menu | Esc | B |
 | Tuning panel (for development) | F1 | Left stick click |
 | Fullscreen on/off | F11 | |
 

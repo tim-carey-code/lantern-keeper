@@ -1,8 +1,70 @@
 # Playtests
 
-## Next: M1a, fire in the Hollow (not ready yet)
+## M1a: what to try (owner, pad)
 
-Being built on `proto/kl-m1a`. When a build is ready, how to run it goes here. The owner checks are in `docs/ROADMAP.md` (M1a, checks 1-11), on a pad only. Record the answers here, including which fire skills to keep, rework or cut (check 8), and whether to keep the Beam and Hearth ring (check 9).
+**Build:** branch `proto/kl-m1a` (fire in the Hollow; build commits 6663292 and 10099a8). Open its worktree in Godot and press F5. It uses the prototype save files, so a `main` save is never touched. A version 4 prototype save loads with the default bar and full flasks, but **start a new game** for step 1. Sound is on as usual; nothing new was added, old sounds stand in.
+
+**Play on a gamepad only.** Leave the keyboard alone, and don't open the tuning panel (L3) except to tune. You need one lit WayLamp: the Hollow's. Lamps still burn fuel in M1a, and the WayLamp still takes 15 fuel and wakes the Ashbrood.
+
+**Controls (pad)**
+- Left stick: move. Right stick: aim.
+- **RT** (hold): Lampfire. **RB**: Fireglobe. **LB**: the Beam at level 1, then Lance from level 2. **Y**: empty (Hearth ring goes here if you pick it). **LT**: dash.
+- **B**: drink lamp oil (and close menus). **A**: read, refuel, rest, travel; hold A to gather or pick up a lamp. **X**: plant a lamp (next to a mirror: turn it left).
+- D-pad up: map. D-pad down: Skills. D-pad left / right: lamp kind (hold right: the lamp list). View: journal. Start: pause (Options are in there).
+
+Keyboard and mouse, for reference: left click Lampfire (hold), right click Fireglobe, Q Beam / Lance, F slot 4, Space or Shift dash, R flask, E interact (hold to gather or pick up), C plant, Tab lamp kind, M map, K Skills, J journal, Esc pause.
+
+**What to try**
+1. Start a new game and play to the Hollow WayLamp without touching the keyboard. Light it (15 fuel, then the Ashbrood). Your name should stay "Keeper" (there's no pad letter grid until M9).
+2. Move and aim while you hold RT, then RB, LB and LT. Your right thumb should never have to leave the stick.
+3. Hold RT and press B. You should drink, and the fireballs should keep their aim.
+4. Close the journal, the map, a note and the pause menu with B. No flask should be spent.
+5. Move through every menu with the D-pad. The map should not open and the keeper should not move.
+6. Watch the cooldown sweeps on the action bar. Try a skill while you're short of charge: its slot should be greyed.
+7. Clear the first packs with Lampfire, Fireglobe and Lance only.
+8. Decide on each fire skill: keep, rework or cut (below).
+9. Try the Beam on LB at level 1, and again after level 2: Lance takes LB then, and the Skills list (D-pad down) puts the Beam back in one press. Put Hearth ring on Y and try it too. Mark keep or cut for each (below).
+10. While something hunts you, stand in a lamp's light. Charge should come back only slowly, and warmth not at all (the top-right chip says so).
+11. Check that packs drop oil (an amber flask), that the Ashbrood drops oil at half health in each of its two phases, and that **Rest** at the lit WayLamp (A, then Rest) refills your flasks and warmth.
+
+**If you have time:** turn on the auto-fire option (pause, Options) and see if it helps with RT and RB on one finger. Try the screen-shake slider and "Reduce flashes". The Clinker now has 48 hp and the Ashbrood 220 a phase: say if either fight drags.
+
+**The two key questions**
+
+*Are the fire skills fun? (keep / rework / cut each)*
+
+| Skill | Keep / rework / cut | Why, or what to change |
+|---|---|---|
+| Lampfire | | |
+| Fireglobe | | |
+| Lance | | |
+
+*Keep the Beam? Hearth ring?*
+
+| Skill | Keep / cut | Why |
+|---|---|---|
+| The Beam | | |
+| Hearth ring | | |
+
+**Your answers to steps 1-11** (pass, or what went wrong)
+
+| Step | Result |
+|---|---|
+| 1. New game to the lit WayLamp, pad only; name stays Keeper | |
+| 2. RT, RB, LB, LT while moving and aiming | |
+| 3. RT held + B: drinks, aim kept | |
+| 4. B closes menus without spending a flask | |
+| 5. D-pad in menus: no map, no movement | |
+| 6. Cooldown sweeps; greyed when short of charge | |
+| 7. First packs with Lampfire, Fireglobe, Lance | |
+| 10. Light while hunted: slow charge, no warmth | |
+| 11. Oil from packs and the Ashbrood; Rest refills | |
+
+Anything else (feel, numbers, the action bar, texts):
+
+**Texts to mark up:** every M1a text is DRAFT in STORY.md §14 (skills, the Skills list, Rest, flasks, options, toasts), plus the two changed boss-bar hints (§12) and "Rest or travel" (§11).
+
+The checks come from the game plan (§18, M1a) and ROADMAP.md; the steps from `docs/replan/M1A_BUILD_NOTES.md`.
 
 ---
 

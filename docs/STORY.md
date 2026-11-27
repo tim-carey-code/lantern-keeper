@@ -1,6 +1,7 @@
 # Lantern Keeper — Story Outline
 
 > **Synced to commit c6d3ee0** on `proto/kl-replan` (2026-11-27), refreshed for the approved game plan (`docs/replan/GAME_PLAN.md` §13). In the code today: the title card, the name prompt, the letter, **23 goals**, **11 journal entries** (1-8 and 13-15), **21 tips**, **12 readable landmark notes** plus the rack (scenery), **6 upgrade-find notes**, **3 WayLamp notes**, the fast-travel texts, and the UI lines in §12. They match `systems/story/story.gd`, `scripts/main/main.gd`, `scripts/world/` and `scripts/ui/` word for word. **Built** = in the game at c6d3ee0; **Planned** = written, not built yet.
+> **M1a** (branch `proto/kl-m1a`, build commit 6663292, checked at f97b531). The fire kit added new texts and changed a few old ones. All of them are in **§14**, marked **DRAFT (M1a, not yet owner-approved)**. Where M1a changed a text, the new code wording is recorded as DRAFT and the old one is kept as "was". No APPROVED text was changed in the code.
 > **Marks.** **APPROVED**: the owner approved this exact wording; keep it word for word, and change it only with the owner. **DECIDED**: an owner decision about the story (who, what, where). **DEFAULT**: a draft choice the owner let stand; ask before changing it. **DRAFT**: not yet approved. Owner-reviewed 2026-11-26 (milestone M5a); later approvals are dated.
 > **The re-plan.** The game plan changes how the game plays (fire skills, no lamp tending, WayLamps won by fighting, a finale fight, people who speak). Approved texts below stay as they are until the owner approves new wording. §13 lists every text the plan needs rewritten, as DRAFT suggestions.
 > Sources: DECISIONS.md (overrides), the game plan, `systems/story/story.gd`, `scripts/main/main.gd`, DESIGN.md, ROADMAP.md.
@@ -312,6 +313,8 @@ DEFAULT: first person.
 
 Shown once each, in a panel near the bottom of the screen, for 6 s, one at a time. Built: these 12, the 6 onboarding tips below and the 3 WayLamp tips (§11), 21 in all, as in `Story.TIPS`. A token such as [beam] becomes the button for the device in use (`Story.tip_text`).
 
+**Since M1a** the tip texts are unchanged, but some tokens name other buttons, so what the player reads changed (§14.10). The legend below is the M1a one.
+
 | id | Trigger (as built) | Tip |
 |----|--------------------|-----|
 | `cold_lantern` | First cold lantern (shows at the start: the hut lantern starts cold) | A cold lantern keeps its frame. A little fuel will wake it. |
@@ -327,13 +330,13 @@ Shown once each, in a panel near the bottom of the screen, for 6 s, one at a tim
 | `mirror_placed` | First Mirror Post placed | A mirror needs light. Stand it inside a burning lantern's glow. |
 | `mirror_lit` | First lit mirror | Interact to turn the beam. Beams pass from mirror to mirror. |
 
-**The first 10 minutes** (onboarding, `docs/archive/PLAN_ONBOARDING.md` §6; text APPROVED by the owner 2026-11-27). In brackets: the button for the device in use (`Story.tip_text`): [beam] left click / RT, [burst] F / RB, [dash] Shift / LT, [build] Space / X, [aim] the mouse / the right stick.
+**The first 10 minutes** (onboarding, `docs/archive/PLAN_ONBOARDING.md` §6; text APPROVED by the owner 2026-11-27). In brackets: the button for the device in use (`Story.tip_text`), as of M1a: [beam] slot 1, Lampfire's button: left click / RT; [burst] the slot Hearth ring is on, else slot 4: F / Y; [dash] Space / LT; [build] C / X; [aim] the mouse / the right stick. Before M1a: [beam] left click / RT, [burst] F / RB, [dash] Shift / LT, [build] Space / X.
 
 | id | Trigger (as built) | Tip |
 |----|--------------------|-----|
 | `haven` | The north path's old lamp is lit | Lantern light fills your lamp and warms you. Fight near it. |
-| `burst` | Two Wicklings within 130 px | Too close. [burst] throws them back. |
-| `shell` | First beam on a shell (the crook's guard) | Light cracks a shell. Keep it on. |
+| `burst` | Two Wicklings within 130 px, once Hearth ring is on the bar (M1a; before, always) | Too close. [burst] throws them back. |
+| `shell` | First hit that wears a shell (M1a: Lampfire, Lance or the Beam; before, the beam) on the crook's guard | Light cracks a shell. Keep it on. |
 | `dash` | The Clinker's first roll tell | It is gathering itself. [dash] steps clear. |
 | `nest` | First nest within 416 px (its wake range and 2 tiles) | A nest. Your light can't touch it. A lantern's core can. |
 | `build_here` | By a nest with the Post Lamp unlocked and 5 scrap carried | Plant a Post Lamp beside it. Then hold. |
@@ -448,7 +451,8 @@ Lit WayLamps are fast travel (owner, 2026-11-27). Texts in `scripts/ui/travel_me
 
 | Where | Text |
 |---|---|
-| Prompt over a lit WayLamp (with the button) | Travel |
+| Prompt over a lit WayLamp (with the button) | Rest or travel (DRAFT, M1a, not yet owner-approved; was "Travel") |
+| First button in the list (M1a; §14.4) | Rest: fill your flasks and warmth |
 | Second line of that prompt (in code; added to this table 2026-11-27) | WayLamp: this region is held |
 | List title | WayLamps |
 | Under the title | Travel to a lit WayLamp. |
@@ -528,14 +532,14 @@ The four APPROVED cards: DECISIONS 2026-11-27 ("wick by level gap"): "The four n
 A toast when phase 1 ends:
 > The Ashbrood leaves the bowl.
 
-The boss bar's title reads "{name}   phase {N} / 2: {hint}". The hints:
+The boss bar's title reads "{name}   phase {N} / 2: {hint}". The hints (M1a changed the two "shell up" hints, because Lance and Lampfire wear shells now, not only the beam):
 
-| When | Hint |
-|---|---|
-| Phase 1, shell up | crack its shell with your beam |
-| Phase 1, shell broken | burn it now, before the shell grows back |
-| Phase 2, shell up | crack its shell with your beam, then hit it while it sits |
-| Phase 2, shell broken | it dives at your lanterns: hit it while it sits |
+| When | Hint | Mark |
+|---|---|---|
+| Phase 1, shell up | crack its shell with Lance or Lampfire | DRAFT (M1a, not yet owner-approved). Was: "crack its shell with your beam" |
+| Phase 1, shell broken | burn it now, before the shell grows back | DRAFT (unchanged) |
+| Phase 2, shell up | crack its shell with Lance, then hit it while it sits | DRAFT (M1a, not yet owner-approved). Was: "crack its shell with your beam, then hit it while it sits" |
+| Phase 2, shell broken | it dives at your lanterns: hit it while it sits | DRAFT (unchanged) |
 
 ### Fainting (`scripts/player/player.gd` `faint()`)
 
@@ -591,7 +595,7 @@ From GAME_PLAN §13. **Everything in this section is DRAFT, for the owner.** Not
   - `lamp_empty`, `warmth_low`, `faint`: flasks heal in a fight, and a faint loses nothing (M1a, M1b).
   - `waylamp_seen`, `kindle_attack` (both APPROVED): lit by touch, then a guardian; no ward (M1b).
   - `gust` (M6), `mirror_placed` (M7).
-- **New** (M1a unless marked): the flask, Fireglobe, Lance, rest at a WayLamp, a level point (M2), loot and a full bag (M3).
+- **New** (M1a unless marked): the flask, Fireglobe, Lance, rest at a WayLamp, a level point (M2), loot and a full bag (M3). **Not written in M1a:** the build added no new tips. The skills, the flask and Rest are explained by the Skills list, the action bar, the prompt and toasts (§14).
 
 ### Notes
 - **WayLamp notes:** keep the inscriptions and Oswin's lines (APPROVED). Rewrite the footer: "Feed it 15 fuel." / "While it kindles, the dark will come for it. Keep them off it." / "Lit, it holds this whole region: its lanterns stop burning down, and nothing comes here." (M1b). The Hollow note's Oswin line, "This has to be held until it takes. I could not hold it and keep the rest.", is APPROVED and is kept unless the owner says otherwise.
@@ -606,17 +610,158 @@ From GAME_PLAN §13. **Everything in this section is DRAFT, for the owner.** Not
 - New entries for each guardian (M1b for the Ashbrood; M5-M8).
 
 ### Code texts in §12
-- The boss-bar hints say "your beam" (M1a: Lance and fire) and "phase N / 2" (M2: three phases).
+- The boss-bar hints: "your beam" was replaced in M1a (§12, DRAFT). "phase N / 2" stays until M2 (three phases).
 - The faint note says "Some of what you carried lies where you fell." (M1b: nothing carried is lost; wick waits where you fell).
 - The card screen and its 12 cards go in M2. The four APPROVED names stay as branch picks and gear lines.
-- "Pick it in the lantern list (Tab / Y)": Y becomes a skill slot in M1a.
+- "Pick it in the lantern list (Tab / Y)": **wrong in the M1a build.** Y is a skill slot now; on a pad the lantern list is D-pad right. The code (`scripts/world/landmark.gd`) still says "(Tab / Y)". Suggestion: "Pick it in the lantern list ({button}).", with the button for the device in use. Needs a code change and the owner's OK.
 
 ### Story beats and feeling
 - §1, "**Caring.** Tending light is looking after something, not a chore.": tending goes in M1b. The beat needs a new line (owner's call).
 - §4, region 1: "Gather, relight, build." (M1b).
 - §9: the finale's lines for the fight, the portal, the credits and waking after (M8).
 
-### New lines the plan needs (none written yet)
-- Skills, branch picks, items and relics (M1a-M3); the action bar and the pack screen (M1a, M2).
+### New lines the plan needs
+- Skills and the action bar: written in M1a (§14, DRAFT). Branch picks, items and relics (M2, M3); the pack screen (M2): none yet.
 - Every line for Amos, Maud, Kit, Ebba and Ivo (M4-M7), from `PLAN_NPCS_ENEMIES.md` and `PLAN_LAKESHORE.md`.
 - The finale, the portal and the after-game (M8).
+
+---
+
+## 14. M1a texts (DRAFT, M1a, not yet owner-approved)
+
+Every player-facing text the M1a build added or changed, copied **from the code** at f97b531, word for word. **All of it is DRAFT (M1a, not yet owner-approved).** The source list is `docs/replan/M1A_BUILD_NOTES.md`; where it and the code differed, the code wins (the differences are listed at the end). In these texts, `%s` and `%d` are filled in by the game; the filled-in example follows in brackets. Button names follow the device in use (`systems/input/input_hint.gd`).
+
+### 14.1 Skill names and descriptions (`scripts/player/skills/*.gd`)
+
+| Skill | Description |
+|---|---|
+| Lampfire | Hold to throw fireballs of light. Each one bursts where it hits, and every hit gives back a little charge. |
+| Fireglobe | A big fireball, lobbed where you aim. It bursts and leaves the ground burning. |
+| Lance | A fast bolt that passes through three foes. It breaks shells. |
+| The Beam | Hold for a steady beam. It burns all along its line and wears shells down, but you walk slower and light won't fill your lamp while it's on. |
+| Hearth ring | A ring of flame around you. It sets foes alight and pushes them back a little. |
+
+**Facts line** under each name in the Skills list (`skill.gd` `facts()`, built from `systems/tuning.gd`):
+- Lampfire: "free, a bolt every %s s, +%s charge a hit" (with the starting values: "free, a bolt every 0.35 s, +0.03 charge a hit").
+- The others: "{cost} charge" ("{cost} charge a second" for the Beam, which is held), or "free"; then ", {n} s cooldown" if it has one. With the starting values: Fireglobe "0.3 charge, 5 s cooldown", Lance "0.2 charge, 0.5 s cooldown", the Beam "0.3 charge a second", Hearth ring "0.2 charge, 4 s cooldown". (Worked out from the code and the tuning values, not read off the screen.)
+
+### 14.2 The Skills list (`scripts/ui/skills_list.gd`, `systems/progress.gd`)
+
+| Where | Text |
+|---|---|
+| Title | Skills |
+| An empty slot | empty |
+| A skill row | "{name}   [{button}]   {facts}", then the description on the next line. The button part shows only when the skill is on the bar |
+| Lance before level 2 | %s (level %d) ("Lance (level 2)"), then the description |
+| The dash row | Dash   %s   A quick step. Nothing can chill you mid-dash. ("Dash   LT   A quick step. ...") |
+| Greyed while hunted | Something hunts you. Change skills when it's quiet. |
+| A skill put on a slot | %s is on %s. ("The Beam is on LB.") |
+| A skill taken off | %s is off the bar. |
+| Refused: not a slot | no such slot |
+| Refused: another skill on slot 1 | Slot 1 is always Lampfire. |
+| Refused: Lampfire moved off slot 1 | Lampfire stays on slot 1. |
+| Refused: Lance before level 2 | Not learned yet. |
+| Refused: an aimed skill on slot 4 | This slot takes skills that need no aim. |
+| Refused: Hearth ring on slots 2-3 | This one needs no aim: it goes on slot 4. |
+| Hint, pad | Left / Right: slot    Up / Down: skill    A: put it there    B: close |
+| Hint, keyboard | A / D or arrows: slot    W / S: skill    E or click: put it there    K / Esc: close |
+
+### 14.3 Level 2: Lance (`scripts/ui/hud.gd`)
+
+A toast when Lance takes slot 3:
+> Lance takes %s. %s is in your Skills (%s).
+
+("Lance takes LB. The Beam is in your Skills (D-pad down).") If nothing was on slot 3: "Lance takes %s." The level-up card screen (§12) is unchanged; it goes in M2.
+
+### 14.4 Rest at a lit WayLamp (`scripts/ui/travel_menu.gd`, `scripts/ui/world_prompt.gd`, `scripts/ui/hud.gd`, `scripts/player/player.gd`)
+
+| Where | Text |
+|---|---|
+| Prompt over a lit WayLamp (with the button) | Rest or travel (was "Travel"; §11) |
+| First button in the WayLamp list | Rest: fill your flasks and warmth |
+| Toast after resting | You rest by the WayLamp. Your flasks and warmth are full. |
+| Rest refused (in code; the list can't open while hunted, so it is rarely seen) | Can't rest while something hunts you |
+
+### 14.5 Flasks and oil (`scripts/player/player.gd`, `scripts/enemies/ember.gd`)
+
+| Where | Text |
+|---|---|
+| Floating text when you drink | +%d warmth ("+40 warmth") |
+| Floating text when you pick up oil | +1 lamp oil |
+
+### 14.6 The hunted chip (`scripts/ui/hud.gd`)
+
+Top right, while something hunts you:
+> Something hunts you: light won't warm you
+
+### 14.7 Options (`scripts/ui/pause_menu.gd`)
+
+| Where | Text |
+|---|---|
+| Heading | Options |
+| Slider label | Screen shake: %d%% ("Screen shake: 50%") |
+| Check box | Reduce flashes |
+| Check box | Lampfire fires when you push the right stick |
+
+### 14.8 The controls list in the pause menu (`systems/input/input_hint.gd` `controls_text()`)
+
+Each row is a label, then the button for the device in use. M1a rewrote the whole list.
+
+| Row (M1a) | Pad | Keyboard / mouse |
+|---|---|---|
+| Move | Left stick | WASD / arrows |
+| Lampfire (hold, aim with the %s) ("right stick" / "mouse") | RT | Left click |
+| Skill slots 2, 3, 4 | RB, LB, Y | Right click, Q, F |
+| Dash | LT | Space / Shift |
+| Drink lamp oil | B | R |
+| Use: read, refuel, rest, travel | A | E |
+| Gather, pick up a lamp (hold) | A | E |
+| Plant the selected lamp | X | C |
+| Next lamp kind (hold: the list) | D-pad right | Tab |
+| Skills | D-pad down | K |
+| Map | D-pad up | M |
+| Journal | View | J |
+| Pause | Start | Esc |
+
+Was (before M1a): "Move" (Left stick / D-pad), "Use: read, refuel, turn, gather (hold)", "Build selected lantern", "Pick up lantern", "Beam (hold, aim with the %s)", "Burst", "Dash", "Lantern list", "Map", "Journal", "Pause".
+
+### 14.9 Other HUD and prompt lines
+
+**The key reminder** (bottom left; fades after a minute; `scripts/ui/hud.gd`). Pad:
+> View journal    Start pause
+> D-pad up map    down skills
+> D-pad left / right lamps
+
+Keyboard ("%s journal    %s map" / "%s lamps    %s skills" / "%s pause", filled in):
+> J journal    M map
+> Tab lamps    K skills
+> Esc pause
+
+Was: "%s journal    %s map    %s lanterns    %s pause", on one line.
+
+**The map's title** (`scripts/ui/map_screen.gd`):
+> Map   (M / D-pad up to close)      amber = lit lantern   yellow = low fuel   red = cold   white = you
+
+Was: "Map   (M / LB to close)      amber = lit lantern   yellow = low fuel   red = cold   white = you".
+
+**Prompts over a lantern or a mirror** (`scripts/ui/world_prompt.gd`): "Hold: pick up", with the interact button (E / A). Was: "Pick up", with Q / B.
+
+**The lantern list's hint on a pad** (`scripts/ui/build_menu.gd`):
+> Left / Right choose    A select    tap D-pad right or left to switch without this list
+
+Was: "Left / Right choose    A select    tap Y to switch without opening this list". The keyboard hint is unchanged.
+
+### 14.10 Tips: what the player reads now
+
+No tip text changed in `Story.TIPS`. M1a changed what some tokens become (§8), so the rendered tips changed:
+- `wickling_close`, "Hold [beam] to shine on it. Aim with [aim].": [beam] is now Lampfire's button (left click / RT, the same buttons as before), so it reads "Hold RT to shine on it." while it teaches Lampfire. The wording still says "shine", from the beam. A rewrite is already listed in §13.
+- `burst`, "Too close. [burst] throws them back.": [burst] is now the button of the slot Hearth ring is on (F / Y on slot 4). The tip shows only once Hearth ring is on the bar, so it never names an empty button.
+- `dash`, "It is gathering itself. [dash] steps clear.": [dash] on a keyboard is now Space (was Shift; Shift still works).
+- `build_here` has no token. Tips with [build] would now say C / X (was Space / X).
+- `shell` now also shows for the first Lampfire or Lance hit on a shell, not only the beam.
+
+### 14.11 Where the notes and the code differ (texts)
+
+- The notes list the boss-bar hints nowhere; the code changed two of them (§12).
+- The notes don't list the facts lines (§14.1), the new controls rows other than "Drink lamp oil" and "Use: read, refuel, rest, travel" (§14.8), "Hold: pick up", or the lantern list's new pad hint (§14.9). All are in the code and recorded here.
+- The notes give the map title, the key reminders and the rest of the texts exactly as the code has them.

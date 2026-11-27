@@ -11,7 +11,7 @@
 | Milestone | State |
 |---|---|
 | History: M0-M5b, the prototypes and the loop | done; see "History" at the end |
-| **M1a** Fire in the Hollow | being built on `proto/kl-m1a` (not merged; nothing in DESIGN describes it as built) |
+| **M1a** Fire in the Hollow | **built, awaiting the owner's playtest.** On `proto/kl-m1a` (commits 6663292, 10099a8), not merged. DESIGN marks it BUILT (M1a); the playtest is in PLAYTEST.md |
 | **M1b** No more tending | planned, after M1a passes. **Merge to `main` once M1b passes.** |
 | **M2** Builds | planned |
 | **M3** Loot | planned |
@@ -34,10 +34,12 @@
 
 ## M1a: Fire in the Hollow
 
+**Status (2026-11-27): built, awaiting the owner's playtest** on a pad (`docs/PLAYTEST.md`, "M1a: what to try"). Branch `proto/kl-m1a`, build commits 6663292 and 10099a8. The build's own report is `docs/replan/M1A_BUILD_NOTES.md`; DESIGN.md marks each part BUILT (M1a), and the new texts are DRAFT in STORY.md §14. The gate is checks 1-11 below; checks 8 and 9 are the owner's calls.
+
 **Scope**
 - Lampfire, Fireglobe, Lance and the dash. The Beam (7.5 hp/s) and Hearth ring as optional picks in a plain Skills list.
 - The action bar and HUD bars, on pad and keyboard/mouse. Aim assist and aim hold. The Y rule. The flask on B, read after the menu guard. The D-pad off movement.
-- The regen table (DESIGN §5.2). Oil from packs, elites and the Ashbrood. Rest at a lit WayLamp (flasks and warmth).
+- The regen table (DESIGN §5.1). Oil from packs, elites and the Ashbrood. Rest at a lit WayLamp (flasks and warmth).
 - Clinker and Ashbrood health set by hand against today's curve (M1b re-checks them with scaling). Summoned foes drop nothing.
 - The juice baseline, the shake slider and "reduce flashes". Save version 5.
 - **Stays as built for now:** lamps still burn, the WayLamp still takes fuel, and the old cards stay until M2.
@@ -55,7 +57,16 @@
 10. Mid-fight, standing in a lamp's light refills charge only slowly.
 11. Packs drop oil, the Ashbrood drops oil halfway through each phase, and resting at the lit WayLamp refills.
 
-**Tests:** `test_combat` becomes `test_skills`. New `test_flasks` and `test_input` (B after each menu, the D-pad through each menu). The bench runs 40 projectiles.
+**Tests:** `test_combat` becomes `test_skills`. New `test_flasks` and `test_input` (B after each menu, the D-pad through each menu). The bench runs 40 projectiles. **Done:** all three exist and are in AGENTS.md. The build reported 658 checks passing across 15 scenes, 0 failures, and bench logic at 3.16 ms (M1A_BUILD_NOTES; not re-run for this doc). Automated tests cover the testable parts of checks 1-7 and 10-11; the feel of checks 1-3 and 7, and checks 8-9, need the owner.
+
+**Deviations from the plan** (DESIGN has the details)
+- The Ashbrood has 220 hp per phase, not 150, because only two of its three phases are built (phase 3 is M2). Test arithmetic: about 114 s with a lamp nearby, 145 s without.
+- The Beam and Hearth ring cards stay on the old card screen (M2 replaces it).
+- The Spitwick's spit still has its own projectile script; only the keeper's fire is pooled.
+- The bench runs 40 bolts but no burning ground (the plan said 4 burning areas).
+- The keyboard has no "previous lamp kind" key; keys 1-4 still pick a lamp.
+- The auto-fire option, damage numbers and D-pad lamp cycling were built in M1a (they were "not yet placed").
+- The landmark unlock line still says "(Tab / Y)", which is wrong on a pad now (STORY §13). It needs a code change.
 
 **Risks**
 - Feel is most of the work. If the fire doesn't feel good, do one more feel pass before M1b.
@@ -188,17 +199,14 @@
 
 ## Not yet placed
 
-The plan describes these but names no milestone. Place each one when its neighbour milestone is planned in detail. **Uncertain** where each belongs; the guesses below are guesses.
+The plan describes these but names no milestone. Place each one when its neighbour milestone is planned in detail. M1a built three of them: damage numbers, lamp-kind cycling on the D-pad, and the auto-fire option. **Uncertain** where each belongs; the guesses below are guesses.
 
 | Item | Plan | Likely |
 |---|---|---|
-| Damage numbers that pop and drift, grey when the gap cut the wick | §14 | M1a (the juice baseline) |
-| The L3 tuning panel behind a dev-build flag | §3, §16 | M1a (the input work) |
-| Lamp-kind cycling on the D-pad, replacing the lantern list on Y | §3, §16 | M1a (Y becomes a skill slot) |
+| The L3 tuning panel behind a dev-build flag | §3, §16 | not done in M1a; M1b or M9 |
 | Warmth +8 a level; foe damage +8% a level | §5 | M1b (with foe scaling) |
 | Fog slows walking to 85% at most, not 60% | §7 | M1b |
 | The map shows WayLamp icons, lures you've seen and the share explored | §14 | M1b or M2 |
-| The auto-fire option | §3, §14 | after M1a, or in M1a as the fallback |
 | `check_docs.py` reads skill and item texts | §17 | M2 and M3 |
 
 ---
@@ -227,3 +235,4 @@ What was built before the re-plan, in short. The full old roadmap is in `docs/ar
 - **The first 10 minutes** (`proto/kl-onboard`): Option B.
 - **The loop and WayLamp fast travel** (`proto/kl-loop`): built and merged into `proto/kl-hollow`. Loop texts approved; three loop calls under review.
 - **The fuel-and-abilities playtest** led to the re-plan (PLAYTEST.md). The game plan v2 was approved on 2026-11-27.
+- **M1a, fire in the Hollow** (`proto/kl-m1a`): built 2026-11-27; awaiting the owner's playtest.
