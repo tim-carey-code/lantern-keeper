@@ -57,16 +57,15 @@
 10. Mid-fight, standing in a lamp's light refills charge only slowly.
 11. Packs drop oil, the Ashbrood drops oil halfway through each phase, and resting at the lit WayLamp refills.
 
-**Tests:** `test_combat` becomes `test_skills`. New `test_flasks` and `test_input` (B after each menu, the D-pad through each menu). The bench runs 40 projectiles. **Done:** all three exist and are in AGENTS.md. The build reported 658 checks passing across 15 scenes, 0 failures, and bench logic at 3.16 ms (M1A_BUILD_NOTES; not re-run for this doc). Automated tests cover the testable parts of checks 1-7 and 10-11; the feel of checks 1-3 and 7, and checks 8-9, need the owner.
+**Tests:** `test_combat` becomes `test_skills`. New `test_flasks` and `test_input` (B after each menu, the D-pad through each menu). The bench runs 40 projectiles. **Done:** all three exist and are in AGENTS.md. The build reported 658 checks passing across 15 scenes, 0 failures, and bench logic at 3.16 ms (M1A_BUILD_NOTES). After the review fixes (`proto/kl-m1a-fix`): the B checks run end to end through the keeper's own frame for all eight menus, and the bench runs a real fight (40 moving bolts that hit, 4 burning areas), which is **over the 4 ms budget** at about 4.7-5.6 ms (DESIGN §16). The old 3.16 ms was measured with bolts that stood still and a world the level-up cards had paused. Automated tests cover the testable parts of checks 1-7 and 10-11; the feel of checks 1-3 and 7, and checks 8-9, need the owner.
 
 **Deviations from the plan** (DESIGN has the details)
 - The Ashbrood has 220 hp per phase, not 150, because only two of its three phases are built (phase 3 is M2). Test arithmetic: about 114 s with a lamp nearby, 145 s without.
 - The Beam and Hearth ring cards stay on the old card screen (M2 replaces it).
 - The Spitwick's spit still has its own projectile script; only the keeper's fire is pooled.
-- The bench runs 40 bolts but no burning ground (the plan said 4 burning areas).
 - The keyboard has no "previous lamp kind" key; keys 1-4 still pick a lamp.
 - The auto-fire option, damage numbers and D-pad lamp cycling were built in M1a (they were "not yet placed").
-- The landmark unlock line still says "(Tab / Y)", which is wrong on a pad now (STORY §13). It needs a code change.
+- The landmark unlock line now names the lantern list's button for the device in use (Tab or D-pad right; was "(Tab / Y)"). The new wording is DRAFT (STORY §14.9).
 
 **Risks**
 - Feel is most of the work. If the fire doesn't feel good, do one more feel pass before M1b.

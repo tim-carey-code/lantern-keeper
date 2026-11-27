@@ -170,7 +170,9 @@ Run these from the project folder. `tools/run_tests.sh` runs them all and also f
 godot --headless --audio-driver Dummy --path . --import
 tools/run_tests.sh                                                                             # all of the tests below
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_core.tscn   # exit 0 = pass
-godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_combat.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_skills.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_flasks.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_input.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_save.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_slots.tscn

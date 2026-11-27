@@ -1,6 +1,6 @@
 # Lantern Keeper — Design Document
 
-Synced to commit f97b531 on `proto/kl-m1a` (2026-11-27): the M1a build (commits 6663292 and 10099a8) is folded in and marked **BUILT (M1a)**. Before that, synced to c6d3ee0 on `proto/kl-replan`. Rewritten from the approved game plan, `docs/replan/GAME_PLAN.md` v2 (DECISIONS 2026-11-27, "the game plan approved"). **DRAFT for owner approval** (GAME_PLAN §17). The version before the rewrite is `docs/archive/DESIGN_PRE_REPLAN.md`.
+Synced to commit f97b531 on `proto/kl-m1a` (2026-11-27): the M1a build (commits 6663292 and 10099a8) is folded in and marked **BUILT (M1a)**. The review fixes on `proto/kl-m1a-fix` (2026-11-27) are folded in too. Before that, synced to c6d3ee0 on `proto/kl-replan`. Rewritten from the approved game plan, `docs/replan/GAME_PLAN.md` v2 (DECISIONS 2026-11-27, "the game plan approved"). **DRAFT for owner approval** (GAME_PLAN §17). The version before the rewrite is `docs/archive/DESIGN_PRE_REPLAN.md`.
 
 > **How to read this doc**
 > - **Built** means it is in the code at f97b531. **BUILT (M1a)** marks what the M1a build added; it awaits the owner's playtest (`docs/PLAYTEST.md`). For what is built, the code wins over this doc.
@@ -72,7 +72,7 @@ Twin-stick aim: the left thumb moves, the right thumb aims. RT, RB, LB and LT wo
 | Move | Left stick (not the D-pad) | WASD / arrows |
 | Aim | Right stick (else where you face) | Mouse |
 | Interact: read, refuel or relight, turn a mirror right, rest, travel | A | E |
-| Hold: gather; by a lamp with nothing to gather, pick it up (0.8 s, a ring fills) | A | E |
+| Hold: gather; by a lamp with nothing to gather, pick it up (0.8 s, `kl_pickup_hold`; a ring fills) | A | E |
 | Plant the selected lamp; next to a mirror, turn it left | X | C |
 | Next lamp kind (tap); the lamp list (hold); previous lamp kind | D-pad right; D-pad right; D-pad left | Tab; Tab; keys 1-4 pick directly |
 | Map / Skills list / Journal / Pause | D-pad up / D-pad down / View / Start | M / K / J / Esc |
@@ -80,9 +80,10 @@ Twin-stick aim: the left thumb moves, the right thumb aims. RT, RB, LB and LT wo
 | Fullscreen; tuning panel (dev) | —; L3 | F11; F1 |
 
 - **Aim hold.** While RT, RB or LB is held, a released right stick keeps its last aim (`kl_aim_hold` true). So drinking mid-stream doesn't swing your fire.
-- **The input guard.** The flask and all combat input are read after `Progress.input_blocked()`. The B that closes a menu never drinks. `test_input` checks the journal, map, a note, pause, the lamp list, the Skills list, the travel list and the level-up screen.
+- **The input guard.** The flask and all combat input are read after `Progress.input_blocked()`. The B that closes a menu never drinks. `test_input` checks the journal, map, a note, pause, the lamp list, the Skills list, the travel list and the level-up screen end to end: one press that is both "cancel" and "flask" (as the pad's B is) closes the menu, the keeper's own frame reads the flask, no flask is spent, and the same press drinks once the block runs out. It also checks the flask's 1 s lockout ends.
 - **The D-pad** is off movement. The map and lamp cycling are read only while no menu is open.
 - **Aim assist** on a pad: a gentle pull onto a foe within 12 degrees, for Lampfire and Lance (`kl_aim_assist_deg`).
+- **The right stick** aims once pushed past 0.3 (`kl_stick_aim_min`); its tilt from there to 0.9 (`kl_stick_tilt_full`) sets how far a Fireglobe lands.
 - **Auto-fire option** (pause menu, off by default): on a pad, Lampfire fires while the right stick is pushed past 0.8 (`kl_autofire_stick`). Saved for this PC in `user://settings.cfg`.
 - **The action bar** shows the button for the device used last. Cooldowns show as a dark radial sweep, with seconds when more than 3 are left. A slot greys out when you're short of charge. The flask shows pips (§14).
 - **Binding:** the plain Skills list (K / D-pad down). Left and right pick slot 2, 3 or 4; up and down pick a skill; A / E / a click puts it there (pressing the skill already there takes it off). It opens on slot 3 with the first skill that's off the bar, so after level 2 one press puts the Beam back on LB. It is greyed while you're hunted, with the reason shown. The world pauses while it is open.
@@ -121,7 +122,7 @@ BUILT (M1a). Each skill is a script in `scripts/player/skills/`; `scripts/player
 
 **Feel** (BUILT, M1a; GAME_PLAN §15):
 - **Hit-stop per target:** a big hit (5 damage or more, `kl_hitstop_big`: Lance, Fireglobe) freezes the foe it hits for 0.06 s (`kl_hitstop`); a Fireglobe that hits something, or a big kill, freezes the keeper for the same time. The old whole-game freeze (`Engine.time_scale`) is gone.
-- **Shake** uses trauma: events add trauma, it decays 1.8 a second (`kl_trauma_decay`), and the offset is 16 px x trauma squared (`kl_shake_px`, was 6 px linear), times the player's shake setting.
+- **Shake** uses trauma: events add trauma, it decays 1.8 a second (`kl_trauma_decay`), and the offset is 16 px x trauma squared (`kl_shake_px`, was 6 px linear), times the player's shake setting. Trauma added: a Lance throw 0.12 and its hit 0.2, a Fireglobe landing 0.55, Hearth ring 0.4, a kill 0.15, a big kill (elite, shelled or boss) 0.35 (`kl_shake_lance_cast`, `kl_shake_lance_hit`, `kl_shake_globe`, `kl_shake_ring`, `kl_shake_kill`, `kl_shake_kill_big`; all in F1).
 - **Damage numbers** pop over the foe, then drift: hits at once, splash smaller, shell damage in its own colour, steady damage (the Beam, burning) summed every 0.4 s.
 - **Flash, sparks, scorch** on impact; a kill burst; persistent burning-ground visuals. Projectiles and impacts are additive sprites. "Reduce flashes" dims hit, impact and screen flashes.
 - Foes flash when hit. Hurt foes and big ones show a name, a level and a health bar, with the shell as a pale bar above. The Ashbrood has a boss bar with its phase and a one-line hint, now above the action bar.
@@ -223,7 +224,7 @@ These assume linear scaling and the stated uptimes. They are the plan's arithmet
 | Charges | 3 (`kl_flask_max`). PLANNED: +1 from Maud (M5); +1 from a coat line (M3); at most 5 |
 | Drink | B / R. Heals 40% of max warmth at once (+40) and gives +0.4 charge (`kl_flask_heal`, `kl_flask_charge`). 1 s lockout (`kl_flask_lockout`) |
 | Rest at a lit WayLamp | "Rest" in the WayLamp's list: flasks and warmth back to full. Refused while hunted. Fast travel never rests |
-| Drops (an amber flask on the ground; walk over it) | A fixed pack's last foe always drops 1 oil. An elite: 30% (`kl_elite_oil_chance`). The Clinker: 1 when its health falls past half. The Ashbrood: 1 at half health in each phase (`kl_boss_oil_step` 0.5). Summoned foes (nest hatchlings, the Ashbrood's adds) drop nothing at all, not even embers or scrap; they still pay wick |
+| Drops (an amber flask on the ground; walk over it) | A fixed pack's last foe always drops 1 oil. An elite: 30% (`kl_elite_oil_chance`). The Clinker: 1 when its health falls past half. The Ashbrood: 1 at half health in each phase (`kl_boss_oil_step` 0.5). Every loss of health (hits, burning, the lingering burn) goes through the same check, so crossing half always drops it once, even when one hit takes the boss (or a phase) from above half to nothing. On the ground, oil slides to you at 220 px/s once you're close (`kl_oil_pull`). Summoned foes (nest hatchlings, the Ashbrood's adds) drop nothing at all, not even embers or scrap; they still pay wick |
 | Timer refill | None. You can always rest in light out of a fight |
 
 ### 5.2 Still planned
@@ -573,8 +574,8 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 
 ## 15. Save, load and pause (built)
 
-- Three save slots, chosen on a screen at start (keeper, region and play time on each), plus autosave every 60 s *(code)*, on closing the window and from the pause menu. Save version 5 (BUILT, M1a; `systems/save/save_game.gd`). The prototype line saves to its own files (`user://keepers_light_slot_*`), so it never touches a `main` save. A version 4 save is migrated on load: it gets the default bar (with Lance on slot 3 if the keeper is level 2 or more) and full flasks. Anything older starts fresh and shows "(old save)".
-- **Saved:** the keeper, inventory, unlocks, every lantern, resource spots and dropped piles, the fog and what has been seen, story progress, wick and level, cards, cleared foes, wick drops, lit WayLamps and the stones; since version 5, the action bar, whether Lance was given, and the flasks. **Not saved:** live foes, embers and oil on the ground, wind. The M1a options (shake, flashes, auto-fire) are saved per PC in `user://settings.cfg`, not in a slot.
+- Three save slots, chosen on a screen at start (keeper, region and play time on each), plus autosave every 60 s *(code)*, on closing the window and from the pause menu. Save version 5 (BUILT, M1a; `systems/save/save_game.gd`). The prototype line saves to its own files (`user://keepers_light_slot_*`), so it never touches a `main` save. A version 4 save is migrated on load: it gets the default bar (with Lance on slot 3 if the keeper is level 2 or more) and full flasks. Anything older starts fresh and shows "(old save)". A loaded action bar is checked slot by slot against the binding rules; a slot holding something it may not (an unknown or unlearned skill, an aimed skill on slot 4, a skill already on an earlier slot) takes the default bar's skill for that slot, or stays empty if that is not allowed either.
+- **Saved:** the keeper, inventory, unlocks, every lantern, resource spots and dropped piles, the fog and what has been seen, story progress, wick and level, cards, cleared foes, wick drops, lit WayLamps and the stones; since version 5, the action bar, whether Lance was given, and the flasks. **Not saved:** live foes, embers and oil on the ground, wind. The M1a options (shake, flashes, auto-fire) are saved per PC in `user://settings.cfg`, not in a slot. Tests, captures and the bench (scenes under `res://tools/`) never read or write that file; they use the defaults.
 - **Pause menu** (Esc / Start): Resume, Save, Save slots, New game (press twice), Save and quit, Goal pointer, Show tips again, the controls, and Options (BUILT, M1a: screen shake, reduce flashes, Lampfire auto-fire).
 - Later milestones add sections to the save.
 
@@ -583,9 +584,9 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 ## 16. Performance (built)
 
 - **Budget:** game logic (process + physics) averages well under 4 ms a frame with 30 lanterns and 20 foes, measured by `tools/bench/bench.tscn` (see AGENTS.md). After the loop it measured 3.03-3.10 ms over three runs (worst frame about 6.0-6.4 ms).
-- **M1a** (BUILT): the bench also keeps 40 fire bolts in flight. The M1a build reported 3.045 ms process + 0.113 ms physics = 3.158 ms logic on average, worst logic frame 5.237 ms, with 30 lamps and 20 foes (one run, from `docs/replan/M1A_BUILD_NOTES.md`; not re-run for this doc). The bolts' fog lights are included in that run.
+- **M1a** (BUILT): the bench also runs a fight at a firing range away from the keeper: 40 Lampfire bolts always in the air, flying at 8 target foes and hitting them (about 160 hits a second, with splash, impact effects and damage numbers), and 4 burning areas under them. **It is over budget:** game logic averaged 4.7-5.6 ms (worst frame 8.0-11.7 ms) over seven headless runs on 2026-11-27, against 3.0-3.5 ms for the same world with no fight (`-- 30 20 400 0 0`). The bolts' hits add about 1.2 ms of physics and the effects about 0.4 ms of process; the burning areas about 0.4 ms. The machine was also running the game at the time, so treat these as rough. (The M1a build's own figure, 3.158 ms, came from a bench whose 40 bolts stood still and hit nothing, and whose world was paused by the level-up cards from about frame 100. The bench now keeps the cards closed and reports paused frames.)
 - The fog steps only tiles that can change. Foes read lantern light from one shared snapshot a frame (`systems/light/light_sense.gd`). The map is drawn once, in 16 x 16 tile chunks *(code)*. Lanterns redraw only when their look changes.
-- **Deviation:** the plan also asked for 4 burning areas in the bench. The bench has no burning ground yet.
+- **Open:** bring the M1a fight back under 4 ms (the bolts' physics and the hit effects are the first places to look).
 
 ---
 

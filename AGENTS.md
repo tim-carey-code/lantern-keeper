@@ -55,9 +55,11 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800 
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/bench/bench.tscn            # game logic only
 xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60 --disable-vsync \
   --path . res://tools/bench/bench.tscn                                                              # adds frame time and draw calls
-# optional: -- <lanterns> <foes> <frames>   (default 30 20 400)
+# optional: -- <lanterns> <foes> <frames> <bolts> <burning>   (default 30 20 400 40 4; "-- 30 20 400 0 0" = no fight)
 ```
-- It places 30 lanterns around the start, keeps 20 foes in play, maintains 40 fire projectiles in flight, and prints a table (average and worst
+- It places 30 lanterns around the start, keeps 20 foes in play, runs a fight at a firing range away from the keeper (40 Lampfire bolts always in
+  the air hitting 8 targets that can't die, with splash, effects and damage numbers, over 4 burning areas), keeps the level-up cards from pausing
+  the world (it reports any paused frames), and prints a table (average and worst
   process / physics time, fog step, fog texture update, node count; draw calls when rendering).
 - **Budget:** game logic (process + physics) averages well under 4 ms a frame at 30 lanterns and 20 foes
   (DECISIONS.md). Run it after changing the fog, foes, lanterns, the map or anything that redraws every frame.
@@ -68,6 +70,8 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
 
 - Add checks to `tools/tests/test_core.gd` for new rules. Tests run as a scene so autoloads exist.
 - Tests and captures set `SaveGame.path` to a test file first: they must never read or overwrite the owner's real save.
+  Settings (`user://settings.cfg`) are never read or written by a scene run from `res://tools/`; tests also set `Settings.path` to a test file and call `Settings.use_defaults()`.
+  `tools/run_tests.sh` also points `XDG_DATA_HOME` at a scratch folder, so every `user://` file a test writes is kept away from the owner's data.
 - Tests strip joypad events first: a real controller on this PC would otherwise move the test keeper (this caused flaky runs).
 - Automated runs are silent (`--audio-driver Dummy`). Don't play sound through the owner's speakers.
 - Visual check without the owner's screen: render frames on a virtual display with `tools/capture/capture.tscn`

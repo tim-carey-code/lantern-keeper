@@ -163,7 +163,7 @@ DECIDED: the pointer turns off on reaching the Reedmarsh (a setting turns it bac
 ## 6. Landmark texts
 
 ### Built landmarks (12 readable notes, plus the rack as scenery; `letter` cut)
-Each quoted line is one line on screen. The title shows on the note and in "Something catches the light: ...". A landmark that unlocks a lantern adds a line to its note: "New lantern: <name>. Pick it in the lantern list (Tab / Y)."
+Each quoted line is one line on screen. The title shows on the note and in "Something catches the light: ...". A landmark that unlocks a lantern adds a line to its note: "New lantern: <name>. Pick it in the lantern list ({button})." (DRAFT, M1a, §14.9; was "... (Tab / Y).")
 
 **`letter`**, "The letter on the hut door" (Hollow, pinned to the hut door). **Cut 2026-11-27** (owner: too much to read at the start; the letter is in the opening and the journal).
 > The letter that brought you here. The ink has run a little.
@@ -555,7 +555,7 @@ A note with a title and two lines:
 | A goal is done (toast) | Done: {goal text} |
 | The light first finds a landmark (toast) | Something catches the light: {title} |
 | A lantern kind unlocks (toast) | New lantern unlocked: {name}   [{button}] |
-| Under a note that unlocks a lantern | New lantern: {name}. Pick it in the lantern list (Tab / Y). |
+| Under a note that unlocks a lantern | New lantern: {name}. Pick it in the lantern list ({button}). (DRAFT, M1a, §14.9; was "(Tab / Y)") |
 | The level row | Lv {N}; at the cap the count reads "max" |
 
 ---
@@ -613,7 +613,7 @@ From GAME_PLAN §13. **Everything in this section is DRAFT, for the owner.** Not
 - The boss-bar hints: "your beam" was replaced in M1a (§12, DRAFT). "phase N / 2" stays until M2 (three phases).
 - The faint note says "Some of what you carried lies where you fell." (M1b: nothing carried is lost; wick waits where you fell).
 - The card screen and its 12 cards go in M2. The four APPROVED names stay as branch picks and gear lines.
-- "Pick it in the lantern list (Tab / Y)": **wrong in the M1a build.** Y is a skill slot now; on a pad the lantern list is D-pad right. The code (`scripts/world/landmark.gd`) still says "(Tab / Y)". Suggestion: "Pick it in the lantern list ({button}).", with the button for the device in use. Needs a code change and the owner's OK.
+- "Pick it in the lantern list (Tab / Y)": was wrong in the M1a build (Y is a skill slot now; on a pad the lantern list is D-pad right). **Changed in the M1a fixes** to the suggestion, "Pick it in the lantern list ({button}).", with the button for the device in use (§14.9, DRAFT). Needs the owner's OK.
 
 ### Story beats and feeling
 - §1, "**Caring.** Tending light is looking after something, not a chore.": tending goes in M1b. The beat needs a new line (owner's call).
@@ -750,6 +750,12 @@ Was: "Map   (M / LB to close)      amber = lit lantern   yellow = low fuel   red
 > Left / Right choose    A select    tap D-pad right or left to switch without this list
 
 Was: "Left / Right choose    A select    tap Y to switch without opening this list". The keyboard hint is unchanged.
+
+**Under a note that unlocks a lantern** (`scripts/world/landmark.gd`; DRAFT, M1a). `%s` is the lantern's name, then the button that opens the lantern list on the device in use (`InputHint.key("build_menu")`):
+> New lantern: %s. Pick it in the lantern list (%s).
+
+On a pad: "New lantern: Reservoir Lamp. Pick it in the lantern list (D-pad right)." On a keyboard: "... (Tab)."
+Was: "New lantern: %s. Pick it in the lantern list (Tab / Y)." on every device.
 
 ### 14.10 Tips: what the player reads now
 
