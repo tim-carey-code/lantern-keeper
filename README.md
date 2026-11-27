@@ -22,7 +22,7 @@
 
 ## About
 
-You are the new keeper of a dark, foggy valley. It had keepers once, until the lamps went out one by one. Now there is a letter from Oswin, the last keeper: light the old lantern by the hut, then follow their marks.
+You are the new keeper of a dark, foggy valley. It had keepers once, until the lamps went out one by one. Now there is a letter from Oswin, the last keeper: light the old lantern by the hut, then follow his marks.
 
 So you build lanterns, relight the ones that go cold, gather what the light reveals, and push the fog back a little at a time. Oswin's notes lead you across the valley, toward the Still Lake. The fun is in deciding where the light goes.
 
@@ -36,7 +36,7 @@ Lantern Keeper is in development. It is a single-player game for PC (Linux first
 - The Still Lake and the ending come next.
 - Some art and sound are still placeholders.
 - There is no downloadable build yet. You can run the game from source (see [How to run it](#how-to-run-it)).
-- A rework of lantern upkeep, called WayLamps, is being prototyped on a separate branch. It is not part of the game on `main`.
+- Each region has an old WayLamp. Feed it fuel and keep the dark off it while it kindles, and the region is held: its lanterns stop burning down.
 
 ## Screenshots
 
