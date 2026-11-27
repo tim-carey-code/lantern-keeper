@@ -88,8 +88,8 @@ DEFAULT: the letter as drafted.
 
 | Region | Player learns | Emotional beat | Points onward |
 |--------|---------------|----------------|---------------|
-| **1. The Hollow** | Gather, relight, build. Many keepers once counted their lamps; one stayed longest. | Arriving somewhere abandoned but not hopeless. The first flame is a small welcome. | Ledger: "My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, on the way east." (DRAFT 2026-11-27, the loop) Fresh chalk arrow on the carved stone. Pointer is on. |
-| **2. The Reedmarsh** | The way to the water was kept lit. Every frame faces the lake. The lake once shone; then something dark coiled around it. The pump still works. | Curiosity turning to unease. The chalk is the first sign that something *took* the light. | Pumphouse note: "Now go up, north of the reeds. The ridge has glass." (DRAFT 2026-11-27, the loop) The cairn at the foot of the marsh climb. |
+| **1. The Hollow** | Gather, relight, build. Many keepers once counted their lamps; one stayed longest. | Arriving somewhere abandoned but not hopeless. The first flame is a small welcome. | Ledger: "My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, on the way east." (DECIDED 2026-11-27, the loop; owner approved) Fresh chalk arrow on the carved stone. Pointer is on. |
+| **2. The Reedmarsh** | The way to the water was kept lit. Every frame faces the lake. The lake once shone; then something dark coiled around it. The pump still works. | Curiosity turning to unease. The chalk is the first sign that something *took* the light. | Pumphouse note: "Now go up, north of the reeds. The ridge has glass." (DECIDED 2026-11-27, the loop; owner approved) The cairn at the foot of the marsh climb. |
 | **3. The Windward Ridge** | Keepers made glass and passed light by mirror. The Wick remembers every flame. Oswin lost their coat here and wrote: "It came up out of the water." | Exposure and worry. The loneliest place in the game. | The station's mirror has been turned down toward the lake; steps beside it lead into the fog. |
 | **4. The Still Lake** | Ordinary light dies here; only beams cut through. Oswin camped on the shore and built a mirror with no light to give it. Every keeper's name is on the island steps. | Stillness and dread, then resolve: finishing what Oswin started. | Oswin's mirror faces the island. Build the chain to the great lamp. |
 | **5. Finale** | Who took the light: the Soul of the Wick. Light drives it off. | A quiet confrontation, not a battle. Tension, then release. | The fog lifts over the whole valley. |
@@ -140,7 +140,7 @@ Optional after-game goals (journal only): `all_notes` "Find every note Oswin lef
 
 **The loop (2026-11-27, owner):** the goals run one way round. The Hollow's WayLamp is on the way east, so after `kindle_hollow` you go straight on to the carved stone and the marsh. After `kindle_marsh` you climb north out of the marsh (`climb_north`) to the Ridge's east end, and walk the Ridge one way, toward the old steps: glazier, lens, coat, station, its WayLamp, the steps. Each stop is nearer the steps than the one before (`main.gd` `RIDGE_TRAIL`). The order of the goals didn't change; their places did.
 
-DRAFT (2026-11-27, the loop): `climb_north` "Climb north out of the marsh" (was "Climb north from the top of the Hollow").
+DECIDED (2026-11-27, owner approved; the loop): `climb_north` "Climb north out of the marsh" (was "Climb north from the top of the Hollow").
 
 DEFAULT: keep the goals as listed; tune after playtest.
 DECIDED: the pointer turns off on reaching the Reedmarsh (a setting turns it back on).
@@ -164,7 +164,7 @@ Each quoted line is one line on screen. The title shows on the note and in "Some
 > Long columns of tally marks, one for every lamp lit each night.
 > Near the end the columns shrink to a single mark, in a newer hand.
 > Under it: My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, on the way east. - Oswin
-DRAFT (2026-11-27, the loop; DECISIONS asks for this re-edit): the WayLamp now stands on the way east, not at the top. Was, DECIDED (onboarding plan §6): "My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, at the top. - Oswin"; before that "The north lamps first. Wake the WayLamp up there, then follow the stones east." (DRAFT), and "Gone east to the marsh. Follow the stones."
+DECIDED (2026-11-27, owner approved; the loop; DECISIONS asks for this re-edit): the WayLamp now stands on the way east, not at the top. Was, DECIDED (onboarding plan §6): "My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, at the top. - Oswin"; before that "The north lamps first. Wake the WayLamp up there, then follow the stones east." (DRAFT), and "Gone east to the marsh. Follow the stones."
 
 **`stone_way`**, "Carved stone" (Hollow, at the passage to the marsh)
 > KEEP THE WAY TO THE WATER LIT.
@@ -173,7 +173,7 @@ DRAFT (2026-11-27, the loop; DECISIONS asks for this re-edit): the WayLamp now s
 **`climb_cairn`**, "A stone cairn" (Reedmarsh, at the foot of the marsh climb, the loop's way up to the Ridge; moved 2026-11-27 from the foot of the old climb)
 > A small cairn, a chalk arrow on the top stone, pointing up.
 > The wind is worse up there. Light the marsh before you climb. - Oswin
-DRAFT (2026-11-27, the loop; DECISIONS asks for this re-edit): the marsh climb is open as soon as you reach the marsh, so the cairn asks you to light the marsh first. Was: "The wind is worse up there. Come back when the marsh is lit. - Oswin" (DRAFT), and before that "Keep your lights sheltered."
+DECIDED (2026-11-27, owner approved; the loop; DECISIONS asks for this re-edit): the marsh climb is open as soon as you reach the marsh, so the cairn asks you to light the marsh first. Was: "The wind is worse up there. Come back when the marsh is lit. - Oswin" (DRAFT), and before that "Keep your lights sheltered."
 
 **`crook_post`**, "A keeper's post" (Hollow, about 19 tiles north of the hut on the main route; a shelled Wickling sleeps on it and a 6-scrap cache lies beside it; Keeper's Light prototype)
 > A keeper's crook, fallen across the path. The lamp on it is cold, but whole.
@@ -193,7 +193,7 @@ DRAFT: the Post Lamp unlocks when the keeper reads this find.
 > The old pump still turns when you push it. Its tank could feed a lamp for a long time.
 > Scratched on the tank: Light has to be fed from somewhere.
 > Now go up, north of the reeds. The ridge has glass. - Oswin
-DRAFT (2026-11-27, the loop): you climb to the Ridge from the marsh now, not back past the Hollow. Was: "Now go up, past the Hollow. The ridge has glass. - Oswin"
+DECIDED (2026-11-27, owner approved; the loop): you climb to the Ridge from the marsh now, not back past the Hollow. Was: "Now go up, past the Hollow. The ridge has glass. - Oswin"
 
 **`glazier`**, "The glazier's workshop" (Ridge, by the top of the marsh climb since the loop, 2026-11-27; unlocks the Hooded Lamp)
 > Cold kilns and racks of cut glass. A half-finished hood sits on the bench,
@@ -398,7 +398,7 @@ DEFAULT: the ending as drafted.
 - The Hollow text is the working text. The other two change "on the pumphouse island" and "at the signal station" to "by ...", so all three read alike, and the marsh one is shorter (the player knows the pumphouse by then). The working texts also fit (42 and 40 characters).
 - With these rows the goals run 1-27: 21 for the built regions, 6 planned for the Lake. The pointer rule stays "on until the Reedmarsh" (it would cover goals 1-7). Every kindle goal has a target.
 - `kindle_hollow` comes right after `burn_nest` (since the onboarding pass, 2026-11-27: `relight_waypost`, `build_post`, `burn_nest`, then the WayLamp). Since the loop (2026-11-27) its WayLamp stands in the north-east of the Hollow, on the way east, so you go north to the crook and nest A, turn east to the WayLamp, and leave east past the carved stone right after kindling. WayLamps take fuel directly; no lantern has to reach them (owner, 2026-11-27).
-- DRAFT (2026-11-27, the loop): `kindle_hollow` "Kindle the WayLamp on the way east" (was "Kindle the WayLamp in the north Hollow").
+- DECIDED (2026-11-27, owner approved; the loop): `kindle_hollow` "Kindle the WayLamp on the way east" (was "Kindle the WayLamp in the north Hollow").
 
 ### WayLamp inspection texts
 Each quoted line is one line on screen.

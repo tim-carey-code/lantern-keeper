@@ -2,6 +2,10 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (loop texts approved)
+- **The loop's new texts are approved** (owner: "I approve the new text drafts"): the ledger, cairn and pumphouse notes and the `kindle_hollow` and `climb_north` goal lines in STORY.md. The fast-travel menu texts stay DRAFT (not yet shown to the owner).
+- **The builder's three loop calls are under review** (owner asked for a review): the old climb opened by stones pushed from the Ridge, the cairn at the foot of the marsh climb, and the reworded pumphouse note's placement.
+
 ## 2026-11-27 (playtest: fuel and abilities)
 - **Lamp tending is not wanted** (owner: "fuel is ABUNDANT, its everywhere, its pretty much useless... i dont want that to be a chore i didnt want that anyway but even less so because its an ARPG now"). Built lanterns should not need refuelling.
 - **Fuel becomes lamp-oil flasks** (owner: "fuel as flasks"): a few carried charges, Diablo-potion style, instead of a pickup scattered everywhere.
