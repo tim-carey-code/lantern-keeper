@@ -10,7 +10,7 @@ Single-player, no game over. Read `docs/DESIGN.md`, `docs/STORY.md` (owner-revie
 ## Working rules
 - Build in milestones (`docs/ROADMAP.md`). Each ends with an owner playtest in `docs/PLAYTEST.md`.
   Don't start the next milestone, or add content to fix a loop that isn't fun, before the gate passes.
-- Scope is locked: new ideas go in the DESIGN "Maybe later" list, not into the game.
+- Scope follows the game plan and ROADMAP: `docs/replan/GAME_PLAN.md` (approved by the owner 2026-11-27) and the milestones in `docs/ROADMAP.md`. New ideas go in the DESIGN "Maybe later" list, not into the game.
 - Every action must work on keyboard/mouse **and** gamepad. Menus must be usable without a mouse.
   Input actions are defined by `tools/setup_input.gd`; edit that and re-run it, don't hand-edit `[input]`.
 - Placeholder numbers live in the `Tuning` autoload (`systems/tuning.gd`); expose new ones in the
@@ -20,8 +20,8 @@ Single-player, no game over. Read `docs/DESIGN.md`, `docs/STORY.md` (owner-revie
 ## Layout
 - `systems/` game-wide logic: `tuning.gd`, `inventory.gd`, `progress.gd` (autoloads), `fog/`, `wind/`, `light/`, `audio/`
 - `scripts/` per-feature nodes: `main/` (world generation), `player/`, `lanterns/`, `resources/`, `world/` (landmarks), `ui/`
-- `scenes/main/main.tscn` the game scene; `tools/` setup and tests; `docs/` design docs
-- `assets/` files the game loads; `source/` working files (Pixelorama `.pxo`, REAPER projects)
+- `scenes/main/main.tscn` the game scene; `tools/` setup and tests; `docs/` design docs (`docs/archive/` holds retired docs, kept unchanged)
+- `assets/` files the game loads; `source/` working files: Pixelorama `.pxo` in `source/art/`, the palette in `source/palette/`, original vendor sheets in `source/vendor/`. `source/audio/` is empty for now; sound and music are the owner's job.
 
 ## Verify before committing
 ```

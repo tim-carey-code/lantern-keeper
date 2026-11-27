@@ -2,6 +2,41 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## Standing decisions (index)
+
+Added 2026-11-27, after the game plan was approved. This index only points to entries; it changes none of them. The log below stays append-only. Where an older entry and the approved game plan disagree, the plan wins for the rows in its supersede table (`docs/replan/GAME_PLAN.md`, "Decisions this plan would supersede"). Built from AUDIT §3 and the plan.
+
+| Topic | What stands | Entry |
+|---|---|---|
+| The plan of record | `docs/replan/GAME_PLAN.md` v2, all nine answers as recommended, and its supersede table as a whole | [2026-11-27 (the game plan approved)](#2026-11-27-the-game-plan-approved) |
+| Genre | An action RPG | [2026-11-27 (Hollow prototype playtest)](#2026-11-27-hollow-prototype-playtest) |
+| Combat | The fire kit (Lampfire, Fireglobe, Lance); the Beam and Hearth ring optional; the pad map; light in a fight | [the game plan approved](#2026-11-27-the-game-plan-approved), [playtest: fuel and abilities](#2026-11-27-playtest-fuel-and-abilities) |
+| No tending | Lamps never burn; fuel becomes lamp-oil flasks; an action bar; lamps and WayLamps lit by touch; scrap the only material | [playtest: fuel and abilities](#2026-11-27-playtest-fuel-and-abilities), [the game plan approved](#2026-11-27-the-game-plan-approved) |
+| Progress | Level-gap wick; the Hollow's last level on the Ashbrood kill (now level 6, not 8); fixed skill branches replace the cards; the four approved cards keep their names and values | [wick by level gap](#2026-11-27-wick-by-level-gap), [the game plan approved](#2026-11-27-the-game-plan-approved) |
+| Loot and add-ons | Diablo-style loot in four slots (lens, burner, coat, wick); Dialogue Manager for talk; GLoot data for items; salvage in | [loot and agent skills](#2026-11-27-loot-and-agent-skills), [the game plan approved](#2026-11-27-the-game-plan-approved) |
+| Foes and pacing | No endless trickle; fixed packs and nests; cleared ground stays cleared (and after a faint, per the plan's faint rule); timid and brave Wicklings; names and bars | [Hollow prototype playtest](#2026-11-27-hollow-prototype-playtest), [the game plan approved](#2026-11-27-the-game-plan-approved) |
+| The start | Onboarding Option B: a calm start, the guard on Oswin's crook, the Clinker as a mid-boss; the south of the Hollow optional | [the first 10 minutes](#2026-11-27-the-first-10-minutes) |
+| Route | One clockwise loop; the Ridge crossed one way; lit WayLamps are fast travel; the marsh WayLamp on the U-route's north leg | [route: one loop](#2026-11-27-route-one-loop), [the game plan approved](#2026-11-27-the-game-plan-approved) |
+| Loop texts | Ledger, cairn and pumphouse notes and two goal lines approved; three loop calls under review (stones, cairn place, pumphouse place) | [loop texts approved](#2026-11-27-loop-texts-approved) |
+| Regions | Every region 4x bigger (224 x 200 tiles); the Lakeshore between the Ridge and the Still Lake | [performance budget; bigger regions](#2026-11-27-performance-budget-bigger-regions), [owner answers, later](#2026-11-27-owner-answers-later) |
+| Finds | Each region's find is the key; the Post Lamp is the Hollow's find; the Mirror Post unlocks at the Lakeshore | [new direction and font](#2026-11-27-new-direction-and-font), [Keeper's Light: owner answers](#2026-11-27-keepers-light-owner-answers) |
+| The finale | A real fight; the Soul is not killed and retreats through a portal; sandbox after | [Keeper's Light: owner answers](#2026-11-27-keepers-light-owner-answers), [answers to DESIGN §10](#2026-11-26-answers-to-design-10) |
+| Story | The letter premise; the typed name; the Soul is "it" with big pale eyes; who, not why; keep the great lamp plate; the player builds every mirror; the pointer off at the Reedmarsh | [story markup](#2026-11-26-story-markup), [owner answers](#2026-11-27-owner-answers), [answers to DESIGN §10](#2026-11-26-answers-to-design-10) |
+| Oswin | Oswin Reed, "he"; signs "- Oswin" with a plain hyphen; surname never in the game; the keeper wears his coat | [owner answers](#2026-11-27-owner-answers), [owner answers, afternoon](#2026-11-27-owner-answers-afternoon), [Keeper's Light: owner answers](#2026-11-27-keepers-light-owner-answers) |
+| People | Five people in v1, before the Still Lake; drawn at 32x32 without portraits; Ebba is "she" and her boat crosses after the finale; **no pronouns for Amos, Maud, Kit or Ivo until the owner says** | [owner answers](#2026-11-27-owner-answers), [owner answers, later](#2026-11-27-owner-answers-later), [owner answers, afternoon](#2026-11-27-owner-answers-afternoon), [the game plan approved](#2026-11-27-the-game-plan-approved) |
+| The Lakeshore | Thick fog; Ebba lives there | [owner answers, afternoon](#2026-11-27-owner-answers-afternoon) |
+| Guidance | A goal line, the journal and a soft pointer, on in the first region | [guidance and story before the Lake](#2026-11-26-guidance-and-story-before-the-lake) |
+| UI | Menus pause the world; one panel style; quiet building; less to read at the start; three save slots; the cursor hides off the mouse | [HUD redesign](#2026-11-26-hud-redesign-owner-approved-mockup), [WayLamps playtest feedback](#2026-11-27-waylamps-playtest-feedback), [combat kit playtest](#2026-11-27-combat-kit-playtest), [combat prototype playtest](#2026-11-26-combat-prototype-playtest) |
+| Mirrors | Beams burn Wicklings; Wicklings smother mirrors; mirrors turn both ways | [HUD playtest follow-ups](#2026-11-26-hud-playtest-follow-ups) |
+| Look and sound | Moody pixel art (16x16 at 2x, the palette); the Post Lamp is a shepherd's crook; font Ark Pixel; sound and music are the owner's job | [art style](#2026-11-26-art-style), [Post Lamp look](#2026-11-26-post-lamp-look), [new direction and font](#2026-11-27-new-direction-and-font), [combat kit playtest](#2026-11-27-combat-kit-playtest) |
+| Rules | No death, no game over; gamepad in v1; docs follow the code; the 4 ms performance budget; the Compatibility renderer | [combat prototype playtest](#2026-11-26-combat-prototype-playtest), [answers to DESIGN §10](#2026-11-26-answers-to-design-10), [lantern upkeep, docs, people and creatures](#2026-11-26-lantern-upkeep-docs-people-and-creatures), [performance budget; bigger regions](#2026-11-27-performance-budget-bigger-regions), [Coordinator notes](#coordinator-notes) |
+
+**Superseded by the plan** (still in the log as history): level 8 on the Ashbrood kill; Hollow foes up to Lv 6 and the Ashbrood Lv 7; the second cold lamp relit with fuel; onboarding texts that teach the beam and fuel first (rewritten as DRAFT); the cards as a screen; lamp charge topped up by fuel, and the hand lamp using fuel; the beam, burst and dash as the core kit; WayLamps taking 15 fuel; tap-to-refuel and hold-to-gather; the Lakeshore WayLamp reached only by a beam; glass as a resource; the Clinker roaming; a faint dropping half your fuel and scrap; satchels as +10 carry; held regions refilling lamps and dying lamps being drained; the Tab/Y lamp list and keys 1-4; wind burning lamps valley-wide; embers worth fuel; the marsh WayLamp on the south-east island; "no crafting beyond lamps"; playtime 1-2 hours. Each row cites its section in the plan.
+
+**Still open:** the three loop calls (above); pronouns for Amos, Maud, Kit and Ivo (before M4); whether to keep the Beam and Hearth ring (after the M1a playtest); whether the `crook_post` note's wording is approved (STORY §6); "one nest on the main route: decide after playing" (`docs/archive/PLAN_ONBOARDING.md` §8).
+
+---
+
 ## 2026-11-27 (the game plan approved)
 - **The new game plan is approved as recommended** (owner tapped "Approve all 9 as recommended"): `docs/replan/GAME_PLAN.md` v2 (90ac820) is the plan of record. Its nine owner questions are all answered yes:
   1. the kit: Lampfire (RT) and Fireglobe (RB) from level 1, Lance (LB) from level 2, the Beam optional (LB at level 1 only), the old burst as the optional Hearth ring, Y empty;

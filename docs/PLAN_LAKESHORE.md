@@ -1,5 +1,7 @@
 # Lantern Keeper: the Lakeshore (draft region)
 
+> **TO BE MERGED in M7** (GAME_PLAN §17, approved 2026-11-27). This draft is not the plan of record. At M7 its region brief goes into DESIGN and its texts into STORY, and then this file moves to `docs/archive/`. Until then, where it disagrees with `docs/replan/GAME_PLAN.md` (for example its coordinates on the old 112 x 100 map, the beam-only landing, glass as a resource, and milestones M5c-M5e), the game plan wins.
+
 **DRAFT for the owner's markup, 2026-11-27.** Already decided today (DECISIONS, PLAN §2 and ROADMAP at db283fa): the region itself; the Fogstilt and Ebba moving there; the Ridge keeping the Gutterkite; the Clinker roaming whatever isn't held; and the milestone order M5c, M5d, M5e. Everything else here is a proposal. Nothing is built, committed or published, and the repo is unchanged.
 
 Sources: the docs on branch `proto/waylamps` at db283fa, which includes `main`: STORY.md, DESIGN.md (§3, §4, §8), PLAN_NPCS_ENEMIES.md, DECISIONS.md and ROADMAP.md. Map and rule numbers were checked against `scripts/main/main.gd`, `systems/fog/fog_grid.gd`, `scripts/world/waylamp.gd`, `scripts/player/player.gd`, `systems/story/story.gd` and `systems/tuning.gd`.
