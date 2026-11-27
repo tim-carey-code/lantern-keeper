@@ -2,6 +2,11 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (playtest: fuel and abilities)
+- **Lamp tending is not wanted** (owner: "fuel is ABUNDANT, its everywhere, its pretty much useless... i dont want that to be a chore i didnt want that anyway but even less so because its an ARPG now"). Fuel and lantern upkeep need a rethink; plan pending owner approval.
+- **The abilities are boring** (owner: "the beam and the ward idk i feel like we need to shoot flaming light fireballs or some shit instead"). Combat needs a skill rework toward projectile/AoE light-fire skills; plan pending owner approval.
+- Level 8 on the Ashbrood kill, as tuned.
+
 ## 2026-11-27 (route: one loop)
 - **The journey becomes one clockwise loop with no backtracking** (owner): the Hollow's WayLamp moves north-east toward the marsh passage. A new path climbs north out of the Reedmarsh to the Ridge's east end. The Ridge is crossed one way: the glazier (Hooded Lamp) and the lens move near where you enter from the marsh, then the coat, the signal station and the Ridge's WayLamp at the far end, then down the old steps to the Lakeshore and the Still Lake. The far west of the Ridge becomes optional. The old Hollow climb stays as a later shortcut. To be built right after the onboarding work.
 - **Lit WayLamps are fast travel** (owner: "the loop with a one way ridge plus waylamp fast travel"): once lit, you can jump between any lit WayLamps, like Diablo's waypoints. Built with the loop. The ledger and cairn texts get re-edited for the loop as DRAFT text for owner approval.
