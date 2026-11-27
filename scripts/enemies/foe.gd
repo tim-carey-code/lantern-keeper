@@ -233,13 +233,19 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 		_on_shell_cracked()
 		if amount <= 0.0:
 			return
-	hp -= amount
 	_burning = 0.3
 	_number(amount, source, false)
 	_on_hurt(scare, source)
 	if not (source in STEADY) and _impact_t <= 0.0:
 		Sfx.play("ui_tick", -20.0, 0.12)
 		_impact_t = 0.3
+	_lose_hp(amount)
+
+## Every loss of health goes through here (hits, burns, lingering burn), so a boss's oil step can't be skipped.
+func _lose_hp(amount: float) -> void:
+	if hp_max <= 0.0:
+		hp_max = hp   # hurt before its first tick
+	hp -= amount
 	_check_oil_step()
 	if hp <= 0.0:
 		_die()
@@ -253,9 +259,10 @@ func _number(amount: float, source: String, on_shell: bool) -> void:
 		return
 	DamageNumbers.add(global_position + Vector2(0, -body_radius() - 10.0), amount, "shell" if on_shell else ("small" if source == "splash" else "hit"))
 
-## Mid-boss and guardian: 1 oil as health falls past the oil step (once a phase; GAME_PLAN §5).
+## Mid-boss and guardian: 1 oil as health falls past the oil step (once a phase; GAME_PLAN §5). A hit that
+## takes it from above the step straight to 0 still drops it.
 func _check_oil_step() -> void:
-	if not oil_step or _oil_step_given or hp_max <= 0.0 or hp > hp_max * Tuning.kl_boss_oil_step or hp <= 0.0:
+	if not oil_step or _oil_step_given or hp_max <= 0.0 or hp > hp_max * Tuning.kl_boss_oil_step:
 		return
 	_oil_step_given = true
 	drop_oil(global_position + Vector2(0, body_radius() + 6.0))
@@ -304,10 +311,9 @@ func tick_foe(delta: float) -> void:
 			return
 	if _linger_t > 0.0 and not _dead:
 		_linger_t = maxf(0.0, _linger_t - delta)
-		hp -= Tuning.kl_linger_dps * delta
 		_num_acc += Tuning.kl_linger_dps * delta
-		if hp <= 0.0:
-			_die()
+		_lose_hp(Tuning.kl_linger_dps * delta)
+		if _dead or is_queued_for_deletion():
 			return
 	if _knock_t > 0.0 and _hitstop_t <= 0.0:
 		_knock_t -= delta
@@ -362,7 +368,7 @@ func _die() -> void:
 	var keeper := _player()
 	var big := hp_max >= Tuning.kl_elite_hp or shell_max > 0.0
 	if keeper and keeper.has_method("shake"):
-		keeper.shake(0.35 if big else 0.15)
+		keeper.shake(Tuning.kl_shake_kill_big if big else Tuning.kl_shake_kill)
 	# Per-target hit-stop (GAME_PLAN §15): a big kill freezes the keeper for a moment, never the whole game
 	# (the old global Engine.time_scale freeze would stutter at Lampfire's rate).
 	if keeper and big and keeper.has_method("hit_stop"):

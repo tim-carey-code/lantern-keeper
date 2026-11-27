@@ -289,6 +289,16 @@ var kl_boss_oil_step := 0.5              # mid-boss and guardian: 1 oil when hea
 var kl_hitstop := 0.06                   # s: a big hit freezes the keeper and its target only (40-80 ms)
 var kl_hitstop_big := 5.0                # damage that counts as a big hit (Lance, Fireglobe); kills always do
 var kl_trauma_decay := 1.8               # screen-shake trauma lost per second
+var kl_shake_lance_hit := 0.2            # screen-shake trauma (0..1) when a Lance hits
+var kl_shake_lance_cast := 0.12          # ... throwing a Lance (a little recoil)
+var kl_shake_globe := 0.55               # ... a Fireglobe landing
+var kl_shake_ring := 0.4                 # ... Hearth ring
+var kl_shake_kill := 0.15                # ... a kill
+var kl_shake_kill_big := 0.35            # ... killing an elite, a shelled foe or a boss
+var kl_oil_pull := 220.0                 # px/s: a lamp-oil drop slides to the keeper inside its pull radius
+var kl_pickup_hold := 0.8                # s: hold interact (A / E) by a lantern this long to pick it up
+var kl_stick_aim_min := 0.3              # pad: the right stick aims once pushed past this
+var kl_stick_tilt_full := 0.9            # pad: pushed this far counts as full tilt (the Fireglobe's farthest landing)
 
 # Feedback (PROTOTYPE)
 var kl_shake_px := 16.0                  # px of shake at full trauma (offset = this x trauma squared; was 6 x linear)

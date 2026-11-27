@@ -45,7 +45,8 @@ func activate() -> void:
 	var body := text
 	if unlock_kind != "" and not Progress.is_unlocked(unlock_kind):
 		Progress.unlock(unlock_kind)
-		body += "\n\nNew lantern: %s. Pick it in the lantern list (Tab / Y)." % Lantern.display(unlock_kind)
+		# The button that opens the lantern list on the device in use (M1a: Y is a skill slot; the list is D-pad right).
+		body += "\n\nNew lantern: %s. Pick it in the lantern list (%s)." % [Lantern.display(unlock_kind), InputHint.key("build_menu")]
 	if upgrade != "" and Progress.take_upgrade(id, upgrade):
 		Sfx.play("unlock", -6.0)
 		if upgrade == "carry":

@@ -32,9 +32,78 @@ func _ready() -> void:
 	strip_real_input()
 	Tuning.wick_enabled = false
 	Story.skip_opening = true
+	Settings.path = "user://test_save_settings.cfg"   # never the owner's settings
+	Settings.use_defaults()
 	SaveGame.path = "user://test_save.json"
 	SaveGame.delete_save()
 	_new_main()
+
+## Test-only files next to the test save (never the owner's slots or settings).
+const V4_PATH := "user://test_save_v4.json"
+const BAD_BAR_PATH := "user://test_save_bad_bar.json"
+
+func _read_json(path: String) -> Dictionary:
+	var data = JSON.parse_string(FileAccess.get_file_as_string(path))
+	return data if typeof(data) == TYPE_DICTIONARY else {}
+
+func _write_json(path: String, data: Dictionary) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(JSON.stringify(data))
+	f.close()
+
+## Loads `data` from a test-only file into the running world, then points SaveGame back at the test save.
+func _load_file(path: String, data: Dictionary) -> bool:
+	_write_json(path, data)
+	var keep := SaveGame.path
+	SaveGame.path = path
+	Progress.reset()
+	var ok := SaveGame.load_into(main)
+	SaveGame.delete_save()
+	SaveGame.path = keep
+	return ok
+
+## A version 4 save *file* (the shape before M1a: no bar, no Lance flag, no flasks) loads and migrates, at level 2
+## and at level 1; a saved bar with things it may not hold falls back to the default bar slot by slot.
+func _old_and_bad_files() -> void:
+	var v5 := _read_json(SaveGame.path)
+	check(int(v5.get("version", 0)) == SaveGame.VERSION, "the test save is version %d" % SaveGame.VERSION)
+	var v4: Dictionary = v5.duplicate(true)
+	v4["version"] = 4
+	v4["progress"].erase("bar")
+	v4["progress"].erase("lance_given")
+	v4["player"].erase("flasks")
+	v4["progress"]["level"] = 2
+	v4["player"]["warmth"] = 55.0
+	check(_load_file(V4_PATH, v4), "a version 4 save file loads")
+	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "lance", "skill_4": ""} and Progress.lance_given, "a level 2 v4 file gets the default bar with Lance on LB (%s)" % str(Progress.bar))
+	check(main.player.flasks == Tuning.kl_flask_max and absf(main.player.warmth - 55.0) < 0.5, "with full flasks, and its keeper as saved (flasks %d, warmth %.0f)" % [main.player.flasks, main.player.warmth])
+	check(Progress.level == 2 and Progress.wick == 7 and Inventory.get_count("scrap") == 7 and Progress.notes_read.has("ledger") and Progress.has_combat_upgrade("long_throw"), "and its world state: level, wick, inventory, notes, upgrades")
+	check(not FileAccess.file_exists(V4_PATH), "the v4 test file is cleaned up")
+	v4["progress"]["level"] = 1
+	v4["progress"]["wick"] = 0
+	check(_load_file(V4_PATH, v4), "a level 1 version 4 save file loads")
+	check(Progress.level == 1 and Progress.bar == Progress.default_bar() and not Progress.lance_given and not Progress.knows("lance"), "level 1: the default bar with the Beam on LB, and no Lance (%s)" % str(Progress.bar))
+	check(main.player.flasks == Tuning.kl_flask_max, "and full flasks")
+	# A v5 file whose bar holds what it may not.
+	var bad: Dictionary = v5.duplicate(true)
+	bad["progress"]["level"] = 1
+	bad["progress"]["lance_given"] = false
+	bad["progress"]["bar"] = {"skill_1": "fireglobe", "skill_2": "hearth_ring", "skill_3": "lance", "skill_4": "no_such_skill"}
+	check(_load_file(BAD_BAR_PATH, bad), "a save with a bad action bar still loads")
+	check(Progress.bar == Progress.default_bar(), "each bad slot falls back to the default bar: Lampfire on 1, Fireglobe, the Beam, empty (%s)" % str(Progress.bar))
+	bad["progress"]["bar"] = {"skill_1": "lampfire", "skill_2": "beam", "skill_3": 7, "skill_4": "fireglobe"}
+	check(_load_file(BAD_BAR_PATH, bad), "and another")
+	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "beam", "skill_3": "", "skill_4": ""}, "good slots stay, a bad slot whose default is already used goes empty, an aimed skill leaves slot 4 (%s)" % str(Progress.bar))
+	bad["progress"]["bar"] = {"skill_1": "lampfire", "skill_2": "lampfire", "skill_3": "fireglobe", "skill_4": "hearth_ring"}
+	_load_file(BAD_BAR_PATH, bad)
+	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "beam", "skill_4": "hearth_ring"}, "a skill twice keeps only the first (the later slot takes its default); a self-cast on slot 4 stays (%s)" % str(Progress.bar))
+	bad["progress"].erase("bar")
+	_load_file(BAD_BAR_PATH, bad)
+	check(Progress.bar == Progress.default_bar(), "a v5 file with no bar gets the default one")
+	check(not FileAccess.file_exists(BAD_BAR_PATH), "the bad-bar test file is cleaned up")
+	# Put the round-trip state back for the pause-menu checks that follow.
+	Progress.reset()
+	SaveGame.load_into(main)
 
 ## The controller's A, as our "interact" action.
 func _press_a() -> void:
@@ -118,6 +187,7 @@ func _process(_delta: float) -> void:
 			check(main.player.global_position.distance_to(keeper_pos) < 2.0, "the keeper is where they were")
 			check(main.fog.remembered.count(1) >= seen_before, "the map of what you've seen comes back")
 			check(Progress.regions_seen.has(FogGrid.R_HOLLOW), "found regions come back")
+			_old_and_bad_files()
 			# Pause menu: the controller's A (our "interact") presses the focused button.
 			var pm = main.get_node("PauseMenu")
 			pm.open()

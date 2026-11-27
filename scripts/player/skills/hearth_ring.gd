@@ -35,7 +35,7 @@ func ring() -> int:
 	var k := keeper()
 	var center: Vector2 = k.global_position
 	if k.has_method("shake"):
-		k.shake(0.4)
+		k.shake(Tuning.kl_shake_ring)
 	Sfx.play("relight", -8.0, 0.3)
 	FireFx.blast(center + Vector2(0, -6), Tuning.kl_burst_radius, 0.3)
 	var found: Array = FireBolts.inst.area(center, Tuning.kl_burst_radius) if FireBolts.inst else []

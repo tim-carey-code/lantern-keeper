@@ -149,6 +149,28 @@ static func migrate_data(data: Dictionary) -> Dictionary:
 		data["version"] = 5
 	return data
 
+## A saved action bar, checked slot by slot with Progress.bind_reason() (call it after level and lance_given are
+## loaded). A slot holding something it may not (an unknown or unlearned skill, an aimed skill on slot 4, a skill
+## already on an earlier slot, not a string) falls back to the default bar's skill for that slot, or to empty if
+## that isn't allowed either. A missing slot takes the default too. Public for tests.
+static func valid_bar(saved: Dictionary) -> Dictionary:
+	var defaults := Progress.default_bar()
+	var bar := {}
+	var used := {}
+	for slot in Progress.SLOTS:
+		var id := ""
+		var raw = saved.get(slot, null)
+		if typeof(raw) == TYPE_STRING and Progress.bind_reason(slot, raw) == "" and (raw == "" or not used.has(raw)):
+			id = raw
+		else:
+			var d: String = defaults[slot]
+			if Progress.bind_reason(slot, d) == "" and (d == "" or not used.has(d)):
+				id = d
+		bar[slot] = id
+		if id != "":
+			used[id] = true
+	return bar
+
 func _pack_density(d: PackedFloat32Array) -> String:
 	var b := PackedByteArray()
 	b.resize(d.size())
@@ -223,13 +245,9 @@ func load_into(main: Node) -> bool:
 	Progress.combat_upgrades = []
 	for upgrade in p.get("combat_upgrades", []):
 		Progress.combat_upgrades.append(str(upgrade))
-	Progress.bar = Progress.default_bar()
-	var saved_bar: Dictionary = p.get("bar", {})
-	for slot in Progress.SLOTS:
-		if saved_bar.has(slot):
-			Progress.bar[slot] = str(saved_bar[slot])
-	Progress.bar["skill_1"] = "lampfire"
-	Progress.lance_given = bool(p.get("lance_given", false))
+	Progress.lance_given = bool(p.get("lance_given", false))   # before the bar: knows("lance") depends on it
+	var saved_bar = p.get("bar", {})
+	Progress.bar = valid_bar(saved_bar if typeof(saved_bar) == TYPE_DICTIONARY else {})
 	# Lanterns: replace the generated ones.
 	var lroot: Node = main.get_node("Lanterns")
 	for c in lroot.get_children():

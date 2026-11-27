@@ -1,22 +1,29 @@
 extends Node
 ## Performance benchmark (not a test). Loads the game, places 30 lanterns and keeps 20 foes alive
-## around the keeper, adds 40 in-flight fire bolts, then measures a few hundred frames and prints a short table.
+## around the keeper, then measures a few hundred frames and prints a short table. A fight runs the whole time at a
+## firing range away from the keeper: 40 Lampfire bolts always in the air, flying at and hitting 8 target foes
+## (so every frame has real hits, splash, impact effects and damage numbers), with 4 burning areas under them.
 ## Headless (game logic only):
 ##   godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/bench/bench.tscn
 ## With rendering (adds the whole-frame time and draw calls; silent, on a virtual display):
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60 --disable-vsync \
 ##     --path . res://tools/bench/bench.tscn
-## Optional user args after "--": lanterns foes frames, e.g. "-- 30 20 600".
+## Optional user args after "--": lanterns foes frames bolts burning, e.g. "-- 30 20 600" or, for the world with no
+## fight, "-- 30 20 400 0 0".
 ## Budget (DECISIONS.md): game logic (process + physics) well under 4 ms a frame at 30 lanterns and 20 foes.
 
 const WARMUP := 30
 const BUDGET_MS := 4.0
+const TARGETS := 8         # foes at the firing range (they never die: huge health)
+const RANGE_FROM := 160.0  # px: bolts start this far from the range's centre, so each flies ~0.3 s before it hits
 
 var main: Node
 var frame := 0
 var lanterns := 30
 var foes := 20
 var frames := 400
+var bolts := 40            # Lampfire bolts kept in the air at the firing range
+var burning := 4           # burning areas at the firing range
 var fog: FogGrid
 var spawner: Node
 var _rng := RandomNumberGenerator.new()
@@ -33,6 +40,10 @@ var _proc_start := 0
 var _phys_start := 0
 var _proc_now := 0.0
 var _phys_now := 0.0
+var _range := Vector2.ZERO
+var _targets: Array = []   # untyped: has() is asked about Spitwicks too
+var _hits0 := 0
+var _paused_frames := 0
 
 ## Runs after every other node (high priority number) so the bench can time the whole process
 ## and physics passes itself (Performance.TIME_PROCESS is not reliable headless).
@@ -56,6 +67,10 @@ func _ready() -> void:
 		foes = int(args[1])
 	if args.size() > 2:
 		frames = int(args[2])
+	if args.size() > 3:
+		bolts = int(args[3])
+	if args.size() > 4:
+		burning = int(args[4])
 	seed(7)
 	_rng.seed = 7
 	Story.skip_opening = true
@@ -99,6 +114,9 @@ func _process(_delta: float) -> void:
 			_tex_ms.append((Time.get_ticks_usec() - t0) / 1000.0)
 		fog.queue_redraw()
 	_keep_foes()
+	_keep_bolts()
+	if get_tree().paused:
+		_paused_frames += 1
 	if frame > WARMUP:
 		# Last frame's passes (the fog tick runs inside the process pass, as in the game).
 		_proc.append(_proc_now)
@@ -148,28 +166,67 @@ func _setup() -> void:
 				main.get_node("Lanterns").add_child(l)
 				placed += 1
 	lanterns = placed
-	# Forty simultaneous bolts at a remote walkable tile; they remain alive and exercise the pool's hot path.
-	var projectile_tile := Vector2i(-1, -1)
-	for y in range(fog.rows):
-		for x in range(fog.cols):
-			var tile := Vector2i(x, y)
-			if fog.solid[fog.idx(tile)] == 0 and fog.tile_center(tile).distance_to(main.start) > 700.0:
-				projectile_tile = tile
-				break
-		if projectile_tile.x >= 0: break
-	var origin := fog.tile_center(projectile_tile)
-	for i in 40:
-		var b = FireBolts.inst.fire_lampfire(origin + Vector2(float(i % 8) * 3.0, float(i / 8) * 3.0), Vector2.RIGHT)
-		b.speed = 0.0
-		b.reach = 1000000.0
-
+	# Foes burned by the lanterns give wick, and the level-up cards would pause the world for the rest of the run
+	# (the bench measured a paused world from about frame 100 before this): no cards in the bench.
+	var cards = main.get_node("HUD").level_up_screen
+	if Progress.level_up.is_connected(cards._on_level_up):
+		Progress.level_up.disconnect(cards._on_level_up)
+	_setup_range()
 	_keep_foes()
+
+## The firing range: open ground well away from the keeper (so its bolts never reach the foes around the keeper),
+## with TARGETS foes that can't die in a ring the splash reaches, and `burning` burning areas under them.
+func _setup_range() -> void:
+	var best := Vector2i(-1, -1)
+	for y in range(8, fog.rows - 8):
+		for x in range(8, fog.cols - 8):
+			var t := Vector2i(x, y)
+			if fog.tile_center(t).distance_to(main.start) < 1400.0:
+				continue
+			var open := true
+			for dy in range(-7, 8):
+				for dx in range(-7, 8):
+					if fog.solid[fog.idx(t + Vector2i(dx, dy))] == 1:
+						open = false
+						break
+				if not open:
+					break
+			if open:
+				best = t
+				break
+		if best.x >= 0:
+			break
+	_range = fog.tile_center(best)
+	for i in (TARGETS if bolts > 0 or burning > 0 else 0):
+		var w: Wickling = spawner.spawn_at(_range + Vector2.from_angle(TAU * i / TARGETS) * 36.0, i % 4 == 0)
+		w.hp = 1.0e7
+		w.hp_max = 1.0e7
+		w.shell = 0.0
+		w.stun(1.0e9)
+		_targets.append(w)
+	for i in burning:
+		var g := BurningGround.new()
+		g.radius = Tuning.kl_fireglobe_radius
+		g.dps = Tuning.kl_fireglobe_burn_dps
+		g.life = 1.0e9
+		g.position = _range + Vector2.from_angle(TAU * i / maxi(1, burning) + 0.4) * 30.0
+		spawner.add_child(g)
+	_hits0 = FireBolts.inst.hits
+
+## Keeps `bolts` Lampfire bolts in the air at the range, each fired from the ring around it at one of the targets.
+func _keep_bolts() -> void:
+	var n := FireBolts.inst.in_flight(FireBolts.LAMPFIRE)
+	while n < bolts and not _targets.is_empty():
+		var from := _range + Vector2.from_angle(_rng.randf() * TAU) * RANGE_FROM
+		var target: Wickling = _targets[_rng.randi() % _targets.size()]
+		FireBolts.inst.fire_lampfire(from, target.global_position - from)
+		n += 1
 
 ## Keeps the foe count steady around the keeper (lantern cores burn some of them).
 func _keep_foes() -> void:
 	var alive := 0
 	for f in get_tree().get_nodes_in_group("foe"):
-		if (f is Wickling or f is Spitwick) and not f.is_queued_for_deletion():
+		if (f is Wickling or f is Spitwick) and not f.is_queued_for_deletion() and not _targets.has(f):
 			alive += 1
 	var p: Vector2 = main.player.global_position
 	var tries := 0
@@ -209,7 +266,11 @@ func _report() -> void:
 	for f in get_tree().get_nodes_in_group("foe"):
 		n_foes += 1
 	print("")
-	print("BENCH map %dx%d tiles, %d lanterns, %d foes in play (%d foe nodes incl. nests), %d projectiles in flight, %d frames" % [fog.cols, fog.rows, lanterns, foes, n_foes, FireBolts.inst.in_flight(), _proc.size()])
+	print("BENCH map %dx%d tiles, %d lanterns, %d foes in play (%d foe nodes incl. nests and %d range targets), %d frames" % [fog.cols, fog.rows, lanterns, foes, n_foes, TARGETS, _proc.size()])
+	var secs := float(frame - 2) / float(Engine.physics_ticks_per_second)
+	print("FIGHT %d Lampfire bolts in the air, %d burning areas; %d hits in %.1f s (%.0f a second), %d effects and %d damage numbers alive at the end; %d paused frames" % [
+		FireBolts.inst.in_flight(FireBolts.LAMPFIRE), get_tree().get_nodes_in_group("burning_ground").size(), FireBolts.inst.hits - _hits0, secs,
+		(FireBolts.inst.hits - _hits0) / maxf(0.01, secs), FireFx.inst.count() if FireFx.inst else -1, DamageNumbers.inst.count() if DamageNumbers.inst else -1, _paused_frames])
 	print("%-26s %9s %9s" % ["", "avg", "worst"])
 	_row("process (all _process)", _proc)
 	_row("physics (all _physics)", _phys)
@@ -222,5 +283,7 @@ func _report() -> void:
 	print("%-26s %9d" % ["nodes", int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))])
 	print("%-26s %9d" % ["canvas items drawn (2D)", int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME))])
 	var st := _stats(logic)
-	print("BUDGET game logic avg %.3f ms (budget %.1f ms): %s" % [st[0], BUDGET_MS, "within" if st[0] < BUDGET_MS else "OVER"])
+	if _paused_frames > 0:
+		print("WARNING the world was paused for %d frames: those frames don't measure the game" % _paused_frames)
+	print("BUDGET game logic avg %.3f ms, worst %.3f ms (budget %.1f ms): %s" % [st[0], st[1], BUDGET_MS, "within" if st[0] < BUDGET_MS else "OVER"])
 	SaveGame.delete_save()

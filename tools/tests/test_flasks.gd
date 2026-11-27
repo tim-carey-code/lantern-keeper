@@ -15,6 +15,8 @@ func _ready() -> void:
 			if e is InputEventJoypadButton or e is InputEventJoypadMotion: InputMap.action_erase_event(action, e)
 	Tuning.wick_enabled = false
 	Story.skip_opening = true
+	Settings.path = "user://test_flasks_settings.cfg"   # never the owner's settings
+	Settings.use_defaults()
 	SaveGame.path = "user://test_flasks_save.json"
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
@@ -24,6 +26,80 @@ func _process(_delta: float) -> void:
 	frame += 1
 	if frame == 2:
 		await _run_checks()
+
+## A boss's oil step can't be skipped: one hit from full to nothing, the lingering burn and being set alight all
+## cross the half-health line through the same check, and each crossing drops exactly one oil.
+func _boss_oil_every_way(p: Node, spawner: Node) -> void:
+	var at: Vector2 = p.global_position + Vector2(700, 0)
+	# One big hit that crosses the step and kills.
+	var a := _test_clinker(spawner, at)
+	var oils := _oil_count()
+	a.hurt(Tuning.kl_clinker_hp * 3.0, false, "lance")
+	await get_tree().process_frame
+	check(_oil_count() == oils + 1, "one hit from full health to nothing still drops the boss oil (%d)" % (_oil_count() - oils))
+	# One big hit past the step (not a kill), then more hits: one oil, once.
+	var b := _test_clinker(spawner, at + Vector2(0, 80))
+	oils = _oil_count()
+	b.hurt(Tuning.kl_clinker_hp * 0.9, false, "lance")
+	b.hurt(1.0, false, "lance")
+	b.hurt(1.0, false, "lance")
+	await get_tree().process_frame
+	check(_oil_count() == oils + 1, "a big hit past half drops it once, and later hits don't again (%d)" % (_oil_count() - oils))
+	b.queue_free()
+	# The lingering burn (it used to take health without the check).
+	var c := _test_clinker(spawner, at + Vector2(0, 160))
+	c.hp = c.hp_max * Tuning.kl_boss_oil_step + 0.05
+	oils = _oil_count()
+	c._linger_t = 1.0
+	c.tick_foe(0.5)
+	await get_tree().process_frame
+	check(c.hp < c.hp_max * Tuning.kl_boss_oil_step and _oil_count() == oils + 1, "the lingering burn crossing half drops the oil (%d)" % (_oil_count() - oils))
+	c.queue_free()
+	# Set alight (Hearth ring's burn).
+	var d := _test_clinker(spawner, at + Vector2(0, 240))
+	d.hp = d.hp_max * Tuning.kl_boss_oil_step + 0.05
+	oils = _oil_count()
+	d.ignite(2.0, 2.0)
+	d.tick_foe(0.5)
+	await get_tree().process_frame
+	check(d.hp < d.hp_max * Tuning.kl_boss_oil_step and _oil_count() == oils + 1, "burning crossing half drops the oil (%d)" % (_oil_count() - oils))
+	d.queue_free()
+	# A boss hurt before its first tick (hp_max not set yet) still counts from its full health.
+	var e := Clinker.new()
+	e.process_mode = Node.PROCESS_MODE_DISABLED
+	e.position = at + Vector2(0, 320)
+	spawner.add_child(e)
+	e.shell = 0.0
+	e.hp_max = 0.0
+	oils = _oil_count()
+	e.hurt(e.hp * 0.6, false, "lance")
+	await get_tree().process_frame
+	check(_oil_count() == oils + 1, "a boss hit before its first frame still drops the oil at half")
+	e.queue_free()
+	# The Ashbrood: one hit through all of phase 1 drops phase 1's oil, and phase 2 has its own.
+	var boss := Ashbrood.new()
+	boss.process_mode = Node.PROCESS_MODE_DISABLED
+	boss.position = at + Vector2(120, 0)
+	spawner.add_child(boss)
+	boss.hp_max = Tuning.kl_ashbrood_hp; boss.hp = Tuning.kl_ashbrood_hp; boss.shell = 0.0
+	oils = _oil_count()
+	boss.hurt(Tuning.kl_ashbrood_hp * 2.0, false, "lance")
+	await get_tree().process_frame
+	check(boss.phase == 2 and _oil_count() == oils + 1, "one hit through a whole Ashbrood phase still drops that phase's oil")
+	boss.shell = 0.0
+	boss.hurt(Tuning.kl_ashbrood_hp * 0.6, false, "lance")
+	await get_tree().process_frame
+	check(_oil_count() == oils + 2, "and the next phase drops its own")
+	boss.queue_free()
+	await get_tree().process_frame
+
+func _test_clinker(spawner: Node, at: Vector2) -> Clinker:
+	var k := Clinker.new()
+	k.process_mode = Node.PROCESS_MODE_DISABLED
+	k.position = at
+	spawner.add_child(k)
+	k.hp_max = Tuning.kl_clinker_hp; k.hp = Tuning.kl_clinker_hp; k.shell = 0.0
+	return k
 
 func _oil_count() -> int:
 	return get_tree().get_nodes_in_group("ember").filter(func(e): return e.kind == "oil").size()
@@ -109,6 +185,7 @@ func _run_checks() -> void:
 	await get_tree().process_frame
 	check(_oil_count() == oils + 5, "Clinker drops oil at its health step")
 	clinker.queue_free()
+	await _boss_oil_every_way(p, spawner)
 	# Rest must refuse hunters and refill through the lit WayLamp's menu otherwise.
 	var wl: WayLamp = get_tree().get_nodes_in_group("waylamp").filter(func(w): return w.id == "hollow")[0]
 	Progress.settled[wl.region_id] = true
@@ -124,9 +201,10 @@ func _run_checks() -> void:
 	await get_tree().process_frame
 	p.hunted = false
 	var level_up = main.get_node("HUD").level_up_screen
-	if level_up.root.visible:
-		level_up._choose(level_up._offer[0].id)
-	await get_tree().process_frame
+	for i in 12:   # the boss kills above can queue more than one level-up
+		if level_up.root.visible:
+			level_up._choose(level_up._offer[0].id)
+		await get_tree().process_frame
 	var can_open: bool = travel.open(wl)
 	check(can_open, "the lit WayLamp offers Rest when the area is quiet")
 	travel._rest()

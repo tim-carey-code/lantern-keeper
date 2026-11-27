@@ -37,7 +37,7 @@ func _process(delta: float) -> void:
 			queue_free()
 			return
 		elif to_k.length() < MAGNET and room:
-			global_position += to_k.normalized() * minf(220.0 * delta, to_k.length())
+			global_position += to_k.normalized() * minf(Tuning.kl_oil_pull * delta, to_k.length())
 	elif player:
 		var to := player.global_position - global_position
 		if to.length() < COLLECT:

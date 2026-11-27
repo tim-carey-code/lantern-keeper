@@ -73,9 +73,9 @@ func update_aim(move_dir: Vector2, fire_held: bool = false) -> void:
 		return
 	var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
 	_stick_len = stick.length()
-	if _stick_len > 0.3:
+	if _stick_len > Tuning.kl_stick_aim_min:
 		aim = stick.normalized()
-		stick_tilt = clampf((_stick_len - 0.3) / 0.6, 0.0, 1.0)
+		stick_tilt = clampf((_stick_len - Tuning.kl_stick_aim_min) / maxf(0.01, Tuning.kl_stick_tilt_full - Tuning.kl_stick_aim_min), 0.0, 1.0)
 		_stick_aim = true
 	elif InputHint.pad and fire_held and Tuning.kl_aim_hold and _stick_aim:
 		pass   # the aim hold: a released stick keeps its last aim while a fire button is down

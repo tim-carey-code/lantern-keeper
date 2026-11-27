@@ -30,5 +30,5 @@ func press() -> bool:
 	Sfx.play("ui_tick", -12.0, 0.2)
 	var k := keeper()
 	if k and k.has_method("shake"):
-		k.shake(0.12)   # a little recoil
+		k.shake(Tuning.kl_shake_lance_cast)   # a little recoil
 	return true

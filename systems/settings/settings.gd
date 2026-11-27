@@ -1,8 +1,9 @@
 extends Node
 ## Autoload "Settings": player options that belong to the PC, not to a save slot (GAME_PLAN §14, brief §4):
 ## the screen-shake slider, "reduce flashes" and the optional Lampfire auto-fire on the right stick.
-## Stored in user://settings.cfg. Only the pause menu calls save(); tests and captures never do, and they
-## call use_defaults() so the owner's own settings can't change a run.
+## Stored in user://settings.cfg. Only the pause menu calls save(). Tests, captures and the bench (any scene run
+## from res://tools/) never read or write that file: the defaults are used, and save() only writes when a test has
+## pointed `path` at its own file. Tests also call use_defaults() themselves.
 
 const PATH := "user://settings.cfg"
 
@@ -13,7 +14,17 @@ var path := PATH              # tests point this elsewhere
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if tool_run():
+		use_defaults()
+		return
 	load_from(path)
+
+## True when the scene being run is a test, capture or bench (res://tools/...), not the game.
+static func tool_run() -> bool:
+	for a in OS.get_cmdline_args():
+		if a.begins_with("res://tools/"):
+			return true
+	return false
 
 func use_defaults() -> void:
 	shake = 1.0
@@ -29,6 +40,8 @@ func load_from(p: String) -> void:
 	autofire = bool(cfg.get_value("controls", "autofire", false))
 
 func save() -> bool:
+	if path == PATH and tool_run():
+		return false   # a test or capture must never write the owner's settings
 	var cfg := ConfigFile.new()
 	cfg.set_value("feel", "shake", shake)
 	cfg.set_value("feel", "reduce_flashes", reduce_flashes)

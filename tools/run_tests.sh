@@ -6,6 +6,10 @@
 #   tools/run_tests.sh save story    # just these (test_save, test_story)
 set -uo pipefail
 cd "$(dirname "$0")/.."
+# user:// for the tests lives in a throwaway folder, so no run can touch the owner's saves or settings.cfg
+# (~/.local/share/godot/app_userdata/Lantern Keeper/). Godot on Linux puts user:// under $XDG_DATA_HOME.
+export XDG_DATA_HOME="${LK_TEST_DATA:-$HOME/.cache/openclaw/project-scratch/lantern-keeper-test-data}"
+mkdir -p "$XDG_DATA_HOME"
 if [ $# -gt 0 ]; then
 	scenes=()
 	for n in "$@"; do scenes+=("tools/tests/test_$n.tscn"); done

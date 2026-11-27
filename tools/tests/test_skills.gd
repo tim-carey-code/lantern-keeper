@@ -246,17 +246,22 @@ func _aim() -> void:
 	Input.action_release("skill_1")
 	await _frames(2)
 	check(c.aim.distance_to(Vector2.UP) > 0.5, "let go of RT too and the aim goes back to where you face")
-	# Owner check 3: pressing B mid-stream heals without changing the held aim.
+	# Owner check 3: pressing B mid-stream heals without changing the held aim. The press goes through the
+	# keeper's own frame (player._physics_process), not a direct call.
 	player.flasks = 3; player.flask_lock = 0.0; player.warmth = 50.0; player.lamp_charge = 0.2
+	Progress._input_block_until = 0
 	Input.action_press("aim_up", 1.0)
 	Input.action_press("skill_1")
 	await _frames(2)
 	Input.action_release("aim_up")
+	var lf_before: int = c.skill("lampfire").fired
+	Input.action_press("flask")
+	await _frames(2)
 	Input.action_release("flask")
-	var drank: bool = player._handle_flask_input(true, false)
-	check(drank and player.flasks == 2 and player.warmth >= 90.0, "B drinks a flask while RT is held")
+	check(player.flasks == 2 and player.drinks > 0 and player.warmth >= 85.0, "B drinks a flask while RT is held (flasks %d, warmth %.0f)" % [player.flasks, player.warmth])
 	check(c.aim.distance_to(Vector2.UP) < 0.01, "drinking with B keeps the fire aimed up")
-	Input.action_release("flask")
+	await _frames(25)
+	check(c.skill("lampfire").fired > lf_before, "and Lampfire keeps streaming through the drink")
 	Input.action_release("skill_1")
 	await _frames(2)
 	Tuning.kl_aim_hold = false
@@ -427,10 +432,14 @@ func _lance() -> void:
 	_clear()
 	await _frames(2)
 
+## Closes the level-up cards through the real choice, then takes the chosen upgrades back: the offer is shuffled,
+## and a card such as Catching, Spill, Tight focus or Deep tank would change what later checks measure.
 func _close_cards() -> void:
 	var cards = main.get_node("HUD").level_up_screen
+	var before: Array[String] = Progress.combat_upgrades.duplicate()
 	while cards.root.visible:
 		cards._choose(cards._offer[0].id)
+	Progress.combat_upgrades = before
 
 # --- The Beam and Hearth ring (optional) --------------------------------------------------------------
 
@@ -591,10 +600,25 @@ func _panel_rows() -> void:
 	for m in rx.search_all(block):
 		if not keys.has(m.get_string(1)):
 			missing.append(m.get_string(1))
-	for k in ["kl_beam_dps", "kl_burst_burn_dps", "kl_burst_burn_time", "kl_burst_knock", "kl_burst_cd", "kl_clinker_hp", "kl_ashbrood_hp", "kl_shake_px"]:
-		if not keys.has(k):
+	for k in ["kl_beam_dps", "kl_burst_burn_dps", "kl_burst_burn_time", "kl_burst_knock", "kl_burst_cd", "kl_clinker_hp", "kl_ashbrood_hp", "kl_shake_px",
+			"kl_shake_lance_hit", "kl_shake_lance_cast", "kl_shake_globe", "kl_shake_ring", "kl_shake_kill", "kl_shake_kill_big",
+			"kl_oil_pull", "kl_pickup_hold", "kl_stick_aim_min", "kl_stick_tilt_full"]:
+		if not keys.has(k) or not k in Tuning:
 			missing.append(k)
-	check(missing.is_empty() and rx.search_all(block).size() >= 40, "every M1a number is a kl_ tuning value with a row in the F1 panel (missing: %s)" % str(missing))
+	check(missing.is_empty() and rx.search_all(block).size() >= 50, "every M1a number is a kl_ tuning value with a row in the F1 panel (missing: %s)" % str(missing))
+	# And the M1a code reads them: no bare numbers left in its shake calls, the oil pull, the pick-up hold or the
+	# right stick's tilt.
+	var bare := []
+	var shake_rx := RegEx.create_from_string("shake\\(\\s*[0-9.]")
+	for f in ["res://scripts/player/skills/fire_bolts.gd", "res://scripts/player/skills/lance.gd", "res://scripts/player/skills/hearth_ring.gd", "res://scripts/enemies/foe.gd"]:
+		if shake_rx.search(FileAccess.get_file_as_string(f)) != null:
+			bare.append(f.get_file())
+	var reads := {"res://scripts/enemies/ember.gd": "kl_oil_pull", "res://scripts/player/player.gd": "kl_pickup_hold", "res://scripts/player/combat.gd": "kl_stick_aim_min"}
+	for f in reads:
+		if not FileAccess.get_file_as_string(f).contains(reads[f]):
+			bare.append(f.get_file())
+	check(bare.is_empty() and not FileAccess.get_file_as_string("res://scripts/player/player.gd").contains("HOLD_TO_PICK_UP") \
+			and FileAccess.get_file_as_string("res://scripts/player/combat.gd").contains("kl_stick_tilt_full"), "the shake amounts, oil pull, pick-up hold and stick tilt read those values (bare numbers in: %s)" % str(bare))
 
 # --- The old combat checks, kept ---------------------------------------------------------------------------
 

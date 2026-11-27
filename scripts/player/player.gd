@@ -8,7 +8,6 @@ extends CharacterBody2D
 @export var speed := 160.0
 const REACH := 52.0   # px to interact with a lantern or resource
 const HOLD_TO_GATHER := 0.3   # s: holding interact this long gathers the nearest resource (tap still refuels)
-const HOLD_TO_PICK_UP := 0.8  # s: holding interact this long by a lantern (no resource in reach) picks it up
 
 var lamp: PointLight2D
 var lamp_charge := 1.0          # 0 = ember, 1 = full hand lamp
@@ -35,7 +34,7 @@ var flask_lock := 0.0          # s before the next drink
 var drinks := 0                # flasks drunk (tests)
 var hunted := false            # something hunts the keeper (Hunt), worked out once a physics frame
 var _hitstop_t := 0.0          # > 0: a big hit freezes the keeper for a moment
-var _pick_t := 0.0             # how long interact has been held by a lantern (picks it up at HOLD_TO_PICK_UP)
+var _pick_t := 0.0             # how long interact has been held by a lantern (picks it up at Tuning.kl_pickup_hold)
 
 func _ready() -> void:
 	flasks = Tuning.kl_flask_max
@@ -204,7 +203,7 @@ func _physics_process(delta: float) -> void:
 		# Hold by a lantern (with nothing to gather in reach): pick it up (GAME_PLAN §3: right mouse is a skill now).
 		if not is_gathering() and nearest_resource() == null and nearest_lantern() != null:
 			_pick_t += delta
-			if _pick_t >= HOLD_TO_PICK_UP:
+			if _pick_t >= Tuning.kl_pickup_hold:
 				_pick_t = -1000.0   # one pick-up per hold
 				pick_up_nearest()
 		else:
@@ -216,7 +215,7 @@ func _physics_process(delta: float) -> void:
 
 ## 0..1 while interact is held by a lantern (the pick-up ring).
 func pick_up_progress() -> float:
-	return clampf(_pick_t / HOLD_TO_PICK_UP, 0.0, 1.0)
+	return clampf(_pick_t / maxf(0.01, Tuning.kl_pickup_hold), 0.0, 1.0)
 
 func _physics_delta() -> float:
 	return get_physics_process_delta_time()

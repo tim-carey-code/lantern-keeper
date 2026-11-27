@@ -247,7 +247,7 @@ func _lance_hit(f: Foe, at: Vector2, dir: Vector2) -> void:
 	FireFx.impact(at, dir, 14.0, false)
 	var k := _keeper()
 	if k and k.has_method("shake"):
-		k.shake(0.2)
+		k.shake(Tuning.kl_shake_lance_hit)
 	Sfx.play("ui_tick", -14.0, 0.3)
 
 ## Fireglobe lands: 8 in 90 px (no shells), then burning ground; camera trauma, a ring flash, a big pop.
@@ -268,7 +268,7 @@ func _globe_burst(at: Vector2) -> int:
 	FireFx.blast(at, Tuning.kl_fireglobe_radius, Tuning.kl_fireglobe_pop_clear)
 	var k := _keeper()
 	if k and k.has_method("shake"):
-		k.shake(0.55)
+		k.shake(Tuning.kl_shake_globe)
 		if n > 0 and k.has_method("hit_stop"):
 			k.hit_stop(Tuning.kl_hitstop)
 	Sfx.play("relight", -6.0, 0.25)
