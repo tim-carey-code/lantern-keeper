@@ -8,7 +8,7 @@ extends Node2D
 const TILE := 32
 const TICK := 0.1                  # simulation step (s)
 const REMEMBER_BELOW := 0.3        # a tile this clear counts as "seen"
-const PLACE_MAX_DENSITY := 0.6     # lanterns need lit or edge-of-light ground
+const PLACE_MAX_DENSITY := 0.6     # (no longer used for building: lanterns can go anywhere you can stand, owner 2026-11-27)
 
 # Terrain
 const T_GROUND := 0

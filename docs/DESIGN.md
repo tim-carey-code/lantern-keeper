@@ -55,7 +55,7 @@ Over a session: *light a path → read Oswin's next mark → unlock a lantern �
 - **Upgrades** lie in the far corners of each region, revealed by light like landmarks: a **keeper's satchel** (carry 10 more of each resource, so 30 → 60 with all three) and a **lamp glass** (the hand lamp reaches 12 px further, dims 25% slower and the ward costs 15% less charge, per glass). Read one to take it. Numbers in `tuning.gd` (`carry_*`, `lamp_upgrade_*`).
 
 ### 3.4 The four lanterns
-Space / X (or left click) builds the selected lantern on your tile: firm ground (not rock or soft marsh), lit or at the edge of the light, at least 1.5 tiles from other lanterns *(code)*. Building is quiet: no outline or cost text shows until you try, and if you can't build there, the outline and the reason show for 2 s. You can't build on top of a resource. Q / B picks a lantern up for half its cost (rounded down) plus its fuel.
+Space / X (or left click) builds the selected lantern on your tile: firm ground (not rock or soft marsh), anywhere you can stand (no "too dark" rule since 2026-11-27), at least 1.5 tiles from other lanterns *(code)*. Building is quiet: no outline or cost text shows until you try, and if you can't build there, the outline and the reason show for 2 s. You can't build on top of a resource. Q / B picks a lantern up for half its cost (rounded down) plus its fuel.
 
 | | Post Lamp | Reservoir Lamp | Hooded Lamp | Mirror Post |
 |---|---|---|---|---|

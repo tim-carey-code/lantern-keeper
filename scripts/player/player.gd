@@ -334,8 +334,6 @@ func place_block_reason(p: Vector2) -> String:
 	var ground := fog.build_block(p)
 	if ground != "":
 		return ground
-	if fog.density_at(p) > FogGrid.PLACE_MAX_DENSITY:
-		return "too dark"
 	for r in get_tree().get_nodes_in_group("resource"):
 		if r.global_position.distance_to(p) < FogGrid.TILE * 0.75:
 			return "on a resource"
