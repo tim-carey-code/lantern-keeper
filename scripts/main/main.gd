@@ -4,24 +4,33 @@ extends Node2D
 ## boardwalks and islands; its pumphouse unlocks the Reservoir Lamp. The Ridge is
 ## windswept, holds glass, and its glazier's workshop and signal station unlock the
 ## Hooded Lamp and the Mirror Post. (Region 4, The Still Lake, comes next.)
+## The map is 224 x 200 tiles (2026-11-27: every region 4x the area, owner); the north-east
+## quarter above the Reedmarsh is kept free for the Lakeshore and the Still Lake.
 
 const SEED := 11
-const HOLLOW_FUEL := 18
-const HOLLOW_SCRAP := 16
-const MARSH_PEAT := 24
-const MARSH_SCRAP := 6
+# Resource spots per region: 4x the old counts for 4x the area.
+const HOLLOW_FUEL := 72
+const HOLLOW_SCRAP := 64
+const MARSH_PEAT := 96
+const MARSH_SCRAP := 24
 
-const Y := 36   # the Hollow and Reedmarsh sit below the Ridge
-const HOLLOW_C := Vector2(24, 32 + Y)
-const HOLLOW_R := Vector2(19, 22)
-const MARSH_C := Vector2(80, 32 + Y)
-const MARSH_R := Vector2(28, 24)
-const ISLANDS := [Vector3(72, 23 + Y, 2), Vector3(76, 42 + Y, 2), Vector3(95, 24 + Y, 2), Vector3(97, 41 + Y, 2), Vector3(59, 43 + Y, 2), Vector3(102, 32 + Y, 3)]
-const RIDGE_C := Vector2(34, 17)
-const RIDGE_R := Vector2(30, 13)
-const RIDGE_GLASS := 14
-const RIDGE_FUEL := 8
-const RIDGE_SCRAP := 7
+const Y := 72   # the Hollow and Reedmarsh sit below the Ridge
+const HOLLOW_C := Vector2(48, 64 + Y)
+const HOLLOW_R := Vector2(38, 44)
+const MARSH_C := Vector2(160, 64 + Y)
+const MARSH_R := Vector2(56, 48)
+const ISLANDS := [
+	Vector3(144, 46 + Y, 4), Vector3(152, 84 + Y, 4), Vector3(190, 48 + Y, 4), Vector3(194, 82 + Y, 4),
+	Vector3(118, 86 + Y, 4), Vector3(204, 64 + Y, 6),
+	# More firm ground in the bigger marsh.
+	Vector3(122, 40 + Y, 3), Vector3(168, 30 + Y, 3), Vector3(170, 100 + Y, 3), Vector3(200, 94 + Y, 3),
+]
+const RIDGE_C := Vector2(68, 34)
+const RIDGE_R := Vector2(60, 26)
+const RIDGE_GLASS := 56
+const RIDGE_FUEL := 32
+const RIDGE_SCRAP := 28
+const RIDGE_OUTCROPS := 88
 
 @onready var fog: FogGrid = $FogLayer/FogGrid
 @onready var player: CharacterBody2D = $Player
@@ -75,7 +84,7 @@ func _ready() -> void:
 	add_child(boss_bar)
 	_place_hollow_prototype()
 	_scatter()
-	queue_redraw()
+	_build_terrain()
 	# Continue from the save unless "New game" was just chosen.
 	if SaveGame.skip_load_once:
 		SaveGame.skip_load_once = false
@@ -119,16 +128,18 @@ func _generate() -> void:
 	_carve_ellipse(HOLLOW_C, HOLLOW_R, FogGrid.T_GROUND, FogGrid.R_HOLLOW, 1.3)
 	_carve_ellipse(MARSH_C, MARSH_R, FogGrid.T_MARSH, FogGrid.R_MARSH, 4.1)
 	# The passage between them, with a firm landing at the marsh edge.
-	for x in range(38, 58):
-		var wiggle := int(round(sin(x * 0.6)))
-		for y in range(30 + Y + wiggle, 35 + Y + wiggle):
-			fog.set_tile(Vector2i(x, y), FogGrid.T_GROUND, FogGrid.R_HOLLOW if x < 48 else FogGrid.R_MARSH)
+	for x in range(76, 116):
+		var wiggle := int(round(sin(x * 0.3) * 2.0))
+		for y in range(60 + Y + wiggle, 70 + Y + wiggle):
+			fog.set_tile(Vector2i(x, y), FogGrid.T_GROUND, FogGrid.R_HOLLOW if x < 96 else FogGrid.R_MARSH)
 	# Boardwalks.
-	_boardwalk(Vector2i(57, 32 + Y), Vector2i(104, 32 + Y))
-	_boardwalk(Vector2i(66, 13 + Y), Vector2i(66, 51 + Y))
-	_boardwalk(Vector2i(88, 17 + Y), Vector2i(88, 47 + Y))
-	_boardwalk(Vector2i(66, 23 + Y), Vector2i(72, 23 + Y))
-	_boardwalk(Vector2i(88, 41 + Y), Vector2i(97, 41 + Y))
+	_boardwalk(Vector2i(114, 64 + Y), Vector2i(208, 64 + Y))
+	_boardwalk(Vector2i(132, 26 + Y), Vector2i(132, 102 + Y))
+	_boardwalk(Vector2i(176, 34 + Y), Vector2i(176, 94 + Y))
+	_boardwalk(Vector2i(132, 46 + Y), Vector2i(144, 46 + Y))
+	_boardwalk(Vector2i(176, 82 + Y), Vector2i(194, 82 + Y))
+	_boardwalk(Vector2i(132, 86 + Y), Vector2i(152, 86 + Y))   # out to the southern island
+	_boardwalk(Vector2i(176, 48 + Y), Vector2i(190, 48 + Y))   # out to the north-east island
 	# Islands of firm ground.
 	for c in ISLANDS:
 		var cx := int(c.x)
@@ -142,32 +153,34 @@ func _generate() -> void:
 	_generate_ridge()
 	# The first prototype ends in the Hollow; keep the east and north routes shut in normal play.
 	if not Story.skip_opening:
-		for y in range(65, 73):
-			fog.set_tile(Vector2i(47, y), FogGrid.T_ROCK, FogGrid.R_HOLLOW)
-		for x in range(16, 33):
-			fog.set_tile(Vector2i(x, 42), FogGrid.T_ROCK, FogGrid.R_HOLLOW)
+		for y in range(128, 148):
+			for x in [94, 95]:
+				fog.set_tile(Vector2i(x, y), FogGrid.T_ROCK, FogGrid.R_HOLLOW)
+		for x in range(32, 66):
+			for y in [84, 85]:
+				fog.set_tile(Vector2i(x, y), FogGrid.T_ROCK, FogGrid.R_HOLLOW)
 
 ## Region 3: a long windswept ridge north of the Hollow, reached by a narrow climb.
 ## Rock outcrops give shelter from the west wind.
 func _generate_ridge() -> void:
 	_carve_ellipse(RIDGE_C, RIDGE_R, FogGrid.T_GROUND, FogGrid.R_RIDGE, 2.7)
 	# The climb from the top of the Hollow up to the Ridge.
-	for y in range(26, 50):
-		var wiggle := int(round(sin(y * 0.5) * 1.5))
-		for x in range(22 + wiggle, 27 + wiggle):
+	for y in range(52, 100):
+		var wiggle := int(round(sin(y * 0.25) * 3.0))
+		for x in range(44 + wiggle, 54 + wiggle):
 			if fog.terrain_of(Vector2i(x, y)) == FogGrid.T_ROCK:
-				fog.set_tile(Vector2i(x, y), FogGrid.T_GROUND, FogGrid.R_RIDGE if y < 38 else FogGrid.R_HOLLOW)
+				fog.set_tile(Vector2i(x, y), FogGrid.T_GROUND, FogGrid.R_RIDGE if y < 76 else FogGrid.R_HOLLOW)
 	# Outcrops: small rock clusters, kept off the middle line so the Ridge stays walkable end to end.
 	var orng := RandomNumberGenerator.new()
 	orng.seed = SEED + 3
 	var placed := 0
 	var tries := 0
-	while placed < 22 and tries < 500:
+	while placed < RIDGE_OUTCROPS and tries < 2000:
 		tries += 1
-		var c := Vector2i(orng.randi_range(8, 60), orng.randi_range(7, 27))
+		var c := Vector2i(orng.randi_range(16, 120), orng.randi_range(14, 54))
 		if fog.terrain_of(c) != FogGrid.T_GROUND or fog.region[fog.idx(c)] != FogGrid.R_RIDGE:
 			continue
-		if absi(c.y - int(RIDGE_C.y)) < 2 or (c.x >= 20 and c.x <= 29 and c.y > 20):
+		if absi(c.y - int(RIDGE_C.y)) < 3 or (c.x >= 38 and c.x <= 60 and c.y > 40):
 			continue   # keep the spine and the top of the climb open
 		for t in [Vector2i.ZERO, Vector2i(0, 1), Vector2i(0, -1)] if orng.randf() < 0.6 else [Vector2i.ZERO, Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
 			if fog.region[fog.idx(c + t)] == FogGrid.R_RIDGE:
@@ -217,42 +230,42 @@ func _place_landmarks() -> void:
 	# The rack by the hut is scenery now (owner: too much to read at the start); the letter is the opening.
 	var rack := _add_landmark("rack", "Lantern rack", "rack", start + Vector2(-80, -40), "")
 	rack.scenery = true
-	_add_landmark("climb_cairn", "A stone cairn", "cairn", fog.tile_center(Vector2i(24, 47)),
+	_add_landmark("climb_cairn", "A stone cairn", "cairn", fog.tile_center(Vector2i(48, 94)),
 		"A small cairn, a chalk arrow on the top stone, pointing up.\nThe wind is worse up there. Come back when the marsh is lit. - Oswin")
 	_add_landmark("ledger", "Keepers' ledger", "ledger", start + Vector2(-96, -64),
 		"Long columns of tally marks, one for every lamp lit each night.\nNear the end the columns shrink to a single mark, in a newer hand.\nUnder it: The north lamps first. Wake the WayLamp up there, then follow the stones east. - Oswin")
-	_add_landmark("stone_way", "Carved stone", "stone", fog.tile_center(Vector2i(40, 30 + Y)),
+	_add_landmark("stone_way", "Carved stone", "stone", fog.tile_center(Vector2i(80, 60 + Y)),
 		"KEEP THE WAY TO THE WATER LIT.\nBelow the old letters, a fresh chalk arrow points east.")
-	_add_landmark("frames_east", "Old lantern frames", "frames", fog.tile_center(Vector2i(78, 31 + Y)),
+	_add_landmark("frames_east", "Old lantern frames", "frames", fog.tile_center(Vector2i(156, 62 + Y)),
 		"Three empty frames along the boardwalk, all turned east, toward the lake.\nA rag is tied to the last one: The pump still works. Wake it. - Oswin")
-	_add_landmark("chalk_lake", "Chalk on the pumphouse wall", "chalk", fog.tile_center(Vector2i(100, 30 + Y)),
+	_add_landmark("chalk_lake", "Chalk on the pumphouse wall", "chalk", fog.tile_center(Vector2i(200, 60 + Y)),
 		"Two drawings of the same lake. In the first it shines.\nIn the second, something dark is coiled around the light.\nBeside them, newer chalk: I went to look. - Oswin")
-	var pump := _add_landmark("pumphouse", "The pumphouse", "pumphouse", fog.tile_center(Vector2i(103, 33 + Y)),
+	var pump := _add_landmark("pumphouse", "The pumphouse", "pumphouse", fog.tile_center(Vector2i(206, 66 + Y)),
 		"The old pump still turns when you push it. Its tank could feed a lamp for a long time.\nScratched on the tank: Light has to be fed from somewhere.\nNow go up, past the Hollow. The ridge has glass. - Oswin")
 	pump.unlock_kind = "reservoir"
 
 func _place_ridge_landmarks() -> void:
-	var glazier := _add_landmark("glazier", "The glazier's workshop", "workshop", _ridge_spot(Vector2i(14, 15)),
+	var glazier := _add_landmark("glazier", "The glazier's workshop", "workshop", _ridge_spot(Vector2i(28, 30)),
 		"Cold kilns and racks of cut glass. A half-finished hood sits on the bench,\nshaped to keep a flame alive in any wind.\nA note under it: Finish it. I could not stay. - Oswin")
 	glazier.unlock_kind = "hooded"
-	var station := _add_landmark("station", "The signal station", "station", _ridge_spot(Vector2i(58, 13)),
+	var station := _add_landmark("station", "The signal station", "station", _ridge_spot(Vector2i(116, 26)),
 		"A tall post with a cracked mirror. Keepers passed light from post to post, all the way to the lake.\nSomeone has turned the mirror down, toward the water.\nOld steps beside it go down into the fog.")
 	station.unlock_kind = "mirror"
-	_add_landmark("coat", "A keeper's coat", "coat", _ridge_spot(Vector2i(42, 22)),
+	_add_landmark("coat", "A keeper's coat", "coat", _ridge_spot(Vector2i(84, 44)),
 		"Snagged on the rocks, stiff with frost. An O is stitched inside the collar.\nIn the pocket: \"It came up out of the water. It drank the great lamp.\nNow it is hungry for the rest. Only mirrors reach the lake.\"")
-	_add_landmark("ridge_steps", "Old steps", "steps", _ridge_spot(Vector2i(62, 17)),
+	_add_landmark("ridge_steps", "Old steps", "steps", _ridge_spot(Vector2i(124, 34)),
 		"Old steps, worn smooth, going down.\nBelow, the fog does not move, even in the wind.")
-	_add_landmark("lens", "A broken lens", "lens", _ridge_spot(Vector2i(30, 9)),
+	_add_landmark("lens", "A broken lens", "lens", _ridge_spot(Vector2i(60, 18)),
 		"A great curved lens, split down the middle. Scratched into the frame:\nTHE WICK REMEMBERS EVERY FLAME.\nBelow, in a newer hand: Then it will remember ours. - Oswin")
 
 ## PROTOTYPE: one old WayLamp per region (texts are drafts until the owner approves STORY.md).
 func _place_waylamps() -> void:
 	# Texts approved by the owner on 2026-11-27 (STORY.md section 11).
-	_add_waylamp("hollow", FogGrid.R_HOLLOW, Vector2i(32, 45), "WayLamp of the Hollow",
+	_add_waylamp("hollow", FogGrid.R_HOLLOW, Vector2i(64, 90), "WayLamp of the Hollow",
 		"A tall lamp with a wide iron bowl, cold and full of old ash.\nCut into the base: WHILE THIS BURNS, THE HOLLOW IS KEPT.\nTied to the post: This has to be held until it takes. I could not hold it and keep the rest. - Oswin")
-	_add_waylamp("marsh", FogGrid.R_MARSH, Vector2i(100, 70), "WayLamp of the Reedmarsh",
+	_add_waylamp("marsh", FogGrid.R_MARSH, Vector2i(200, 140), "WayLamp of the Reedmarsh",
 		"A WayLamp on a stone footing, above the damp. Its bowl is dry.\nCut into the base: WHILE THIS BURNS, THE MARSH IS KEPT.\nUnder it, a tin of dry wicks and a tag in an old hand: For whoever comes next.")
-	_add_waylamp("ridge", FogGrid.R_RIDGE, Vector2i(55, 15), "WayLamp of the Ridge",
+	_add_waylamp("ridge", FogGrid.R_RIDGE, Vector2i(110, 30), "WayLamp of the Ridge",
 		"A WayLamp in the lee of the station wall. Frost has cracked its hood.\nCut into the base: WHILE THIS BURNS, THE RIDGE IS KEPT.\nUnder a stone: When this went out, the small dark ones came up the steps. - Oswin")
 
 func _add_waylamp(id: String, region_id: int, want: Vector2i, title: String, text: String) -> WayLamp:
@@ -269,7 +282,7 @@ func _add_waylamp(id: String, region_id: int, want: Vector2i, title: String, tex
 
 ## The nearest open Ridge tile to a wanted spot (outcrops are random).
 func _ridge_spot(want: Vector2i) -> Vector2:
-	for r in 6:
+	for r in 12:
 		for dy in range(-r, r + 1):
 			for dx in range(-r, r + 1):
 				var t := want + Vector2i(dx, dy)
@@ -311,12 +324,12 @@ func _peat_spot(t: Vector2i) -> bool:
 	return false
 
 func _island_spot(t: Vector2i) -> bool:
-	return fog.terrain_of(t) == FogGrid.T_GROUND and fog.region[fog.idx(t)] == FogGrid.R_MARSH and t.x > 57
+	return fog.terrain_of(t) == FogGrid.T_GROUND and fog.region[fog.idx(t)] == FogGrid.R_MARSH and t.x > 114
 
 func _scatter_kind(kind: String, label: String, count: int, ok: Callable, lo: int, hi: int, cap: int, regrow: float) -> void:
 	var placed := 0
 	var tries := 0
-	while placed < count and tries < 6000:
+	while placed < count and tries < 30000:
 		tries += 1
 		var t := Vector2i(rng.randi_range(0, fog.cols - 1), rng.randi_range(0, fog.rows - 1))
 		if not ok.call(t):
@@ -371,51 +384,33 @@ func _add_landmark(id: String, title: String, look: String, p: Vector2, text: St
 
 # --- Drawing -----------------------------------------------------------------
 
-func _hash(x: int, y: int) -> int:
-	return ((x * 73856093) ^ (y * 19349663)) & 0xffff
-
-func _draw() -> void:
-	var t := FogGrid.TILE
-	var ground_tint := Color(0.78, 0.8, 0.9)   # keep lamplit grass from washing out
-	var marsh_tint := Color(0.5, 0.68, 0.74)
-	var plank_tint := Color(1.0, 0.8, 0.6)
-	for y in fog.rows:
-		for x in fog.cols:
-			var pos := Vector2(x * t, y * t)
-			var h := _hash(x, y)
-			match fog.terrain[y * fog.cols + x]:
-				FogGrid.T_ROCK when fog.region[y * fog.cols + x] == FogGrid.R_RIDGE:
-					# Ridge outcrops: bare stone that breaks the wind.
-					Art.cell(self, Art.TOWN, Art.GRASS, pos, Color(0.5, 0.55, 0.65))
-					Art.cell(self, Art.DUNGEON, Art.STONE_WALL, pos, Color(0.75, 0.78, 0.88))
-				FogGrid.T_ROCK:
-					Art.cell(self, Art.TOWN, Art.GRASS, pos, Color(0.22, 0.24, 0.32))
-					if h % 100 < 70:
-						Art.cell(self, Art.TOWN, Art.PINES[h % Art.PINES.size()], pos + Vector2((h % 7) - 3, (h % 5) - 2), Color(0.6, 0.64, 0.78))
-				FogGrid.T_MARSH:
-					Art.cell(self, Art.TOWN, Art.GRASS, pos, marsh_tint)
-					if h % 100 < 45:
-						draw_texture_rect(Art.placeholder("reeds.png"), Rect2(pos, Vector2(t, t)), false)
-				FogGrid.T_BOARDWALK:
-					Art.cell(self, Art.TOWN, Art.GRASS, pos, marsh_tint)
-					Art.cell(self, Art.DUNGEON, Art.PLANKS, pos, plank_tint)
-				_:
-					var c := Art.GRASS
-					if h % 100 < 3:
-						c = Art.GRASS_FLOWERS
-					elif h % 100 < 25:
-						c = Art.GRASS_TUFT
-					Art.cell(self, Art.TOWN, c, pos, ground_tint)
-	# The keeper's hut: 3 tiles wide, roof over walls, just north of the start.
-	var hut := start + Vector2(-48, -112)
-	for i in 3:
-		Art.cell(self, Art.TOWN, Art.HUT_ROOF[i], hut + Vector2(i * t, 0))
-		Art.cell(self, Art.TOWN, Art.HUT_WALL[i], hut + Vector2(i * t, t))
+## The static map, drawn once in chunks (MapChunk) so the renderer can cull what is off screen.
+## The terrain sits behind everything else in the scene; the hut is drawn over it.
+func _build_terrain() -> void:
+	var terrain := Node2D.new()
+	terrain.name = "Terrain"
+	add_child(terrain)
+	move_child(terrain, 0)
+	for cy in range(0, fog.rows, MapChunk.SIZE):
+		for cx in range(0, fog.cols, MapChunk.SIZE):
+			var c := MapChunk.new()
+			c.fog = fog
+			c.t0 = Vector2i(cx, cy)
+			c.position = Vector2(cx, cy) * FogGrid.TILE
+			terrain.add_child(c)
+	var hut := Node2D.new()
+	hut.name = "Hut"
+	hut.position = start + Vector2(-48, -112)   # 3 tiles wide, roof over walls, just north of the start
+	hut.draw.connect(func():
+		for i in 3:
+			Art.cell(hut, Art.TOWN, Art.HUT_ROOF[i], Vector2(i * FogGrid.TILE, 0))
+			Art.cell(hut, Art.TOWN, Art.HUT_WALL[i], Vector2(i * FogGrid.TILE, FogGrid.TILE)))
+	terrain.add_child(hut)
 
 ## Keeper's Light prototype content, limited to the Hollow.
 func _place_hollow_prototype() -> void:
 	# A calm start (owner): nothing hostile within 16 tiles of the hut. The Clinker's post sits just past that.
-	var post_pos := _spot_in_region(Vector2i(27, 48), FogGrid.R_HOLLOW)   # owner: near the WayLamp
+	var post_pos := _spot_in_region(Vector2i(58, 96), FogGrid.R_HOLLOW)   # owner: near the WayLamp
 	var post := _add_landmark("crook_post", "A keeper's post", "post", post_pos,
 		"A keeper's crook, fallen across the path. The lamp on it is cold, but whole.\nTied to it: Plant one where you mean to stand. The small ones will not come into it. - Oswin")
 	post.unlock_kind = "post"
@@ -425,20 +420,13 @@ func _place_hollow_prototype() -> void:
 	var clinker := Clinker.new()
 	clinker.position = post_pos
 	$FogLayer/Wicklings.add_child(clinker)
-	var nest_tiles := [Vector2i(16, 50), Vector2i(21, 45), Vector2i(35, 48)]
-	for i in nest_tiles.size():
+	for i in HOLLOW_NESTS.size():
 		var nest := WickNest.new()
 		nest.foe_id = "nest_hollow_%d" % (i + 1)
-		nest.position = _spot_in_region(nest_tiles[i], FogGrid.R_HOLLOW)
+		nest.position = _spot_in_region(HOLLOW_NESTS[i], FogGrid.R_HOLLOW)
 		$FogLayer/Wicklings.add_child(nest)
-	var packs := [
-		# [tile, how many, Spitwicks, shelled elites]: tougher the further north (toward the WayLamp)
-		[Vector2i(8, 80), 3, 0, 0], [Vector2i(40, 80), 4, 0, 0],      # the quiet southern corners
-		[Vector2i(12, 55), 4, 1, 0], [Vector2i(38, 56), 4, 1, 1],
-		[Vector2i(18, 47), 4, 0, 1], [Vector2i(35, 50), 5, 1, 1],
-	]
-	for i in packs.size():
-		var row: Array = packs[i]
+	for i in HOLLOW_PACKS.size():
+		var row: Array = HOLLOW_PACKS[i]
 		var pack := EnemyPack.new()
 		pack.id = "hollow_%d" % (i + 1)
 		pack.count = int(row[1])
@@ -446,32 +434,75 @@ func _place_hollow_prototype() -> void:
 		pack.elites = int(row[3])
 		pack.position = _spot_in_region(row[0], FogGrid.R_HOLLOW)
 		$FogLayer/Wicklings.add_child(pack)
+	_place_caches()
+
+## Nests (4x for the 4x Hollow): three on the road north, the rest out on the flanks and in the south.
+## All at least 20 tiles from the hut.
+const HOLLOW_NESTS := [
+	Vector2i(32, 100), Vector2i(42, 90), Vector2i(70, 96),     # the road north (the first three)
+	Vector2i(56, 112), Vector2i(36, 116),
+	Vector2i(20, 112), Vector2i(80, 118), Vector2i(14, 130), Vector2i(84, 136),
+	Vector2i(30, 160), Vector2i(66, 162), Vector2i(48, 172),
+]
+
+## Fixed packs (4x for the 4x Hollow). [tile, how many, Spitwicks, shelled elites]:
+## tougher the closer to the WayLamp (north), quiet in the south. All at least 20 tiles from the hut.
+const HOLLOW_PACKS := [
+	# Near the WayLamp: elites.
+	[Vector2i(70, 100), 5, 1, 1], [Vector2i(60, 106), 5, 1, 1], [Vector2i(36, 94), 4, 0, 1],
+	[Vector2i(76, 112), 4, 1, 1], [Vector2i(46, 104), 4, 1, 1], [Vector2i(26, 100), 4, 0, 1],
+	# The middle: Spitwicks.
+	[Vector2i(24, 110), 4, 1, 0], [Vector2i(48, 112), 4, 1, 0], [Vector2i(62, 118), 4, 1, 0],
+	[Vector2i(30, 120), 4, 1, 0], [Vector2i(82, 126), 4, 1, 0],
+	[Vector2i(16, 122), 4, 0, 0], [Vector2i(68, 132), 4, 0, 0], [Vector2i(72, 150), 4, 0, 0],
+	[Vector2i(86, 146), 4, 0, 0], [Vector2i(80, 160), 4, 0, 0],
+	# The quiet south and the west.
+	[Vector2i(16, 160), 3, 0, 0], [Vector2i(34, 176), 3, 0, 0], [Vector2i(60, 176), 3, 0, 0],
+	[Vector2i(48, 160), 3, 0, 0], [Vector2i(12, 138), 3, 0, 0], [Vector2i(24, 150), 3, 0, 0],
+	[Vector2i(28, 134), 3, 0, 0], [Vector2i(70, 170), 3, 0, 0],
+]
+
+## Side caches: an old keeper's stash at a dead end of each region, worth a detour. One-off (no regrowth).
+## [region, tile, kind, amount]
+const CACHES := [
+	[FogGrid.R_HOLLOW, Vector2i(12, 150), "scrap", 10], [FogGrid.R_HOLLOW, Vector2i(84, 168), "fuel", 10],
+	[FogGrid.R_HOLLOW, Vector2i(16, 104), "scrap", 8],
+	[FogGrid.R_MARSH, Vector2i(122, 112), "scrap", 10], [FogGrid.R_MARSH, Vector2i(170, 172), "fuel", 10],
+	[FogGrid.R_RIDGE, Vector2i(20, 26), "glass", 6], [FogGrid.R_RIDGE, Vector2i(120, 46), "glass", 6],
+]
+
+func _place_caches() -> void:
+	for c in CACHES:
+		var t: Vector2i = c[1]
+		var p := _spot_in_region(t, int(c[0]))
+		var r := _add_resource(str(c[2]), p, int(c[3]), int(c[3]), 1.0e9, false)
+		r.label = "Old cache"
 
 ## Upgrades in the far corners of each region: a keeper's satchel (carry more) and a lamp glass
 ## (a better hand lamp). Texts are DRAFT in STORY.md until the owner approves them.
 func _place_upgrades() -> void:
-	var u := _add_landmark("satchel_hollow", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(7, 55), FogGrid.R_HOLLOW),
+	var u := _add_landmark("satchel_hollow", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(14, 110), FogGrid.R_HOLLOW),
 		"A keeper's satchel, hung on a nail in a fallen wall.\nPatched many times, and still sound.")
 	u.upgrade = "carry"
-	u = _add_landmark("lampglass_hollow", "A lamp glass", "lampglass", _spot_in_region(Vector2i(11, 82), FogGrid.R_HOLLOW),
+	u = _add_landmark("lampglass_hollow", "A lamp glass", "lampglass", _spot_in_region(Vector2i(22, 164), FogGrid.R_HOLLOW),
 		"A spare glass for a hand lamp, wrapped in a rag.\nIt is clearer than yours.")
 	u.upgrade = "lamp"
-	u = _add_landmark("satchel_marsh", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(88, 54), FogGrid.R_MARSH),
+	u = _add_landmark("satchel_marsh", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(176, 108), FogGrid.R_MARSH),
 		"A satchel wrapped in oilcloth, wedged under an old post.\nIt is dry inside.")
 	u.upgrade = "carry"
-	u = _add_landmark("lampglass_marsh", "A lamp glass", "lampglass", _spot_in_region(Vector2i(97, 79), FogGrid.R_MARSH),
+	u = _add_landmark("lampglass_marsh", "A lamp glass", "lampglass", _spot_in_region(Vector2i(194, 158), FogGrid.R_MARSH),
 		"A lamp glass in a tin box, packed in dry moss.\nNot a crack in it.")
 	u.upgrade = "lamp"
-	u = _add_landmark("satchel_ridge", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(46, 6), FogGrid.R_RIDGE),
+	u = _add_landmark("satchel_ridge", "A keeper's satchel", "satchel", _spot_in_region(Vector2i(92, 12), FogGrid.R_RIDGE),
 		"A satchel under a flat stone, its strap mended with wire.\nSomeone meant to come back for it.")
 	u.upgrade = "carry"
-	u = _add_landmark("lampglass_ridge", "A lamp glass", "lampglass", _spot_in_region(Vector2i(7, 20), FogGrid.R_RIDGE),
+	u = _add_landmark("lampglass_ridge", "A lamp glass", "lampglass", _spot_in_region(Vector2i(14, 40), FogGrid.R_RIDGE),
 		"A thin lamp glass from the glazier's racks, cut clear as water.\nIt fits your hand lamp.")
 	u.upgrade = "lamp"
 
 ## The nearest walkable ground or boardwalk tile of a region to a wanted tile.
 func _spot_in_region(want: Vector2i, region_id: int) -> Vector2:
-	for r in 10:
+	for r in 20:
 		for dy in range(-r, r + 1):
 			for dx in range(-r, r + 1):
 				var t := want + Vector2i(dx, dy)

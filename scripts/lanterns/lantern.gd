@@ -62,6 +62,12 @@ static func blurb(k: String) -> String:
 			return "No fuel. Place it in another lantern's light and it throws a long beam. [E / A] turns it."
 	return ""
 
+func _enter_tree() -> void:
+	LightSense.bump()
+
+func _exit_tree() -> void:
+	LightSense.bump()
+
 func _ready() -> void:
 	add_to_group("light_source")
 	add_to_group("lantern")
@@ -144,11 +150,25 @@ func is_dying() -> bool:
 
 # --- Wind --------------------------------------------------------------------
 
+# Cached lookups (performance): every foe asks every lantern for its light radius each frame.
+var _fog_ref: FogGrid
+var _wind_ref: Wind
+var _shelter_tile := Vector2i(-999999, -999999)
+var _shelter := {}               # wind direction -> sheltered (rock doesn't change after the map is made)
+var _seg_pos := Vector2.INF       # beam_segment cache key: position, direction and beam length
+var _seg_dir := -1
+var _seg_len := -1.0
+var _seg: Array = []
+
 func _fog() -> FogGrid:
-	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	if _fog_ref == null or not is_instance_valid(_fog_ref):
+		_fog_ref = get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	return _fog_ref
 
 func _wind() -> Wind:
-	return get_tree().get_first_node_in_group("wind") as Wind
+	if _wind_ref == null or not is_instance_valid(_wind_ref):
+		_wind_ref = get_tree().get_first_node_in_group("wind") as Wind
+	return _wind_ref
 
 ## Sheltered if rock (or the map edge) is 1-2 tiles upwind.
 func is_sheltered_from(dir: Vector2i) -> bool:
@@ -156,11 +176,20 @@ func is_sheltered_from(dir: Vector2i) -> bool:
 	if fog == null:
 		return false
 	var t := fog.tile_of(global_position)
+	if t != _shelter_tile:
+		_shelter_tile = t
+		_shelter.clear()
+	var cached = _shelter.get(dir)
+	if cached != null:
+		return cached
+	var out := false
 	for k in range(1, 3):
 		var u := t - dir * k
 		if not fog.in_bounds(u) or fog.solid[u.y * fog.cols + u.x] == 1:
-			return true
-	return false
+			out = true
+			break
+	_shelter[dir] = out
+	return out
 
 func wind_proof() -> bool:
 	return kind == "hooded" or kind == "mirror"
@@ -220,6 +249,8 @@ func beam_segment() -> Array:
 		return []
 	var fog := _fog()
 	var from := global_position
+	if from == _seg_pos and mirror_dir == _seg_dir and Tuning.mirror_beam_length == _seg_len and fog != null:
+		return _seg
 	var dir := beam_dir()
 	var length := Tuning.mirror_beam_length
 	if fog:
@@ -230,6 +261,11 @@ func beam_segment() -> Array:
 				length = d - step
 				break
 			d += step
+		_seg_pos = from
+		_seg_dir = mirror_dir
+		_seg_len = Tuning.mirror_beam_length
+		_seg = [from, from + dir * length]
+		return _seg
 	return [from, from + dir * length]
 
 ## How brightly a point sits in this mirror's beam (0 outside).
@@ -250,6 +286,7 @@ func refuel(amount: float) -> float:
 		return 0.0
 	var before := fuel
 	fuel = minf(fuel + amount, max_fuel())
+	LightSense.bump()
 	return fuel - before
 
 func _process(delta: float) -> void:
@@ -273,7 +310,22 @@ func _process(delta: float) -> void:
 		if beam_light.enabled:
 			beam_light.rotation = beam_dir().angle()
 			beam_light.texture_scale = maxf(seg[0].distance_to(seg[1]), 8.0) / 256.0
-	queue_redraw()
+	_redraw_if_changed()
+
+var _look := -1
+
+## Redraw only when what is drawn changes (performance): the fuel bar moves a pixel, it lights or goes
+## cold, it is held or dying, a mirror turns. Wind marks and smother wisps animate, so they redraw every frame.
+func _redraw_if_changed() -> void:
+	var windy := in_gust() or in_ridge_wind()
+	if windy or is_smothered():
+		_look = -1
+		queue_redraw()
+		return
+	var look := int(fuel_frac() * 24.0) | (int(is_lit()) << 5) | (int(is_held()) << 6) | (int(is_dying()) << 7) | (mirror_dir << 8)
+	if look != _look:
+		_look = look
+		queue_redraw()
 
 ## Reservoir: share fuel with other fuel-burning lanterns inside its light, lit or cold.
 func _feed(delta: float) -> void:

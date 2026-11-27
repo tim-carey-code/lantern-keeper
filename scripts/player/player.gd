@@ -410,6 +410,7 @@ func pick_up_nearest() -> void:
 	l.remove_from_group("lantern")
 	l.remove_from_group("light_source")
 	l.queue_free()
+	LightSense.bump()
 
 # --- Drawing ---------------------------------------------------------------
 

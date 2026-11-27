@@ -43,6 +43,22 @@ python3 tools/check_docs.py                                                     
 # test fails with "Could not preload resource file ...kenney_pixel.ttf". Run --import again until it exits 0.
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800                    # no errors
 ```
+## Performance benchmark (not a test; `run_tests.sh` doesn't run it)
+```
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/bench/bench.tscn            # game logic only
+xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60 --disable-vsync \
+  --path . res://tools/bench/bench.tscn                                                              # adds frame time and draw calls
+# optional: -- <lanterns> <foes> <frames>   (default 30 20 400)
+```
+- It places 30 lanterns around the start, keeps 20 foes in play, and prints a table (average and worst
+  process / physics time, fog step, fog texture update, node count; draw calls when rendering).
+- **Budget:** game logic (process + physics) averages well under 4 ms a frame at 30 lanterns and 20 foes
+  (DECISIONS.md). Run it after changing the fog, foes, lanterns, the map or anything that redraws every frame.
+- Hot paths to keep cheap: foes read lantern light from `LightSense` (one snapshot a frame, `bump()` it when
+  lanterns appear, go or get refuelled); the fog only steps tiles below full fog or in light (call
+  `FogGrid.mark_all_dirty()` after replacing `density` or `remembered` wholesale); the map is drawn once in
+  `MapChunk`s; lanterns redraw only when their look changes.
+
 - Add checks to `tools/tests/test_core.gd` for new rules. Tests run as a scene so autoloads exist.
 - Tests and captures set `SaveGame.path` to a test file first: they must never read or overwrite the owner's real save.
 - Tests strip joypad events first: a real controller on this PC would otherwise move the test keeper (this caused flaky runs).

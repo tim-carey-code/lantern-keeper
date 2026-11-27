@@ -52,15 +52,15 @@ func _find_prey(max_dist: float) -> Node2D:
 		if w.kindling and d < bd:
 			best = w
 			bd = d
-	for l in get_tree().get_nodes_in_group("lantern"):
+	LightSense.refresh(get_tree())
+	for i in LightSense.nodes.size():   # dying lanterns (the snapshot has every non-mirror lantern)
+		var d := LightSense.pos[i].distance_to(global_position)
+		if d < bd and LightSense.dying[i] == 1 and healthy_level_at(LightSense.pos[i], LightSense.nodes[i]) <= 0.0:
+			best = LightSense.nodes[i]
+			bd = d
+	for l in get_tree().get_nodes_in_group("mirror"):
 		var d: float = l.global_position.distance_to(global_position)
-		if d >= bd:
-			continue
-		if l.kind == "mirror":
-			if l.is_lit() and healthy_level_at(l.global_position) <= 0.0:
-				best = l
-				bd = d
-		elif l.is_dying() and healthy_level_at(l.global_position, l) <= 0.0:
+		if d < bd and l.is_in_group("lantern") and l.is_lit() and healthy_level_at(l.global_position) <= 0.0:
 			best = l
 			bd = d
 	return best

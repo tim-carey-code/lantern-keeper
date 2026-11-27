@@ -1,6 +1,6 @@
 # Lantern Keeper — Design Document
 
-Synced to commit 9a2b9cc plus the Reservoir refuel fix (2026-11-26). History of decisions: docs/DECISIONS.md.
+Synced to commit 9a2b9cc plus the Reservoir refuel fix (2026-11-26); map sizes, regions and performance synced on `proto/kl-big` (2026-11-27). History of decisions: docs/DECISIONS.md.
 
 > Describes the game **as built** at 9a2b9cc. Unbuilt content is marked **planned**; §8 is a prototype. `docs/DECISIONS.md` overrides this file; story text lives in `docs/STORY.md`.
 > Numbers from `systems/tuning.gd` are **placeholders**. Numbers fixed elsewhere in the code are marked *(code)*.
@@ -42,7 +42,7 @@ Over a session: *light a path → read Oswin's next mark → unlock a lantern �
 - **Hand lamp:** 104 px of light, dimming to a 44 px **ember** over 45 s in the dark. It refills at 0.5 per second in lantern light (within 85% of a lit lantern's radius *(code)*) and burns 1 carried fuel when low. It never goes out.
 
 ### 3.2 Fog and memory
-- The valley is 112 × 100 tiles of 32 px *(code)*, each with fog from 0 (clear) to 1.
+- The valley is 224 × 200 tiles of 32 px *(code)*, each with fog from 0 (clear) to 1. (It was 112 × 100 until 2026-11-27, when every region grew to 4x its area.)
 - Light clears fog (up to 0.8 per second). Unlit tiles fog back in (up to 0.05 per second, fastest next to fog), so lone lights get eaten at the edges. Reedmarsh fog returns 1.8× as fast; gusts make it 1.5× as fast everywhere.
 - A tile once clearer than 0.3 is **remembered** *(code)*: a dim blue haze on screen and map. Never-seen ground is near-black.
 - Resources and landmarks show only below 0.35 fog; building needs 0.6 or less *(code)*. Full fog slows walking to 60%.
@@ -122,17 +122,25 @@ Text lives in STORY.md, mirrored in `systems/story/story.gd` and `scripts/main/m
 - **Pause menu (Esc / Start):** Resume, Save, New game (press twice; deletes the save), Save and quit, Goal pointer, Show tips again, plus the controls.
 - Notes, menus, the map and the journal pause the world.
 
+### 3.11 Performance
+- Budget: game logic (process + physics) averages well under 4 ms a frame with 30 lanterns and 20 foes, measured by `tools/bench/bench.tscn` (see AGENTS.md).
+- The fog steps only tiles that can change: those below full fog, and those in light this tick. The fog texture updates only those tiles.
+- Foes read lantern light from one shared snapshot a frame (`systems/light/light_sense.gd`) instead of asking every lantern.
+- The map is drawn once, in 16 × 16 tile chunks *(code)*, so the renderer culls what is off screen and a light redraws only the chunks under it. Lanterns redraw only when their look changes.
+
 ---
 
 ## 4. Regions
 
 One fixed map, built by code from a fixed seed, so it is the same in every game. It never reloads; it only becomes lit. Each region adds one twist.
 
-**1. The Hollow** (start, built). A sheltered bowl around the keeper's hut. The hut lantern starts cold; the woodpile and a scrap pile sit close by; 18 resin trees and 16 ruins *(code)*. Landmarks: the letter, the lantern rack, the ledger, the carved stone at the east passage, a cairn at the foot of the climb. Goals 1-6, with the pointer on.
+**Sizes (2026-11-27, owner: "make them all 4x bigger"):** every region is twice as wide and twice as tall as before, about 4x the area, and everything hand-placed kept its relative place. The map is 224 × 200 tiles *(code)*. The Hollow is an oval about 76 × 88 tiles (about 5,500 open tiles); the Reedmarsh about 112 × 96 (about 8,500); the Ridge about 120 × 52 (about 4,800). The passage to the marsh is 10 tiles wide and the climb to the Ridge 10 wide. The north-east quarter, above the marsh, is kept empty for the Lakeshore and the Still Lake. Resource spots, packs and nests are 4x as many, so the bigger space is as full as the old one, and each region has old caches (one-off piles of scrap, fuel or glass) at its dead ends.
 
-**2. The Reedmarsh** (east, built). **Twist: soft ground.** You wade at 85% speed *(code)*, but lanterns stand only on boardwalks and six islands, and fog returns faster. 24 peat and 6 scrap spots *(code)*. Landmarks: old frames, chalk on the pumphouse wall, the pumphouse (Reservoir Lamp). Goals 6-10.
+**1. The Hollow** (start, built). A sheltered bowl around the keeper's hut. The hut lantern starts cold; the woodpile and a scrap pile sit close by; 72 resin trees and 64 ruins *(code)*, and three old caches. Landmarks: the letter, the lantern rack, the ledger, the carved stone at the east passage, a cairn at the foot of the climb. Goals 1-6, with the pointer on.
 
-**3. The Windward Ridge** (north, built). Up a narrow climb from the Hollow. **Twist: wind.** 14 glass, 8 fuel and 7 scrap spots *(code)*. Landmarks, west to east: the glazier's workshop (Hooded Lamp), a broken lens, a keeper's coat, the signal station (Mirror Post), old steps going down. Goals 11-18.
+**2. The Reedmarsh** (east, built). **Twist: soft ground.** You wade at 85% speed *(code)*, but lanterns stand only on boardwalks and ten islands, and fog returns faster. 96 peat and 24 scrap spots *(code)*, and two old caches. Landmarks: old frames, chalk on the pumphouse wall, the pumphouse (Reservoir Lamp). Goals 6-10.
+
+**3. The Windward Ridge** (north, built). Up a narrow climb from the Hollow. **Twist: wind.** 56 glass, 32 fuel and 28 scrap spots *(code)*, 88 rock outcrops, and two caches of glass. Landmarks, west to east: the glazier's workshop (Hooded Lamp), a broken lens, a keeper's coat, the signal station (Mirror Post), old steps going down. Goals 11-18.
 
 **4. The Still Lake** (planned). Down the old steps. **Twist: fog too thick for ordinary light.** Only beams cut through, so the player chains mirrors from the shore to the island. Oswin's camp holds a half-built mirror frame and a crate of glass; the player builds every mirror. 8 landmarks and goals 19-24 are in STORY.md.
 
@@ -244,12 +252,14 @@ One fixed map, built by code from a fixed seed, so it is the same in every game.
 
 ### Hollow prototype (branch `proto/kl-hollow`, implemented 2026-11-27; playtest pending)
 
-Slices 1-6 of `docs/PLAN_KEEPERS_LIGHT.md` are now present: six fixed packs (two with Spitwicks), three core-burned nests, the shelled Clinker guarding the Post Lamp find, wick and level-up choices, and the two-phase Ashbrood on the Hollow WayLamp. Fixed enemies and pack clears persist; fainting drops unspent wick where the keeper fell and resets pack clears. The build uses a separate save path. The north and east routes are closed. F1 exposes prototype combat, enemy, progression and boss tuning. The small Leads slice, third boss phase, and polish beyond placeholder shapes/effects remain out of scope. This is implementation status, not a passed playtest; see `docs/PLAYTEST.md` for the handoff and gate questions.
+Slices 1-6 of `docs/PLAN_KEEPERS_LIGHT.md` are now present: 24 fixed packs (since the 4x Hollow; Spitwicks in the middle and north), twelve core-burned nests, the shelled Clinker guarding the Post Lamp find, wick and level-up choices, and the two-phase Ashbrood on the Hollow WayLamp. Fixed enemies and pack clears persist; fainting drops unspent wick where the keeper fell and resets pack clears. The build uses a separate save path. The north and east routes are closed. F1 exposes prototype combat, enemy, progression and boss tuning. The small Leads slice, third boss phase, and polish beyond placeholder shapes/effects remain out of scope. This is implementation status, not a passed playtest; see `docs/PLAYTEST.md` for the handoff and gate questions.
 
 **Feedback (2026-11-27):** foes flash when hit; the burst, kills and big hits shake the screen (`kl_shake_px`); a short freeze on a kill. Hurt foes, and big ones nearby, show a name and a health bar, with the shell as a pale bar above it. The Ashbrood has a boss bar across the bottom of the screen. The "Quick fill" upgrade is replaced by "Kindled kills" (each kill gives back 10% lamp charge).
 
 **Lanterns and the dark (2026-11-27):** about half the Wicklings are timid and stay out of healthy light. The brave ones walk in, start burning after 2.5 s (1.5 hp/s) and run. Elites, the Clinker and the Ashbrood ignore lanterns completely, cores included. Numbers: `kl_timid_share`, `kl_light_tolerance`, `kl_light_burn_dps`. The boss bar shows the phase and a hint for what it wants.
 
-**No endless spawns (2026-11-27):** the old trickle of Wicklings out of the fog is off (`kl_ambient_spawns`). Enemies wait in six fixed packs (tougher further north, two with a shelled elite), three nests and the WayLamp fight. Cleared packs stay cleared.
+**No endless spawns (2026-11-27):** the old trickle of Wicklings out of the fog is off (`kl_ambient_spawns`). Enemies wait in fixed packs (tougher further north), nests and the WayLamp fight. Cleared packs stay cleared.
 
 **A calm start (2026-11-27):** nothing hostile within 16 tiles of the hut. The two nearest packs moved to the southern corners; the Clinker's post is now 17 tiles north (its 330 px charge range no longer reaches the hut); nests and the other packs moved out to match.
+
+**4x Hollow (2026-11-27):** with the bigger map, the Hollow holds 24 packs and 12 nests, all at least 20 tiles from the hut. Six packs in the north, around the WayLamp, have shelled elites (4-5 Wicklings, most with a Spitwick); the middle ten have Spitwicks or 4 Wicklings; the eight in the south and west are 3 Wicklings each. Three nests sit on the road north, the rest on the flanks and in the south. The Clinker's post is under 10 tiles from the WayLamp and about 40 from the hut. Three old caches (scrap, fuel) lie at dead ends. One red lure still marks the post.

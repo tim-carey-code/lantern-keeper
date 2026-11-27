@@ -18,8 +18,12 @@ func _ready() -> void:
 	add_to_group("resource")
 	z_index = 15
 
+var _fog_ref: FogGrid
+
 func _fog() -> FogGrid:
-	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	if _fog_ref == null or not is_instance_valid(_fog_ref):
+		_fog_ref = get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	return _fog_ref
 
 func is_revealed() -> bool:
 	var fog := _fog()

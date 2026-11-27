@@ -27,8 +27,10 @@ func _process(_delta: float) -> void:
 	match frame:
 		2:
 			check(not Progress.is_unlocked("post"), "the Post Lamp starts locked")
-			check(get_tree().get_nodes_in_group("enemy_pack").size() == 6, "six fixed Hollow packs are placed")
-			check(get_tree().get_nodes_in_group("foe").filter(func(f): return f is WickNest).size() == 3, "three nests guard the road north")
+			check(get_tree().get_nodes_in_group("enemy_pack").size() == 24, "24 fixed Hollow packs are placed (4x for the 4x Hollow)")
+			check(get_tree().get_nodes_in_group("foe").filter(func(f): return f is WickNest).size() == 12, "twelve nests, three of them on the road north")
+			var caches := get_tree().get_nodes_in_group("resource").filter(func(r): return r.label == "Old cache")
+			check(caches.size() == 7, "side caches wait at the dead ends (%d)" % caches.size())
 			var find := get_tree().get_nodes_in_group("landmark").filter(func(m): return m.id == "crook_post")
 			check(find.size() == 1, "the Post Lamp find is placed north of the hut")
 			check(Story.goal_target("build_post") == "crook_post", "the goal pointer leads to the Hollow find")
@@ -105,5 +107,15 @@ func _process(_delta: float) -> void:
 			check(too_close.is_empty(), "a calm start: no pack, nest or Clinker within 16 tiles of the hut (%s)" % str(too_close))
 			var packs := get_tree().get_nodes_in_group("enemy_pack")
 			check(packs.any(func(p): return p.elites > 0), "the northern packs hold shelled elites")
+			# Tougher toward the WayLamp: the third of the packs nearest it outweighs the farthest third.
+			packs.sort_custom(func(a, b): return a.global_position.distance_to(wl_pos) < b.global_position.distance_to(wl_pos))
+			var weight := func(p): return p.count + p.spitwicks * 2 + p.elites * 3
+			var third := packs.size() / 3
+			var near_w := 0
+			var far_w := 0
+			for i in third:
+				near_w += weight.call(packs[i])
+				far_w += weight.call(packs[packs.size() - 1 - i])
+			check(near_w > far_w and packs.slice(packs.size() - third).all(func(p): return p.elites == 0), "packs get tougher toward the WayLamp (%d vs %d)" % [near_w, far_w])
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)

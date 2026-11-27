@@ -29,9 +29,9 @@ func target_pos() -> Variant:
 		"start_lantern":
 			return main.start_lantern_pos
 		"passage":
-			return main.fog.tile_center(Vector2i(44, 68))
+			return main.fog.tile_center(Vector2i(88, 136))
 		"marsh_entry":
-			return main.fog.tile_center(Vector2i(54, 68))
+			return main.fog.tile_center(Vector2i(108, 136))
 	if key.begins_with("waylamp_"):
 		for w in get_tree().get_nodes_in_group("waylamp"):
 			if "waylamp_" + w.id == key:

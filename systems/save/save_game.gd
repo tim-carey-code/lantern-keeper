@@ -6,7 +6,7 @@ extends Node
 ## what has been seen). Not saved: Wicklings, embers and wind (they come back on their own).
 ## File: user://save.json  (on Linux: ~/.local/share/godot/app_userdata/Lantern Keeper/)
 
-const VERSION := 3   # 3: isolated Keeper's Light prototype progression
+const VERSION := 4   # 3: isolated Keeper's Light prototype progression; 4: the map is 224 x 200 (regions 4x)
 const AUTOSAVE_SEC := 60.0
 
 const SLOTS := 3
@@ -162,6 +162,7 @@ func load_into(main: Node) -> bool:
 	var rem := Marshalls.base64_to_raw(fd["remembered"])
 	if rem.size() == fog.remembered.size():
 		fog.remembered = rem
+	fog.mark_all_dirty()   # the fog's sparse update and texture must see the loaded map
 	# Inventory and progress.
 	for k in data["inventory"]:
 		Inventory.counts[k] = int(data["inventory"][k])
