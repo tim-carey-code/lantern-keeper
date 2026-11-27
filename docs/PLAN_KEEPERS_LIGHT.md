@@ -123,6 +123,8 @@ So a fight in the dark is three seconds of beam, then a choice: fall back to a l
 
 **OWNER 3:** the charge model. (a) As built: light refills it, fuel tops it up between fights. Recommended to test first; your ward playtest liked the push and pull. (b) If fights in the dark stall, add a slow free trickle: 0.05 per second after 2 s of quiet.
 
+DECIDED (2026-11-27): (a), as built, for now.
+
 ### 2.3 Shells
 
 - A shell is a pale ring around a creature. It thins as the beam wears it. (Built)
@@ -211,9 +213,15 @@ The four built lanterns become the four keys, so nothing built is thrown away. T
 
 **OWNER 7:** the Post Lamp becomes the Hollow's find.
 
+DECIDED (2026-11-27): yes.
+
 **OWNER 8:** move the Reedmarsh's WayLamp to the south-east island. The alternative keeps the WayLamp and moves the Reservoir's unlock west to the old frames.
 
+DECIDED (2026-11-27): yes.
+
 **OWNER 9:** move the Mirror Post's unlock to the Lakeshore. The alternative keeps it at the station, as the reward for holding the Ridge.
+
+DECIDED (2026-11-27): yes.
 
 **OWNER 10:** the catch ring as the Lake's find. This also keeps "the player builds every mirror" (DECIDED).
 
@@ -230,6 +238,8 @@ Each sits off the main road under a guard, and each has a job where it is found.
 | The Still Lake | none. Oswin's hand lamp after the finale stays story | |
 
 **OWNER 11:** the keeper takes and wears Oswin's coat. It is a strong story beat, and it is yours to call. If no, the coat stays a note and the Ridge gets another coat.
+
+DECIDED (2026-11-27): yes, the keeper takes and wears it.
 
 ---
 
@@ -308,6 +318,8 @@ It is "it". It has big pale eyes. It never speaks. Why it rose stays unexplained
 - Phase 2 is the game's final exam: every find is a key once more.
 
 **OWNER 16:** the finale becomes a fight in three phases. This replaces "a confrontation of light, not a fight" (2026-11-26). The ending text, "it", the eyes and the unanswered why all stay.
+
+DECIDED (2026-11-27): yes. Owner's pitch: the Soul is not killed; it retreats into a dark realm, a portal opens, and the keeper follows it (the hook to expand the game).
 
 ---
 
