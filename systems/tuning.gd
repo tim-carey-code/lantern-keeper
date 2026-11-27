@@ -203,4 +203,6 @@ var kl_timid_share := 0.5                # share of Wicklings that won't enter h
 var kl_light_tolerance := 2.5            # s a brave Wickling can stand in light before it burns
 var kl_light_burn_dps := 1.5             # hp/s it then takes (and it runs)
 
+var kl_ambient_spawns := false           # the old endless trickle of Wicklings out of the fog (off: ARPG packs instead)
+
 var ui_open := false                    # true while a menu has focus (player stops)

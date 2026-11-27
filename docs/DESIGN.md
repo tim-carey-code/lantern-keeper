@@ -249,3 +249,5 @@ Slices 1-6 of `docs/PLAN_KEEPERS_LIGHT.md` are now present: six fixed packs (two
 **Feedback (2026-11-27):** foes flash when hit; the burst, kills and big hits shake the screen (`kl_shake_px`); a short freeze on a kill. Hurt foes, and big ones nearby, show a name and a health bar, with the shell as a pale bar above it. The Ashbrood has a boss bar across the bottom of the screen. The "Quick fill" upgrade is replaced by "Kindled kills" (each kill gives back 10% lamp charge).
 
 **Lanterns and the dark (2026-11-27):** about half the Wicklings are timid and stay out of healthy light. The brave ones walk in, start burning after 2.5 s (1.5 hp/s) and run. Elites, the Clinker and the Ashbrood ignore lanterns completely, cores included. Numbers: `kl_timid_share`, `kl_light_tolerance`, `kl_light_burn_dps`. The boss bar shows the phase and a hint for what it wants.
+
+**No endless spawns (2026-11-27):** the old trickle of Wicklings out of the fog is off (`kl_ambient_spawns`). Enemies wait in six fixed packs (tougher further north, two with a shelled elite), three nests and the WayLamp fight. Cleared packs stay cleared.

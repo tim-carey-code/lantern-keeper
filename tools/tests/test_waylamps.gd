@@ -219,6 +219,7 @@ func _process(_delta: float) -> void:
 			Tuning.lantern_burn_per_sec = 0.0
 			var r: float = marsh_a.get_light_radius()
 			w_repel = spawner.spawn_at(marsh_a.global_position + Vector2(r * 0.5, 0))   # inside, but outside the core
+			w_repel.timid = true   # (about half are; this check is about the timid ones)
 			w_healthy = spawner.spawn_at(marsh_a.global_position + Vector2(0, -r * 0.9))
 			w_healthy.target = marsh_a
 			w_healthy.state = Wickling.State.SEEK_LANTERN

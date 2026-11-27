@@ -92,5 +92,8 @@ func _process(_delta: float) -> void:
 			check(level_ui.root.visible, "a later level-up opens the choice again")
 			check(focus is Button and focus.get_parent() == level_ui.cards and not focus.is_queued_for_deletion(), "and the controller's focus is on one of its new cards")
 		10:
+			check(not Tuning.kl_ambient_spawns, "nothing streams out of the fog: enemies wait in packs and nests")
+			var packs := get_tree().get_nodes_in_group("enemy_pack")
+			check(packs.any(func(p): return p.elites > 0), "the northern packs hold shelled elites")
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)

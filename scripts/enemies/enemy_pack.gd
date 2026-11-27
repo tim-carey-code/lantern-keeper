@@ -5,6 +5,7 @@ extends Node2D
 var id := ""
 var count := 4
 var spitwicks := 0
+var elites := 0                 # shelled Wicklings in the pack
 var awake := false
 var _pulse := 0.0
 
@@ -26,7 +27,9 @@ func _process(delta: float) -> void:
 			if i < spitwicks:
 				foe = Spitwick.new()
 			else:
-				foe = Wickling.new()
+				var w := Wickling.new()
+				w.elite = i >= count - elites
+				foe = w
 			foe.pack_id = id
 			foe.position = global_position + Vector2.from_angle(i * TAU / count) * (22.0 + i * 6.0)
 			get_parent().add_child(foe)

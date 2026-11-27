@@ -431,9 +431,10 @@ func _place_hollow_prototype() -> void:
 		nest.position = _spot_in_region(nest_tiles[i], FogGrid.R_HOLLOW)
 		$FogLayer/Wicklings.add_child(nest)
 	var packs := [
-		[Vector2i(13, 64), 3, 0], [Vector2i(35, 66), 4, 0],
-		[Vector2i(15, 57), 4, 1], [Vector2i(34, 58), 4, 1],
-		[Vector2i(18, 49), 4, 0], [Vector2i(29, 54), 5, 0],
+		# [tile, how many, Spitwicks, shelled elites]: tougher the further north (toward the WayLamp)
+		[Vector2i(13, 64), 3, 0, 0], [Vector2i(35, 66), 4, 0, 0],
+		[Vector2i(15, 57), 4, 1, 0], [Vector2i(34, 58), 4, 1, 1],
+		[Vector2i(18, 49), 4, 0, 1], [Vector2i(29, 54), 5, 1, 1],
 	]
 	for i in packs.size():
 		var row: Array = packs[i]
@@ -441,6 +442,7 @@ func _place_hollow_prototype() -> void:
 		pack.id = "hollow_%d" % (i + 1)
 		pack.count = int(row[1])
 		pack.spitwicks = int(row[2])
+		pack.elites = int(row[3])
 		pack.position = _spot_in_region(row[0], FogGrid.R_HOLLOW)
 		$FogLayer/Wicklings.add_child(pack)
 

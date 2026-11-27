@@ -2,6 +2,11 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (Hollow prototype playtest)
+- **Genre: action RPG.** Lantern Keeper is labelled an ARPG from here on.
+- **No endless trickle of enemies.** Enemies wait in fixed packs, nests and the WayLamp fights; you meet them as you push into new ground and clear it, and cleared ground stays cleared. (`kl_ambient_spawns` is off.) Shelled elites now sit in the northern packs.
+- Lanterns: about half the Wicklings are timid; brave ones burn after a while in light; elites and guardians ignore lanterns. Names, health bars and a boss bar; hit flash and screen shake.
+
 ## 2026-11-27 (combat kit playtest)
 - The combat kit mostly feels good; the owner dashed on purpose to dodge. Still too easy, but more fun. Sound effects and music are the owner's job.
 - **Start of the game:** only the pointer (on the woodpile) until you have fuel; then the cold lamp gets its ring.

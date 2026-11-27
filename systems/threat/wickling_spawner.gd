@@ -20,8 +20,8 @@ func count() -> int:
 	return get_tree().get_nodes_in_group("wickling").size()
 
 func _process(delta: float) -> void:
-	if not Tuning.wick_enabled:
-		return
+	if not Tuning.wick_enabled or not Tuning.kl_ambient_spawns:
+		return   # ARPG: enemies wait in fixed packs and nests; nothing streams out of the fog
 	_timer -= delta
 	if _timer > 0.0:
 		return
