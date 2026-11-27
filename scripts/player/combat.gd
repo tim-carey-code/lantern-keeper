@@ -17,10 +17,20 @@ var dash_t := 0.0                 # > 0 while dashing
 var dash_dir := Vector2.ZERO
 var _burst_fx := 0.0              # > 0 while the burst ring is showing
 var _face := Vector2.RIGHT
+const BEAM_SND := "res://assets/audio/sfx/beam_loop.ogg"
+const BEAM_DB := -9.0
+var beam_snd: AudioStreamPlayer   # the beam's looping hiss and crackle, faded in and out
 
 func _ready() -> void:
 	add_to_group("beam_source")
 	z_index = 9
+	var loop := load(BEAM_SND) as AudioStreamOggVorbis
+	loop.loop = true
+	beam_snd = AudioStreamPlayer.new()
+	beam_snd.stream = loop
+	beam_snd.bus = "SFX"
+	beam_snd.volume_db = -60.0
+	add_child(beam_snd)
 
 func keeper() -> Node2D:
 	return get_parent() as Node2D
@@ -66,11 +76,23 @@ func tick(delta: float, move_dir: Vector2, beam_held: bool, burst_pressed: bool,
 	if beaming:
 		k.lamp_charge = maxf(0.0, k.lamp_charge - Tuning.kl_beam_cost * delta)
 		burn_along_beam(delta)
+	_beam_sound(delta)
 	if burst_pressed:
 		burst()
 	if dash_pressed:
 		dash(move_dir)
 	queue_redraw()
+
+## The beam's loop fades in while it fires and out when it stops (no click on release).
+func _beam_sound(delta: float) -> void:
+	if beaming:
+		if not beam_snd.playing:
+			beam_snd.play()
+		beam_snd.volume_db = move_toward(beam_snd.volume_db, BEAM_DB, 240.0 * delta)
+	elif beam_snd.playing:
+		beam_snd.volume_db = move_toward(beam_snd.volume_db, -60.0, 180.0 * delta)
+		if beam_snd.volume_db <= -59.0:
+			beam_snd.stop()
 
 ## Burns everything inside the beam. Returns how many it touched.
 func burn_along_beam(delta: float) -> int:

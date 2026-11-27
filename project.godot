@@ -20,6 +20,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 Tuning="*res://systems/tuning.gd"
 Inventory="*res://systems/inventory.gd"
 Progress="*res://systems/progress.gd"
+Mix="*res://systems/audio/mix.gd"
 Sfx="*res://systems/audio/sfx.gd"
 SaveGame="*res://systems/save/save_game.gd"
 Story="*res://systems/story/story.gd"

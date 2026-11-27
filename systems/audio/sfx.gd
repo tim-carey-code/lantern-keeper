@@ -15,6 +15,7 @@ func _ready() -> void:
 	rng.randomize()
 	for i in VOICES:
 		var p := AudioStreamPlayer.new()
+		p.bus = "SFX"
 		add_child(p)
 		_players.append(p)
 

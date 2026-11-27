@@ -41,6 +41,10 @@ const ROWS := [
 	["kl_elite_speed", "Elite speed", 10.0, 160.0, 5.0],
 	["warmth_max", "Warmth (health)", 20.0, 300.0, 5.0],
 	["wick_scrap_chance", "Wickling scrap drop chance", 0.0, 1.0, 0.05],
+	# Audio buses
+	["vol_sfx_db", "Sound effects volume (dB)", -40.0, 6.0, 1.0],
+	["vol_music_db", "Music volume (dB)", -40.0, 6.0, 1.0],
+	["vol_ambience_db", "Ambience volume (dB)", -40.0, 6.0, 1.0],
 ]
 
 var panel: PanelContainer

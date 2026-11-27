@@ -79,6 +79,13 @@ func _process(_delta: float) -> void:
 			Input.action_press("beam")
 		20:
 			check(c.beaming, "holding the beam button fires the beam")
+			check(c.beam_snd.playing and c.beam_snd.volume_db > -60.0, "the beam's sound loop plays while it fires")
+			check(c.beam_snd.stream is AudioStreamOggVorbis and (c.beam_snd.stream as AudioStreamOggVorbis).loop, "and it is a loop")
+			for bus in ["SFX", "Music", "Ambience"]:
+				check(AudioServer.get_bus_index(bus) != -1, "the %s audio bus exists" % bus)
+			var mus = main.get_node("Music")
+			check(mus.player.bus == "Music" and mus.player.stream is AudioStreamMP3 and (mus.player.stream as AudioStreamMP3).loop, "the Hollow's music is a looping track on the Music bus")
+			check(mus.wanted and mus.player.playing, "the Hollow's music plays while the keeper is in the Hollow")
 			check(player.lamp_charge < 1.0, "the beam spends lamp charge")
 			fog.step(0.1)
 			var mid: Vector2 = player.global_position + Vector2(0, -10) + c.aim * Tuning.kl_beam_len * 0.6
@@ -86,6 +93,10 @@ func _process(_delta: float) -> void:
 			player.lamp_charge = 0.0
 		24:
 			check(not c.beaming, "an empty lamp can't fire the beam")
+			Tuning.vol_music_db = -10.0
+			Mix._process(0.0)
+			check(is_equal_approx(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music")), -10.0), "the music volume slider moves the Music bus")
+			Tuning.vol_music_db = 0.0
 			Input.action_release("beam")
 			player.lamp_charge = 1.0
 		26:

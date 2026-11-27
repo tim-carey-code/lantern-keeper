@@ -22,6 +22,7 @@ func _ready() -> void:
 	stream_player = AudioStreamPlayer.new()
 	stream_player.stream = gen
 	stream_player.volume_db = -18.0
+	stream_player.bus = "Ambience"
 	add_child(stream_player)
 	stream_player.play()
 	playback = stream_player.get_stream_playback() as AudioStreamGeneratorPlayback

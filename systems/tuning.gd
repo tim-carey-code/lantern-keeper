@@ -133,4 +133,9 @@ var kl_elite_speed := 48.0
 var kl_elite_chill_mult := 1.6           # its touch chills this much harder
 var kl_elite_every := 4                  # every Nth Wickling that comes out of the fog is an elite
 
+# Volume per bus, in dB (0 = as authored). Sliders in the F1 panel.
+var vol_sfx_db := 0.0
+var vol_music_db := 0.0
+var vol_ambience_db := 0.0
+
 var ui_open := false                    # true while a menu has focus (player stops)

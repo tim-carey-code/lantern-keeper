@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://dy452juy2jht4" path="res://scripts/ui/build_menu.gd" id="6_build"]
 [ext_resource type="Script" path="res://systems/wind/wind.gd" id="7_wind"]
 [ext_resource type="Script" path="res://systems/audio/ambience.gd" id="8_amb"]
+[ext_resource type="Script" path="res://systems/audio/music.gd" id="19_music"]
 [ext_resource type="Script" path="res://scripts/ui/note_reader.gd" id="9_note"]
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id="10_map"]
 [ext_resource type="Script" path="res://systems/wind/wind_streaks.gd" id="11_streaks"]
@@ -30,6 +31,9 @@ script = ExtResource("7_wind")
 
 [node name="Ambience" type="Node" parent="."]
 script = ExtResource("8_amb")
+
+[node name="Music" type="Node" parent="."]
+script = ExtResource("19_music")
 
 [node name="Resources" type="Node2D" parent="."]
 

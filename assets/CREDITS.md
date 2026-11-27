@@ -12,6 +12,8 @@ Every third-party asset gets a row before it is committed. Check the license on 
 | Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | `assets/audio/sfx/ui_*`, `relight.ogg`, `unlock.ogg` | 2026-11-26 |
 | RPG Audio | Kenney | https://kenney.nl/assets/rpg-audio | CC0 1.0 | `assets/audio/sfx/refuel.ogg`, `note_open.ogg`, `note_close.ogg` | 2026-11-26 |
 | Puny Characters (Mage, red) | Shade (Kurt Gabriel Sotelo) | https://opengameart.org/content/puny-characters (also https://merchant-shade.itch.io/16x16-puny-characters) | CC0 1.0 (OGA license field; itch.io asset license) | `assets/art/puny/keeper.png` (recoloured); original in `source/vendor/puny-characters/` | 2026-11-26 |
+| Dark Forest Theme (GameMusic_ForestTheme_24) | The Cynic Project (cynicmusic.com, pixelsphere.org) | https://opengameart.org/content/dark-forest-theme | CC0 (OGA license field; download is byte-identical to the file used, checked 2026-11-27). Credit not required; the author asks to be told about projects that use it | `assets/audio/music/hollow_dark_forest_theme.mp3`: the Hollow's music | 2026-11-27 |
+| Beam loop (original) | Lantern Keeper (synthesized by `source/audio/make_beams.py`) | n/a | Original work, all rights reserved (see LICENSE-ASSETS.md); placeholder until the owner replaces it | `assets/audio/sfx/beam_loop.ogg` | 2026-11-27 |
 
 Downloaded but not yet used (not in the repo): Kenney 1-Bit Pack (CC0), https://kenney.nl/assets/1-bit-pack.
 
