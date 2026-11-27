@@ -2,6 +2,11 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (loot and agent skills)
+- **Loot is Diablo-style:** random drops with rarity and rolled stats you compare and swap (lens, burner, coat, wick slots). Rolling is our own code. NPC talk uses Dialogue Manager; inventory data uses GLoot (both MIT; vetted).
+- **Leveling needs a balance pass** (owner), after the bigger map lands (it changes how much wick there is).
+- **An ARPG skill for our agents:** `.agents/skills/lantern-keeper-arpg/` holds the pillars, how foes, numbers, leveling, loot and UI are built, and how to run a balance pass.
+
 ## 2026-11-27 (Hollow prototype playtest)
 - **Genre: action RPG.** Lantern Keeper is labelled an ARPG from here on.
 - **No endless trickle of enemies.** Enemies wait in fixed packs, nests and the WayLamp fights; you meet them as you push into new ground and clear it, and cleared ground stays cleared. (`kl_ambient_spawns` is off.) Shelled elites now sit in the northern packs.

@@ -61,6 +61,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800 
 ## Docs
 - Docs change in the same branch as the code they describe. Follow `.agents/skills/lantern-keeper-docs/SKILL.md`
   (which doc owns what, when it changes, owner approval for story text) and run `python3 tools/check_docs.py` before committing.
+- Combat, enemies, bosses, leveling, loot and NPCs follow `.agents/skills/lantern-keeper-arpg/SKILL.md`.
 
 ## Story and guidance
 - All player-facing story text lives in `docs/STORY.md` (owner-reviewed) and is mirrored in `systems/story/story.gd` (goals, journal entries, tips, letter) and `scripts/main/main.gd` (landmark texts). Change both together.
