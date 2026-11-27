@@ -81,8 +81,10 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact") and not event.is_action_pressed("ui_accept"):
 		var f := get_viewport().gui_get_focus_owner()
 		if f is Button:
-			(f as Button).pressed.emit()
+			# Mark it handled first: the button may reload the whole scene (New game), and then
+			# this menu is no longer in the tree (that error froze the game in the debugger).
 			get_viewport().set_input_as_handled()
+			(f as Button).pressed.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):

@@ -160,10 +160,11 @@ Placeholder numbers live in `systems/tuning.gd`, and the tuning panel (F1) chang
 
 ### Tests
 
-Run these from the project folder. A test exits with code 0 when it passes. Tests use their own save file, so they never touch your real save, and they ignore any connected controller.
+Run these from the project folder. `tools/run_tests.sh` runs them all and also fails a test that prints a script error (in the editor, a script error freezes the game in the debugger). A single test exits with code 0 when it passes. Tests use their own save file, so they never touch your real save, and they ignore any connected controller.
 
 ```sh
 godot --headless --audio-driver Dummy --path . --import
+tools/run_tests.sh                                                                             # all of the tests below
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_core.tscn   # exit 0 = pass
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_save.tscn

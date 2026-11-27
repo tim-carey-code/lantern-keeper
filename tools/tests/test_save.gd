@@ -5,6 +5,7 @@ extends Node
 var main: Node
 var frame := 0
 var fails := 0
+var old_main_id := 0
 var lamp_pos := Vector2.ZERO
 var keeper_pos := Vector2.ZERO
 var res_pos := Vector2.ZERO
@@ -33,6 +34,13 @@ func _ready() -> void:
 	SaveGame.path = "user://test_save.json"
 	SaveGame.delete_save()
 	_new_main()
+
+## The controller's A, as our "interact" action.
+func _press_a() -> void:
+	var ev := InputEventAction.new()
+	ev.action = "interact"
+	ev.pressed = true
+	Input.parse_input_event(ev)
 
 func _process(_delta: float) -> void:
 	frame += 1
@@ -100,8 +108,23 @@ func _process(_delta: float) -> void:
 		130:
 			var pm2 = main.get_node("PauseMenu")
 			check(not pm2.is_open() and not get_tree().paused, "A / E chooses the focused option (Resume)")
-			# New game: delete and skip.
-			SaveGame.delete_save()
+			# New game with the controller: A on "New game", then A again. It reloads the game
+			# scene, so make the game the current scene first (as when you play it).
+			check(SaveGame.has_save(), "a save exists before the new game")
+			main.reparent(get_tree().root)   # the current scene must be a child of the root
+			get_tree().current_scene = main
+			old_main_id = main.get_instance_id()
+			pm2.open()
+			pm2.buttons[2].grab_focus()
+			_press_a()
+		140:
+			var pm3 = main.get_node("PauseMenu")
+			check(pm3.buttons[2].text == "New game? Press again", "A on New game asks to confirm")
+			_press_a()
+		170:
+			var cur := get_tree().current_scene
+			check(cur != null and cur.get_instance_id() != old_main_id and cur.is_in_group("main"), "A again starts a new game: the game scene reloads")
+			check(not get_tree().paused and not Tuning.ui_open, "the new game runs, unpaused")
 			check(not SaveGame.has_save(), "new game deletes the save")
 			Art._ph.clear()
 			print("RESULT fails=%d" % fails)
