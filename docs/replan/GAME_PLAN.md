@@ -1,6 +1,6 @@
 # Lantern Keeper: game plan (re-plan), v2
 
-**DRAFT for owner approval, 2026-11-27.** This is a proposal, not a decision. Where it changes an earlier owner decision, it is listed under "Decisions this plan would supersede", and each of those needs the owner's OK.
+**APPROVED by the owner, 2026-11-27** (all nine questions answered as recommended, and the supersede table approved as a whole; see DECISIONS "the game plan approved"). Numbers are still starting values for tuning. In-game texts named here stay DRAFT until each is shown to the owner.
 
 **Inputs.** `docs/replan/AUDIT.md` (AUDIT §n), `docs/research/ARPG_REFERENCES.md` (brief §n), `docs/replan/REVIEW_GAME_PLAN.md` (review IDs B1, M1-M13, minor 1-16), `docs/DECISIONS.md` (numbered as the rows of AUDIT §3), and the loop on `proto/kl-loop` at `ff8426b` ("the loop"), treated as built.
 

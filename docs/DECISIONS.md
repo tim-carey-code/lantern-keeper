@@ -2,6 +2,20 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (the game plan approved)
+- **The new game plan is approved as recommended** (owner tapped "Approve all 9 as recommended"): `docs/replan/GAME_PLAN.md` v2 (90ac820) is the plan of record. Its nine owner questions are all answered yes:
+  1. the kit: Lampfire (RT) and Fireglobe (RB) from level 1, Lance (LB) from level 2, the Beam optional (LB at level 1 only), the old burst as the optional Hearth ring, Y empty;
+  2. the pad map: aimed skills on RT/RB/LB, dash on LT, Y self-cast only, flask on B read after the menu guard, the D-pad off movement;
+  3. light in a fight: warmth from light only when nothing hunts you; charge from light 0.1/s while hunted;
+  4. lamps and WayLamps lit by touch, lamps never burn, at most 3 planted outside held ground with a full refund and a 15 s replant delay, WayLamps cost a guardian fight;
+  5. the faint rule (§12): cleared stays cleared, nothing carried is lost, wick waits where you fell, bosses keep their phase;
+  6. levels: base 7, exponent 1.65, cap 12; the Hollow ends at 6; Hollow foes 1-4;
+  7. fixed skill branches replace the "Trim the wick" cards; Hot core and Lee become fixed gear lines;
+  8. scrap is the only material; salvage in; Kit's re-cut a cut line;
+  9. the plan's "Decisions this plan would supersede" table is approved as a whole, including #36 (the marsh WayLamp goes on the U-route's north leg, not the south-east island).
+- **Pronouns for Amos, Maud, Kit and Ivo:** not given yet; use none until the owner says (needed before M4).
+- **Next:** rewrite the docs per GAME_PLAN §17, and build M1a (fire in the Hollow) per §18.
+
 ## 2026-11-27 (loop texts approved)
 - **The loop's new texts are approved** (owner: "I approve the new text drafts"): the ledger, cairn and pumphouse notes and the `kindle_hollow` and `climb_north` goal lines in STORY.md. The fast-travel menu texts stay DRAFT (not yet shown to the owner).
 - **The builder's three loop calls are under review** (owner asked for a review): the old climb opened by stones pushed from the Ridge, the cairn at the foot of the marsh climb, and the reworded pumphouse note's placement.
