@@ -111,7 +111,7 @@ OWNER: held regions stop every creature, not only Wicklings, and creatures insid
 - **Knobs:** `clinker_max` (1-2), `clinker_speed`, `clinker_hp`, `clinker_push_mult`, `clinker_settle_sec`.
 - **Effort:** M (push handling and soft-lock guards).
 
-OWNER (2026-11-27, proposed): the Ridge is crowded (the Gutterkite, the Fogstilt and, once the Hollow and the Reedmarsh are held, the Clinker). Proposal: add a small **Lakeshore** region between the Ridge and the Lake, down the old steps, in the empty north-east of the map. The Fogstilt and Ebba move there (beams cut its fog: a warm-up for the Lake). The Ridge keeps the Gutterkite; the Clinker roams whatever isn't held. About one milestone of work. Cheaper option: no new region; the Clinker keeps to the Hollow and the Reedmarsh.
+DECIDED (2026-11-27): add a small **Lakeshore** region between the Ridge and the Lake, down the old steps, in the empty north-east of the map. The Fogstilt and Ebba move there (beams cut the Fogstilt's fog: a warm-up for the Lake). The Ridge keeps the Gutterkite; the Clinker roams whatever isn't held. The region's design is drafted separately for owner markup; the Fogstilt and Ebba sections below still show their earlier homes until it is approved.
 
 ### In v1
 All four, before the Lake. The Gutterkite and the Fogstilt give the Hooded Lamp and the Mirror Post a second job. The Slowwater adds pressure while players are still learning, so it is the gentlest. The Clinker needs soft-lock testing. Difficulty still grows with distance from the hut, as ROADMAP plans: the marsh gets one new creature and the Ridge gets three, so the M5d playtest checks that the Ridge isn't too busy.
@@ -300,7 +300,7 @@ Needed before M5c:
 - §1: keep people optional. Guardrail 1 already says no main goal needs a person.
 
 Needed before M5d:
-- §2: add the Lakeshore region for the Fogstilt and Ebba, or spread the creatures instead.
+- The Lakeshore design (region, WayLamp, notes, goals), drafted separately.
 - §1: the new homes for the Fogstilt and Ebba.
 - §3: which readable things count toward the 15-25 landmarks.
 

@@ -5,7 +5,7 @@ Owner decisions that override or settle the design docs. Newest first.
 ## 2026-11-27 (owner answers, later)
 - **Oswin signs "- O."** The sign-off changed from "- H." (for Hester) in every built text: the letter, his notes, journal entries and the initial stitched in his coat.
 - **People are drawn at the keeper's 32x32 scale**, without portraits.
-- Open: the Ridge is crowded. Proposed: a small Lakeshore region between the Ridge and the Lake (see PLAN_NPCS_ENEMIES §2).
+- **A new region, the Lakeshore**, goes between the Ridge and the Still Lake (down the old steps), because the Ridge was getting crowded. The Fogstilt and Ebba move there; the Ridge keeps the Gutterkite; the Clinker roams whatever isn't held. A design draft is being written for owner markup.
 
 ## 2026-11-27 (owner answers)
 - **People and creatures are IN for v1:** people with short spoken lines and errands, and the four creatures from `docs/PLAN_NPCS_ENEMIES.md`. **All of them come before the Still Lake.** The plan is being revised to match (two milestones, after the WayLamp playtest).

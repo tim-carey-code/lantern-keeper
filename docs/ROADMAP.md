@@ -19,7 +19,8 @@
 | **M5b HUD redesign** (owner decision) | built, plus playtest follow-ups (see DECISIONS); awaiting owner playtest of the follow-ups |
 | **WayLamps prototype** (owner decision) | built on branch `proto/waylamps`: one WayLamp per region holds it; healthy light repels Wicklings; only dying lanterns can be drained. Awaiting owner playtest; this is the gate before the Still Lake |
 | **M5c People, part 1** (owner decision 2026-11-27) | planned, after the WayLamp playtest: talk panel, journal People/Errands pages, save section; Amos (Hollow), Maud (Reedmarsh), Kit (Ridge); the Gutterkite. Ends in an owner playtest. Plan: `docs/PLAN_NPCS_ENEMIES.md` |
-| **M5d People and creatures, part 2** | planned, after M5c: the Slowwater, the Clinker, the Fogstilt (moved to the Ridge's east end); Ebba (moved to the Reedmarsh) and Ivo. Ends in an owner playtest; then the Still Lake |
+| **M5d The Lakeshore** (owner decision 2026-11-27) | planned, after M5c: a new small region between the Ridge and the Lake (down the old steps), with its WayLamp, the Fogstilt and Ebba. Design draft for owner markup. Ends in an owner playtest |
+| **M5e People and creatures, part 3** | planned, after M5d: the Slowwater, the Clinker and Ivo. Ends in an owner playtest; then the Still Lake |
 | M5 Full v1 content + save/load | in progress: save/load done; Windward Ridge done (glass, Hooded Lamp, Mirror Post, ridge wind); carry and hand-lamp upgrades done (3 satchels, 3 lamp glasses); next the WayLamp playtest, then people and creatures, then the Still Lake |
 | M6 Polish, playtest, Linux build | after M5 |
 
