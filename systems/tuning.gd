@@ -198,4 +198,9 @@ var kl_pack_wake_radius := 320.0
 var kl_shake_px := 6.0                   # screen shake at full strength
 var kl_kindled_kill_charge := 0.1        # "Kindled kills": lamp charge back per kill
 
+# Lanterns and the dark (PROTOTYPE, owner 2026-11-27)
+var kl_timid_share := 0.5                # share of Wicklings that won't enter healthy light
+var kl_light_tolerance := 2.5            # s a brave Wickling can stand in light before it burns
+var kl_light_burn_dps := 1.5             # hp/s it then takes (and it runs)
+
 var ui_open := false                    # true while a menu has focus (player stops)

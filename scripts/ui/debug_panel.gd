@@ -82,6 +82,9 @@ const ROWS := [
 	["kl_wick_first_level", "Wick to level 2", 1.0, 100.0, 1.0],
 	["kl_wick_level_step", "Wick per later level", 1.0, 100.0, 1.0],
 	["warmth_max", "Warmth (health)", 20.0, 300.0, 5.0],
+	["kl_timid_share", "Share of timid Wicklings", 0.0, 1.0, 0.05],
+	["kl_light_tolerance", "Brave ones last in light (s)", 0.0, 10.0, 0.25],
+	["kl_light_burn_dps", "Light burn on brave ones (hp/s)", 0.0, 10.0, 0.25],
 	["wick_scrap_chance", "Wickling scrap drop chance", 0.0, 1.0, 0.05],
 ]
 

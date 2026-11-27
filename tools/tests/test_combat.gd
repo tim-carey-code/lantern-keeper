@@ -14,6 +14,10 @@ var spot := Vector2.ZERO
 var knocked: Wickling
 var knock_from := 0.0
 var dash_from := Vector2.ZERO
+var lamp_t: Lantern
+var brave: Wickling
+var timid_w: Wickling
+var elite_w: Wickling
 
 func check(ok: bool, what: String) -> void:
 	print(("PASS " if ok else "FAIL ") + what)
@@ -166,6 +170,24 @@ func _process(_delta: float) -> void:
 			Tuning.wick_enabled = false
 			_clear()
 		64:
+			# Lanterns: timid Wicklings stay out; brave ones walk in but burn and run; elites don't care.
+			Tuning.wick_enabled = false
+			lamp_t = Lantern.new()
+			lamp_t.position = fog.tile_center(fog.tile_of(player.global_position + Vector2(0, 200)))
+			main.get_node("Lanterns").add_child(lamp_t)
+			player.global_position += Vector2(-600, 0)
+			brave = _w(lamp_t.global_position + Vector2(60, 0))
+			brave.timid = false
+			timid_w = _w(lamp_t.global_position + Vector2(70, 30))
+			timid_w.timid = true
+			elite_w = _w(lamp_t.global_position + Vector2(20, 0), true)
+			elite_w.shell = 0.0   # no shell, so only "ignores lanterns" can save it
+		300:
+			check(is_instance_valid(timid_w) and timid_w.healthy_level_at(timid_w.global_position) < 0.05, "a timid Wickling stays out of lantern light")
+			check(not is_instance_valid(brave) or brave.hp < Tuning.wick_hp, "a brave one walks in, but burns after a while")
+			check(is_instance_valid(elite_w) and elite_w.hp == Tuning.kl_elite_hp, "elites don't care about lanterns at all")
+			_clear()
+		302:
 			SaveGame.delete_save()
 			Art._ph.clear()
 			print("RESULT fails=%d" % fails)

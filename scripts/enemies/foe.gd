@@ -199,7 +199,9 @@ func tick_foe(delta: float) -> void:
 	if _dead or is_queued_for_deletion():
 		return
 	# Every ordinary foe is burned by a lantern's bright core; only Wicklings can drink a mirror beam.
-	for lamp in get_tree().get_nodes_in_group("lantern"):
+	# Elites and guardians don't care about lanterns at all (owner, 2026-11-27).
+	var ignores_lanterns: bool = (self is Wickling and self.elite) or self is Clinker or self is Ashbrood
+	for lamp in ([] if ignores_lanterns else get_tree().get_nodes_in_group("lantern")):
 		if lamp.kind == "mirror" or not lamp.is_lit():
 			continue
 		var radius: float = lamp.get_light_radius()

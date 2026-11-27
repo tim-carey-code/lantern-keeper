@@ -22,8 +22,12 @@ var _wander_to := Vector2.ZERO
 var _t := 0.0
 var rng := RandomNumberGenerator.new()
 
+var timid := true                # afraid of lantern light (about half are); the rest walk in but burn there
+var _in_light := 0.0             # seconds a brave one has stood in healthy light
+
 func _ready() -> void:
 	foe_name = "Shelled Wickling" if elite else "Wickling"
+	timid = not elite and randf() < Tuning.kl_timid_share
 	add_to_group("wickling")
 	add_to_group("foe")
 	z_index = 7
@@ -173,8 +177,18 @@ func _process(delta: float) -> void:
 	var step := (goal - global_position).limit_length(speed * delta)
 	if is_stunned():
 		step = Vector2.ZERO
-	elif not bold and state != State.FLEE:
-		step = step_outside_light(step, delta)   # pushed back out of healthy light, or hovering at its edge
+	elif not bold and not elite and state != State.FLEE:
+		if timid:
+			step = step_outside_light(step, delta)   # pushed back out of healthy light, or hovering at its edge
+		elif healthy_level_at(global_position) > 0.0:
+			# A brave one walks into the light, but it can't stay: after a while it burns and runs.
+			_in_light += delta
+			if _in_light >= Tuning.kl_light_tolerance:
+				hurt(Tuning.kl_light_burn_dps * delta, false, "light")
+				state = State.FLEE
+				_flee_t = 1.5
+		else:
+			_in_light = maxf(0.0, _in_light - delta)
 	global_position += step
 	queue_redraw()
 

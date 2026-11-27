@@ -29,7 +29,10 @@ func _draw_bar() -> void:
 	var w := 640.0
 	var x := (1280.0 - w) / 2.0
 	var y := 600.0
-	var title := "%s   phase %d / 2" % [b.foe_name, b.phase]
+	var hint := "crack its shell with your beam" if b.shell > 0.0 else "burn it now, before the shell grows back"
+	if b.phase == 2:
+		hint = "it dives at your lanterns: hit it while it sits" if b.shell <= 0.0 else "crack its shell with your beam, then hit it while it sits"
+	var title := "%s   phase %d / 2: %s" % [b.foe_name, b.phase, hint]
 	holder.draw_string(FONT, Vector2(x + 2, y - 10), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0, 0, 0, 0.8))
 	holder.draw_string(FONT, Vector2(x, y - 12), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UiStyle.GOLD)
 	holder.draw_rect(Rect2(x - 2, y - 2, w + 4, 24), Color(0.02, 0.025, 0.045, 0.9))

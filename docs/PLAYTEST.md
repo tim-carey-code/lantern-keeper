@@ -26,7 +26,9 @@ Questions (decision gate):
 3. Didn't know what the Clinker or the Ashbrood were → **names and health bars over foes, a pale shell bar above the red one, and a boss bar for the Ashbrood**.
 4. The Post Lamp felt earned and changed how he fought.
 5. Choices mostly distinct; **"Quick fill" was useless** (the lamp already refills fast) → replaced by **"Kindled kills"** (each kill gives back 10% charge).
-6-8. Not answered yet.
+6. Couldn't tell the Ashbrood's phases apart or whether it was taking damage → the boss bar shows phase, health, shell and a one-line hint for each phase.
+7. The lures pulled him along.
+8. Built lamps because monsters are afraid of them, which may be too strong → now about half the Wicklings are timid and stay out; the brave ones walk in, burn after 2.5 s and run. Elites, the Clinker and the Ashbrood ignore lanterns completely.
 
 ---
 
