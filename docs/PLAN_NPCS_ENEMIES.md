@@ -8,7 +8,7 @@ Answered decisions start with DECIDED (2026-11-27):. Open ones start with OWNER:
 
 ## 1. Summary and what changes
 
-This plan adds four creatures, five people who come back as regions are held, a talk panel, People and Errands pages in the journal, and six optional errands. All of it comes before the Still Lake, in two milestones, M5c and M5d (section 6).
+This plan adds four creatures, five people who come back as regions are held, a talk panel, People and Errands pages in the journal, and six optional errands. All of it comes before the Still Lake, in three milestones: M5c, M5d (the Lakeshore) and M5e (section 6).
 
 **What changes.** People and short spoken lines move to IN. DESIGN §5 and STORY's header already say so (commit 40f3406). This plan also adds creature kinds beyond ROADMAP's "Wickling variety per region (kept small)".
 
@@ -116,7 +116,7 @@ DECIDED (2026-11-27): add a small **Lakeshore** region between the Ridge and the
 ### In v1
 All four, before the Lake. The Gutterkite and the Fogstilt give the Hooded Lamp and the Mirror Post a second job. The Slowwater adds pressure while players are still learning, so it is the gentlest. The Clinker needs soft-lock testing. Difficulty still grows with distance from the hut, as ROADMAP plans: the marsh gets one new creature and the Ridge gets three, so the M5d playtest checks that the Ridge isn't too busy.
 
-DECIDED (2026-11-27): all four creatures go in v1, before the Still Lake: the Gutterkite in M5c, and the Slowwater, the Clinker and the Fogstilt in M5d.
+DECIDED (2026-11-27): all four creatures go in v1, before the Still Lake: the Gutterkite in M5c, the Fogstilt in M5d (the Lakeshore), and the Slowwater and the Clinker in M5e.
 
 ### The Soul of the Wick
 All four come from the Soul, like Wicklings, though no text says so outright. The Soul has big pale eyes, and Wicklings have two pale eyes, as built. Eyes on the new creatures are suggestions, above. The finale stays a light confrontation with some pressure. When the great lamp catches, every creature unravels.
@@ -240,12 +240,12 @@ OWNER: the rewards and trade rates are placeholders. Flag any that feel too stro
 
 ## 6. Phasing and effort
 
-DECIDED (2026-11-27): build all of it after the WayLamp playtest and before the Still Lake, in two milestones. Each ends in an owner playtest.
+DECIDED (2026-11-27): build all of it after the WayLamp playtest and before the Still Lake, in three milestones: M5c (below), M5d the Lakeshore with the Fogstilt and Ebba (`PLAN_LAKESHORE.md`), and M5e the Slowwater, the Clinker and Ivo. Each ends in an owner playtest. (The M5d item below is the older split, kept for its details.)
 
 **Before M5c:** the WayLamp playtest passes, because people need "held" to work. Already done in 40f3406: the satchels and lamp glasses, which the Wide Pack and Maud's glass stack on, and the 25 s first Wickling.
 
 1. **M5c: talk, and the first three people.** The talk panel, the journal's People and Errands pages, the save section and the arrival line; Amos (with the Trade menu and the Wide Pack), Maud and Kit; the Gutterkite. Effort L, about the size of M5a. Ends with an owner playtest.
-2. **M5d: the other creatures and people.** The Slowwater, the Clinker and the Fogstilt (on the Ridge); Ebba (with the marsh boat) and Ivo (three survey stones and the map reward). The save section grows to cover them. Effort L: three creatures, and the Clinker's soft-lock guards are the biggest unknown. Ends with an owner playtest.
+2. **M5d: the other creatures and people** (older split: the Fogstilt and Ebba now go in M5d, the Lakeshore; the Slowwater, the Clinker and Ivo in M5e). The Slowwater, the Clinker and the Fogstilt (on the Ridge); Ebba (with the marsh boat) and Ivo (three survey stones and the map reward). The save section grows to cover them. Effort L: three creatures, and the Clinker's soft-lock guards are the biggest unknown. Ends with an owner playtest.
 3. **With the Still Lake, or later:** Ebba's "Row out" and the crossing, and Fogstilts in the finale if chosen.
 
 **Why this split.** It keeps the suggested split, because no swap is clearly better. M5c builds every shared system once and tests it with one person per held region and one creature. M5d is mostly creatures, so its playtest can look at pressure, the busy Ridge and soft-locks. Ebba's tip names the Fogstilt, so the two land together. Moving the Slowwater (S) into M5c would show a creature earlier, but M5d would then hold all three Ridge creatures with nothing light to balance them.
@@ -299,7 +299,7 @@ Needed before M5c:
 - §4: the talk panel (a), and Errands and People as their own pages. M5c assumes both.
 - §1: keep people optional. Guardrail 1 already says no main goal needs a person.
 
-Needed before M5d:
+Needed before M5d (the Lakeshore; see `PLAN_LAKESHORE.md` §9 too):
 - The Lakeshore design (region, WayLamp, notes, goals), drafted separately.
 - §1: the new homes for the Fogstilt and Ebba.
 - §3: which readable things count toward the 15-25 landmarks.
