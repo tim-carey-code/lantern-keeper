@@ -229,6 +229,16 @@ Run `tools/run_tests.sh`, `python3 tools/check_docs.py` and a capture frame of t
 
 ## 8. OWNER questions
 
+**Owner answers (2026-11-27):**
+1. **Option B:** a small guard on the Post Lamp; the Clinker moves to be a mid-boss near the WayLamp.
+2. **Allow the lone Wickling closer**, so the Post Lamp sits at about 18 tiles.
+3. **A second cold lantern on the way north:** try it; cut it if it feels cheesy.
+4. **One nest on the main route:** decide after playing.
+5. **The 6-scrap cache at the Post Lamp:** yes.
+6. **The §6 texts:** approved.
+7. **The south of the Hollow:** keep it as optional content, possibly a side quest from an NPC there.
+
+
 1. **Option A** (crook and Clinker at about 22 tiles, with a haven at 12)? Or B (a small guard on the crook, with the Clinker as a WayLamp mid-boss)?
 2. **The calm rule:** keep 16 tiles, which puts the crook at about 22? Or allow the lone Wickling at about 12 tiles, which pulls the crook in to about 18?
 3. **The haven:** a second cold old lantern on the north path, as a second relight and win? Or none, so the Clinker fight is harder?
