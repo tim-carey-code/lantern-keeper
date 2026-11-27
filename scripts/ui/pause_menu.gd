@@ -5,7 +5,7 @@ extends CanvasLayer
 var root: Control
 var buttons: Array[Button] = []
 var info: Label
-var controls: Label
+var controls: GridContainer
 var _confirm_new := false
 
 func _ready() -> void:
@@ -18,12 +18,15 @@ func _ready() -> void:
 	dim.color = Color(0.01, 0.012, 0.02, 0.8)
 	dim.size = Vector2(1280, 720)
 	root.add_child(dim)
+	# Centered, so the panel always fits the screen whatever the font's width.
+	var center := CenterContainer.new()
+	center.size = Vector2(1280, 720)
+	root.add_child(center)
 	var frame := PanelContainer.new()
-	frame.position = Vector2(150, 150)
 	frame.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.WOOD, UiStyle.NAVY, 2, 20))
-	root.add_child(frame)
+	center.add_child(frame)
 	var cols := HBoxContainer.new()
-	cols.add_theme_constant_override("separation", 48)
+	cols.add_theme_constant_override("separation", 40)
 	frame.add_child(cols)
 	var box := VBoxContainer.new()
 	box.custom_minimum_size = Vector2(340, 0)
@@ -34,7 +37,10 @@ func _ready() -> void:
 	var ctitle := UiStyle.label(30, UiStyle.GOLD)
 	ctitle.text = "Controls"
 	right.add_child(ctitle)
-	controls = UiStyle.label(20, UiStyle.PALE)
+	controls = GridContainer.new()
+	controls.columns = 2
+	controls.add_theme_constant_override("h_separation", 24)
+	controls.add_theme_constant_override("v_separation", 4)
 	right.add_child(controls)
 	var title := Label.new()
 	title.text = "Paused"
@@ -60,10 +66,21 @@ func open() -> void:
 	_confirm_new = false
 	buttons[2].text = "New game"
 	info.text = "Last save: " + _last_save_text()
-	controls.text = InputHint.controls_text()
+	_fill_controls()
 	_pointer_label()
 	buttons[0].grab_focus()
 	Sfx.play("ui_open", -14.0)
+
+func _fill_controls() -> void:
+	for c in controls.get_children():
+		c.queue_free()
+	for r in InputHint.controls_rows():
+		var a := UiStyle.label(18, UiStyle.PALE)
+		a.text = r[0]
+		controls.add_child(a)
+		var k := UiStyle.label(18, UiStyle.GOLD)
+		k.text = r[1]
+		controls.add_child(k)
 
 func close() -> void:
 	root.visible = false

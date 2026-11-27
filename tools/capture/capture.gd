@@ -4,7 +4,7 @@ extends Node
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --audio-driver Dummy \
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
-## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held, upgrade, kl_combat. The last frame is the one to look at.
+## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held, upgrade, kl_combat, pause. The last frame is the one to look at.
 ## README views (staged, pop-ups hidden; rendered by tools/capture/readme_shots.sh): readme_hollow, readme_ward,
 ## readme_marsh, readme_ridge, readme_map, readme_lanterns, readme_relight (an animation: use every frame).
 
@@ -152,6 +152,8 @@ func _process(_delta: float) -> void:
 		main.player.combat.burst()
 	if frame == 6 and view == "map":
 		main.get_node("MapScreen").toggle()
+	if frame == 6 and view == "pause":
+		main.get_node("PauseMenu").open()
 	# Opening views: step through to the page we want to see.
 	if view == "opening_name" and frame == 5:
 		main.get_node("Opening")._next()

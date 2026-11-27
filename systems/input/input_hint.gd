@@ -28,12 +28,15 @@ func _input(event: InputEvent) -> void:
 func key(action: String) -> String:
 	return (PAD if pad else KEYS).get(action, "?")
 
-## Full controls list for the pause menu.
-func controls_text() -> String:
-	var rows := [["Move", "Left stick / D-pad" if pad else "WASD / arrows"], ["Use: read, refuel, turn, gather (hold)", key("interact")],
+## Controls list rows ([action, button]) for the pause menu.
+func controls_rows() -> Array:
+	return [["Move", "Left stick / D-pad" if pad else "WASD / arrows"], ["Use: read, refuel, turn, gather (hold)", key("interact")],
 		["Build selected lantern", key("place_lantern")], ["Pick up lantern", key("cancel")], ["Beam (hold, aim with the %s)" % ("right stick" if pad else "mouse"), key("beam")], ["Burst", key("flare")], ["Dash", key("dash")],
 		["Lantern list", key("build_menu")], ["Map", key("map")], ["Journal", key("journal")], ["Pause", key("pause")]]
+
+## Same list as plain text (kept for anything that wants one string).
+func controls_text() -> String:
 	var lines: Array[String] = []
-	for r in rows:
-		lines.append("%-40s %s" % [r[0], r[1]])
+	for r in controls_rows():
+		lines.append("%s: %s" % [r[0], r[1]])
 	return "\n".join(lines)
