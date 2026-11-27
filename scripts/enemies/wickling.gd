@@ -167,15 +167,37 @@ func _die() -> void:
 		return
 	Sfx.play("relight", -14.0, 0.2)
 	# Drops land on the fog layer (our parent) so they glow through the dark.
+	var drop_at := walkable_near(global_position)
 	var e := Ember.new()
-	e.position = global_position
+	e.position = drop_at
 	get_parent().add_child(e)
 	if randf() < Tuning.wick_scrap_chance:
 		var s := Ember.new()
 		s.kind = "scrap"
-		s.position = global_position + Vector2(14, 6)
+		s.position = walkable_near(global_position + Vector2(14, 6))
 		get_parent().add_child(s)
 	queue_free()
+
+## Wicklings float over rock; their drops land on the nearest ground the keeper can walk on.
+func walkable_near(p: Vector2) -> Vector2:
+	var fog := _fog()
+	if fog == null:
+		return p
+	var t := fog.tile_of(p)
+	if fog.in_bounds(t) and fog.solid[fog.idx(t)] == 0:
+		return p
+	for r in range(1, 8):
+		var best := Vector2.INF
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				var q := t + Vector2i(dx, dy)
+				if fog.in_bounds(q) and fog.solid[fog.idx(q)] == 0:
+					var c := fog.tile_center(q)
+					if best == Vector2.INF or c.distance_to(p) < best.distance_to(p):
+						best = c
+		if best != Vector2.INF:
+			return best
+	return p
 
 ## Shoved by the keeper's ward.
 func push(v: Vector2) -> void:

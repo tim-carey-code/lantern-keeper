@@ -139,6 +139,22 @@ func _process(_delta: float) -> void:
 			check(not is_instance_valid(e) or e.is_queued_for_deletion(), "and burns the elite away")
 			c.beaming = false
 			_clear()
+			# A Wickling burned over rock drops its ember on ground you can walk on.
+			var rock := Vector2i(-1, -1)
+			for y in range(fog.rows):
+				for x in range(fog.cols):
+					var q := Vector2i(x, y)
+					if rock.x < 0 and fog.solid[fog.idx(q)] == 1 and fog.in_bounds(q + Vector2i(2, 0)) and fog.solid[fog.idx(q + Vector2i(2, 0))] == 0 and fog.region[fog.idx(q + Vector2i(2, 0))] == FogGrid.R_HOLLOW:
+						rock = q   # rock right at the edge of the Hollow
+			check(rock.x >= 0, "found rock at the Hollow's edge")
+			for em in get_tree().get_nodes_in_group("ember"):
+				em.free()
+			var over_rock := _w(fog.tile_center(rock))
+			over_rock.hurt(99.0)
+			var landed := get_tree().get_nodes_in_group("ember").filter(func(em): return not em.is_queued_for_deletion())
+			check(landed.size() >= 1 and landed.all(func(em): return fog.solid[fog.idx(fog.tile_of(em.global_position))] == 0), "drops from a Wickling over rock land on walkable ground")
+			for em in landed:
+				em.queue_free()
 			# Every Nth Wickling out of the fog is an elite.
 			Tuning.wick_enabled = true
 			var elites := 0

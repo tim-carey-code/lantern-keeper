@@ -4,7 +4,7 @@ extends Node2D
 ## scrap. Drawn on the fog layer so it glows through the dark instead of being dimmed
 ## like the ground. Pulls toward the keeper when close, then collects on touch.
 
-const MAGNET := 70.0      # px: starts drifting toward the keeper
+const MAGNET := 140.0     # px: starts drifting toward the keeper (vacuums up drops near you)
 const COLLECT := 18.0     # px: collected
 
 var kind := "fuel"        # "fuel" (ember) or "scrap"
