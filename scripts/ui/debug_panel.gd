@@ -58,6 +58,8 @@ const ROWS := [
 	["kl_clinker_roll_tell", "Clinker roll tell (s)", 0.2, 2.0, 0.1],
 	["kl_clinker_hit_warmth", "Clinker roll warmth", 0.0, 60.0, 1.0],
 	["kl_nest_wake_radius", "Nest wake range (px)", 80.0, 600.0, 10.0],
+	["kl_pack_wake_radius", "Pack wake range (px)", 80.0, 600.0, 10.0],
+	["kl_post_guard_wake_radius", "Post Lamp guard wake (px)", 32.0, 400.0, 8.0],
 	["kl_nest_hatch_count", "Nest Wicklings per hatch", 1.0, 7.0, 1.0],
 	["kl_nest_core_dps", "Nest core damage (hp/s)", 0.0, 10.0, 0.25],
 	["kl_nest_hatch_sec", "Nest hatch interval (s)", 2.0, 30.0, 0.5],

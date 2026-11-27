@@ -88,7 +88,7 @@ DEFAULT: the letter as drafted.
 
 | Region | Player learns | Emotional beat | Points onward |
 |--------|---------------|----------------|---------------|
-| **1. The Hollow** | Gather, relight, build. Many keepers once counted their lamps; one stayed longest. | Arriving somewhere abandoned but not hopeless. The first flame is a small welcome. | Ledger: "The north lamps first. Wake the WayLamp up there, then follow the stones east." (DRAFT 2026-11-27) Fresh chalk arrow on the carved stone. Pointer is on. |
+| **1. The Hollow** | Gather, relight, build. Many keepers once counted their lamps; one stayed longest. | Arriving somewhere abandoned but not hopeless. The first flame is a small welcome. | Ledger: "My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, at the top." (DECIDED 2026-11-27, onboarding) Fresh chalk arrow on the carved stone. Pointer is on. |
 | **2. The Reedmarsh** | The way to the water was kept lit. Every frame faces the lake. The lake once shone; then something dark coiled around it. The pump still works. | Curiosity turning to unease. The chalk is the first sign that something *took* the light. | Pumphouse note: "Now go up, past the Hollow. The ridge has glass." |
 | **3. The Windward Ridge** | Keepers made glass and passed light by mirror. The Wick remembers every flame. Oswin lost their coat here and wrote: "It came up out of the water." | Exposure and worry. The loneliest place in the game. | The station's mirror has been turned down toward the lake; steps beside it lead into the fog. |
 | **4. The Still Lake** | Ordinary light dies here; only beams cut through. Oswin camped on the shore and built a mirror with no light to give it. Every keeper's name is on the island steps. | Stillness and dread, then resolve: finishing what Oswin started. | Oswin's mirror faces the island. Build the chain to the great lamp. |
@@ -112,7 +112,9 @@ One goal shows on the HUD at a time; the journal lists the current goal and fini
 | 1 | `gather_fuel` | Take fuel from the woodpile | Carrying at least 1 fuel (also done once the old lantern is relit) | Woodpile |
 | 2 | `relight_first` | Relight the old lantern by the hut | Start lantern lit | Start lantern |
 | 3 | `read_ledger` | Read the ledger by the hut | `ledger` read | Ledger |
-| 4 | `build_post` | Find the keeper's post north of the hut | The keeper reads `crook_post` (or builds a Post Lamp in tests) | `crook_post` |
+| 3b | `relight_waypost` | Relight the old lamp on the north path | The second cold old lantern, 12 tiles north of the hut, is lit (or `build_post` is done: never sent back) | The north path's lamp |
+| 4 | `build_post` | Take back the lamp from Oswin's crook | The keeper reads `crook_post` (or builds a Post Lamp in tests) | `crook_post` |
+| 4b | `burn_nest` | Burn out the nest with a Post Lamp | Any Hollow nest is burned out (or the Hollow is held) | Nest A, the route's nest (then the nearest nest left) |
 | 5 | `stone_way` | Light the way east to the carved stone | `stone_way` read | Carved stone |
 | 6 | `enter_marsh` | Follow the arrow into the marsh | Enter the Reedmarsh | Passage exit |
 | 7 | `frames_east` | Find the old frames on the boardwalk | `frames_east` read | Frames |
@@ -159,8 +161,8 @@ Each quoted line is one line on screen. The title shows on the note and in "Some
 **`ledger`**, "Keepers' ledger" (Hollow, by the hut)
 > Long columns of tally marks, one for every lamp lit each night.
 > Near the end the columns shrink to a single mark, in a newer hand.
-> Under it: The north lamps first. Wake the WayLamp up there, then follow the stones east. - Oswin
-DRAFT (2026-11-27): changed because the Hollow's WayLamp moved north (owner: the notes no longer matched the goals). Was: "Gone east to the marsh. Follow the stones."
+> Under it: My lamp hangs on my crook, on the north path. Take it back. Then the WayLamp, at the top. - Oswin
+DECIDED (2026-11-27, onboarding plan §6, owner approved): names the first find, then the WayLamp. Was: "The north lamps first. Wake the WayLamp up there, then follow the stones east." (DRAFT), and before that "Gone east to the marsh. Follow the stones."
 
 **`stone_way`**, "Carved stone" (Hollow, at the passage to the marsh)
 > KEEP THE WAY TO THE WATER LIT.
@@ -171,7 +173,7 @@ DRAFT (2026-11-27): changed because the Hollow's WayLamp moved north (owner: the
 > The wind is worse up there. Come back when the marsh is lit. - Oswin
 DRAFT (2026-11-27): the cairn now stands by the Hollow's WayLamp, before the marsh. Was: "Keep your lights sheltered."
 
-**`crook_post`**, "A keeper's post" (Hollow, north of the hut; Keeper's Light prototype)
+**`crook_post`**, "A keeper's post" (Hollow, about 19 tiles north of the hut on the main route; a shelled Wickling sleeps on it and a 6-scrap cache lies beside it; Keeper's Light prototype)
 > A keeper's crook, fallen across the path. The lamp on it is cold, but whole.
 > Tied to it: Plant one where you mean to stand. The small ones will not come into it. - Oswin
 DRAFT: the Post Lamp unlocks when the keeper reads this find.
@@ -302,13 +304,26 @@ Shown once each, in a panel near the bottom of the screen, for 6 s, one at a tim
 | `fog_edge` | After 90 s of play (stands in for "first fog edge") | Fog comes back where light fades. Light holds the ground. |
 | `gust` | First gust warning | Wind is coming. Rock on the windward side shelters a flame. |
 | `wickling_seen` | First Wickling within 420 px | Something small moves in the dark. It is drawn to your lights. |
-| `wickling_close` | First Wickling within 130 px | Hold your beam on them: left click or RT, aimed. F or RB throws them back. (PROTOTYPE text, Keeper's Light) |
+| `wickling_close` | First Wickling within 130 px | Hold [beam] to shine on it. Aim with [aim]. (DECIDED 2026-11-27, onboarding; was "Hold your beam on them: left click or RT, aimed. F or RB throws them back.") |
 | `lamp_empty` | Hand lamp down to an ember | Your lamp is down to an ember. Rest in a lantern's light to fill it. |
 | `warmth_low` | Warmth below 35% | You are getting cold. Stand in a lantern's light. |
 | `faint` | First faint | You woke by the nearest light. What you dropped waits where you fell. |
 | `glass` | First glass carried | Glass. The keepers on the ridge made lamps from it. |
 | `mirror_placed` | First Mirror Post placed | A mirror needs light. Stand it inside a burning lantern's glow. |
 | `mirror_lit` | First lit mirror | Interact to turn the beam. Beams pass from mirror to mirror. |
+
+**The first 10 minutes** (onboarding, `docs/PLAN_ONBOARDING.md` §6; text DECIDED, approved by the owner 2026-11-27). In brackets: the button for the device in use (`Story.tip_text`): [beam] left click / RT, [burst] F / RB, [dash] Shift / LT, [build] Space / X, [aim] the mouse / the right stick.
+
+| id | Trigger (as built) | Tip |
+|----|--------------------|-----|
+| `haven` | The north path's old lamp is lit | Lantern light fills your lamp and warms you. Fight near it. |
+| `burst` | Two Wicklings within 130 px | Too close. [burst] throws them back. |
+| `shell` | First beam on a shell (the crook's guard) | Light cracks a shell. Keep it on. |
+| `dash` | The Clinker's first roll tell | It is gathering itself. [dash] steps clear. |
+| `nest` | First nest within 416 px (its wake range and 2 tiles) | A nest. Your light can't touch it. A lantern's core can. |
+| `build_here` | By a nest with the Post Lamp unlocked and 5 scrap carried | Plant a Post Lamp beside it. Then hold. |
+
+Not built from §6: the optional "Something is sitting on the crook." banner and the journal line after the crook (they were written for the Clinker on the crook, Option A).
 
 DEFAULT: yes, a "show tips again" option (built, in the pause menu).
 
@@ -379,7 +394,7 @@ DEFAULT: the ending as drafted.
 
 - The Hollow text is the working text. The other two change "on the pumphouse island" and "at the signal station" to "by ...", so all three read alike, and the marsh one is shorter (the player knows the pumphouse by then). The working texts also fit (42 and 40 characters).
 - With these rows the goals run 1-27: 21 for the built regions, 6 planned for the Lake. The pointer rule stays "on until the Reedmarsh" (it would cover goals 1-7). Every kindle goal has a target.
-- `kindle_hollow` comes right after `build_post`. Its WayLamp stands at the north end of the Hollow, below the climb, so you light your way north first, then east to the carved stone and the marsh. (Moved 2026-11-27: the owner felt it was too close to the hut.) WayLamps take fuel directly; no lantern has to reach them (owner, 2026-11-27).
+- `kindle_hollow` comes right after `burn_nest` (since the onboarding pass, 2026-11-27: `relight_waypost`, `build_post`, `burn_nest`, then the WayLamp). Its WayLamp stands at the north end of the Hollow, below the climb, so you light your way north first, then east to the carved stone and the marsh. (Moved 2026-11-27: the owner felt it was too close to the hut.) WayLamps take fuel directly; no lantern has to reach them (owner, 2026-11-27).
 
 ### WayLamp inspection texts
 Each quoted line is one line on screen.

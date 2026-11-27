@@ -2,10 +2,12 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
-
 ## 2026-11-27 (route: one loop)
 - **The journey becomes one clockwise loop with no backtracking** (owner): the Hollow's WayLamp moves north-east toward the marsh passage. A new path climbs north out of the Reedmarsh to the Ridge's east end. The Ridge is crossed one way: the glazier (Hooded Lamp) and the lens move near where you enter from the marsh, then the coat, the signal station and the Ridge's WayLamp at the far end, then down the old steps to the Lakeshore and the Still Lake. The far west of the Ridge becomes optional. The old Hollow climb stays as a later shortcut. To be built right after the onboarding work.
 - **Lit WayLamps are fast travel** (owner: "the loop with a one way ridge plus waylamp fast travel"): once lit, you can jump between any lit WayLamps, like Diablo's waypoints. Built with the loop. The ledger and cairn texts get re-edited for the loop as DRAFT text for owner approval.
+
+## 2026-11-27 (the first 10 minutes)
+- **Onboarding, Option B** (owner answers in `docs/PLAN_ONBOARDING.md` §8): a small guard (one shelled Wickling) sits on Oswin's crook, the Post Lamp find, about 19 tiles north of the hut; the Clinker becomes a mid-boss near the WayLamp, before the Ashbrood, keeping its sleep and leash. The lone first Wickling may sit closer than 16 tiles (10); the rule is now that nothing wakes at the hut, the woodpile or the ledger. A second cold old lantern on the north path (12 tiles) is a safe spot and an easy win (to cut if it feels cheesy). One nest on the main route, just past the crook, is the first lock the Post Lamp opens. A 6-scrap cache at the crook lets you build at once. The plan's §6 texts are approved (ledger line, tips, goal lines). The south of the Hollow stays optional content (maybe an NPC side quest later). Built on `proto/kl-onboard`: the main route wakes 3 of 24 packs and 1 of 12 nests; the rest moved off it. Leveling target changed: level 2 comes at the find, not after the first pack. DESIGN §9.
 ## 2026-11-27 (wick by level gap)
 - **Wick scales with the level gap, not "no wick"** (owner: "Idk about give no wick. Other games solve this by the XP they give not being proportionate to levels... eventually it doesn't pay to do so and it's too grindy, you will be there forever. That's part of the many reasons the game pushes the player to progress forward."). Every foe has a level (Lv 1 by the hut up to 6 by the WayLamp); a kill pays full wick up to 1 level over the foe, then ×0.25 a level, nothing at 5+. Hatched, called and re-fought foes pay normally again. DESIGN §9.
 - **The Hollow's last level comes on the Ashbrood kill**, not from kindling afterwards (owner). Ashbrood wick up, kindling down to a small amount.

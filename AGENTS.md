@@ -38,6 +38,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_upgrades.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_leveling.tscn   # wick in a full Hollow clear vs the level targets
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_hollow.tscn # prototype branch only
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_onboarding.tscn # prototype: the first 10 minutes' main route
 python3 tools/check_docs.py                                                                    # docs match the code
 # A test that fails to parse never quits: wrap runs in `timeout 120`.
 # In a fresh checkout the first --import can crash (Godot 4.7.2) and leave the font unimported, and then every

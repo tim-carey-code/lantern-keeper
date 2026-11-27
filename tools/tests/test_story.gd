@@ -68,7 +68,26 @@ func _process(_delta: float) -> void:
 			_read("ledger")
 			Story.update(main)
 			check(Story.done.has("read_ledger") and Story.entries.has(2), "reading the ledger writes the second entry")
+			# The first 10 minutes (onboarding): the north path's old lamp, Oswin's crook, then the first nest.
+			check(Story.current == "relight_waypost" and ptr.target_pos() == main.waypost_lantern_pos, "next: relight the old lamp on the north path, and the pointer leads there (%s)" % Story.current)
+			var waypost: Node2D = get_tree().get_nodes_in_group("lantern").filter(func(l): return l.global_position.distance_to(main.waypost_lantern_pos) < 8.0)[0]
+			check(not waypost.is_lit(), "it starts cold")
+			Inventory.counts["fuel"] = 2
+			main.player.position = waypost.global_position + Vector2(0, 20)
+			main.player.refuel(waypost)
+			Story.update(main)
+			check(Story.done.has("relight_waypost") and Story.tips_seen.has("haven"), "relighting it completes the goal and shows the haven tip")
+			check(Story.current == "build_post" and ptr.target_pos() == _landmark("crook_post").global_position, "next: take back the lamp from Oswin's crook, and the pointer leads there")
+			check(Story.goal_text("build_post") == "Take back the lamp from Oswin's crook", "the goal names Oswin's crook")
 			Story.note_built("post")
+			Story.update(main)
+			var nest_a: Node2D = get_tree().get_nodes_in_group("foe").filter(func(f): return f is WickNest and f.foe_id == "nest_hollow_4")[0]
+			check(Story.current == "burn_nest" and ptr.target_pos() == nest_a.global_position, "next: burn out the nest with a Post Lamp, and the pointer leads to the route's nest (%s)" % Story.current)
+			var names_ok := true
+			for k in ["wickling_close", "burst", "dash"]:
+				names_ok = names_ok and not Story.tip_text(k).contains("[")
+			check(names_ok and Story.tip_text("wickling_close").begins_with("Hold %s " % InputHint.key("beam")) and Story.tip_text("burst").contains(InputHint.key("flare")), "tips name the button in use (%s)" % Story.tip_text("wickling_close"))
+			Progress.cleared["nest_hollow_4"] = true
 			_read("stone_way")
 			Story.update(main)
 			check(Story.current == "kindle_hollow", "after building a lamp and reading the stone: kindle the Hollow's WayLamp (%s)" % Story.current)
@@ -124,7 +143,7 @@ func _process(_delta: float) -> void:
 			check(j.body.text.contains("To whoever reads this") and j.body.text.contains("The ledger"), "the journal keeps the letter and the story so far")
 			j.page = 2
 			j.refresh()
-			check(j.body.text.contains("follow the stones east"), "the journal keeps every note read, to read again")
+			check(j.body.text.contains("on the north path"), "the journal keeps every note read, to read again")
 			j.toggle()
 			check(not j.is_open() and not get_tree().paused, "the journal closes")
 			# The new HUD: prompts over things, the right button for the device, goal banner, chips.

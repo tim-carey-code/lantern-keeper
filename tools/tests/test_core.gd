@@ -86,7 +86,7 @@ func _process(_delta: float) -> void:
 		244:
 			player.pick_up_nearest()
 		248:
-			check(get_tree().get_nodes_in_group("lantern").size() == 1, "pick up removes the lantern")
+			check(get_tree().get_nodes_in_group("lantern").size() == 2, "pick up removes the lantern (the hut's and the north path's old lamps stay)")
 			check(Inventory.get_count("scrap") == 3, "pick up refunds half the scrap")
 			check(Inventory.get_count("fuel") >= 9, "pick up returns the tank's fuel (%d)" % Inventory.get_count("fuel"))
 			# Hand lamp: walk deep into the dark with no fuel.

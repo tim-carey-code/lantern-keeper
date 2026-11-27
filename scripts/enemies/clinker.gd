@@ -67,6 +67,7 @@ func _process(delta: float) -> void:
 			_roll_dir = to_player.normalized()
 			_roll_hit = false
 			_roll_t = Tuning.kl_clinker_roll_tell
+			Story.tip("dash")   # the first roll tell teaches the dash
 			_cooldown = Tuning.kl_clinker_roll_cooldown
 		elif not is_stunned() and to_player.length() > Tuning.kl_clinker_stop_range:
 			global_position += to_player.normalized() * minf(Tuning.kl_clinker_speed * delta, to_player.length() - Tuning.kl_clinker_stop_range)

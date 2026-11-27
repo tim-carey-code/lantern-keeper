@@ -5,7 +5,8 @@ extends Node
 ##     --write-movie ~/.cache/openclaw/project-scratch/shots/frame.png --fixed-fps 30 \
 ##     res://tools/capture/capture.tscn -- start
 ## Views (after "--"): lanterns, start, marsh, cold, edge, wick, drops, ridge, map, journal, opening, opening_name, opening_letter, waylamp_kindle, waylamp_held, upgrade, kl_combat,
-## kl_level (the HUD's level and wick row, then a level-up's card screen). The last frame is the one to look at.
+## kl_level (the HUD's level and wick row, then a level-up's card screen), onboard_start, onboard_north, onboard_haven,
+## onboard_crook (the first 10 minutes' main route, nothing staged). The last frame is the one to look at.
 ## README views (staged, pop-ups hidden; rendered by tools/capture/readme_shots.sh): readme_hollow, readme_ward,
 ## readme_marsh, readme_ridge, readme_map, readme_lanterns, readme_relight (an animation: use every frame).
 
@@ -116,6 +117,8 @@ func _process(_delta: float) -> void:
 						main.player.position = m.global_position + Vector2(30, 20)
 					if m.id == "lampglass_hollow":
 						_lantern(m.global_position + Vector2(-90, -30))
+			"onboard_start", "onboard_north", "onboard_haven", "onboard_crook":
+				_onboard_setup()
 			"kl_combat":
 				_lantern(s + Vector2(-260, 60))
 				main.player.position = s + Vector2(-420, 120)
@@ -207,6 +210,40 @@ func _process(_delta: float) -> void:
 		main.player.refuel(main.get_node("Lanterns").get_child(0))
 	if frame >= end_frame:
 		get_tree().quit()
+
+## The first 10 minutes (onboarding): the real map with nothing added, at each step of the main route.
+##   onboard_start: a fresh start at the hut. onboard_north: hut lamp lit, ledger read, 6 tiles north (the
+##   north path's cold lamp and the lone Wickling ahead). onboard_haven: that lamp lit, the crook's red pulse
+##   ahead. onboard_crook: the Post Lamp found, the pointer on nest A.
+func _onboard_setup() -> void:
+	var s: Vector2 = main.start
+	var T := FogGrid.TILE
+	main.player.position = s
+	if view == "onboard_start":
+		Story.update(main)
+		return
+	for l in get_tree().get_nodes_in_group("lantern"):
+		if l.global_position.distance_to(main.start_lantern_pos) < 8.0 or (view != "onboard_north" and l.global_position.distance_to(main.waypost_lantern_pos) < 8.0):
+			l.fuel = l.max_fuel()
+	Progress.notes_read["ledger"] = true
+	Inventory.counts["fuel"] = 2
+	match view:
+		"onboard_north":
+			main.player.position = s + Vector2(0, -6) * T
+			_goals_done_until("relight_waypost")
+		"onboard_haven":
+			main.player.position = main.waypost_lantern_pos + Vector2(0, 40)
+			_goals_done_until("build_post")
+		"onboard_crook":
+			var crook: Node2D = get_tree().get_nodes_in_group("landmark").filter(func(m): return m.id == "crook_post")[0]
+			Progress.notes_read["crook_post"] = true
+			Progress.unlock("post")
+			Progress.cleared["pack_hollow_post_guard"] = true
+			Progress.cleared["pack_hollow_20"] = true
+			Progress.cleared["pack_hollow_23"] = true
+			Inventory.counts["scrap"] = 6
+			main.player.position = crook.global_position + Vector2(10, -60)
+			_goals_done_until("burn_nest")
 
 ## Marks every goal before this one done, so the HUD shows a goal that fits the shot.
 func _goals_done_until(goal_id: String) -> void:

@@ -1,7 +1,7 @@
 extends Node
 ## Leveling balance (2026-11-27): counts all the wick in the Hollow from the placed packs, nests, the Clinker,
-## the Ashbrood and kindling, walks two full clears (a beeline to the Clinker, and an explorer who takes the
-## nearest thing first), and checks the level curve against the targets in DESIGN §9. Each kill pays its wick
+## the Ashbrood and kindling, walks two full clears (a beeline along the main route of the first 10 minutes to
+## the Clinker, and an explorer who takes the nearest thing first), and checks the level curve against the targets in DESIGN §9. Each kill pays its wick
 ## scaled by the foe's level and the level gap (Progress.kill_wick). It also prints the old flat curve and old
 ## wick values on the same map, and a time-to-kill table from tuning.gd. A farming keeper who camps the hut row
 ## and the south (endless hatchlings, packs re-fought after faints) must stall around level 4, slower than going
@@ -76,7 +76,7 @@ func _pack_event(p: EnemyPack) -> Dictionary:
 		var kind := "spitwick" if i < p.spitwicks else ("elite" if i >= p.count - p.elites else "wickling")
 		units.append([wv[kind], p.level])
 		old += OLD[kind]
-	return {"name": "pack %s Lv%d (%d)" % [p.id, p.level, p.count], "kind": "pack", "pos": p.global_position, "units": units, "old": old, "old_adds": old, "level": p.level}
+	return {"name": "pack %s Lv%d (%d)" % [p.id, p.level, p.count], "kind": "pack", "pos": p.global_position, "units": units, "old": old, "old_adds": old, "level": p.level, "wake": p.wake_px(), "guard": p.guard}
 
 ## level: the foe level (0 = flat wick, like kindling).
 func _one(name: String, kind: String, pos: Vector2, old_adds: int, level: int) -> Dictionary:
@@ -112,15 +112,21 @@ func _build_routes() -> void:
 		adds.append([wv["wickling"], Tuning.kl_ashbrood_add_level])
 	boss.units = adds + boss.units
 	var finale := [boss, _one("kindling the WayLamp", "kindle", wl, 0, 0)]
-	# Beeline: follow the pointer to the Clinker, fighting every pack whose wake radius the path crosses;
-	# then everything else nearest-first (nests only burn once you have the Post Lamp); the guardian last.
-	var on_path := packs.filter(func(e): return _dist_to_segment(e.pos, start, clinker.pos) <= Tuning.kl_pack_wake_radius)
-	on_path.sort_custom(func(a, b): return start.distance_to(a.pos) < start.distance_to(b.pos))
-	var rest := packs.filter(func(e): return not on_path.has(e)) + nests
+	# Beeline (onboarding, 2026-11-27): follow the pointer along the main route (the north path's cold lamp, Oswin's
+	# crook, the route's nest) to the Clinker, fighting every pack whose wake radius the path crosses and burning
+	# every nest it passes (the Post Lamp comes first now); then everything else nearest-first; the guardian last.
+	var crook: Vector2 = get_tree().get_nodes_in_group("landmark").filter(func(m): return m.id == "crook_post")[0].global_position
+	var path: Array = [start, main.waypost_lantern_pos, crook]
+	path += nests.filter(func(e): return _dist_to_path(e.pos, [crook, clinker.pos]) <= Tuning.kl_nest_wake_radius).map(func(e): return e.pos)
+	path.append(clinker.pos)
+	var on_path := packs.filter(func(e): return _dist_to_path(e.pos, path) <= e.wake)
+	on_path += nests.filter(func(e): return path.has(e.pos))
+	on_path.sort_custom(func(a, b): return _along(a.pos, path) < _along(b.pos, path))
+	var rest := packs.filter(func(e): return not on_path.has(e)) + nests.filter(func(e): return not on_path.has(e))
 	routes["beeline"] = on_path + [clinker] + _nearest_first(rest, clinker.pos) + finale
-	# Explorer: always the nearest thing it can fight; nests open up after the Clinker.
+	# Explorer: always the nearest thing it can fight; nests open up after the Post Lamp find (its guard).
 	var route := []
-	var todo := packs.duplicate() + [clinker]
+	var todo := packs.duplicate() + [clinker]   # the guard is a pack: taking it opens the nests
 	var at := start
 	var nests_open := false
 	while not todo.is_empty():
@@ -128,7 +134,7 @@ func _build_routes() -> void:
 		var next: Dictionary = todo.pop_front()
 		route.append(next)
 		at = next.pos
-		if next.kind == "clinker" and not nests_open:
+		if next.get("guard", false) and not nests_open:
 			nests_open = true
 			todo += nests
 	routes["explorer"] = route + finale
@@ -146,6 +152,25 @@ func _nearest_first(events: Array, from: Vector2) -> Array:
 
 func _dist_to_segment(p: Vector2, a: Vector2, b: Vector2) -> float:
 	return p.distance_to(Geometry2D.get_closest_point_to_segment(p, a, b))
+
+func _dist_to_path(p: Vector2, path: Array) -> float:
+	var best := INF
+	for i in path.size() - 1:
+		best = minf(best, _dist_to_segment(p, path[i], path[i + 1]))
+	return best
+
+## How far along the path (px) the point nearest to p lies.
+func _along(p: Vector2, path: Array) -> float:
+	var best := INF
+	var at := 0.0
+	var walked := 0.0
+	for i in path.size() - 1:
+		var q := Geometry2D.get_closest_point_to_segment(p, path[i], path[i + 1])
+		if p.distance_to(q) < best - 0.01:
+			best = p.distance_to(q)
+			at = walked + (q as Vector2).distance_to(path[i])
+		walked += (path[i] as Vector2).distance_to(path[i + 1])
+	return at
 
 static func old_need(lv: int) -> int:
 	return 15 + 10 * (lv - 1)
@@ -255,6 +280,7 @@ func _measure() -> void:
 		var lv_old_adds := simulate(route, "old", "old_adds")
 		var p1 := _first_index(route, "pack", 1)
 		var p2 := _first_index(route, "pack", 2)
+		var p3 := _first_index(route, "pack", 3)
 		var ci := _first_index(route, "clinker")
 		var ai := _first_index(route, "ashbrood")
 		var before_boss: int = lv_new[ai - 1]
@@ -269,7 +295,9 @@ func _measure() -> void:
 		print("    new curve: L%d after pack 1, L%d after pack 2, L%d before the Clinker, L%d before the Ashbrood, L%d at the end" % [lv_new[p1], lv_new[p2], lv_new[ci - 1] if ci > 0 else 1, before_boss, lv_new[-1]])
 		var level_ups: int = lv_new[-1] - 1
 		check(level_ups >= 6 and level_ups <= 8, "%s: a full Hollow clear gives 6-8 level-ups (%d, ending at L%d)" % [name, level_ups, lv_new[-1]])
-		check(lv_new[p2] >= 2 and lv_new[p1] <= 2, "%s: level 2 comes with the first pack or two" % name)
+		# Onboarding (2026-11-27): the first three fights are the lone Wickling, the pack of 3 and the Post Lamp's
+		# guard (or the guard second, for the explorer). Level 2 comes with the find, not before it (PLAN_ONBOARDING).
+		check(lv_new[p3] >= 2 and lv_new[p1] <= 1, "%s: level 2 comes with the first three fights, at the Post Lamp find (L%d after the first, L%d after the third)" % [name, lv_new[p1], lv_new[p3]])
 		check(ci > 0 and lv_new[ci - 1] >= 3, "%s: level 3 before the Clinker" % name)
 		check(before_boss == 7, "%s: level 7 into the Ashbrood (L%d)" % [name, before_boss])
 		check(lv_new[ai] == 8 and lv_new[ai] > before_boss, "%s: the Ashbrood kill gives the Hollow's last level, L8 (L%d)" % [name, lv_new[ai]])

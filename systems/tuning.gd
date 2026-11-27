@@ -228,6 +228,10 @@ var kl_waylamp_swarm_level := 6         # Wicklings drawn to a kindling WayLamp 
 # Foe levels for packs and nests are in the HOLLOW_PACKS / HOLLOW_NESTS tables in scripts/main/main.gd.
 var kl_wick_drop_radius := 28.0
 var kl_pack_wake_radius := 320.0
+# The first 10 minutes (onboarding, owner 2026-11-27, Option B): a small guard on the Post Lamp find.
+# The route's first packs wake closer (the 6th column of HOLLOW_PACKS, in tiles), so nothing wakes at the hut.
+var kl_post_guard_wake_radius := 128.0  # px (4 tiles): the shelled Wickling on Oswin's crook sleeps until you come this close
+var kl_post_guard_level := 2            # its foe level: the first elite, one above the route's Wicklings
 
 # Feedback (PROTOTYPE)
 var kl_shake_px := 6.0                   # screen shake at full strength

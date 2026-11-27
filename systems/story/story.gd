@@ -13,7 +13,10 @@ const GOALS := [
 	{"id": "gather_fuel", "text": "Take fuel from the woodpile", "target": "woodpile"},
 	{"id": "relight_first", "text": "Relight the old lantern by the hut", "target": "start_lantern", "entry": 1},
 	{"id": "read_ledger", "text": "Read the ledger by the hut", "target": "ledger", "entry": 2},
-	{"id": "build_post", "text": "Find the keeper's post north of the hut", "target": "crook_post"},
+	# The first 10 minutes (onboarding, owner 2026-11-27): the north path's cold lamp, Oswin's crook, the first nest.
+	{"id": "relight_waypost", "text": "Relight the old lamp on the north path", "target": "waypost_lantern"},
+	{"id": "build_post", "text": "Take back the lamp from Oswin's crook", "target": "crook_post"},
+	{"id": "burn_nest", "text": "Burn out the nest with a Post Lamp", "target": "nest_a"},
 	{"id": "kindle_hollow", "text": "Kindle the WayLamp in the north Hollow", "target": "waylamp_hollow", "entry": 13},
 	{"id": "stone_way", "text": "Light the way east to the carved stone", "target": "stone_way"},
 	{"id": "enter_marsh", "text": "Follow the arrow into the marsh", "target": "marsh_entry"},
@@ -57,7 +60,14 @@ const TIPS := {
 	"fog_edge": "Fog comes back where light fades. Light holds the ground.",
 	"gust": "Wind is coming. Rock on the windward side shelters a flame.",
 	"wickling_seen": "Something small moves in the dark. It is drawn to your lights.",
-	"wickling_close": "Hold your beam on them: left click or RT, aimed. F or RB throws them back.",
+	"wickling_close": "Hold [beam] to shine on it. Aim with [aim].",
+	# The first 10 minutes (onboarding; text approved by the owner 2026-11-27). [beam] etc. become the button in use.
+	"haven": "Lantern light fills your lamp and warms you. Fight near it.",
+	"burst": "Too close. [burst] throws them back.",
+	"shell": "Light cracks a shell. Keep it on.",
+	"dash": "It is gathering itself. [dash] steps clear.",
+	"nest": "A nest. Your light can't touch it. A lantern's core can.",
+	"build_here": "Plant a Post Lamp beside it. Then hold.",
 	"lamp_empty": "Your lamp is down to an ember. Rest in a lantern's light to fill it.",
 	"warmth_low": "You are getting cold. Stand in a lantern's light.",
 	"faint": "You woke by the nearest light. What you dropped waits where you fell.",
@@ -123,7 +133,14 @@ func tip(id: String) -> void:
 	if tips_seen.has(id) or not TIPS.has(id):
 		return
 	tips_seen[id] = true
-	tip_shown.emit(TIPS[id])
+	tip_shown.emit(tip_text(id))
+
+## A tip with its button names filled in for the device in use: [beam], [burst], [dash], [aim], [build].
+func tip_text(id: String) -> String:
+	var t: String = TIPS.get(id, "")
+	t = t.replace("[beam]", InputHint.key("beam")).replace("[burst]", InputHint.key("flare"))
+	t = t.replace("[dash]", InputHint.key("dash")).replace("[build]", InputHint.key("place_lantern"))
+	return t.replace("[aim]", "the right stick" if InputHint.pad else "the mouse")
 
 func add_entry(n: int) -> void:
 	if entries.has(n) or not ENTRIES.has(n):
@@ -186,8 +203,20 @@ func _is_done(id: String, main: Node) -> bool:
 			return read.has(id)
 		"chalk_lake":
 			return read.has("chalk_lake") or read.has("pumphouse")
+		"relight_waypost":
+			if done.has("build_post"):
+				return true   # walked past it: don't send the keeper back
+			for l in _lanterns(main):
+				if l.global_position.distance_to(main.waypost_lantern_pos) < 8.0 and l.is_lit():
+					return true
+			return false
 		"build_post":
 			return read.has("crook_post") or int(built.get("post", 0)) > 0
+		"burn_nest":
+			for k in Progress.cleared:
+				if str(k).begins_with("nest_hollow"):
+					return true
+			return Progress.is_settled(FogGrid.R_HOLLOW)
 		"enter_marsh":
 			return visited.has(FogGrid.R_MARSH)
 		"build_reservoir":
@@ -232,12 +261,25 @@ func _check_tips(main: Node) -> void:
 	var wind := main.get_tree().get_first_node_in_group("wind") as Wind
 	if wind and wind.state == Wind.State.WARNING:
 		tip("gust")
+	var close := 0
 	for w in main.get_tree().get_nodes_in_group("wickling"):
 		var d: float = w.global_position.distance_to(player.global_position)
 		if d < 420.0:
 			tip("wickling_seen")
 		if d < 130.0:
 			tip("wickling_close")
+			close += 1
+	if close >= 2:
+		tip("burst")
+	if main.waypost_lantern_pos != Vector2.ZERO:
+		for l in _lanterns(main):
+			if l.global_position.distance_to(main.waypost_lantern_pos) < 8.0 and l.is_lit():
+				tip("haven")
+	for n in main.get_tree().get_nodes_in_group("foe"):
+		if n is WickNest and not Progress.cleared.has(n.foe_id) and n.global_position.distance_to(player.global_position) < Tuning.kl_nest_wake_radius + 64.0:
+			tip("nest")
+			if Progress.is_unlocked("post") and Inventory.get_count("scrap") >= Tuning.post_lamp_cost_scrap:
+				tip("build_here")
 	if player.lamp_charge <= Tuning.ward_min_charge:
 		tip("lamp_empty")
 	if player.warmth < Tuning.warmth_max * 0.35:
