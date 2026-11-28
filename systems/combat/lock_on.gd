@@ -112,6 +112,23 @@ func pick(origin: Vector2, dir: Vector2, exclude: Node = null) -> Foe:
 			best = f
 	return best if best else near
 
+## Auto mode (§6.8): the nearest foe hunting the keeper within kl_lock_range, wherever it is (no cone), or null.
+func nearest_hunter() -> Foe:
+	var k := keeper()
+	var t := tree()
+	if k == null or t == null:
+		return null
+	var best: Foe = null
+	var best_d := Tuning.kl_lock_range
+	for f in t.get_nodes_in_group("foe"):
+		if not Hunt.is_hunting(f) or not lockable(f):
+			continue
+		var d: float = k.global_position.distance_to(f.global_position)
+		if d <= best_d:
+			best_d = d
+			best = f
+	return best
+
 ## Starts a lock toward `dir` (the stick if pushed, else your facing or the cursor). False with nothing to lock.
 func acquire(dir: Vector2) -> bool:
 	var k := keeper()
@@ -213,6 +230,8 @@ func cycle(step: int) -> bool:
 
 ## K&M sticky click: a fire button pressed with the cursor within kl_sticky_click_radius of a foe's body.
 func sticky_begin(cursor: Vector2) -> bool:
+	if not Settings.sticky_click or Settings.lock_mode == "off":
+		return false   # its own option, and off with the lock (M1c review)
 	if has_target() and not sticky:
 		return false   # a full lock is already on
 	var t := tree()
@@ -277,9 +296,8 @@ func tick(delta: float, stick: Vector2, pressed: bool, mouse_pos: Vector2 = Vect
 		_auto_t -= delta
 		if _auto_t <= 0.0:
 			_auto_t = 0.2
-			var k := keeper()
-			var f := pick(k.global_position, combat.facing_or_aim()) if k else null
-			if f and Hunt.is_hunting(f):
+			var f := nearest_hunter()
+			if f:
 				_set_target(f)
 				last_event = "auto"
 	if target != null:

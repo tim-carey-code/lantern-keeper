@@ -2,6 +2,11 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-28 (M1c review fixes)
+- From the independent review (`REVIEW_M1C.md`, relayed by the coordinator), fixed before the owner's playtest: phase 2 never sits in the dark (a dive that finds no lit lamp recovers in 1 s and throws ash bolts); the M1c cost on the bench is mostly gone (3.1 → about 2.3 ms; the base was 2.0); the quest arrow hides only near the fight; real Ashbrood kills and the scrap economy with real slots are tested.
+- **Agent's calls, to confirm:** the lock-button option drops "Back paddle" (a standard Xbox pad has none); with the lock on Y, slot 4 moves to R3. The mouse's sticky click gets its own option and is off when the lock is Off. A version 6 save with a lamp planted where the rim lamp now stands gets that lamp's scrap back, and the rim lamp takes the tile.
+- **Left for the playtest:** standing at your own lamp makes every Lampfire bolt catch (PLAYTEST "Watch this").
+
 ## 2026-11-28 (M1b playtest; M1c built)
 - **M1b playtest results** (owner, on a pad; PLAYTEST.md): nothing felt like tending; lighting by touch stays **one press**; the faint rule worked and cleared packs stayed cleared; the level pace is right; everything else passed. The Ashbrood's ember **didn't read**: "it was right above the yellow quest arrow, I didn't know what was going on". The owner wants art and sound (they stay the owner's job).
 - **Lamp slots: build them now** (owner, 2026-11-28). This overrides the M1b call to keep "no lamp limit" while lanterns were redesigned ([M1b: lanterns are being redesigned](#2026-11-27-m1b-lanterns-are-being-redesigned)). Built in M1c as PLAN_LANTERNS §5: 2 slots at levels 1-3, 3 at 4-7, 4 at 8-11, 5 at 12 (6 with gear in M3); old lamps and lamps in held ground are free; a refused plant says why; a full refund and an 8 s replant.

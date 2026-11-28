@@ -885,7 +885,8 @@ The other boss-bar hints (§12) are unchanged. There is no new toast. The rim la
 |---|---|
 | Target lock | Target lock: press to lock · Target lock: auto · Target lock: off |
 | Moving on after a kill | Next foe after a kill: on · Next foe after a kill: off |
-| The lock button | Lock button: %s (R3, Y, L3 or Back paddle) |
+| The lock button | Lock button: %s (R3, Y or L3; with Y, slot 4 moves to R3) |
+| The mouse's sticky click (review fix) | Mouse: a click on a foe follows it: on · Mouse: a click on a foe follows it: off |
 | The marker | Lock marker: normal · Lock marker: large |
 | Aim assist | Aim assist: %s ("12 degrees", "20 degrees" or "off") |
 

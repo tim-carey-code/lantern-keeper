@@ -180,12 +180,16 @@ func _lock_checks(p: Node) -> void:
 	InputHint.pad = true
 	var lock_y := InputMap.action_get_events("lock_on").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_Y)
 	var skill_y := InputMap.action_get_events("skill_4").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_Y)
+	var skill_r3 := InputMap.action_get_events("skill_4").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_RIGHT_STICK)
 	check(lock_y and not skill_y and InputHint.key("lock_on") == "Y", "the lock moved to Y: Y locks, and slot 4 gives Y up")
+	check(skill_r3 and InputHint.short("skill_4") == "R3" and InputHint.key("skill_4") == "R3", "and slot 4 moves to R3, and the bar says so")
 	Settings.lock_button = "r3"
 	Settings.apply_controls()
 	skill_y = InputMap.action_get_events("skill_4").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_Y)
 	var lock_r3 := InputMap.action_get_events("lock_on").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_RIGHT_STICK)
-	check(skill_y and lock_r3, "back on R3: slot 4 has Y again")
+	skill_r3 = InputMap.action_get_events("skill_4").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_RIGHT_STICK)
+	check(skill_y and lock_r3 and not skill_r3 and InputHint.short("skill_4") == "Y", "back on R3: slot 4 has Y again")
+	check(not Settings.LOCK_BUTTONS.has("paddle"), "no lock button a standard pad lacks (no back paddle)")
 	check(InputMap.action_get_events("lock_on").any(func(e): return e is InputEventMouseButton), "middle mouse always locks")
 	# Y may hold an aimed skill (PLAN_LANTERNS §6.6).
 	check(Progress.bind_reason("skill_4", "fireglobe") == "", "Y takes an aimed skill")

@@ -335,11 +335,21 @@ func _sticky_auto_checks() -> void:
 	lock.sticky_end()
 	check(not lock.has_target(), "letting go ends it")
 	check(not lock.sticky_begin(t.global_position + Vector2(t.body_radius() + 40.0, 0)), "a press farther from any foe is a plain shot")
-	# Auto mode: no lock, so the nearest hunting foe is taken.
+	Settings.sticky_click = false
+	check(not lock.sticky_begin(t.global_position), "the sticky click has its own option, off")
+	Settings.sticky_click = true
+	Settings.lock_mode = "off"
+	check(not lock.sticky_begin(t.global_position), "and it is off with the lock set to Off")
+	Settings.lock_mode = "toggle"
+	# Auto mode: no lock, so the nearest hunting foe is taken, even behind you (outside the cone), over an idle one ahead.
+	var idle := foe(spot + Vector2(120, 0))
+	t.global_position = spot + Vector2(-200, 0)
+	combat._face = Vector2.RIGHT
 	Settings.lock_mode = "auto"
 	t.state = Wickling.State.CHASE
 	await wait(0.3)
-	check(lock.target == t and lock.last_event == "auto", "Auto mode locks the nearest foe hunting you")
+	check(lock.target == t and lock.last_event == "auto", "Auto mode locks the nearest foe hunting you, even behind you (not the idle one ahead)")
+	idle.queue_free()
 	Settings.lock_mode = "toggle"
 	clear()
 	await wait(0.05)
@@ -359,6 +369,16 @@ func _y_checks() -> void:
 		if b.alive and b.kind == FireBolts.LANCE:
 			lb = b
 	check(lb != null and lb.dir.dot((t.global_position - lb.pos).normalized()) > 0.98, "Y with an aimed skill and no lock fires at the best foe within %.0f degrees" % Tuning.kl_y_autotarget_deg)
+	# Not at a foe behind rock or in deep fog (the lock's rules).
+	var rock := fog.idx(fog.tile_of(player.global_position + (t.global_position - player.global_position) * 0.5))
+	fog.solid[rock] = 1
+	check(combat.y_target() == null, "Y's auto-target skips a foe behind rock")
+	fog.solid[rock] = 0
+	var fi := fog.idx(fog.tile_of(t.global_position))
+	fog.density[fi] = 0.95
+	check(combat.y_target() == null, "and one in deep fog")
+	fog.density[fi] = 0.0
+	check(combat.y_target() == t, "and takes it again in the clear")
 	await wait(0.6)
 	t.global_position = spot + Vector2.RIGHT.rotated(deg_to_rad(70)) * 220.0
 	combat.skill("lance").cd = 0.0

@@ -47,6 +47,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_combos.tscn  # M1c: catch, flare (the snap), chain, feed, the sums
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_lock.tscn    # M1c: the target lock (pick, flick, steer, breaks, lead, sticky click, Auto, Y, the marker)
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_fights.tscn  # M1c: the damage fix (swarm cap, the Clinker's hit) and the Ashbrood fighting back
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_ashbrood_kill.tscn # M1c: real Ashbrood kills (rim lamp only; Fireglobes in the bowl)
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_hollow.tscn # prototype branch only
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_onboarding.tscn # prototype: the first 10 minutes' main route
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_loop.tscn # prototype: the loop route, one-way Ridge, WayLamp fast travel
@@ -88,7 +89,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
 - Tests and captures set `SaveGame.path` to a test file first: they must never read or overwrite the owner's real save.
   Settings (`user://settings.cfg`) are never read or written by a scene run from `res://tools/`; tests also set `Settings.path` to a test file and call `Settings.use_defaults()`.
   `tools/run_tests.sh` also points `XDG_DATA_HOME` at a scratch folder, so every `user://` file a test writes is kept away from the owner's data.
-- M1c: older tests that check other things turn the light rule and the lamp-slot limit off in their `_ready()` (the block marked "M1c"); new rules get their own checks with the defaults on.
+- M1c: older unit-style tests turn the light rule and the lamp-slot limit off in their `_ready()` (the block marked "M1c"); the new rules have their own checks with the defaults on, and `test_prototype_hollow`, `test_prototype_onboarding`, `test_leveling` (its scrap check) and `test_ashbrood_kill` keep the real rules on.
 - Tests strip joypad events first: a real controller on this PC would otherwise move the test keeper (this caused flaky runs).
 - Automated runs are silent (`--audio-driver Dummy`). Don't play sound through the owner's speakers.
 - Visual check without the owner's screen: render frames on a virtual display with `tools/capture/capture.tscn`

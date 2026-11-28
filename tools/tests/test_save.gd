@@ -137,6 +137,8 @@ func _v5_from(v6: Dictionary) -> Dictionary:
 	v5["progress"]["waylamp_fuel"] = {"hollow": 9}
 	var lamps := []
 	for l in v6["lanterns"]:
+		if Vector2(l["x"], l["y"]).distance_to(main.rim_lamp_pos) < 8.0:
+			continue   # a real version 5 save never had the rim lamp (M1c)
 		var old: Dictionary = (l as Dictionary).duplicate()
 		old.erase("cold")
 		old["fuel"] = 0.0 if bool(l.get("cold", false)) else 77.0
@@ -183,6 +185,14 @@ func _v6_file(v7: Dictionary) -> void:
 	check(_load_file(V6_PATH, v6), "a version 6 save file loads")
 	var rim := get_tree().get_nodes_in_group("lantern").filter(func(x): return x.position.distance_to(main.rim_lamp_pos) < 8.0)
 	check(rim.size() == 1 and rim[0].old and rim[0].cold and not rim[0].can_pick_up(), "the bowl's rim lamp is put back, cold, an old lamp (lit by touch)")
+	# A v6 save with a planted Mirror Post on that tile: its scrap comes back, and the rim lamp still stands there.
+	var crowded: Dictionary = v6.duplicate(true)
+	crowded["lanterns"].append({"kind": "mirror", "x": main.rim_lamp_pos.x, "y": main.rim_lamp_pos.y, "cold": false, "dir": 0})
+	var scrap_saved := int(crowded["inventory"].get("scrap", 0))
+	check(_load_file(V6_PATH, crowded), "a version 6 save with a lamp planted on the rim lamp's tile loads")
+	rim = get_tree().get_nodes_in_group("lantern").filter(func(x): return x.position.distance_to(main.rim_lamp_pos) < 8.0)
+	check(rim.size() == 1 and rim[0].old and rim[0].kind == "post", "the rim lamp takes the tile")
+	check(Inventory.get_count("scrap") == scrap_saved + Tuning.mirror_cost_scrap, "and the planted lamp's %d scrap comes back (%d -> %d)" % [Tuning.mirror_cost_scrap, scrap_saved, Inventory.get_count("scrap")])
 	var lit7: Dictionary = v7.duplicate(true)
 	for l in lit7["lanterns"]:
 		if Vector2(l["x"], l["y"]).distance_to(main.rim_lamp_pos) < 8.0:

@@ -213,7 +213,7 @@ func y_target() -> Foe:
 	var best: Foe = null
 	var best_s := INF
 	for f in get_tree().get_nodes_in_group("foe"):
-		if not lock.lockable(f, false):
+		if not lock.lockable(f, true):   # the lock's rules: not in deep fog (M1c review)
 			continue
 		var v: Vector2 = f.global_position - origin
 		var d := v.length()
@@ -222,6 +222,8 @@ func y_target() -> Foe:
 		var ang := absf(dir.angle_to(v))
 		if ang > deg_to_rad(Tuning.kl_y_autotarget_deg):
 			continue
+		if lock.blocked(origin, f.global_position):
+			continue   # ...and not behind rock
 		var s := ang + d / Tuning.kl_lock_range
 		if s < best_s:
 			best_s = s

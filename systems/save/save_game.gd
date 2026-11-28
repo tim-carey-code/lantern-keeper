@@ -186,6 +186,7 @@ static func migrate_data(data: Dictionary) -> Dictionary:
 		# exist); load_into() puts every missing old lamp back, cold, so the rim lamp is there to light by touch.
 		# Lamp slots come from the level (nothing to save); snuff, flare and smother timers are not saved.
 		data["version"] = 7
+		data["from_v6"] = true   # load_into: a lamp the keeper planted on the new rim lamp's tile is refunded
 	return data
 
 ## A saved action bar, checked slot by slot with Progress.bind_reason() (call it after level and lance_given are
@@ -287,7 +288,16 @@ func load_into(main: Node) -> bool:
 	for c in lroot.get_children():
 		lroot.remove_child(c)
 		c.queue_free()
+	var rim: Vector2 = main.rim_lamp_pos if "rim_lamp_pos" in main else Vector2.INF
+	var kept: Array = []
 	for l in data["lanterns"]:
+		# Review fix (M1c): a version 6 save may have a planted lamp where the rim lamp now stands. Its scrap goes
+		# back to the keeper and the rim lamp takes the tile (below), so the no-scrap way to light the Ashbrood stays.
+		if data.get("from_v6", false) and rim != Vector2.INF and Vector2(l["x"], l["y"]).distance_to(rim) < FogGrid.TILE * 1.5:
+			Inventory.counts["scrap"] = Inventory.get_count("scrap") + Lantern.cost(str(l["kind"]))
+			continue
+		kept.append(l)
+	for l in kept:
 		var lamp := Lantern.new()
 		lamp.kind = l["kind"]
 		lamp.mirror_dir = int(l.get("dir", 0))
@@ -300,7 +310,7 @@ func load_into(main: Node) -> bool:
 	if main.has_method("old_lamp_spots"):
 		for spot in main.old_lamp_spots():
 			var found := false
-			for l in data["lanterns"]:
+			for l in kept:
 				if Vector2(l["x"], l["y"]).distance_to(spot) < 8.0:
 					found = true
 					break

@@ -132,16 +132,17 @@ The game starts fullscreen; F11 switches to a window. On Linux, your save is kep
 | Move | WASD / arrows | Left stick |
 | Aim | Mouse | Right stick |
 | Lampfire (hold) | Left click | RT |
-| Skill slots 2, 3, 4 (Fireglobe, the Beam or Lance, empty) | Right click, Q, F | RB, LB, Y |
+| Skill slots 2, 3, 4 (Fireglobe, the Beam or Lance, empty; slot 4 takes any skill) | Right click, Q, F | RB, LB, Y |
+| Lock onto a foe / let go (switch: mouse wheel, or flick the right stick; hold the stick to aim freely) | Middle click (or hold a click on a foe) | R3 (option: Y or L3) |
 | Dash | Space / Shift | LT |
 | Drink lamp oil | R | B (right) |
-| Read, refuel / relight, turn a Mirror Post right, rest, travel (tap); gather or pick up a lamp (hold) | E | A (bottom) |
+| Read, light an old lamp or a WayLamp, take scrap, turn a Mirror Post right, rest, travel (tap); pick up a lamp (hold) | E | A (bottom) |
 | Plant the selected lamp; next to a Mirror Post, turn it left | C | X (left) |
 | Next lamp kind (tap) / lamp list (hold) / previous kind; pick 1-4 | Tab; 1-4 | D-pad right / left |
 | Skills list | K | D-pad down |
 | Map | M | D-pad up |
 | Journal (goals, story so far, notes) | J | Back / View |
-| Pause menu (resume, save, new game, save and quit, goal pointer, tips, options) | Esc | Start |
+| Pause menu (resume, save, new game, save and quit, goal pointer, target lock options, tips, options) | Esc | Start |
 | Close a menu | Esc | B |
 | Tuning panel (for development) | F1 | Left stick click |
 | Fullscreen on/off | F11 | |

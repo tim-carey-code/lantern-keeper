@@ -158,6 +158,7 @@ func _number_checks() -> void:
 	check(is_equal_approx(h1 - lit.hp, 2.6), "lit, it does 2.6 (%.2f)" % (h1 - lit.hp))
 	# Dim: x1.0.
 	player.global_position = dark.global_position + Vector2(40, 0)
+	dark.update_light_state(0.0)   # the keeper jumped here this frame (in play the state catches up within 3 frames)
 	var h2 := dark.hp
 	dark.hurt(1.0, false, "lampfire")
 	check(dark.light_state == Foe.DIM and is_equal_approx(h2 - dark.hp, 1.0), "dim, it does what it always did (%.2f)" % (h2 - dark.hp))
@@ -202,6 +203,7 @@ func _shell_checks() -> void:
 	# Dim (close in): it breaks as before. The plan: about 11 Lampfire hits for the whole guard, dim.
 	g.shell = g.shell_max
 	player.global_position = g.global_position + Vector2(50, 0)
+	g.update_light_state(0.0)   # the keeper jumped here this frame
 	var dim_hits := 0
 	while is_instance_valid(g) and not g._dead and dim_hits < 40:
 		g.hurt(Tuning.kl_lampfire_dmg * Progress.dmg_mult(), false, "lampfire")

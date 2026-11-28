@@ -33,11 +33,15 @@ func _input(event: InputEvent) -> void:
 ## The button for an action on the current device, e.g. key("interact") -> "A" or "E".
 func key(action: String) -> String:
 	if action == "lock_on" and pad:
-		return Settings.lock_button_label()   # M1c: the lock button is an option (R3, Y, L3 or View)
+		return Settings.lock_button_label()   # M1c: the lock button is an option (R3, Y or L3)
+	if action == "skill_4" and pad:
+		return Settings.slot4_label()        # with the lock on Y, slot 4 is on R3
 	return (PAD if pad else KEYS).get(action, "?")
 
 ## The short key-cap label for an action bar slot, e.g. short("skill_1") -> "RT" or "LMB".
 func short(action: String) -> String:
+	if action == "skill_4" and pad:
+		return Settings.slot4_label()
 	return (PAD_SHORT if pad else KEYS_SHORT).get(action, key(action))
 
 ## Full controls list for the pause menu.

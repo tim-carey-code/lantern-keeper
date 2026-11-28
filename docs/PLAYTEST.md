@@ -14,18 +14,21 @@
 5. **Lamp slots.** At level 3 you can plant 2 lamps; a 3rd is refused with "All your lamps are lit." At level 4 it plants. The pips by the lamp kind (top left) show slots and lamps out. A pick-up gives all the scrap back; planting then waits 8 s.
 6. **The damage fix.** Let 3 Wicklings reach you: they should take a full keeper down in about 4 s if you do nothing (was about 1 s). Stand in the Clinker's lane once: it should be the hardest hit in the Hollow (37 warmth) and throw you out of the lane.
 7. **The Ashbrood glances in the dark.** Light the WayLamp with no lamp near: your hits clink and the boss bar says "It shrugs off fire in the dark. Bring a lamp." There is **no quest arrow** during the fight, and **one** ember, at its feet.
-8. **Does the Ashbrood fight back now?** Phase 1: ash bolts at you (cold aim lines), a wing sweep if you stand close, the puff (it now puts out any lamp inside its circle for 4 s) and adds. It should never sit still for more than about 2 s. Phase 2: it dives about every 7 s at a lit lamp, sits on it smothering it (the lamp stays lit: hit it now), then the lamp goes out for 8 s.
+8. **Does the Ashbrood fight back now?** Phase 1: ash bolts at you (cold aim lines), a wing sweep if you stand close, the puff (it now puts out any lamp inside its circle for 4 s) and adds. It should never sit still for more than about 2 s. Phase 2: it dives about every 7 s at a lit lamp, sits on it smothering it (the lamp stays lit: hit it now), then the lamp goes out for 8 s. With only the rim lamp, every other dive finds it still out: then it lands near you, shakes off for a second and throws ash bolts. The quest arrow hides only near the fight; walk away and it shows again.
 9. **Two ways to beat it with no scrap:** light the **rim lamp** (an old lamp west of the bowl, one touch) and fight in its light; or throw a **Fireglobe into the bowl** to stir the ember (it lights the Ashbrood for 4 s, once per 8 s). Does hitting it while it smothers a lamp feel like the right window?
 10. **The lock.** R3 locks the foe you meant (warm corner brackets). A quick flick of the right stick switches. Holding the stick steers (the brackets go half strength) and letting go returns to the lock. After a kill it moves on to the next foe nearby.
 11. **With a lock:** put Lance on Y (Skills list) and press Y: it hits the locked foe. B drinks without losing the target. A Fireglobe lands on the target.
 12. **The lock breaks** behind rock, far away and in deep fog, and never leaks out of a menu.
 13. **Lock or free aim, which do you use?** And the marker colour: warm amber (recommended) or cold?
 
+**Watch this** (from the M1c review): planting a lamp puts it on your own tile, so if you stand right by your lamp and fire, **every** Lampfire bolt catches on its flame (3 damage plus two side bolts, up to 7 a bolt into a pack). Does standing at your lamp feel too strong? If so, the fix is to catch only once a bolt has flown past the keeper's own reach.
+
 **Questions**
 
 | Question | Your answer |
 |---|---|
 | Does the Ashbrood fight back now? Too much, too little? | |
+| Standing at your own lamp makes every bolt catch: too strong? | |
 | Does the Clinker's hit feel scary? Are Wickling swarms fair? | |
 | Do the lamps feel useful now? | |
 | Catch: keep, rework or cut? | |

@@ -460,6 +460,23 @@ func _place_rim_lamp() -> void:
 				best_s = s
 				best = p
 	if best == Vector2.INF:
+		# Review fix: never lose the no-soft-lock lamp silently. Take the ground tile nearest the wanted spot whose
+		# light (a Post Lamp's) still reaches the bowl; with none, say so loudly.
+		push_warning("Rim lamp: no ground tile %.0f px from the Hollow's WayLamp; using the nearest one that lights the bowl" % Tuning.kl_rim_lamp_dist)
+		for dy in range(-7, 8):
+			for dx in range(-7, 8):
+				var t := c + Vector2i(dx, dy)
+				if not fog.in_bounds(t) or fog.solid[fog.idx(t)] == 1 or fog.terrain_of(t) != FogGrid.T_GROUND:
+					continue
+				var p := fog.tile_center(t)
+				var d := p.distance_to(w.global_position)
+				if d < 64.0 or d > Tuning.lantern_max_radius - 24.0:
+					continue
+				if p.distance_to(want) < best_s or best == Vector2.INF:
+					best_s = p.distance_to(want)
+					best = p
+	if best == Vector2.INF:
+		push_error("Rim lamp: no ground tile within a lamp's light of the Hollow's WayLamp: the Ashbrood can't be lit without scrap")
 		return
 	var l := _add_old_lamp(best)
 	rim_lamp_pos = l.position

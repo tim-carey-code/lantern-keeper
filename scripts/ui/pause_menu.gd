@@ -54,7 +54,7 @@ func _ready() -> void:
 	lock_box.add_theme_constant_override("separation", 6)
 	lock_box.visible = false
 	right.add_child(lock_box)
-	for opt in ["mode", "chain", "button", "marker", "assist"]:
+	for opt in ["mode", "chain", "button", "marker", "sticky", "assist"]:
 		var lb := Button.new()
 		lb.pressed.connect(_cycle_lock.bind(opt))
 		lock_box.add_child(lb)
@@ -205,6 +205,7 @@ func _cycle_pointer() -> void:
 const LOCK_MODE_NAMES := {"toggle": "Target lock: press to lock", "auto": "Target lock: auto", "off": "Target lock: off"}
 const LOCK_CHAIN_NAMES := {true: "Next foe after a kill: on", false: "Next foe after a kill: off"}
 const LOCK_MARKER_NAMES := {false: "Lock marker: normal", true: "Lock marker: large"}
+const STICKY_NAMES := {true: "Mouse: a click on a foe follows it: on", false: "Mouse: a click on a foe follows it: off"}
 const LOCK_BUTTON_TEXT := "Lock button: %s"
 const AIM_ASSIST_TEXT := "Aim assist: %s"
 
@@ -213,6 +214,7 @@ func _lock_labels() -> void:
 	lock_buttons["chain"].text = LOCK_CHAIN_NAMES.get(Settings.lock_chain, "Next foe after a kill")
 	lock_buttons["button"].text = LOCK_BUTTON_TEXT % Settings.lock_button_label()
 	lock_buttons["marker"].text = LOCK_MARKER_NAMES.get(Settings.lock_large, "Lock marker")
+	lock_buttons["sticky"].text = STICKY_NAMES.get(Settings.sticky_click, "Sticky click")
 	lock_buttons["assist"].text = AIM_ASSIST_TEXT % ("off" if Settings.aim_assist <= 0.0 else "%d degrees" % roundi(Settings.aim_assist))
 
 ## Shows the lock options in place of the controls list (and back).
@@ -233,6 +235,8 @@ func _cycle_lock(opt: String) -> void:
 			Settings.lock_button = Settings.next_in(Settings.LOCK_BUTTONS, Settings.lock_button)
 		"marker":
 			Settings.lock_large = not Settings.lock_large
+		"sticky":
+			Settings.sticky_click = not Settings.sticky_click
 		"assist":
 			Settings.aim_assist = Settings.next_in(Settings.AIM_ASSISTS, Settings.aim_assist)
 	Settings.apply_controls()
