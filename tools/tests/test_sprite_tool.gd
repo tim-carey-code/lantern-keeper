@@ -32,6 +32,7 @@ func _ready() -> void:
 	_auto_checks()
 	_component_checks()
 	_warm_checks()
+	_recolour_checks()
 	_wipe(ROOT)
 	Art.clear_frames()
 	print("RESULT fails=%d" % fails)
@@ -356,6 +357,62 @@ func _warm_checks() -> void:
 				all_cold = false
 	check(rep["ok"] and warm_px > 0 and cream == 0 and pale > 0, "warm = ember keeps the ember amber (%d px) and snaps the bone-beige skull to the pale cold blues (%d px), not cream" % [warm_px, pale])
 	check(all_cold, "without it (palette cold) the same ember turns cold: a foe never glows amber")
+
+## A person: recolour maps skin tones and green glass to chosen colours; a prop gets its own file and stays out of
+## the frames file.
+func _recolour_checks() -> void:
+	var img := Image.create(240, 120, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 0, 1))
+	img.fill_rect(Rect2i(40, 10, 40, 100), Color8(40, 30, 40))
+	img.fill_rect(Rect2i(44, 14, 32, 24), Color8(214, 168, 132))     # a face
+	img.fill_rect(Rect2i(44, 60, 32, 24), Color8(70, 110, 88))       # a green bottle
+	img.fill_rect(Rect2i(130, 40, 100, 60), Color8(90, 60, 40))      # the cart (a wide prop)
+	img.save_png(ROOT + "rc.png")
+	var m := ConfigFile.new()
+	m.set_value("sheet", "subject", "rc")
+	m.set_value("sheet", "kind", "person")
+	m.set_value("sheet", "rows", 1)
+	m.set_value("sheet", "cols", 2)
+	m.set_value("sheet", "frame_size", 32)
+	m.set_value("sheet", "recolour", {"skin": ["#d9772b", "#9c4a22"], "green": ["#ffd27a", "#f5a742", "#d9772b"]})
+	m.set_value("cells", "r0c0", "idle")
+	m.set_value("cells", "r0c1", "cart/cart")
+	m.set_value("variant.cart", "frame_size", Vector2i(48, 32))
+	m.set_value("pose.cart.cart", "rule", "hold")
+	m.set_value("pose.cart.cart", "prop", true)
+	m.set_value("pose.cart.cart", "file", "rc_cart")
+	m.save(ROOT + "rc.cfg")
+	var rep := Pipeline.new().run(ROOT + "rc.png", ROOT + "rc.cfg", {"out_root": ROOT + "rc_out/", "preview_dir": ROOT + "previews/"})
+	var dir := ROOT + "rc_out/people/rc/"
+	var f := _load(dir + "rc_idle.png")
+	var f0 := f.get_region(Rect2i(0, 0, 32, 32)) if f else null
+	# The face sits in the top quarter of the figure, the bottle lower down.
+	var face := {}
+	var bottle := {}
+	if f0:
+		var top := _top_row(f0)
+		for y in 32:
+			for x in 32:
+				var c := f0.get_pixel(x, y)
+				if c.a < 0.5 or c.to_html(false) == "141a2e":
+					continue
+				var hx := "#" + c.to_html(false)
+				if y >= top + 2 and y <= top + 6:
+					face[hx] = true
+				elif y >= top + 15 and y <= top + 20:
+					bottle[hx] = true
+	check(rep["ok"] and face.has("#d9772b") and not face.has("#ffd27a") and not face.has("#fff1c1") and not face.has("#f5a742"),
+		"recolour skin: a face snaps to #d9772b / #9c4a22, not the lamp ambers (%s)" % str(face.keys()))
+	var green_ok := not bottle.is_empty()
+	for hx in bottle:
+		if not ["#ffd27a", "#f5a742", "#d9772b"].has(hx) and not Pipeline.COLD_HEX.slice(0, 3).has(hx):
+			green_ok = false
+	check(green_ok and (bottle.has("#ffd27a") or bottle.has("#f5a742") or bottle.has("#d9772b")), "recolour green: a green bottle snaps to the flask ambers (%s)" % str(bottle.keys()))
+	var cart := _load(dir + "rc_cart.png")
+	var cfg := ConfigFile.new()
+	cfg.load(dir + "rc.frames.cfg")
+	check(cart != null and cart.get_size() == Vector2i(48, 32) and not FileAccess.file_exists(dir + "rc_cart_cart.png") and not cfg.has_section("cart") and not cfg.has_section("variant.cart") and cfg.has_section("idle"),
+		"a prop: its own file (rc_cart.png, 48x32), left out of the frames file")
 
 # --- Helpers -------------------------------------------------------------------------------------------------------
 

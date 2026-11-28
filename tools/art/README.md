@@ -35,16 +35,16 @@ Ask for one image with every key pose in a grid of equal cells on flat magenta. 
 ## 2. Write the manifest
 
 Copy one from `tools/art/manifests/`: `wickling.cfg` (3 variants, 16 and 24 px), `spitwick.cfg` and `nest.cfg`
-(one shared sheet, non-square frames), `keeper_poses.cfg`, `ashbrood.cfg` (48 px, overlapping poses, the ember kept amber), `amos.cfg` (a person),
+(one shared sheet, non-square frames), `keeper_poses.cfg`, `ashbrood.cfg` (48 px, overlapping poses, the ember kept amber), `amos.cfg` (a person, skin and green recoloured, the cart as a 48 x 32 prop),
 `wickling_timid_sample.cfg` (one row of four idle frames). A `.cfg` is a Godot ConfigFile:
 
 | Section | Keys |
 |---|---|
 | `[sheet]` | `subject`, `kind` (`creature`, `keeper`, `person`, `prop`), `rows`, `cols`, `frame_size` (16, 24, 32, 48 or `Vector2i(16, 32)`), `anchor` (`foot` or `center`), `facing` (`right`), `layout` (`grid`, `auto` or `components`), `margin` (px trimmed off each grid cell), `key_mode` (`magenta` or `hue`), plus any variant key as the default |
 | `[cells]` | `r0c0 = "brave/idle"` (variant/pose; no slash = no variant), or `"skip"`. Several cells with the same pose become one hand-keyed strip of those frames |
-| `[variant.<v>]` | `frame_size`, `anchor`, `rim` (`small` #36507a, `elite` #4a6a94, `none` or a hex), `outline` (1 px #141a2e), `eyes` (how many to repair; 0 = off), `eye_threshold` (0-1 brightness), `palette` (`cold`, `all` or a list of hexes), `gain` (brighten before snapping), `fill` (0-1 of the frame), `sway`, `seed`, `keep`, `warm` (`snap`: everything to the palette; `ember`: fire-coloured pixels keep the four ambers, optionally only inside `ember_region`; `drop`: fire-coloured pixels clear) |
+| `[variant.<v>]` | `frame_size`, `anchor`, `rim` (`small` #36507a, `elite` #4a6a94, `none` or a hex), `outline` (1 px #141a2e), `eyes` (how many to repair; 0 = off), `eye_threshold` (0-1 brightness), `palette` (`cold`, `all` or a list of hexes), `gain` (brighten before snapping), `fill` (0-1 of the frame), `sway`, `seed`, `keep`, `warm` (`snap`: everything to the palette; `ember`: fire-coloured pixels keep the four ambers, optionally only inside `ember_region`; `drop`: fire-coloured pixels clear), `recolour` (`{"skin": [hexes], "green": [hexes], "fire": [hexes]}`: skin tones, green glass or fire colours snap only to the colours given) |
 | `[cell.rXcY]` | `keep` (`all`, or `largest`: drop separate bits such as a fireball), `keep_near` (px), `region` (`[x0, y0, x1, y1]`, fractions of the cell), `palette`, `warm`, `ember_region`, `eyes`, and any variant key |
-| `[pose.<v>.<pose>]` | `rule` (`idle`, `move`, `notice`, `attack`, `hold`, `keys`; `none` = just the key pose), `derive` (`["hurt", "death", "spawn", "notice", "windup"]`; `[]` = none), `anim` (output name), `frames`, `bob`, `lean`, `sway`, `fit` (`variant`, `own` = scale this pose by itself, `clip`) |
+| `[pose.<v>.<pose>]` | `rule` (`idle`, `move`, `notice`, `attack`, `hold`, `keys`; `none` = just the key pose), `derive` (`["hurt", "death", "spawn", "notice", "windup"]`; `[]` = none), `anim` (output name), `frames`, `bob`, `lean`, `sway`, `fit` (`variant`, `own` = scale this pose by itself, `clip`), `prop` + `file` (a still prop with its own file name, e.g. `amos_cart`, left out of the frames file) |
 | `[anim.<name>]` | `fps`, `loop`, `timed_by` (a Tuning name): copied into the frames file if it doesn't have them |
 
 Use `base` for the no-variant name in section names (`[pose.base.idle]`). Defaults by kind: creatures get the rim,

@@ -716,6 +716,17 @@ func _palette_for(variant: String, cname: String = "") -> Array[Color]:
 static func is_fire(c: Color) -> bool:
 	return c.s > 0.5 and c.v > 0.35 and (c.h < 0.17 or c.h > 0.97)
 
+## The kind of colour, for recolour: "green" (glass, leaves), "skin" (a muted orange-pink: faces and hands), "fire"
+## (a saturated orange or amber), or "" for the rest. Green first; skin before fire.
+static func colour_class(c: Color) -> String:
+	if c.v >= 0.2 and c.s >= 0.25 and c.h >= 0.17 and c.h <= 0.45:
+		return "green"
+	if c.v >= 0.35 and c.s >= 0.15 and c.s <= 0.62 and (c.h >= 0.0 and c.h <= 0.12 or c.h >= 0.97):
+		return "skin"
+	if is_fire(c):
+		return "fire"
+	return ""
+
 ## Nearest palette colour ("redmean" weighted RGB distance: close to how the eye judges it, and cheap).
 static func snap(c: Color, pal: Array[Color]) -> Color:
 	var best := pal[0]
@@ -777,8 +788,11 @@ func _build_variant(variant: String, cells: Array, file_base: String) -> Array:
 		var frames := _apply_rule(rule, list, variant, pose, size, facing, outline)
 		if frames.is_empty():
 			continue
-		out.append({"file": "%s_%s.png" % [prefix, anim], "variant": variant, "anim": anim, "frames": frames,
-			"size": size, "thumb": list[0]["thumb"], "rule": rule})
+		# A prop (a cart, a sign) is a still image with its own file name, not an animation: frames.cfg skips it.
+		var fname := str(_popt(variant, pose, "file", ""))
+		var is_prop := bool(_popt(variant, pose, "prop", false))
+		out.append({"file": (fname if fname != "" else "%s_%s" % [prefix, anim]) + ".png", "variant": variant, "anim": anim,
+			"frames": frames, "size": size, "thumb": list[0]["thumb"], "rule": rule + (" (prop)" if is_prop else ""), "prop": is_prop})
 		made[anim] = true
 	# Derived strips (hurt, death, spawn, notice, windup) from a key pose, when the sheet has no key for them.
 	for pose in order:
@@ -854,6 +868,17 @@ func _key_frame(cell: Dictionary, variant: String, size: Vector2i, s: float, pad
 	var fire: Array[Color] = []
 	for hx in FIRE_HEX:
 		fire.append(Color.html(hx))
+	# recolour = {"skin": [hexes], "green": [hexes], "fire": [hexes]}: pixels of that kind snap to those colours only
+	# (skin tones and green glass are not in the 14 colours).
+	var recolour := {}
+	var rc_opt: Variant = _copt(cname, variant, "recolour", null)
+	if rc_opt is Dictionary:
+		for k in rc_opt:
+			var list: Array[Color] = []
+			for hx in rc_opt[k]:
+				list.append(Color.html(str(hx)))
+			if not list.is_empty():
+				recolour[str(k)] = list
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	for ty in th:
 		var sy0 := box.position.y + int(floor(ty / s))
@@ -883,6 +908,10 @@ func _key_frame(cell: Dictionary, variant: String, size: Vector2i, s: float, pad
 			if px < 0 or py < 0 or px >= size.x or py >= size.y:
 				continue
 			var col := Color(sr / sa * gain, sg / sa * gain, sb / sa * gain)
+			var cls := colour_class(col) if not recolour.is_empty() else ""
+			if cls != "" and recolour.has(cls):
+				img.set_pixel(px, py, snap(col, recolour[cls]))
+				continue
 			if warm != "snap" and is_fire(col):
 				if warm == "drop":
 					continue
@@ -1138,8 +1167,12 @@ func _merge_frames_cfg(path: String, strips: Array, variants: Array) -> String:
 		cfg.set_value("sheet", "frame_size", sheet_size)
 	if not cfg.has_section_key("sheet", "anchor"):
 		cfg.set_value("sheet", "anchor", str(_opt("sheet", "anchor", "foot")))
+	var animated := {}
+	for s in strips:
+		if not s.get("prop", false):
+			animated[s["variant"]] = true
 	for v in variants:
-		if v == "":
+		if v == "" or not animated.has(v):
 			continue
 		var vs := _size_of(_vopt(v, "frame_size"))
 		var sec := "variant." + str(v)
@@ -1149,6 +1182,8 @@ func _merge_frames_cfg(path: String, strips: Array, variants: Array) -> String:
 		if manifest.has_section_key("variant." + str(v), "anchor") and not cfg.has_section_key(sec, "anchor"):
 			cfg.set_value(sec, "anchor", str(manifest.get_value("variant." + str(v), "anchor")))
 	for s in strips:
+		if s.get("prop", false):
+			continue
 		var anim: String = s["anim"]
 		var asec := "anim." + anim
 		for key in ["fps", "loop", "timed_by"]:
