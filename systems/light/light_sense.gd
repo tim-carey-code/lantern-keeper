@@ -22,6 +22,10 @@ static var core := PackedFloat32Array()
 ## Every WayLamp and every mirror (their lit state is read live: it can change mid-frame).
 static var waylamps: Array = []
 static var mirrors: Array = []
+## Performance (M1c review): lit lanterns bucketed in a coarse grid (cells as big as the widest light), so a foe's
+## light state only looks at the lamps in its own and the neighbouring cells.
+static var _cell := 256.0
+static var _grid := {}
 
 ## Something changed that the snapshot must see straight away.
 static func bump() -> void:
@@ -40,6 +44,7 @@ static func refresh(tree: SceneTree) -> void:
 	lit.clear()
 	healthy.clear()
 	core.clear()
+	_grid.clear()
 	waylamps = tree.get_nodes_in_group("waylamp")
 	mirrors = tree.get_nodes_in_group("mirror")
 	for l in tree.get_nodes_in_group("lantern"):
@@ -53,6 +58,16 @@ static func refresh(tree: SceneTree) -> void:
 		lit.append(1 if is_lit else 0)
 		healthy.append(1 if is_lit and l.repels_small_dark() else 0)
 		core.append(r * l.core_frac() if is_lit else 0.0)
+	var widest := 64.0
+	for r in radius:
+		widest = maxf(widest, r)
+	_cell = widest
+	for i in nodes.size():
+		if radius[i] > 0.0:
+			var c := Vector2i(floori(pos[i].x / _cell), floori(pos[i].y / _cell))
+			if not _grid.has(c):
+				_grid[c] = PackedInt32Array()
+			_grid[c].append(i)
 
 ## How deep a point sits in healthy light: lit lanterns that keep small dark out, and lit WayLamps (0 outside).
 ## `ignore` leaves one light out. Call refresh() first.
@@ -79,14 +94,20 @@ static func healthy_at(p: Vector2, ignore: Object = null) -> float:
 static func lit_source(p: Vector2) -> Vector2:
 	var best := Vector2.INF
 	var best_k := 0.0
-	for i in nodes.size():
-		var r := radius[i]
-		if r <= 0.0:
-			continue
-		var d := pos[i].distance_to(p)
-		if d < r and 1.0 - d / r > best_k:
-			best_k = 1.0 - d / r
-			best = pos[i] + Vector2(0, Lantern.LAMP_Y * 0.5)
+	var c := Vector2i(floori(p.x / _cell), floori(p.y / _cell))
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var cell = _grid.get(c + Vector2i(dx, dy))
+			if cell == null:
+				continue
+			for i in cell:
+				var r := radius[i]
+				var d2 := pos[i].distance_squared_to(p)
+				if d2 < r * r:
+					var k := 1.0 - sqrt(d2) / r
+					if k > best_k:
+						best_k = k
+						best = pos[i] + Vector2(0, Lantern.LAMP_Y * 0.5)
 	if best != Vector2.INF:
 		return best
 	for w in waylamps:

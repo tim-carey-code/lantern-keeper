@@ -378,6 +378,7 @@ var kl_ashbrood_sweep_radius := 96.0
 var kl_ashbrood_sweep_warmth := 16.0
 var kl_ashbrood_sweep_knock := 90.0
 var kl_ashbrood_sweep_cd := 4.0
+var kl_ashbrood_dark_sit := 1.0          # s it sits after a dive that found no lit lamp (then ash bolts)
 var kl_ashbrood_idle_max := 2.0          # s: it never waits longer than this between attacks
 var kl_ashbrood_trail_period := 1.0      # phase 2: ash it drops along a dive's flight lingers as small puffs
 # Target lock (§6).

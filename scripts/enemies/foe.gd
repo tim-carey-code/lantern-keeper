@@ -190,6 +190,11 @@ var light_state := DIM
 var light_from := Vector2.INF   # where the light that exposes it comes from (its warm rim faces it)
 var _exposed_t := 0.0
 var _was_exposed := false
+var _light_frame := -1          # the frame its light state was last worked out (performance: hits reuse it)
+var _light_epoch := -1
+var _dark_tipped := false      # this foe has asked for the "dark" tip once (Story shows it once anyway)
+var _light_acc := 0.0           # time since its light state was last worked out in tick_foe
+const LIGHT_EVERY := 3          # performance: tick_foe works its light out every 3rd frame (staggered per foe)
 
 ## Nests skip the whole rule.
 func light_exempt() -> bool:
@@ -201,6 +206,8 @@ func needs_light() -> bool:
 
 ## Works out its light state (once a frame in tick_foe; again on each hit, with no time passing).
 func update_light_state(delta: float) -> int:
+	_light_frame = Engine.get_process_frames()
+	_light_epoch = LightSense._epoch
 	if light_exempt():
 		light_state = DIM
 		return light_state
@@ -225,6 +232,14 @@ func update_light_state(delta: float) -> int:
 		light_state = DIM
 	else:
 		light_state = DARK
+	return light_state
+
+## Its light state now: the one tick_foe worked out this frame, else worked out again (performance, M1c review:
+## burning ground and steady sources hit every foe every frame). A lamp lit, snuffed or flaring (LightSense.bump)
+## makes it work it out again.
+func light_now() -> int:
+	if Engine.get_process_frames() - _light_frame >= LIGHT_EVERY or _light_epoch != LightSense._epoch:
+		update_light_state(0.0)
 	return light_state
 
 ## Light that exposes this foe besides lamps (the Ashbrood's stirred ember), or Vector2.INF.
@@ -309,8 +324,15 @@ const STEADY := ["beam", "burn", "ground", "core", "light", "linger", "mirror", 
 func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	if _dead:
 		return
-	update_light_state(0.0)
-	var st := effective_light()
+	# The light rule, worked out once a hit (performance: no helper calls on the hot path).
+	var ruled := not (source in LIGHT_EXEMPT) and not light_exempt()
+	var st := DIM
+	if ruled:
+		if Engine.get_process_frames() - _light_frame >= LIGHT_EVERY or _light_epoch != LightSense._epoch:
+			update_light_state(0.0)
+		st = light_state
+		if st == DIM and Tuning.kl_ashbrood_needs_light and needs_light():
+			st = DARK
 	since_hurt = 0.0
 	var flash := 0.1
 	if source in STEADY:
@@ -327,7 +349,8 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	var wear := shell_factor(source)
 	if wear > 0.0:
 		_since_beam = 0.0
-	if st == DARK and not light_exempt() and not (source in LIGHT_EXEMPT) and not (self is WickNest):
+	if st == DARK and ruled and not _dark_tipped:
+		_dark_tipped = true
 		Story.tip("dark")   # "In the dark they shrug off your fire. Bring light to them." (DRAFT)
 	if shell > 0.0:
 		if wear > 0.0:
@@ -335,11 +358,11 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 		else:
 			_glance()
 			return
-		var floor := shell_floor(source, st)
+		var floor := minf(Tuning.kl_dark_shell_floor, shell_max) if st == DARK and ruled else 0.0
 		if floor > 0.0 and shell <= floor + 0.0001:
 			_glance()   # in the dark a worn shell holds: it clinks
 			return
-		var smult := light_shell_mult(source, st)
+		var smult := Tuning.kl_lit_shell_mult if st == LIT and ruled else 1.0
 		var worn := amount * wear * smult
 		if floor > 0.0 and shell - worn < floor:
 			worn = shell - floor
@@ -358,7 +381,11 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 		_on_shell_cracked()
 		if amount <= 0.0:
 			return
-	amount *= light_dmg_mult(source, st)
+	if ruled:
+		if st == DARK:
+			amount *= Tuning.kl_dark_dmg_mult
+		elif st == LIT:
+			amount *= Tuning.kl_lit_dmg_mult
 	_burning = 0.3
 	_number(amount, source, false)
 	_on_hurt(scare, source)
@@ -424,7 +451,10 @@ func tick_foe(delta: float) -> void:
 	_flash = maxf(0.0, _flash - delta)
 	_beam_flash_cd = maxf(0.0, _beam_flash_cd - delta)
 	_hitstop_t = maxf(0.0, _hitstop_t - delta)
-	update_light_state(delta)
+	_light_acc += delta
+	if (Engine.get_process_frames() + get_instance_id()) % LIGHT_EVERY == 0 or _light_epoch != LightSense._epoch:
+		update_light_state(_light_acc)
+		_light_acc = 0.0
 	# The white hit flash (built), held through a hit-stop; dimmer with "reduce flashes". Else its light's tint (M1c).
 	self_modulate = Color.WHITE.lerp(Color(2.6, 2.4, 2.0), Settings.flash_mult()) if (_flash > 0.0 or _hitstop_t > 0.0) else light_tint()
 	_burning = maxf(0.0, _burning - delta)

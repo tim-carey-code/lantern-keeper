@@ -271,7 +271,17 @@ func _ashbrood_checks() -> void:
 	var b := w.guardian()
 	await wait(0.05)
 	check(b != null and w.guardian_awake(), "the Ashbrood wakes")
-	check(main.get_node("FogLayer/GoalPointer").target_pos() == null, "no quest arrow while it fights (the ember is the only amber over the bowl)")
+	var gp = main.get_node("FogLayer/GoalPointer")
+	var goal_was := Story.current
+	var mode_was: String = Story.pointer_mode
+	Story.current = "kindle_hollow"
+	Story.pointer_mode = "on"
+	check(gp.target_pos() == null, "no quest arrow at the fight (the ember is the only amber over the bowl)")
+	player.global_position = w.global_position + Vector2(-(gp.HIDE_NEAR_FIGHT + 200.0), 0)
+	check(gp.target_pos() != null and gp.target_pos().distance_to(w.global_position) < 1.0, "away from the fight (after a faint, say) the arrow shows the way back")
+	player.global_position = w.global_position + Vector2(0, 30)
+	Story.current = goal_was
+	Story.pointer_mode = mode_was
 	check(WayLamp.EMBER_BOWL == Ashbrood.EMBER_AT, "the WayLamp's ember lies in the bowl at its feet, on the sprite's own bowl ember: one ember")
 	# In the dark (rim lamp cold, no lamps): every hit glances.
 	b.shell = 0.0
@@ -383,6 +393,21 @@ func _ashbrood_checks() -> void:
 	var n_dives := dives.filter(func(s): return s[1] == "dive").size()
 	print("    phase 2: %d dives in 20 s (%s)" % [n_dives, str(dives)])
 	check(n_dives >= 2, "phase 2's dives come often (%d in 20 s)" % n_dives)
+	# Review fix: with only the rim lamp, a smother leaves it out for 8 s, so some dives find no lit lamp. Those dark
+	# sits count as idle (it can't be hurt in the dark). Only a sit on a lit lamp (the punish window) doesn't.
+	var idle := 0.0
+	var longest := 0.0
+	var dark0 := b.dark_sits
+	for f in 60 * 40:
+		await get_tree().physics_frame
+		player.global_position = at2
+		player.warmth = Tuning.warmth_max
+		var active: bool = b.busy() or (b.is_sitting() and not b.is_dark_sitting())
+		idle = 0.0 if active else idle + 1.0 / 60.0
+		longest = maxf(longest, idle)
+	print("    phase 2, rim lamp only, 40 s: %d dark sits, the longest wait %.1f s" % [b.dark_sits - dark0, longest])
+	check(b.dark_sits > dark0, "with the rim lamp only, some dives find it still out (%d dark sits in 40 s)" % (b.dark_sits - dark0))
+	check(longest <= Tuning.kl_ashbrood_idle_max + 0.6, "phase 2 never waits more than about 2 s, counting a dark sit as waiting (%.1f s; was 5.5 s)" % longest)
 	check(main.get_node("FogLayer/GoalPointer").target_pos() == null, "still no quest arrow")
 	b.queue_free()
 	await wait(0.1)

@@ -25,7 +25,8 @@ extends Foe
 ##     now also snuffs every lamp inside its circle for kl_ashbrood_puff_snuff; the adds. It never waits longer
 ##     than kl_ashbrood_idle_max without starting a wind-up;
 ##   - phase 2: dives every kl_ashbrood_dive_period after a sit, at the nearest lit lamp in its arena (the rim lamp
-##     counts). During its sit it smothers that lamp, which stays lit (the punish window); then the lamp is out
+##     counts). With no lit lamp it dives at you and recovers in kl_ashbrood_dark_sit, then throws ash bolts (review
+##     fix: never a long sit in the dark, where it can't be hurt). During its sit it smothers that lamp, which stays lit (the punish window); then the lamp is out
 ##     for kl_snuff_sec.
 
 const BOWL_RADIUS := 64.0        # px: a Fireglobe landing this close to the WayLamp lands in the bowl
@@ -57,6 +58,8 @@ var _ash_t := 0.0                # > 0: the ash ring left by a puff
 var _ember_t := 0.0              # > 0: the ember is stirred (a Fireglobe in the bowl): it is exposed
 var _ember_cd := 0.0
 var _dark_hint_t := 0.0          # > 0: a hit just glanced off in the dark (the boss bar says why)
+var _dark_sit := false           # this sit is in the dark (no lit lamp under it): short, then ash bolts
+var dark_sits := 0               # dark landings so far (tests)
 var attacks := 0                 # wind-ups started (tests)
 var last_attack := ""            # what it started last: puff, adds, bolts, sweep, dive (tests)
 var _art: FoeSprite              # owner art (assets/art/creatures/ashbrood/), when it exists
@@ -115,6 +118,10 @@ func is_sitting() -> bool:
 func in_phase_pause() -> bool:
 	return _phase_t > 0.0
 
+## Sitting after a dive that found no lit lamp (short: kl_ashbrood_dark_sit, then it throws ash bolts).
+func is_dark_sitting() -> bool:
+	return _sit_t > 0.0 and _dark_sit
+
 func smothered_lamp() -> Lantern:
 	return _target_lamp if _sit_t > 0.0 and is_instance_valid(_target_lamp) else null
 
@@ -160,7 +167,7 @@ func dark_hint() -> bool:
 func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	if _phase_t > 0.0:
 		return   # rising out of the bowl: it can't be hurt
-	update_light_state(0.0)
+	light_now()
 	if needs_light() and effective_light() != LIT and not (source in LIGHT_EXEMPT):
 		since_hurt = 0.0
 		_dark_hint_t = 3.0
@@ -396,6 +403,9 @@ func _process_dive(delta: float, player: Node2D) -> void:
 		_sit_t = maxf(0.0, _sit_t - delta)
 		if _sit_t <= 0.0:
 			_release_lamp(true)   # the sit ends: the lamp it smothered goes out
+			if _dark_sit:
+				_dark_sit = false
+				_start_bolts(player)   # a dark landing: it shakes off the ash and throws bolts at once
 		return
 	if _dive:
 		_dive.tick(delta)
@@ -436,7 +446,12 @@ func _land(player: Node2D) -> void:
 	_dive.finish()
 	_dive = null
 	_ash_t = 0.3
-	_sit_t = Tuning.kl_ashbrood_sit_sec
+	# Review fix (M1c): only a sit on a lit lamp is the long punish window. With no lit lamp under it (the rim lamp
+	# still out after the last smother) it can't be hurt, so it recovers fast and throws ash bolts.
+	_dark_sit = not (is_instance_valid(_target_lamp) and _target_lamp.smother_by == self)
+	if _dark_sit:
+		dark_sits += 1
+	_sit_t = Tuning.kl_ashbrood_dark_sit if _dark_sit else Tuning.kl_ashbrood_sit_sec
 	_dive_t = Tuning.kl_ashbrood_dive_period
 
 ## Lets go of the lamp it sat on: snuffed for kl_snuff_sec (snuff = true), or just let go (a faint, its death).
@@ -491,6 +506,7 @@ func restart_phase() -> void:
 	_sweep = null
 	_fly_t = 0.0
 	_sit_t = 0.0
+	_dark_sit = false
 	_phase_t = 0.0
 	_ember_t = 0.0
 	_ember_cd = 0.0

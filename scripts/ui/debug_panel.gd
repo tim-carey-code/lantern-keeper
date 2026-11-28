@@ -62,6 +62,7 @@ const ROWS := [
 	["kl_ashbrood_sweep_radius", "Ashbrood wing sweep (px)", 40.0, 200.0, 4.0],
 	["kl_ashbrood_sweep_warmth", "Ashbrood wing sweep warmth", 0.0, 40.0, 1.0],
 	["kl_ashbrood_sweep_cd", "Ashbrood wing sweep cooldown (s)", 0.5, 12.0, 0.25],
+	["kl_ashbrood_dark_sit", "Ashbrood sits in the dark (s)", 0.2, 4.0, 0.1],
 	# M1c: target lock
 	["kl_lock_range", "Lock range (px)", 100.0, 800.0, 10.0],
 	["kl_lock_cone_deg", "Lock cone (deg)", 10.0, 180.0, 5.0],

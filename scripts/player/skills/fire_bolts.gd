@@ -148,6 +148,14 @@ func _keeper() -> Node:
 
 func _physics_process(delta: float) -> void:
 	var any := false
+	_combo_live = false
+	for b in bolts:
+		if b.alive and b.kind != GLOBE:
+			_combo_live = true
+			break
+	if _combo_live:
+		_gather_flames()
+		_combo_live = not _flames.is_empty()
 	for b in bolts:
 		if not b.alive:
 			continue
@@ -165,10 +173,11 @@ func _step_bolt(b: Bolt, delta: float) -> void:
 	var left := b.reach - b.travelled
 	if step.length() > left:
 		step = b.dir * left
-	if b.kind == LAMPFIRE and not b.caught and not b.no_catch:
-		_try_catch(b, step)
-	elif b.kind == LANCE:
-		_try_chain(b, step)
+	if _combo_live:
+		if b.kind == LAMPFIRE and not b.caught and not b.no_catch:
+			_try_catch(b, step)
+		elif b.kind == LANCE:
+			_try_chain(b, step)
 	# Foes along this tick's motion, nearest first.
 	var found := sweep(b.pos, step, b.radius)
 	for f in found:
@@ -273,18 +282,62 @@ func _lance_hit(f: Foe, at: Vector2, dir: Vector2) -> void:
 # --- Combos (M1c) ---------------------------------------------------------------------------------------
 
 ## The point on this tick's motion closest to a flame within `reach` of it, or null.
-func _flame_on(from: Vector2, step: Vector2, reach: float, exclude: Array = []) -> Lantern:
+## Performance (M1c review): the flames are gathered once a physics tick (and again when a lamp lights, goes out or
+## flares), and each bolt first skips every flame farther than its step plus the reach.
+var _flames := PackedVector2Array()
+var _flame_lamps: Array = []
+var _flames_frame := -1
+var _flames_epoch := -1
+var _combo_live := false         # a bolt is flying and some lamp has a flame (gathered once a tick)
+var _flame_grid := {}            # 128 px cells -> flame indices
+const FLAME_CELL := 128.0        # bigger than a tick's step (12 px) plus a reach (28 px) on each side
+
+func _gather_flames() -> void:
+	var f := Engine.get_physics_frames()
+	if f == _flames_frame and LightSense._epoch == _flames_epoch:
+		return
 	LightSense.refresh(get_tree())
+	_flames_frame = f
+	_flames_epoch = LightSense._epoch
+	_flames.clear()
+	_flame_lamps.clear()
+	_flame_grid.clear()
+	for l in LightSense.nodes:
+		if is_instance_valid(l) and l.has_flame():
+			var fp: Vector2 = l.flame_pos()
+			var c := Vector2i(floori(fp.x / FLAME_CELL), floori(fp.y / FLAME_CELL))
+			if not _flame_grid.has(c):
+				_flame_grid[c] = PackedInt32Array()
+			_flame_grid[c].append(_flames.size())
+			_flames.append(fp)
+			_flame_lamps.append(l)
+
+func _flame_on(from: Vector2, step: Vector2, reach: float, exclude: Array = []) -> Lantern:
+	_gather_flames()
+	if _flames.is_empty():
+		return null
 	var best: Lantern = null
 	var best_d := reach
-	for l in LightSense.nodes:
-		if not is_instance_valid(l) or l in exclude or not l.has_flame():
-			continue
-		var fp: Vector2 = l.flame_pos()
-		var d := Geometry2D.get_closest_point_to_segment(fp, from, from + step).distance_to(fp)
-		if d <= best_d:
-			best_d = d
-			best = l
+	var mid := from + step * 0.5
+	var cull := step.length() * 0.5 + reach
+	cull *= cull
+	var c := Vector2i(floori(mid.x / FLAME_CELL), floori(mid.y / FLAME_CELL))
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var cell = _flame_grid.get(c + Vector2i(dx, dy))
+			if cell == null:
+				continue
+			for i in cell:
+				var fp: Vector2 = _flames[i]
+				if fp.distance_squared_to(mid) > cull:
+					continue
+				var l: Lantern = _flame_lamps[i]
+				if not is_instance_valid(l) or l in exclude:
+					continue
+				var d := Geometry2D.get_closest_point_to_segment(fp, from, from + step).distance_to(fp)
+				if d <= best_d:
+					best_d = d
+					best = l
 	return best
 
 ## Catch: a Lampfire bolt passing within kl_catch_reach of a flame catches (once): +kl_catch_dmg_add, and it throws
