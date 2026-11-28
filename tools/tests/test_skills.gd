@@ -426,7 +426,7 @@ func _lance() -> void:
 		if e.shell < Tuning.kl_elite_shell:
 			hit_t = i
 			break
-	check(e.shell == 0.0 and is_equal_approx(e.hp, Tuning.kl_elite_hp - (Tuning.kl_lance_dmg - Tuning.kl_elite_shell)), "Lance breaks a shell outright: the shell-breaker (hp %.1f)" % e.hp)
+	check(e.shell == 0.0 and is_equal_approx(e.hp, Tuning.kl_elite_hp - (Tuning.kl_lance_dmg * Progress.dmg_mult() - Tuning.kl_elite_shell)), "Lance breaks a shell outright: the shell-breaker (hp %.1f; a level-%d keeper hits x%.1f, M1b)" % [e.hp, Progress.level, Progress.dmg_mult()])
 	check(e._hitstop_t > 0.0 and e.is_stunned() and Engine.time_scale == 1.0, "a big hit freezes only its target for a moment, never the whole game")
 	var speed_px := (120.0 - 12.0 - Tuning.kl_elite_hp) / maxf(1.0, float(hit_t + 1)) * 60.0
 	check(speed_px > Tuning.kl_lance_speed * 0.6, "Lance is fast (about %d px/s)" % int(Tuning.kl_lance_speed))
@@ -470,7 +470,7 @@ func _beam_and_ring() -> void:
 	near._stun_t = 0.0
 	var ring: HearthRingSkill = c.skill("hearth_ring")
 	check(ring.ring() >= 1, "Y fires Hearth ring")
-	check(ring.last_hits >= 1 and is_equal_approx(near.hp, Tuning.wick_hp - Tuning.kl_burst_dmg) and outside.hp == Tuning.wick_hp, "a ring of flame does %s inside %d px, nothing outside" % [str(Tuning.kl_burst_dmg), int(Tuning.kl_burst_radius)])
+	check(ring.last_hits >= 1 and is_equal_approx(near.hp, Tuning.wick_hp - Tuning.kl_burst_dmg * Progress.dmg_mult()) and outside.hp == Tuning.wick_hp, "a ring of flame does %s (x%.1f at level %d) inside %d px, nothing outside" % [str(Tuning.kl_burst_dmg), Progress.dmg_mult(), Progress.level, int(Tuning.kl_burst_radius)])
 	check(near._ignite_t > 0.0, "and sets what it hits alight")
 	check(absf(player.lamp_charge - (1.0 - Tuning.kl_burst_cost)) < 0.01 and ring.cd > Tuning.kl_burst_cd - 0.1, "it costs %s charge, %s s cooldown" % [str(Tuning.kl_burst_cost), str(Tuning.kl_burst_cd)])
 	near.stun(999.0)
@@ -478,7 +478,7 @@ func _beam_and_ring() -> void:
 	var pushed: float = near.global_position.distance_to(player.global_position) - from_d if _alive(near) else -1.0
 	check(pushed > Tuning.kl_burst_knock * 0.8 and pushed < Tuning.kl_burst_knock * 1.3, "with a small push (%.0f px, %d wanted)" % [pushed, int(Tuning.kl_burst_knock)])
 	await _frames(60)
-	check(not _alive(near) or near.hp < Tuning.wick_hp - Tuning.kl_burst_dmg - Tuning.kl_burst_burn_dps * 0.8, "it burns at %s hp/s for %s s" % [str(Tuning.kl_burst_burn_dps), str(Tuning.kl_burst_burn_time)])
+	check(not _alive(near) or near.hp < Tuning.wick_hp - Tuning.kl_burst_dmg * Progress.dmg_mult() - Tuning.kl_burst_burn_dps * 0.8, "it burns at %s hp/s for %s s" % [str(Tuning.kl_burst_burn_dps), str(Tuning.kl_burst_burn_time)])
 	check(c.burst() == -1, "the old burst() is Hearth ring now, with its cooldown")
 	Progress.bar["skill_4"] = ""
 	_clear()
@@ -538,7 +538,14 @@ func _juice() -> void:
 # --- Time to kill (GAME_PLAN §4.6, the balance method in the ARPG skill) ------------------------------------
 
 func _time_to_kill() -> void:
-	# The sums, from tuning.gd, with today's curve (no foe or keeper scaling until M1b).
+	# The sums, from tuning.gd (GAME_PLAN §4.6). M1b: foe health and shell grow 12% a level over 1, and the keeper's
+	# damage 10% a level over 1. The keeper meets the Clinker (Lv 4) at L3-L4 and the Ashbrood (Lv 5) at L4 (a pure
+	# beeline) or L5 (an explorer) (test_leveling); the sums below use the lower keeper level, the slower fight.
+	var foe_m := func(lv: int) -> float: return 1.0 + Tuning.kl_foe_hp_per_level * (lv - 1)
+	var dmg_m := func(lv: int) -> float: return 1.0 + Tuning.kl_dmg_per_level * (lv - 1)
+	var clinker_scale: float = foe_m.call(Tuning.kl_clinker_level) / dmg_m.call(3)
+	var brood_scale: float = foe_m.call(Tuning.kl_ashbrood_level) / dmg_m.call(4)
+	var brood_scale_l5: float = foe_m.call(Tuning.kl_ashbrood_level) / dmg_m.call(5)
 	var lf_dps := Tuning.kl_lampfire_dmg / Tuning.kl_lampfire_period
 	var lf_shell := Tuning.kl_lampfire_dmg * 0.5 / Tuning.kl_lampfire_period
 	var hits_charge := Tuning.kl_lampfire_charge / Tuning.kl_lampfire_period
@@ -548,13 +555,16 @@ func _time_to_kill() -> void:
 	var lance_dps_lamp := minf(income_lamp / Tuning.kl_lance_cost, 1.0 / Tuning.kl_lance_cd) * Tuning.kl_lance_dmg
 	check(ceili(Tuning.wick_hp / Tuning.kl_lampfire_dmg) == 2, "a Wickling (%s hp) dies to 2 Lampfire hits" % str(Tuning.wick_hp))
 	var clinker := Tuning.kl_clinker_shell / (lf_shell + lance_dps_dark) + Tuning.kl_clinker_hp / (lf_dps + lance_dps_dark)
-	var clinker_fight := clinker / 0.25
+	var clinker_fight := clinker * clinker_scale / 0.25
 	print("    Clinker: %.1f s of damage (%.1f dps on health), about %.0f s at 25%% uptime (target about 30 s)" % [clinker, lf_dps + lance_dps_dark, clinker_fight])
 	check(clinker_fight > 22.0 and clinker_fight < 40.0, "the Clinker (%s hp, %s shell) takes about 30 s (%.0f s)" % [str(Tuning.kl_clinker_hp), str(Tuning.kl_clinker_shell), clinker_fight])
 	var phase_lamp := Tuning.kl_ashbrood_shell / (lf_shell + lance_dps_lamp) + Tuning.kl_ashbrood_hp / (lf_dps + lance_dps_lamp)
 	var phase_dark := Tuning.kl_ashbrood_shell / (lf_shell + lance_dps_dark) + Tuning.kl_ashbrood_hp / (lf_dps + lance_dps_dark)
-	var fight_lamp := phase_lamp * 2.0 / 0.35
-	var fight_dark := phase_dark * 2.0 / 0.35
+	var fight_lamp := phase_lamp * brood_scale * 2.0 / 0.35
+	var fight_dark := phase_dark * brood_scale * 2.0 / 0.35
+	var fight_l5 := phase_lamp * brood_scale_l5 * 2.0 / 0.35
+	print("    scaled: the Clinker Lv %d (x%.2f health) against a L3 keeper (x%.1f damage); the Ashbrood Lv %d (x%.2f) against L4 (x%.1f): %.0f s, or %.0f s at L5" % [Tuning.kl_clinker_level, foe_m.call(Tuning.kl_clinker_level), dmg_m.call(3), Tuning.kl_ashbrood_level, foe_m.call(Tuning.kl_ashbrood_level), dmg_m.call(4), fight_lamp, fight_l5])
+	check(fight_l5 > 90.0 and fight_l5 < 150.0, "the Ashbrood takes about 2 minutes for a L5 explorer too (%.0f s)" % fight_l5)
 	print("    Ashbrood: 2 phases; %.0f s with a lamp near (charge %.2f/s), %.0f s without (%.2f/s), at 35%% uptime (target about 2 min, 2.6 without a lamp)" % [fight_lamp, income_lamp, fight_dark, income_dark])
 	check(fight_lamp > 90.0 and fight_lamp < 150.0 and fight_dark > fight_lamp, "the Ashbrood (%s hp a phase) takes about 2 minutes (%.0f s; %.0f s with no lamp near)" % [str(Tuning.kl_ashbrood_hp), fight_lamp, fight_dark])
 	# A real fight: Lampfire alone on a shelled elite (the crook's guard) from 120 px.
@@ -635,8 +645,11 @@ func _old_checks() -> void:
 	check(rock.x >= 0, "found rock at the Hollow's edge")
 	for em in get_tree().get_nodes_in_group("ember"):
 		em.free()
+	var scrap_chance := Tuning.wick_scrap_chance
+	Tuning.wick_scrap_chance = 1.0   # M1b: a kill's only drop (no fuel ember) is the chance of scrap
 	var over_rock := _w(fog.tile_center(rock))
 	over_rock.hurt(99.0)
+	Tuning.wick_scrap_chance = scrap_chance
 	var landed := get_tree().get_nodes_in_group("ember").filter(func(em): return not em.is_queued_for_deletion())
 	check(landed.size() >= 1 and landed.all(func(em): return fog.solid[fog.idx(fog.tile_of(em.global_position))] == 0), "drops from a Wickling over rock land on walkable ground")
 	for em in landed:

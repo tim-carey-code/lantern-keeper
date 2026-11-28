@@ -1,8 +1,10 @@
 class_name Wind
 extends Node
-## Gusts from one direction at a time: calm -> warning (5 s) -> gust (8 s) -> calm.
-## During a gust, lanterns with no rock 1-2 tiles upwind burn faster and shrink,
-## and fog creeps back faster. `direction` is where the wind blows TO.
+## Gusts from one direction at a time: calm -> warning (5 s) -> gust (8 s) -> calm. `direction` is where the wind
+## blows TO. During a gust fog creeps back faster.
+## M1b: inert until M6 (GAME_PLAN §6, §16). Lamps never burn, so wind no longer touches them, and with
+## Tuning.kl_wind_enabled off no gust ever starts (force() still works for tests). In M6 gusts come back on the
+## Ridge only: they snuff exposed lamps until the gust ends and push projectiles downwind.
 
 signal state_changed(state: State)
 
@@ -22,6 +24,8 @@ func _ready() -> void:
 	timer = rng.randf_range(Tuning.wind_calm_min, Tuning.wind_calm_max)
 
 func _process(delta: float) -> void:
+	if not Tuning.kl_wind_enabled and state == State.CALM:
+		return
 	timer -= delta
 	if timer > 0.0:
 		return
@@ -69,7 +73,7 @@ func status_text() -> String:
 		State.WARNING:
 			return "Wind rising from the %s..." % from_name()
 		State.GUST:
-			return "Gust from the %s: exposed lanterns burn faster" % from_name()
+			return "Gust from the %s" % from_name()
 	return ""
 
 ## Tests and debugging.

@@ -15,10 +15,11 @@ Single-player, no game over. Read `docs/DESIGN.md`, `docs/STORY.md` (owner-revie
   Input actions are defined by `tools/setup_input.gd`; edit that and re-run it, don't hand-edit `[input]`.
 - Placeholder numbers live in the `Tuning` autoload (`systems/tuning.gd`); expose new ones in the
   debug panel (`scripts/ui/debug_panel.gd`) when they are worth tuning live.
-- Never leave the game able to soft-lock: the hut woodpile always regrows.
+- Never leave the game able to soft-lock. (Since M1b nothing needs fuel: lamps never burn, the old lamps and WayLamps light by touch, and the hut woodpile is scenery. The old rule, "the woodpile always regrows", is retired with it.)
 
 ## Layout
-- `systems/` game-wide logic: `tuning.gd`, `inventory.gd`, `progress.gd` (autoloads), `fog/`, `wind/`, `light/`, `audio/`
+- `systems/` game-wide logic: `tuning.gd`, `inventory.gd`, `progress.gd` (autoloads), `fog/`, `wind/`, `light/`, `audio/`, `combat/` (`hunt.gd`, `faint_rule.gd`)
+- Lanterns: everything a lit lantern does to the world (light radius, bright core, keeping small dark out, refilling the keeper) lives in the "Effects" section of `scripts/lanterns/lantern.gd`; foes read it through `LightSense`. Add new lantern mechanics there (the owner is redesigning lanterns).
 - `scripts/` per-feature nodes: `main/` (world generation), `player/`, `lanterns/`, `resources/`, `world/` (landmarks), `ui/`
 - `scenes/main/main.tscn` the game scene; `tools/` setup and tests; `docs/` design docs (`docs/archive/` holds retired docs, kept unchanged)
 - `assets/` files the game loads; `source/` working files: Pixelorama `.pxo` in `source/art/`, the palette in `source/palette/`, original vendor sheets in `source/vendor/`. `source/audio/` is empty for now; sound and music are the owner's job.
@@ -31,14 +32,15 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_skills.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_flasks.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_input.tscn
-godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_threats.tscn   # light reactions, warmth, the faint (M1b: the ward is gone)
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_save.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_slots.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_ridge.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_story.tscn
-godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_waylamps.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_waylamps.tscn  # lit by touch, the Ashbrood's ember, hold fights
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_faint.tscn     # the faint rule (M1b): cleared stays cleared, nothing carried lost, bosses keep their phase
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_upgrades.tscn
-godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_leveling.tscn   # wick in a full Hollow clear vs the level targets
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_leveling.tscn   # the curve: L2 at the crook; the Ashbrood kill gives L5 (beeline) or L6 (explorer)
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_telegraphs.tscn # foe wind-ups, the fairness rules, the keeper's feedback, the art swap hook
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_hollow.tscn # prototype branch only
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_onboarding.tscn # prototype: the first 10 minutes' main route
@@ -47,6 +49,9 @@ python3 tools/check_docs.py                                                     
 # A test that fails to parse never quits: wrap runs in `timeout 120`.
 # test_save sometimes hangs at exit after printing "RESULT fails=0" (exit 124 from the timeout): an engine thread spins after quit().
 # It happens on the M1a base commit too (5 of 12 runs there). Re-run it; a real failure prints FAIL or fails>0.
+# M1b: the same hang hits about one test per full run (test_story, test_upgrades, test_waylamps; one unnamed engine
+# thread at 100% after quit() while the main thread waits). Stopping every audio player at quit didn't end it. Cause
+# unknown (ptrace is off and godot is stripped). Re-run; exit 124 after "RESULT fails=0" with no FAIL is this hang.
 # In a fresh checkout the first --import can crash (Godot 4.7.2) and leave the font unimported, and then every
 # test fails with "Could not preload resource file ...kenney_pixel.ttf". Run --import again until it exits 0.
 # After merging a branch that adds a new `class_name` script, run --import before the tests, or they fail with
@@ -69,7 +74,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
 - **Budget:** game logic (process + physics) averages well under 4 ms a frame at 30 lanterns and 20 foes
   (DECISIONS.md). Run it after changing the fog, foes, lanterns, the map or anything that redraws every frame.
 - Hot paths to keep cheap: foes read lantern light, WayLamps and mirrors from `LightSense` (one snapshot a frame,
-  `bump()` it when lanterns appear, go or get refuelled; what a Wickling may drain is worked out once a frame);
+  `bump()` it when lanterns appear, go, are lit, snuffed or relight; it caches each lantern's core from its Effects);
   never start an `AudioStreamPlayer` per hit (`Sfx` mixes through one polyphonic player); the fog only steps tiles below full fog or in light (call
   `FogGrid.mark_all_dirty()` after replacing `density` or `remembered` wholesale); the map is drawn once in
   `MapChunk`s; lanterns redraw only when their look changes.
@@ -81,7 +86,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
 - Tests strip joypad events first: a real controller on this PC would otherwise move the test keeper (this caused flaky runs).
 - Automated runs are silent (`--audio-driver Dummy`). Don't play sound through the owner's speakers.
 - Visual check without the owner's screen: render frames on a virtual display with `tools/capture/capture.tscn`
-  (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map; the loop: loop_waylamp, loop_marsh_climb, loop_ridge_entry, loop_travel; readability: tell_puff, tell_puff_reduce, tell_adds, tell_dive, tell_dive_arrow, tell_spit, tell_lane, tell_reach, tell_hatch, keeper_dash, keeper_cast, keeper_drink, keeper_hurt). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
+  (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map; the loop: loop_waylamp, loop_marsh_climb, loop_ridge_entry, loop_travel; readability: tell_puff, tell_puff_reduce, tell_adds, tell_dive, tell_dive_arrow, tell_spit, tell_lane, tell_reach, tell_hatch, keeper_dash, keeper_cast, keeper_drink, keeper_hurt; M1b: m1b_opening, m1b_opening_lit, m1b_faint, m1b_wake, m1b_lures, m1b_ember, m1b_kindle). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
 - README images: `tools/capture/readme_shots.sh` renders the staged `readme_*` views into `docs/screenshots/` (look at each one before committing).
 - Art: 16x16 sprites drawn at 2x, palette in `source/palette/`. Kenney sheets are recoloured from `source/vendor/`; placeholders come from `tools/art/make_placeholders.py`.
 

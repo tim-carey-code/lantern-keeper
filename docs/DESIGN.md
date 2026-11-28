@@ -1,6 +1,6 @@
 # Lantern Keeper — Design Document
 
-Synced to the readability step on `proto/kl-readability` (2026-11-27, based on cb5b615, the play branch with M1a merged): the telegraph pass, the keeper's own feedback, the placeholder swap hook and the performance pass are marked **BUILT (readability)** (§4.1, §8.4, §16, §17). Before that, synced to commit f97b531 on `proto/kl-m1a` (2026-11-27): the M1a build (commits 6663292 and 10099a8) is folded in and marked **BUILT (M1a)**. The review fixes on `proto/kl-m1a-fix` (2026-11-27) are folded in too. Before that, synced to c6d3ee0 on `proto/kl-replan`. Rewritten from the approved game plan, `docs/replan/GAME_PLAN.md` v2 (DECISIONS 2026-11-27, "the game plan approved"). **DRAFT for owner approval** (GAME_PLAN §17). The version before the rewrite is `docs/archive/DESIGN_PRE_REPLAN.md`.
+Synced to M1b ("no more tending") on `proto/kl-m1b` (2026-11-27, based on b3f5cd9, the play branch with M1a, its fixes and the readability step merged): what M1b built is marked **BUILT (M1b)** (§1, §2, §4.6, §5, §6, §7, §8.1, §9, §12.3, §14, §15, §16, §19). **Owner scope change during M1b** (DECISIONS 2026-11-27, "M1b: lanterns are being redesigned"): the 3-lamp limit, the full refund and the 15 s replant delay were **not built**, and building and picking up lamps stay as they were. Before that, synced to the readability step on `proto/kl-readability` (2026-11-27, based on cb5b615, the play branch with M1a merged): the telegraph pass, the keeper's own feedback, the placeholder swap hook and the performance pass are marked **BUILT (readability)** (§4.1, §8.4, §16, §17). Before that, synced to commit f97b531 on `proto/kl-m1a` (2026-11-27): the M1a build (commits 6663292 and 10099a8) is folded in and marked **BUILT (M1a)**. The review fixes on `proto/kl-m1a-fix` (2026-11-27) are folded in too. Before that, synced to c6d3ee0 on `proto/kl-replan`. Rewritten from the approved game plan, `docs/replan/GAME_PLAN.md` v2 (DECISIONS 2026-11-27, "the game plan approved"). **DRAFT for owner approval** (GAME_PLAN §17). The version before the rewrite is `docs/archive/DESIGN_PRE_REPLAN.md`.
 
 > **How to read this doc**
 > - **Built** means it is in the code at f97b531. **BUILT (M1a)** marks what the M1a build added; it awaits the owner's playtest (`docs/PLAYTEST.md`). For what is built, the code wins over this doc.
@@ -23,12 +23,12 @@ Synced to the readability step on `proto/kl-readability` (2026-11-27, based on c
 
 **Pillars** (GAME_PLAN §1):
 1. **Light is your weapon.** Fireballs of light from the hand lamp, aimed with the right stick or the mouse. *BUILT (M1a): Lampfire, Fireglobe, Lance and the dash, with the Beam and Hearth ring as options (§4.1).*
-2. **Light is your shelter, and you carry it.** Planted lamps and lit WayLamps are pockets where you refill. No upkeep. *Today lanterns still burn fuel and need tending. No upkeep is PLANNED (M1b).*
+2. **Light is your shelter, and you carry it.** Planted lamps and lit WayLamps are pockets where you refill. No upkeep. *BUILT (M1b): lamps never burn, dim or need fuel (§6).*
 3. **The find is the key.** Each region's find is a lamp that opens its lock and answers one phase of its guardian. *Built for the Hollow (the Post Lamp burns nests).*
 4. **Readable fights.** Every big hit has a tell. Every foe has a name, a level and a bar. *Built.*
-5. **Every fight pays, once.** Fixed packs, level-gap wick, and loot that only fixed foes drop. Cleared ground stays cleared. *Packs and level-gap wick are built. Today a faint resets cleared packs (§12.3); the fix is PLANNED (M1b). Loot is PLANNED (M3).*
+5. **Every fight pays, once.** Fixed packs, level-gap wick, and loot that only fixed foes drop. Cleared ground stays cleared. *Packs and level-gap wick are built; cleared ground stays cleared after a faint (the faint rule, BUILT M1b, §12.3). Loot is PLANNED (M3).*
 6. **Calm at the edges.** A calm start, quiet held ground, no game over. *Built.*
-7. **Show, don't list.** Lures through the fog and short notes pull you on. *Built; lures that look different are PLANNED (M1b).*
+7. **Show, don't list.** Lures through the fog and short notes pull you on. *Built; packs, nests and elites look different through the fog (BUILT, M1b, §7.1).*
 
 **What the plan removes:** lamp tending, gathering, "planning over reflexes", "light is safety" and the quiet finale.
 
@@ -36,7 +36,7 @@ Synced to the readability step on `proto/kl-readability` (2026-11-27, based on c
 
 ## 2. The core loop
 
-**Today (built).** You fight with fire on lamp charge (BUILT, M1a): stream Lampfire, spend charge on Fireglobe and Lance, dash through tells, drink lamp oil when low, rest at a lit WayLamp. You still gather fuel, scrap and glass, build lanterns and keep them fed (until M1b). In the Hollow you clear fixed packs and nests, take the Post Lamp from Oswin's crook, beat the Clinker, and feed the Hollow's WayLamp 15 fuel to wake the Ashbrood. Each level-up offers three cards. Lit WayLamps are fast travel. The Reedmarsh and the Ridge are open, with landmarks and WayLamps but no action-RPG foes yet.
+**Today (built).** You fight with fire on lamp charge (BUILT, M1a): stream Lampfire, spend charge on Fireglobe and Lance, dash through tells, drink lamp oil when low, rest at a lit WayLamp. Since M1b there is no tending: you light the hut's old lamp and the north path's by touch, take scrap from one-off piles, and plant lamps that never burn. In the Hollow you clear fixed packs and nests, take the Post Lamp from Oswin's crook, beat the Clinker, and touch the Hollow's WayLamp to wake the Ashbrood, which broods over the lamp's last ember. Each level-up offers three cards. Lit WayLamps are fast travel. The Reedmarsh and the Ridge are open, with landmarks and WayLamps but no action-RPG foes yet.
 
 **The plan** (GAME_PLAN §2):
 
@@ -71,8 +71,8 @@ Twin-stick aim: the left thumb moves, the right thumb aims. RT, RB, LB and LT wo
 |---|---|---|
 | Move | Left stick (not the D-pad) | WASD / arrows |
 | Aim | Right stick (else where you face) | Mouse |
-| Interact: read, refuel or relight, turn a mirror right, rest, travel | A | E |
-| Hold: gather; by a lamp with nothing to gather, pick it up (0.8 s, `kl_pickup_hold`; a ring fills) | A | E |
+| Interact: read, light an old lamp or a WayLamp, take a scrap pile, turn a mirror right, rest, travel (M1b: no refuelling) | A | E |
+| Hold by a planted lamp, with no scrap pile in reach: pick it up (0.8 s, `kl_pickup_hold`; a ring fills). M1b: no gathering | A | E |
 | Plant the selected lamp; next to a mirror, turn it left | X | C |
 | Next lamp kind (tap); the lamp list (hold); previous lamp kind | D-pad right; D-pad right; D-pad left | Tab; Tab; keys 1-4 pick directly |
 | Map / Skills list / Journal / Pause | D-pad up / D-pad down / View / Start | M / K / J / Esc |
@@ -176,13 +176,15 @@ BUILT (M1a) in `foe.gd` `shell_factor()`; `test_skills` checks it. Moth-lights a
 - **None:** Fireglobe, Hearth ring (and its burning), splash, burning ground and lamp cores. They glance off.
 - Shells on elites never grow back once dented. Shells on the Clinker and the Ashbrood grow back after 3 s without a hit that wears shells, until they break, and a broken shell stays broken (`shell_regrows`, `foe.gd`; `kl_shell_regrow_wait`).
 
-### 4.6 Time to kill — Clinker and Ashbrood BUILT (M1a, set by hand); scaling PLANNED (M1b)
+### 4.6 Time to kill — Clinker and Ashbrood BUILT (M1a, set by hand); scaling BUILT (M1b)
 
-**BUILT (M1a):** `kl_clinker_hp` 48 (was 24), as planned. `kl_ashbrood_hp` **220 per phase** (was 40), shell 12, with the **two phases** built today. **Deviation from the plan:** the plan's 150 assumes three phases; phase 3 is M2. At 220 x 2 the test arithmetic in `test_skills` gives about 114 s with a lamp nearby and 145 s without, at the plan's 35% uptime: inside the ~2-minute target. Revisit when M2 adds phase 3. These are sums, not a playtest. Foe scaling is not built, so today's foes have the flat health in §8.1.
+**BUILT (M1a):** `kl_clinker_hp` 48 (was 24), as planned. `kl_ashbrood_hp` **220 per phase** (was 40), shell 12, with the **two phases** built today. **Deviation from the plan:** the plan's 150 assumes three phases; phase 3 is M2. At 220 x 2 the test arithmetic in `test_skills` gives about 114 s with a lamp nearby and 145 s without, at the plan's 35% uptime: inside the ~2-minute target. Revisit when M2 adds phase 3. These are sums, not a playtest.
+
+**BUILT (M1b): scaling, and the re-check.** Foes have +12% health and shell a level over 1 (`kl_foe_hp_per_level`; `Foe.level_mult()`, applied once after a foe's `_ready()`, and to each Ashbrood phase), and the keeper's fire does +10% a level over 1 (`kl_dmg_per_level`; `Progress.dmg_mult()`, on Lampfire's hit and splash, Lance, Fireglobe, burning ground, Hearth ring and its burn, and the Beam; not on the cards' Lingering burn and Catching, nor lamp cores or mirror beams). The re-check, with `test_skills`' sums (same uptimes as above): **the Clinker** (Lv 4, x1.36: 65 hp, 16.3 shell) against a level-3 keeper (x1.2, the beeline's level there) takes about **32 s** (target about 30 s); **the Ashbrood** (Lv 5, x1.48: 326 hp and 17.8 shell a phase) takes about **129 s** with a lamp near against a level-4 keeper (the beeline), **120 s** at level 5 (the explorer), 165 s with no lamp near (target about 2 minutes, 2.6 without a lamp). Both stay inside their targets, so **`kl_clinker_hp` 48 and `kl_ashbrood_hp` 220 are kept.** A Lv 1 Wickling still dies to 2 Lampfire hits at any keeper level.
 
 **Targets:** a same-level Wickling dies to 2 Lampfire hits; a shelled elite takes 3-5 s; a plain pack 2-5 s; a mixed pack 8-12 s; a mid-boss about 30 s; a guardian 2-4 minutes.
 
-**Scaling (M1b):** foes +12% health and shell per level over 1 (`kl_foe_hp_per_level`, new); the keeper +10% damage per level (`kl_dmg_per_level`, new); gear covers the gap. **Charge while hunted:** 0.06 base + 0.086 from Lampfire hits + 0.1 in light = about 0.25/s.
+**Scaling (BUILT, M1b):** foes +12% health and shell per level over 1 (`kl_foe_hp_per_level`); the keeper +10% damage per level (`kl_dmg_per_level`); gear covers the gap (M3). **Charge while hunted:** 0.06 base + 0.086 from Lampfire hits + 0.1 in light = about 0.25/s.
 
 | Fight | Foe | Keeper | Working | Time |
 |---|---|---|---|---|
@@ -201,12 +203,10 @@ These assume linear scaling and the stated uptimes. They are the plan's arithmet
 ### 5.1 Built today
 
 - **Warmth** is the keeper's health: 100. It comes back +20 per second in lantern or WayLamp light, **only while nothing hunts you** (`kl_warmth_regen`, was `warmth_regen_per_sec`; BUILT, M1a). In a fight, flasks heal. A Wickling's touch takes 30 per second.
-- **Lamp charge** runs 0 to 1. It pays for Fireglobe, Lance, the Beam, Hearth ring and the dash, and sets the hand lamp's light: 104 px full, down to a 44 px ember (`hand_lamp_*`). It never goes out. The regen table below replaced the old rules (BUILT, M1a).
-- **Fuel:** resin from dead trees (Hollow), peat (Reedmarsh), fuel spots (Ridge), the hut woodpile (regrows every 10 s, even in the dark), caches, and an ember from every kill. 1 carried fuel = 10 lantern fuel. Lanterns and WayLamps still burn fuel in M1a.
-- **Scrap:** ruins, caches, the hut pile, and a 35% chance from each kill. Pays for lanterns.
-- **Glass:** the Ridge only (56 spots, 2 caches). Pays for the Hooded Lamp and the Mirror Post.
-- **Gathering:** hold E / A on a revealed spot for 1 unit per 0.25 s. Spots regrow while lit *(code)*. You carry 30 of each *(code)*.
-- **Upgrade finds** (one of each per region, in far corners): a **keeper's satchel** (+10 carry of each) and a **lamp glass** (the hand lamp reaches 12 px further; its "dims 25% slower" and its ward discount do nothing now, since the lamp no longer dims and the ward is unused) (`carry_*`, `lamp_upgrade_*`).
+- **Lamp charge** runs 0 to 1.0, **+0.1 per lamp glass** (`lamp_upgrade_charge`; `Progress.charge_max()`, BUILT M1b). It pays for Fireglobe, Lance, the Beam, Hearth ring and the dash, and sets the hand lamp's light: from a 44 px ember to 104 px at full charge, +12 px per glass (`hand_lamp_*`, `lamp_upgrade_radius`). It never goes out. The regen table below replaced the old rules (BUILT, M1a). The charge bar shows the share of the max.
+- **Scrap is the one material** (BUILT, M1b). Ruin piles (64 in the Hollow, 24 on the marsh islands, 28 on the Ridge), the pile beside the hut (6), 8 old caches (the two old fuel caches and the two glass caches hold the same amounts of scrap now), and a 35% chance from each kill of a fixed foe. A pile is a **one-off pickup**: one press of E / A takes all of it you can carry (what doesn't fit stays), and an empty pile is gone for good. Pays for lanterns. You carry 30, +10 per satchel *(as built; the plan's "no carry cap" comes with the satchel's new job in M3, so the satchel isn't left with nothing to do)*.
+- **Cut (M1b):** fuel (dead trees, peat, Ridge fuel spots, the regrowing woodpile, fuel embers from kills), glass (56 Ridge spots), gathering by holding, refuelling. The woodpile by the hut is scenery.
+- **Upgrade finds** (one of each per region, in far corners): a **keeper's satchel** (+10 scrap carried) and a **lamp glass** (the hand lamp reaches 12 px further and holds 0.1 more charge, BUILT M1b; its old "dims slower" and "wards longer" went with the dimming and the ward) (`carry_*`, `lamp_upgrade_*`).
 
 **Light and regen in one place** — BUILT (M1a) (`player.gd` `update_hand_lamp()`, `charge_rate()`; `test_core`, `test_flasks`):
 
@@ -220,7 +220,7 @@ These assume linear scaling and the stated uptimes. They are the plan's arithmet
 
 - "Light" today means a lantern's or a lit WayLamp's light (within 85% of a lit lantern's radius *(code)*). PLANNED: a Fireglobe *Beacon* and the Dash's *Ember rest* (M2).
 - **Hunted** (`systems/combat/hunt.gd`): an awake foe has you as its target within 12 tiles (`travel_hunt_radius`, 384 px). It counts an awake Clinker, any Spitwick, the Ashbrood, a Wickling chasing you, and a Wickling that was chasing and now waits at the edge of the light you stepped into, so you clear the area before you rest. Nests and wandering or fleeing Wicklings don't count. One rule blocks fast travel, Rest, warmth from light and changes in the Skills list; a HUD chip shows it.
-- **Cut in M1a:** the passive dimming in the dark (`hand_lamp_drain_per_sec` is still in `tuning.gd` and the F1 panel, but nothing reads it in play) and the top-up from carried fuel.
+- **Cut in M1a:** the passive dimming in the dark and the top-up from carried fuel (M1b removed `hand_lamp_drain_per_sec` from `tuning.gd` and the F1 panel too).
 - **Why:** with free healing in a fight, players run off to heal instead of drinking. Fast refills out of a fight keep light a shelter.
 
 **Lamp-oil flasks** — BUILT (M1a) (`player.gd` `drink()`, `rest()`; `ember.gd`; `test_flasks`):
@@ -237,54 +237,53 @@ These assume linear scaling and the stated uptimes. They are the plan's arithmet
 
 **Warmth** is 100 at level 1, +8 a level (`kl_warmth_per_level`, new). Foe damage rises 8% a level (`kl_foe_dmg_per_level`, new) to match. PLANNED (not placed; it belongs with the M1b scaling).
 
-**Lamp charge** runs 0 to 1.0, +0.1 per lamp glass (`lamp_upgrade_charge`, new). PLANNED (M1b).
-
-**What fuel, glass and scrap become (M1b).** **Fuel** stops being a resource: oil exists only as flask charges and drops; fuel spots and peat become scenery or go. **Glass** stops being a resource: lamp costs fold into scrap, and the glass racks stay as Ridge story. **Scrap** is the one material: ruins become one-off piles taken with one press. Scrap also comes from drops, caches and salvage (M3), and pays for lamps, Amos's stock (M4) and Kit's re-cut (M6, a cut line). No carry cap.
+**Scrap** also comes from salvage (M3), and pays for Amos's stock (M4) and Kit's re-cut (M6, a cut line). No carry cap (M3, with bag slots). Lamp charge +0.1 per glass and one material are BUILT (M1b, §5.1).
 
 ---
 
 ## 6. Lanterns
 
-### 6.1 Built today
+### 6.1 Built today (M1b: no more tending)
 
-C / X plants the selected lantern on your tile (Space before M1a): firm ground (not rock or soft marsh), anywhere you can stand (no "too dark" rule), at least 1.5 tiles from other lanterns *(code)*, not on a resource, not within 160 px of a WayLamp. Building is quiet: no outline or cost text until you try; a failed build shows the outline and the reason for 2 s. Holding E / A by a lantern for 0.8 s, with nothing to gather in reach, picks it up for half its cost (rounded down) plus its fuel (BUILT, M1a; before, Q / B / right mouse). The Post Lamp is locked at the start; reading Oswin's crook unlocks it.
+**BUILT (M1b).** Lamps never burn, dim or need fuel, in every region's code. A lit lamp shines at full radius. All of a lantern's effects live in one place, the "Effects" section of `scripts/lanterns/lantern.gd` (its light radius, its bright core and what the core does to each foe, whether it keeps small dark out, where it refills the keeper); foes read them through the `LightSense` snapshot, so new lantern mechanics go there (the owner is redesigning lanterns; DECISIONS 2026-11-27).
+
+C / X plants the selected lantern on your tile: firm ground (not rock or soft marsh), anywhere you can stand, at least 1.5 tiles from other lanterns *(code)*, not on a scrap pile, not within 160 px of a WayLamp. Building is quiet: no outline or cost text until you try; a failed build shows the outline and the reason for 2 s. Holding E / A by a planted lantern for 0.8 s picks it up for half its cost, rounded down (as built; with a scrap pile in reach, a tap takes the pile instead and the hold does nothing). The Post Lamp is locked at the start; reading Oswin's crook unlocks it. **Not built** (owner, during M1b): the 3-lamp limit outside held ground, the full refund and the 15 s replant delay (§6.2).
 
 | | Post Lamp | Reservoir Lamp | Hooded Lamp | Mirror Post |
 |---|---|---|---|---|
-| **Cost** | 5 scrap | 8 scrap | 5 scrap + 2 glass | 4 scrap + 3 glass |
-| **Tank, burn** | 100, 0.5/s (about 3.3 min) | 200, 0.3/s (about 11 min) | 100, 0.5/s | none |
-| **Light** | 224 px, shrinks to 40% | 200 px, dim, shrinks to 60% | 180 px, shrinks to 40% | 40 px glow + beam |
-| **Wind** | exposed | exposed | immune | immune |
+| **Cost** | 5 scrap | 8 scrap | 7 scrap (was 5 + 2 glass) | 8 scrap (was 4 + 3 glass) |
+| **Light** | 224 px | 200 px, dim | 180 px | 40 px glow + beam |
+| **Core** | inner 45% | inner 45% (as built; the plan's "no core" waits for its job in M5) | inner 45% | none |
 | **Unlocked at** | Oswin's crook | the pumphouse | the glazier's workshop | the signal station |
 
-- **Tending:** E / A pours carried fuel in. An empty lantern goes cold but keeps its frame, shown through fog with a red pulse. Below 25% it is **dying**: a red bar and a sputter, and Wicklings can drain it if no healthy light covers it. Cold and low lanterns are flagged on the HUD, at the screen edge and on the map.
-- **Reservoir Lamp:** feeds 0.75 fuel per second to each other fuel lantern in its light, lit or cold.
+- **Old lamps** (the hut's, the north path's) start cold. One touch (E / A, "Light it") lights them; they can't be picked up. Until lit, each keeps its cold frame through the fog with a red-amber pulse (the north path's waits until the ledger is read). This is the only cold-lamp marker left.
+- **Snuffed:** the Ashbrood's dive snuffs the lamp it lands on for 8 s (`kl_snuff_sec`): dark, a curl of smoke and a small ring that fills; then it relights by itself.
 - **Lantern cores** (the inner 45% of the light) burn small foes (2 hp/s) and are the only thing that hurts a nest. Elites, the Clinker and the Ashbrood ignore lanterns.
-- **Mirror Post:** catches light within 90% of a burning lantern's radius, or in another catching mirror's beam. Its beam is 352 x 48 px in one of 8 directions; rock stops it. Beams clear fog and burn Wicklings at 3.5 hp/s. A Wickling clinging to a lit mirror smothers it and cuts the chain after it.
-- **Wind:** valley-wide gusts (30-55 s of calm, a 5 s warning, a 10 s gust) make exposed fuel lanterns burn 3x and shrink to 70%. On the Ridge a constant west wind adds 1.6x burn and 85% light, and gusts come every 12-22 s. Rock 1-2 tiles upwind shelters a lantern.
-- **Held region:** see §12.4.
+- **Mirror Post:** catches light within 90% of a lit lantern's radius, or in another catching mirror's beam. Its beam is 352 x 48 px in one of 8 directions; rock stops it. Beams clear fog and burn Wicklings at 3.5 hp/s. A Wickling clinging to a lit mirror smothers it and cuts the chain after it.
+- **Wind is inert** until M6 (`kl_wind_enabled` false): no gust starts, and wind touches no lamp. The Ridge's drifting streaks still show.
+- **Cut (M1b):** tanks, burn rates, shrinking light, refuelling (tap) and relighting with fuel, the Reservoir's feeding, "dying" lamps and Wicklings draining them, wind burning and shrinking lamps (valley-wide and the Ridge's constant wind), held regions refilling lamps, the cold and low lantern markers, edge arrows and HUD chips, the fuel bar and the held diamond under a lamp.
 
-### 6.2 After tending — PLANNED (M1b unless marked)
+### 6.2 After tending — the plan (GAME_PLAN §6); what M1b built
 
 **What a planted lamp does.** It never burns down and shines at full radius. Its light gives charge and, out of a fight, warmth (§5.1). Timid foes stay out, and brave ones burn after 2.5 s (as built). Its core burns small foes and nests (as built). It clears fog (as built). You wake by it after a faint.
 
-**Limits and cost.** At most 3 lamps in regions not yet held (`kl_lamp_limit`, new); no limit in held regions. Picking a lamp up refunds all its scrap, but you can't plant again for 15 s (`kl_lamp_replant_cd`, new), so you can't drag a haven through a fight. Building stays quiet.
+**Limits and cost. NOT BUILT, on hold** (owner, during M1b: "the lanterns become useless without tending"; their role is being redesigned, DECISIONS 2026-11-27). The plan: at most 3 lamps in regions not yet held (`kl_lamp_limit`), no limit in held regions; a full refund on pick-up and a 15 s replant delay (`kl_lamp_replant_cd`). Building and picking up stay as built (§6.1) until the owner's new lantern design.
 
 | Piece | Verdict | New job, and why |
 |---|---|---|
-| Post Lamp | **keep** | The Hollow's find: haven and nest-burner. 5 scrap. |
+| Post Lamp | **keep** (BUILT) | The Hollow's find: haven and nest-burner. 5 scrap. |
 | Reservoir Lamp | **repurpose (M5)** | The marsh's find: a wide dim light (200 px) with no core that forces things in water up (Slowwater, the Sump). Feeding is cut. 8 scrap. |
 | Hooded Lamp | **repurpose (M6)** | The Ridge's find: the only lamp a gust can't snuff. Diving Gutterkites snag on it. 7 scrap. |
 | Mirror Post | **repurpose (M7)** | The Lakeshore's find: a fixed beam that cuts fog, wears shells and makes your fire burst where it crosses. 8 scrap. Its unlock moves from the signal station to the Lakeshore (DECISIONS #36). |
-| Wind | **repurpose (M6)** | Ridge only. Gusts snuff exposed Post and Reservoir Lamps until the gust ends (they relight themselves) and push projectiles downwind. Valley-wide gusts are cut. Inert from M1b until M6. |
-| Old cold lamps (hut, north path) | **keep, no fuel** | Relit by touch: a haven and an early win. |
-| Cold-lantern markers, low pulses, chips | **cut** | Nothing goes cold. The cold-frame lure stays for unlit old lamps. |
-| Woodpile | **cut as a source** | Scenery. It existed to prevent a fuel soft-lock. |
-| WayLamps refilling lamps | **cut** | Nothing to refill. Held ground is safe, with no lamp limit, plus rest and travel. |
-| Dying lamps; Wicklings draining them | **cut** | Wicklings hunt the keeper. Mirror smothering stays, for the Lake. |
-| The Ashbrood's dive emptying a lamp | **repurpose** | Its dive snuffs a lamp for 8 s. |
-| Embers (+1 fuel) | **repurpose** | Their glow and 140 px magnet become the pickup for scrap, oil and items. |
-| Refuel, relight with fuel, hold to gather | **cut** | No tending. |
+| Wind | **repurpose (M6)** | Ridge only. Gusts snuff exposed Post and Reservoir Lamps until the gust ends (they relight themselves) and push projectiles downwind. Valley-wide gusts are cut. **Inert from M1b until M6 (BUILT).** |
+| Old cold lamps (hut, north path) | **keep, no fuel** (BUILT, M1b) | Relit by touch: a haven and an early win. |
+| Cold-lantern markers, low pulses, chips | **cut** (BUILT, M1b) | Nothing goes cold. The cold-frame lure stays for unlit old lamps. |
+| Woodpile | **cut as a source** (BUILT, M1b) | Scenery. It existed to prevent a fuel soft-lock. |
+| WayLamps refilling lamps | **cut** (BUILT, M1b) | Nothing to refill. Held ground is safe, plus rest and travel. |
+| Dying lamps; Wicklings draining them | **cut** (BUILT, M1b) | Wicklings hunt the keeper. Mirror smothering stays, for the Lake. |
+| The Ashbrood's dive emptying a lamp | **repurpose** (BUILT, M1b) | Its dive snuffs a lamp for 8 s. |
+| Embers (+1 fuel) | **repurpose** (BUILT, M1b, in part) | No fuel embers; the glow and 140 px magnet carry scrap and oil drops (items in M3). |
+| Refuel, relight with fuel, hold to gather | **cut** (BUILT, M1b) | No tending. Old lamps and WayLamps light by touch; scrap piles are taken with one press. |
 
 ---
 
@@ -295,15 +294,15 @@ C / X plants the selected lantern on your tile (Space before M1a): firm ground (
 - The valley is 224 x 200 tiles of 32 px *(code)*, each with fog from 0 (clear) to 1.
 - Light clears fog (up to 0.8 per second). Unlit tiles fog back in (up to 0.05 per second, fastest next to fog). The Reedmarsh fogs back 1.8x as fast; gusts make it 1.5x everywhere.
 - A tile once clearer than 0.3 is **remembered** *(code)*: a dim blue haze on screen and map. Never-seen ground is near-black.
-- Resources and landmarks show only below 0.35 fog *(code)*. Building doesn't check fog. Full fog slows walking to 60% (`fog_slow_min`).
-- **Lures** (`scripts/world/post_lure.gd`): sleeping packs pulse through the fog, nests glow, the crook has a red pulse, cold lanterns keep a cold frame. Packs and nests look alike. Caches and upgrade finds have no lure.
+- Scrap piles and landmarks show only below 0.35 fog *(code)*. Building doesn't check fog. Full fog slows walking to 60% (`fog_slow_min`).
+- **Lures you can tell apart** (BUILT, M1b; drawn over the fog): a sleeping pack shows **small pale eyes in pairs**, one pair a member still to fight, each blinking now and then (`enemy_pack.gd`); a pack with a shelled elite (and the crook's guard) shows **one larger pair of eyes with a pale ring** instead; a **nest** has a slow, cold blue glow around it (`wick_nest.gd`); the crook has its red pulse (`post_lure.gd`); an **old lamp not yet lit** keeps its cold frame with a red-amber pulse (`lantern_markers.gd`). The sleeping Clinker is drawn over the fog as itself. Caches and upgrade finds have no lure.
 
 ### 7.2 The plan
 
 - **Your fire lights the fog.** BUILT (M1a). Lampfire, Lance and Fireglobe light about 40 px of fog around them while they fly (`kl_bolt_light`). Lampfire's impact pop clears fog in 72 px, a Fireglobe's burst in 90 px, and burning ground is a light while it lasts (group `light_source`). So you can throw a Fireglobe into the dark to see what's there. The bench measured it within budget (§16).
 - Fog slows walking to 85% at most, not 60% (`fog_slow_min`). PLANNED (not placed).
 - **The Lakeshore's thick fog** clears at a quarter speed for your fire, and at the usual speed for mirror beams, the Beam and WayLamps. PLANNED (M7).
-- **Lures you can tell apart.** PLANNED (M1b).
+- **Lures you can tell apart.** BUILT (M1b) for packs, elites, nests and unlit old lamps (§7.1); the cache glint comes with loot (M3), and the WayLamp is drawn as itself.
 
 | Lure | Look above the fog |
 |---|---|
@@ -324,18 +323,18 @@ All action-RPG foes are in the Hollow. The Reedmarsh and the Ridge have none yet
 
 | Foe | File | Numbers | Behaviour |
 |---|---|---|---|
-| **Wickling** | `wickling.gd` | 3 hp, 65 px/s | About half are timid and stay out of healthy light; brave ones walk in, burn after 2.5 s at 1.5 hp/s and run (`kl_timid_share`, `kl_light_tolerance`, `kl_light_burn_dps`). Touch chills 30 warmth/s. Drains a dying lantern no healthy light covers; smothers mirrors in the dark. |
+| **Wickling** | `wickling.gd` | 3 hp, 65 px/s | About half are timid and stay out of healthy light; brave ones walk in, burn after 2.5 s at 1.5 hp/s and run (`kl_timid_share`, `kl_light_tolerance`, `kl_light_burn_dps`). Touch chills 30 warmth/s. Smothers mirrors in the dark. (M1b: it no longer drains lamps.) |
 | **Shelled Wickling** (elite) | `wickling.gd` | 9 hp + 4 shell, 48 px/s, chill x1.6 | Only in packs, and on Oswin's crook. Ignores lanterns. |
 | **Spitwick** | `spitwick.gd`, `spit_projectile.gd` | 4 hp | Keeps 190-250 px off. A slow spit after a 0.7 s wind-up whose aim locks for its last 0.2 s (BUILT, readability; was 0.6 s, following you to the end): 12 warmth and 0.1 charge. Never starts a wind-up off-screen. |
 | **Nest** | `wick_nest.gd` | 12 hp | Only a lantern's core hurts it (2 hp/s). Hatches 3 Wicklings every 10 s while you are within 320 px. |
-| **Clinker** (mid-boss) | `clinker.gd` | 48 hp (was 24; BUILT, M1a) + 12 shell (regrows), Lv 4 | Sleeps at its post (wake 224 px, leash 480 px); uncurls for 0.6 s when it wakes. Rolls after a 0.9 s lane tell (was 0.8) for 25 warmth, then is dizzy for 0.6 s (BUILT, readability). Ignores lanterns. Drops 1 oil at half health (M1a). At (70,119), 9.4 tiles before the WayLamp. |
-| **The Ashbrood** (guardian) | `ashbrood.gd`, `waylamp.gd` | 220 hp (was 40; BUILT, M1a) + 12 shell a phase, two phases, Lv 7 | Wakes when you kindle the Hollow's WayLamp. Phase 1: in the bowl; an ash puff every 7 s (1.0 s wind-up, was 0.8) drops your lamp to 0.1 charge; a pack of 3 adds (Lv 5) every 8 s, after 0.8 s of spawn glows. Between phases it rises out of the bowl for 1.5 s (no attacks, no damage). Phase 2: it dives at the nearest lit lantern (1.0 s wind-up, was 0.7; then a 0.3 s flight, was a jump), empties it and sits for 4 s. BUILT (readability): §8.4. Drops 1 oil at half health in each phase (M1a). Its kill holds the Hollow. No phase 3. |
+| **Clinker** (mid-boss) | `clinker.gd` | 48 hp (was 24; BUILT, M1a) + 12 shell (regrows), Lv 4: with scaling (M1b) 65 hp + 16.3 shell | Sleeps at its post (wake 224 px, leash 480 px); uncurls for 0.6 s when it wakes. Rolls after a 0.9 s lane tell (was 0.8) for 25 warmth, then is dizzy for 0.6 s (BUILT, readability). Ignores lanterns. Drops 1 oil at half health (M1a). At (70,119), 9.4 tiles before the WayLamp. |
+| **The Ashbrood** (guardian) | `ashbrood.gd`, `waylamp.gd`, `waylamp_ember.gd` | 220 hp (was 40; BUILT, M1a) + 12 shell a phase, two phases, Lv 5 (was 7; M1b): with scaling 326 hp + 17.8 shell a phase | Wakes when you light the Hollow's WayLamp by touch (M1b). It broods over the WayLamp's **last ember**, a small amber glow low in the lamp's cold cage (the lamp's light, not the creature's; DECISIONS 2026-11-27; code-drawn, BUILT M1b). Phase 1: in the bowl; an ash puff every 7 s (1.0 s wind-up, was 0.8) drops your lamp to 0.1 charge; a pack of 3 adds (Lv 4, was 5) every 8 s, after 0.8 s of spawn glows. Between phases it rises out of the bowl for 1.5 s (no attacks, no damage). Phase 2: it dives at the nearest lit lantern (1.0 s wind-up, was 0.7; then a 0.3 s flight, was a jump), **snuffs it for 8 s** (M1b; it relights itself) and sits for 4 s. BUILT (readability): §8.4. Drops 1 oil at half health in each phase (M1a). Its kill holds the Hollow: the WayLamp **takes its ember back**, the ember rising into the lamp and swelling into its flame as the lamp lights (1.4 s; the level-up cards wait for it). No phase 3. |
 
-- **Packs:** 24 fixed packs plus the crook's guard (88 foes: 7 Spitwicks, 6 shelled), and 12 nests (tables in `main.gd`). A pack sleeps until you come within 320 px (`kl_pack_wake_radius`); the first two route packs wake at 5-6 tiles and the guard at 4. Fixed foes stay dead (`Progress.cleared`), but **a faint resets every cleared pack** (`player.gd:211-213`).
-- **Foe levels:** Lv 1 on the hut row and south, 2-4 through the middle, 5-6 by the WayLamp. The guard is Lv 2, the Clinker Lv 4, the Ashbrood Lv 7 and its adds Lv 5. Hatchlings take their nest's level; the swarm at a guardian-less WayLamp is Lv 6. Levels change only the wick a foe pays (§9.1).
+- **Packs:** 24 fixed packs plus the crook's guard (88 foes: 7 Spitwicks, 6 shelled), and 12 nests (tables in `main.gd`). A pack sleeps until you come within 320 px (`kl_pack_wake_radius`); the first two route packs wake at 5-6 tiles and the guard at 4. Fixed foes stay dead (`Progress.cleared`), **even after a faint** (the faint rule, BUILT M1b, §12.3).
+- **Foe levels** (BUILT, M1b; GAME_PLAN §8.2): the Hollow's foes are **Lv 1-4**: 1 on the hut row and south, 2-3 through the middle, 4 in the north (the old 3/4/5/6 became 2/3/4/4). The guard is Lv 2, the Clinker Lv 4, the Ashbrood Lv 5 (was 7) and its adds Lv 4 (was 5). Hatchlings take their nest's level; the swarm at a guardian-less WayLamp is Lv 6 (the marsh's foes will be 5-7). A foe's level sets its wick (§9.1) and, since M1b, its health and shell (+12% a level over 1, §4.6).
 - **A calm start:** nothing wakes at the hut, its lantern, the woodpile, the scrap or the ledger. Only the lone first Wickling is within 16 tiles.
-- **Drops** (`ember.gd`, `foe.gd` `_drop()`): every kill of a fixed foe drops an ember worth 1 fuel (it glows, drifts to you from 140 px and fades after 30 s), and a 35% chance of 1 scrap. Since M1a, lamp oil too (§5.1), and summoned foes drop nothing. No items.
-- **Uncertain:** no code was found that restarts the Ashbrood's phase when the keeper faints (AUDIT M18; searched, not run). The plan makes it a rule in M1b (§12.4).
+- **Drops** (`ember.gd`, `foe.gd` `_drop()`): a kill of a fixed foe has a 35% chance of 1 scrap (it glows, drifts to you from 140 px and fades after 30 s). M1b cut the fuel ember. Since M1a, lamp oil too (§5.1), and summoned foes drop nothing. No items.
+- **A faint** puts a half-fought pack back to sleep, restarts the Clinker and the Ashbrood at their phase, and clears summoned foes (BUILT, M1b; §12.3).
 
 ### 8.2 The plan
 
@@ -421,18 +420,19 @@ BUILT on `proto/kl-readability` (2026-11-27), from `docs/ART_DIRECTION.md` §4 (
 
 ### 9.1 Built today
 
-- **Wick** is the XP. Wick from level L to L+1 is `round(kl_wick_base x L ^ kl_wick_exp)` with base 6 and exponent 1.25 (`Progress.wick_for_level`): 6, 14, 24, 34, 45, 56, 68, 81, 94... Capped at level 12 (`kl_level_cap`); at the cap the HUD says "max".
-- **Base wick per kill** (`kl_*_wick`): Wickling 1, Spitwick 2, shelled Wickling 3, nest 5, Clinker 20, Ashbrood 32. Kindling a WayLamp pays 10 (`kl_wick_kindle`).
+- **Wick** is the XP. Wick from level L to L+1 is `round(kl_wick_base x L ^ kl_wick_exp)` with **base 7 and exponent 1.65** (BUILT, M1b; was 6 and 1.25) (`Progress.wick_for_level`): 7, 22, 43, 69, 100, 135, 174, 216, 263, 313, 366. Capped at level 12 (`kl_level_cap`); at the cap the HUD says "max".
+- **Base wick per kill** (`kl_*_wick`): Wickling 1, Spitwick 2, shelled Wickling 3, nest 5, Clinker **28** (was 20; M1b, so a pure beeline goes into the Ashbrood at L4), Ashbrood 32 (Lv 5: x2 = 64). Kindling a WayLamp pays 10 (`kl_wick_kindle`).
+- **A level** also gives +10% damage (§4.6, BUILT M1b). The +8 warmth a level (§5.2) is not built.
 - **Level-gap wick** (`Progress.kill_wick`, `Progress.wick_gap_mult`): wick = base x (1 + 0.25 x (foe level - 1)) x gap factor, where gap = keeper level - foe level. The factor is 1 up to 1 level over the foe (`kl_xp_band`), then x0.25 per level past that (`kl_xp_falloff`: 1/4, 1/16, 1/64), and 0 at 5 or more (`kl_xp_zero_gap`). A foe above you pays +10% a level, at most +30% (`kl_xp_bonus`, `kl_xp_bonus_max`). Fractions carry over and are saved. Hatched, called and re-fought foes pay like any other foe of their level; the gap is what stops farming.
-- **Measured** (`tools/tests/test_leveling.tscn`, after the loop): beeline and explorer both reach level 2 at the find, level 3 at pack 2, level 4 on the Clinker, level 7 into the Ashbrood and **level 8 on its kill**. The forward run takes about 13 minutes on the test's walk-and-fight estimate. Farming stalls: level 5 only at 25 minutes.
+- **Measured** (`tools/tests/test_leveling.tscn`, M1b): a **pure beeline** (the main route only: the north path, the crook, nest A, what wakes on the road to the Clinker, then the Ashbrood) reaches level 2 at the crook's guard, level 3 at pack 2, level 4 on the Clinker, goes into the Ashbrood at **L4**, and its kill gives **L5**. An **explorer** who clears the whole Hollow nearest-first reaches level 2 at pack 23 (the third fight, by the crook), L4 on the Clinker (its 5th stop), L5 at pack 3, goes into the Ashbrood at **L5**, and its kill gives **L6**. On both routes the Ashbrood's adds alone don't cross the line; the kill does; kindling afterwards adds wick but no level. Farming the hut row and the south stalls at L4 (L4 at 9 minutes, still L4 after 30; about 1.5 wick a minute in the last 10).
 - **Level-up cards** (`scripts/ui/level_up.gd`): a level-up pauses the world and offers 3 of 12 cards ("Trim the wick"). All 12 change real numbers. Texts: STORY.md §12.
 - **What you see:** "Lv 3", a wick bar and "12/24" on the HUD; name bars "Wickling Lv 2", dimmed when the foe pays less than full; a kill floats "+2 wick", grey when the gap cut it. A chime on level-up.
 
-### 9.2 The plan — PLANNED (M1b; skill points M2)
+### 9.2 The plan — the curve BUILT (M1b); skill points M2
 
-- **Keep the level-gap wick exactly as built.** Cap 12.
-- **The curve:** base 7, exponent 1.65 (`kl_wick_base`, `kl_wick_exp`): 7, 22, 43, 69, 100, 135, 174, 216, 263, 313, 366.
-- **The Hollow ends at level 6** (5 on a pure beeline), not 8. Its last level still comes on the Ashbrood kill (DECISIONS #17, kept). Level 2 still comes at the crook. `test_leveling` checks both routes.
+- **Keep the level-gap wick exactly as built.** Cap 12. (Done.)
+- **The curve:** base 7, exponent 1.65 (`kl_wick_base`, `kl_wick_exp`): 7, 22, 43, 69, 100, 135, 174, 216, 263, 313, 366. BUILT (M1b).
+- **The Hollow ends at level 6** (5 on a pure beeline), not 8. Its last level still comes on the Ashbrood kill (DECISIONS #17, kept). Level 2 still comes at the crook. `test_leveling` checks both routes. BUILT (M1b; §9.1).
 - **A level gives** a skill point (M2), +8 warmth and +10% damage (§5.2, §4.6), and new skills at levels 2, 7 and 9. It shows as a chime, a toast and a mark on the Skills tab, with no pause.
 
 **Wick budget per region.** The supply figures come from the plan's level-by-level simulation, not from `test_leveling`. They are estimates.
@@ -451,7 +451,7 @@ The bands land when you fight 75-90% of each region. At 60%, the Hollow and the 
 
 ## 10. Loot — PLANNED (M3)
 
-**Built today:** no items, no inventory screen, no add-ons. Kills drop embers (fuel) and sometimes scrap.
+**Built today:** no items, no inventory screen, no add-ons. Kills sometimes drop scrap (M1b: no fuel embers).
 
 | Rarity | Affixes | Share | Colour |
 |---|---|---|---|
@@ -539,22 +539,23 @@ DECISIONS 2026-11-27 ("route: one loop"). One clockwise loop with no backtrackin
 
 ### 12.3 WayLamps, travel and fainting (built)
 
-- **Three WayLamps** (`scripts/world/waylamp.gd`): the Hollow (78,124), the Reedmarsh (200,140), the Ridge (120,30). Walk up and feed one 15 carried fuel (`waylamp_fuel_need`); no lantern has to reach it.
-- **Kindling:** in the Hollow, it wakes the Ashbrood; its kill holds the region. Elsewhere, a 15 s hold (`waylamp_kindle_sec`) while a swarm of 4 bold Wicklings (Lv 6) tries to sap it. It never fails; each Wickling on it only pushes the kindling back.
-- **A held region:** its lanterns are refilled and stop burning; no Wicklings spawn there and any inside fade away; its WayLamp clears fog only in its own region. A banner says "{Region} is held".
+- **Three WayLamps** (`scripts/world/waylamp.gd`): the Hollow (78,124), the Reedmarsh (200,140), the Ridge (120,30). **Lit by touch** (BUILT, M1b; was 15 fuel): the first touch reads its note, the next ("Light it") lights it. No lantern has to reach it.
+- **Kindling:** in the Hollow, lighting it wakes the Ashbrood, which broods over the lamp's last ember; its kill takes the ember back and holds the region (§8.1). Elsewhere, until their guardians are built (M5, M6), a 15 s hold (`waylamp_kindle_sec`) while a swarm of 4 bold Wicklings (Lv 6) tries to sap it. It never fails; each Wickling on it only pushes the kindling back.
+- **A held region:** no Wicklings spawn there and any inside fade away; its WayLamp clears fog only in its own region; you can rest and travel there. A banner says "{Region} is held". (Lamps there needed refilling before M1b; now nothing does.)
 - **Rest and fast travel** (`scripts/ui/travel_menu.gd`): interact with a lit WayLamp (the prompt says "Rest or travel") to open a list. **Rest** comes first (BUILT, M1a): flasks and warmth back to full, with a toast. It never resets packs. Below it, every lit WayLamp, in region order. The one you stand at is greyed. Picking one fades to black and puts you just below it; arriving never rests. Pad: D-pad, A, B or Start. Keyboard: arrows, E or Enter, Escape (Q no longer closes it; Q is skill slot 3). Mouse: click. The world pauses while the list is open. **Blocked** while a foe hunts you within 12 tiles (`travel_hunt_radius` 384 px), while any WayLamp kindles, and while a guardian is in play. The prompt says why.
-- **Fainting** at 0 warmth (`player.gd` `faint()`): half your carried fuel and scrap drop where you fell (glass is kept); all unspent wick drops as a wick drop (`wick_drop.gd`) to collect later; **every cleared pack resets**; you wake by the nearest lit lantern (or the hut) at 60% warmth, as Wicklings back off. A note says what happened. No death, no game over.
+- **Fainting** at 0 warmth: **the faint rule** (BUILT, M1b; `player.gd` `faint()`, `systems/combat/faint_rule.gd`; `test_faint`):
+  1. You wake at the nearest lit light (a lit lantern or a lit WayLamp) in the region you fell in, at 60% warmth (`kl_faint_warmth`). Any light within 320 px (`kl_faint_skip_radius`) of an unbeaten fight (a pack or nest not cleared, the Clinker's post, the Ashbrood) is skipped. No such light in the region: the nearest anywhere; none at all: the hut.
+  2. You keep everything you carry (scrap, flasks).
+  3. Your unspent wick waits where you fell (a wick drop). A second faint makes a second drop; nothing is lost until you collect them.
+  4. Cleared packs stay cleared. A half-fought pack is whole and asleep again and keeps its dead: its living members go, and when it wakes again only they come back, at full health (`EnemyPack.sleep_again`, `dead_slots`). A half-burned nest is whole again. Summoned foes (hatchlings, the Ashbrood's adds, a hold fight's swarm) go, with no drops; other Wicklings flee for a moment.
+  5. The Clinker goes back to the start of its phase: full health, shell regrown, asleep on its post, its oil armed again. The Ashbrood goes back to the start of the phase it reached, shell regrown, its oil armed again, over its WayLamp; the WayLamp still waits.
+  A note says what happened. No death, no game over. (Before M1b a faint dropped half your fuel and scrap and reset every cleared pack.)
 
 ### 12.4 The plan
 
-**WayLamps (M1b, M2).** Rest is BUILT (M1a; §12.3). Resting will also allow a respec (M2). WayLamps are lit by touching your flame to them, and the guardian is the cost (M1b; today 15 fuel). A fixed hold fight stands in until each guardian is built. Fast travel stays as built.
+**WayLamps (M2).** Rest is BUILT (M1a), lighting by touch is BUILT (M1b; §12.3). Resting will also allow a respec (M2). A fixed hold fight stands in until each guardian is built (M5, M6). Fast travel stays as built.
 
-**The faint rule** (M1b; replaces `player.gd:211-213`):
-1. You wake at the nearest lit light in the region at 60% warmth. Any light within 320 px of an unbeaten pack is skipped, so faints don't chain.
-2. You keep everything you carry.
-3. Your unspent wick waits where you fell (the built wick drop). A second faint makes a second drop; nothing is lost until you collect them.
-4. Cleared packs stay cleared. A partly beaten pack heals, sleeps again, and keeps its dead.
-5. A mid-boss or guardian goes back to the start of the phase you reached, shell regrown. Its phase oil drops again on each try; the flask cap (5) stops any hoarding.
+**The faint rule** is BUILT (M1b; §12.3). Two readings recorded there: "an unbeaten pack" also covers nests, the Clinker and the Ashbrood (so faints don't chain at a boss either); and "a partly beaten pack heals" means its survivors come back at full health while its dead stay dead.
 
 **The Reedmarsh's U-route (M5).** Today you walk east to the pumphouse, then about 80 tiles back west across the water to the climb. The approved plan: go out along the south and back along the north, with the WayLamp on the north island (168,102); the find still comes first (DECISIONS 2026-11-27, plan answer 9, row #36). This is a sketch from `main.gd`'s constants; M5 must lay it out and run a route test.
 
@@ -601,8 +602,8 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 ## 14. UI and HUD
 
 **Built today.** One panel style (`UiStyle`, `assets/ui/theme.tres`). The font is Ark Pixel at 20, 30, 40 or 60 only.
-- **HUD:** top left, resources (fuel, scrap, glass), the level row ("Lv 3", wick bar, "12/24") and the lantern you will build; top centre, the goal banner; top right, status chips only when something needs you (hunted, wind, smothered mirrors, cold or low lanterns, getting cold, an ember lamp). Bottom centre (BUILT, M1a; `scripts/ui/action_bar.gd`): the action bar, drawn by code, with the warmth and charge bars above it (they moved there from the top left). Tips and toasts sit above the bar; the key reminder is bottom left, on three lines.
-- **Prompts** sit over the thing you can use ("[E] Refuel 62%", "[E] Read", "[E] Turn right", "[E] Hold: pick up", "Rest or travel"). A failed build says why for a moment.
+- **HUD:** top left, scrap (M1b: no fuel or glass), the level row ("Lv 3", wick bar, "12/24") and the lantern you will build; top centre, the goal banner; top right, status chips only when something needs you (hunted, smothered mirrors, a hold fight's countdown, getting cold, an ember lamp; M1b cut the wind and the cold and low lantern chips). Bottom centre (BUILT, M1a; `scripts/ui/action_bar.gd`): the action bar, drawn by code, with the warmth and charge bars above it (they moved there from the top left). Tips and toasts sit above the bar; the key reminder is bottom left, on three lines.
+- **Prompts** sit over the thing you can use ("[E] Read", "[E] Light it", "[E] Take  6 scrap", "[E] Turn right", "[E] Hold: pick up", "Rest or travel"; M1b texts in STORY §15). A failed build says why for a moment.
 - **Menus:** the lantern list (cards), map, journal, pause menu (with Options, BUILT M1a), notes, the level-up cards, the Skills list (BUILT, M1a), the WayLamp list (Rest and travel) and the F1 tuning panel (M1a added a row for every `kl_` value it introduced). All of them pause the world.
 - **Foe bars and the boss bar** as in §4.1. No inventory or equipment screen, no talk panel.
 
@@ -612,7 +613,7 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 |---|---|---|
 | **Action bar** | Bottom centre, laid out like the pad: LT and LB left, Y middle, RB and RT right, the flask at the right end with pips that flash when one comes back. 32 px icons, button labels at 20. Cooldown sweep and seconds; greyed when short of charge. | BUILT (M1a) |
 | **Warmth and charge** | Two bars just above the bar, with skill-cost ticks on charge. | BUILT (M1a) |
-| **Top of the screen** | Left: level, the wick bar and the scrap count. Centre: the goal banner (built). Right: chips only for "hunted" and "cold". The "hunted" chip is BUILT (M1a); the fuel, lamp and wind chips go in M1b. | M1a / M1b |
+| **Top of the screen** | Left: level, the wick bar and the scrap count. Centre: the goal banner (built). Right: chips only for "hunted" and "cold". The "hunted" chip is BUILT (M1a); the fuel, lamp and wind chips are gone (BUILT, M1b). | BUILT (M1a, M1b) |
 | **Foe bars, boss bar** | As built, plus the elite affix line (20 px) and "phase N / 3". | M2 |
 | **Damage numbers** | Pop, then drift (§4.1). | BUILT (M1a). The "+wick" popup was already grey when the gap cut the wick |
 | **Map** | As built, plus WayLamp icons, lures you've seen, and the share explored. | not placed |
@@ -626,8 +627,8 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 
 ## 15. Save, load and pause (built)
 
-- Three save slots, chosen on a screen at start (keeper, region and play time on each), plus autosave every 60 s *(code)*, on closing the window and from the pause menu. Save version 5 (BUILT, M1a; `systems/save/save_game.gd`). The prototype line saves to its own files (`user://keepers_light_slot_*`), so it never touches a `main` save. A version 4 save is migrated on load: it gets the default bar (with Lance on slot 3 if the keeper is level 2 or more) and full flasks. Anything older starts fresh and shows "(old save)". A loaded action bar is checked slot by slot against the binding rules; a slot holding something it may not (an unknown or unlearned skill, an aimed skill on slot 4, a skill already on an earlier slot) takes the default bar's skill for that slot, or stays empty if that is not allowed either.
-- **Saved:** the keeper, inventory, unlocks, every lantern, resource spots and dropped piles, the fog and what has been seen, story progress, wick and level, cards, cleared foes, wick drops, lit WayLamps and the stones; since version 5, the action bar, whether Lance was given, and the flasks. **Not saved:** live foes, embers and oil on the ground, wind. The M1a options (shake, flashes, auto-fire) are saved per PC in `user://settings.cfg`, not in a slot. Tests, captures and the bench (scenes under `res://tools/`) never read or write that file; they use the defaults.
+- Three save slots, chosen on a screen at start (keeper, region and play time on each), plus autosave every 60 s *(code)*, on closing the window and from the pause menu. Save version **6** (BUILT, M1b; version 5 came with M1a; `systems/save/save_game.gd`). **A version 5 save migrates** (the owner's current save is v5): fuel and glass leave the inventory; what WayLamps were fed is dropped; lanterns lose their tanks, and only the valley's old lamps can stay cold (a v5 old lamp with an empty tank comes back cold, to be lit by touch; a planted lamp that had burned out comes back lit); fuel spots, peat, glass shards, the woodpile, dropped fuel and empty piles go; untaken fuel and glass caches become scrap caches of the same size; scrap piles keep what is left (one-off now). Level, wick, the bar, flasks, upgrades, notes, cleared fights and the story are kept. Charge is capped at the new max. `test_save` migrates a test-only v5 file. The prototype line saves to its own files (`user://keepers_light_slot_*`), so it never touches a `main` save. A version 4 save is migrated on load: it gets the default bar (with Lance on slot 3 if the keeper is level 2 or more) and full flasks. Anything older starts fresh and shows "(old save)". A loaded action bar is checked slot by slot against the binding rules; a slot holding something it may not (an unknown or unlearned skill, an aimed skill on slot 4, a skill already on an earlier slot) takes the default bar's skill for that slot, or stays empty if that is not allowed either.
+- **Saved:** the keeper, scrap, unlocks, every lantern (kind, place, mirror direction, whether an old lamp is still cold), the scrap piles left, the fog and what has been seen, story progress, wick and level, cards, cleared foes, wick drops, lit WayLamps and the stones; since version 5, the action bar, whether Lance was given, and the flasks. **Not saved:** live foes, embers and oil on the ground, a snuffed lamp's timer, a half-fought pack's dead (a reload brings the whole pack back, asleep), wind. The M1a options (shake, flashes, auto-fire) are saved per PC in `user://settings.cfg`, not in a slot. Tests, captures and the bench (scenes under `res://tools/`) never read or write that file; they use the defaults.
 - **Pause menu** (Esc / Start): Resume, Save, Save slots, New game (press twice), Save and quit, Goal pointer, Show tips again, the controls, and Options (BUILT, M1a: screen shake, reduce flashes, Lampfire auto-fire).
 - Later milestones add sections to the save.
 
@@ -637,10 +638,11 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 
 - **Budget:** game logic (process + physics) averages well under 4 ms a frame with 30 lanterns and 20 foes, measured by `tools/bench/bench.tscn` (see AGENTS.md). After the loop it measured 3.03-3.10 ms over three runs (worst frame about 6.0-6.4 ms).
 - **M1a** (BUILT): the bench also runs a fight at a firing range away from the keeper: 40 Lampfire bolts always in the air, flying at 8 target foes and hitting them (about 160 hits a second, with splash, impact effects and damage numbers), and 4 burning areas under them. **It was over budget** (fixed by the readability step, below): game logic averaged 4.7-5.6 ms (worst frame 8.0-11.7 ms) over seven headless runs on 2026-11-27, against 3.0-3.5 ms for the same world with no fight (`-- 30 20 400 0 0`). The bolts' hits add about 1.2 ms of physics and the effects about 0.4 ms of process; the burning areas about 0.4 ms. The machine was also running the game at the time, so treat these as rough. (The M1a build's own figure, 3.158 ms, came from a bench whose 40 bolts stood still and hit nothing, and whose world was paused by the level-up cards from about frame 100. The bench now keeps the cards closed and reports paused frames.)
-- The fog steps only tiles that can change. Foes read lantern light from one shared snapshot a frame (`systems/light/light_sense.gd`). The map is drawn once, in 16 x 16 tile chunks *(code)*. Lanterns redraw only when their look changes.
+- **M1b** (BUILT): lamps no longer burn, feed, take wind or die, and nothing works out what a Wickling may drain, so the lanterns' and the foes' frames got cheaper. The bench (its quarter of "dying" lamps are snuffed, dark lamps, now): game logic **1.61 / 1.67 / 1.61 ms** (worst 3.37 / 3.77 / 3.45 ms), 160 hits a second, 0 paused frames, three headless runs on 2026-11-27. The bench is lighter than before in one way: its dark lamps used to be lit "dying" lamps, so 8 of its 30 lamps no longer clear fog.
+- The fog steps only tiles that can change. Foes read lantern light from one shared snapshot a frame (`systems/light/light_sense.gd`), which also caches each lantern's core from the lantern's own Effects. The map is drawn once, in 16 x 16 tile chunks *(code)*. Lanterns redraw only when their look changes.
 - **The readability step's performance pass** (BUILT, readability). Profiled with the bench's new `profile` mode (it runs each kind of node's `_process` and `_physics_process` itself and times them). Before, on this machine: game logic 4.70 / 4.63 / 4.59 ms (worst 8.95 / 7.54 / 8.20 ms). The profile put 2.37 ms in the foes and 1.05 ms in the bolts' physics, and **0.71 ms of the bolts' 1.05 ms was `Sfx.play`**: every Lampfire hit started an Ogg on its own player, and setting up its decoder cost about 0.25 ms on the main thread. Fixes, none of which change how the game plays:
   - `Sfx` mixes every effect through one `AudioStreamPolyphonic` player (about 0.04 ms a play), and a cue asked for twice in the same frame plays once.
-  - Foes read WayLamps and mirrors from the `LightSense` snapshot instead of asking the scene tree every call; "is this dying lamp covered by healthy light?" is worked out once a frame for all Wicklings (`LightSense.prey_flags`), not once per Wickling per lamp; Wicklings ask the keeper's light once a frame (`player.in_light_cached()`); a Wickling's own light level is read only when it needs it.
+  - Foes read WayLamps and mirrors from the `LightSense` snapshot instead of asking the scene tree every call; "is this dying lamp covered by healthy light?" was worked out once a frame for all Wicklings (`LightSense.prey_flags`; gone in M1b with the draining), not once per Wickling per lamp; Wicklings ask the keeper's light once a frame (`player.in_light_cached()`); a Wickling's own light level is read only when it needs it.
   - After: **2.60 / 2.55 / 2.61 ms** (worst 4.30 / 4.29 / 4.77 ms), 160 hits a second as before. The world with no fight (`-- 30 20 400 0 0`): 1.95 ms (was 3.0-3.5). The worst frames are the frames the fog ticks (1.3 ms a tick, every 0.1 s).
   - **With the telegraphs busy** (`-- 30 20 400 40 4 tells=8`: 8 Spitwicks winding up without a pause, the Ashbrood and the Clinker, about 9.5 wind-ups alive every frame): **2.51 / 2.55 / 2.54 ms** (worst 4.53 / 4.53 / 4.77 ms). The telegraph layer's own process costs under 0.01 ms.
   - Rendered on a virtual display (software rendering, so frame times are high): logic 3.36 ms, frame 15.9 ms, 441 draw calls on average; with `tells=8`, logic 3.40 ms, frame 16.8 ms, 516 draw calls. All numbers 2026-11-27, no other Godot process running.
@@ -714,21 +716,22 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 
 ## 19. Measured numbers (built)
 
-These are measurements of the code at c6d3ee0. M1a did not change wick, levels or the route; it changed the Clinker's and the Ashbrood's health (§4.6), so the time estimates below may now be short. M1b changes most of the rest; keep this section until then.
+§19.1 is measured on `proto/kl-m1b` (M1b: the new curve, foe levels 1-4, scaling). §19.2's route is unchanged since c6d3ee0, apart from the foe levels.
 
-### 19.1 Wick in the Hollow
+### 19.1 Wick in the Hollow (M1b)
 
-Fixed wick, before the level gap scales it: 25 packs of 88 foes, 12 nests, the Clinker, the Ashbrood and kindling. The balance pass (2026-11-27) set the curve to base 6, exponent 1.25, and wick by danger. The level-gap pass made the Ashbrood's kill the Hollow's last level (base 32, x2.5 at Lv 7 = 80; kindling 10).
+Fixed wick, before the level gap scales it: 25 packs of 88 foes, 12 nests, the Clinker, the Ashbrood and kindling. M1b set the curve to base 7, exponent 1.65 (GAME_PLAN §9), the Hollow's foes to Lv 1-4 (the Ashbrood Lv 5, its adds Lv 4), and **`kl_clinker_wick` 20 → 28**: with 20, a pure beeline went into the Ashbrood at L3 (64 of the 72 wick L4 needs), and its kill then gave two levels at once. With 28 (Lv 4: 49 wick) it goes in at L4 and the kill gives L5.
 
-| | Beeline | Explorer |
+| | Pure beeline (the main route only) | Explorer (all of the Hollow, nearest first) |
 |---|---|---|
-| Level 2 | at the crook's guard (3rd fight) | at pack 23 (3rd fight, after the guard) |
-| Level 3 | pack 2, before the Clinker | pack 2, before the Clinker |
-| Level 4 | the Clinker | the Clinker |
-| Into the Ashbrood | L7 | L7 |
-| The kill | L8 | L8 |
+| Level 2 | at the crook's guard (3rd fight) | at pack 23 (3rd fight, by the crook) |
+| Level 3 | pack 2, before the Clinker | (passed on the Clinker) |
+| Level 4 | the Clinker | the Clinker (its 5th stop) |
+| Level 5 | the Ashbrood's kill | pack 3 (12th stop) |
+| Into the Ashbrood | L4 | L5 |
+| The kill | **L5** | **L6** |
 
-A farmer who camps the hut row and the south reaches L4 in 4 minutes, then L5 only at 25 minutes, and earns about 1 wick a minute in the last 10. Band 1 and x0.25 were chosen over band 2 and x0.5, which let the farmer reach L5 in 5 minutes and over-paid the forward run (L9 by the end of the Hollow).
+A farmer who camps the hut row and the south reaches L4 in 9 minutes and is still L4 after 30, earning about 1.5 wick a minute in the last 10. The forward beeline reaches L5 in about 2 minutes on the test's rough walk-and-fight model (it counts no waking, no dodging and no rests: a floor, not a playtime).
 
 ### 19.2 The first 10 minutes (Option B)
 
@@ -741,10 +744,10 @@ The main route, as placed. Offsets are tiles from the hut's start tile (48,136),
 | 3 | The first pack (pack 23: 3 Wicklings, Lv 1) | (+5, -17) | 17.7 | 6 tiles |
 | 4 | **Oswin's crook** (the Post Lamp find) with its small guard (one shelled Wickling, Lv 2) and a 6-scrap cache | (-1, -19) | 19.0 | 4 tiles (`kl_post_guard_wake_radius` 128 px) |
 | 5 | **Nest A** (nest 4, Lv 2): the first lock the Post Lamp opens; goal `burn_nest` | (+2, -30) | 30.1 | 10 tiles |
-| 6 | Pack 2 (4: one Spitwick, one shelled, Lv 4) | (60,113) | | 10 tiles |
+| 6 | Pack 2 (4: one Spitwick, one shelled, Lv 3 since M1b; was 4) | (60,113) | | 10 tiles |
 | 7 | The Clinker, a mid-boss (Lv 4) | (70,119) | | 7 tiles |
 | 8 | The Hollow's WayLamp and the Ashbrood | (78,124), offset (+30, -12) | 32.3 | - |
 
 **Rules the tests hold:** nothing wakes at the hut, its lantern, the woodpile, the scrap or the ledger. Only the lone Wickling is within 16 tiles of the hut. From the hut to the crook: at most 2 packs and 4 Wicklings, no Spitwick, no elite, no nest, no Clinker. The whole route wakes 3 of the 24 packs and 1 of the 12 nests; the rest is optional. No nest is within 28 tiles of the hut, and no Spitwick or elite pack within 25. The south of the Hollow is optional content (maybe Amos's side quest, M4).
 
-**Not done:** pack and nest lures still look alike (M1b). Timings are estimates, not a playtest.
+Pack, nest and elite lures look different since M1b (§7.1). Timings are estimates, not a playtest.

@@ -21,11 +21,6 @@ func target_pos() -> Variant:
 	match key:
 		"":
 			return null
-		"woodpile":
-			for r in get_tree().get_nodes_in_group("resource"):
-				if r.always_regrow:
-					return r.global_position
-			return null
 		"start_lantern":
 			return main.start_lantern_pos
 		"waypost_lantern":

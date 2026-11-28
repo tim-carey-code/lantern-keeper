@@ -1,27 +1,21 @@
 extends CharacterBody2D
-## The keeper (grey-box circle). Moves, carries the hand lamp, gathers,
-## builds, refuels and picks up lanterns. Keyboard/mouse and gamepad.
+## The keeper. Moves, carries the hand lamp, builds and picks up lanterns, lights old lamps and WayLamps by touch,
+## takes scrap piles. Keyboard/mouse and gamepad. M1b (no more tending): no fuel, no gathering, no refuelling,
+## no ward; a faint follows the faint rule (GAME_PLAN §12; FaintRule).
 ## M1a: throws fire (KeeperCombat), drinks lamp oil (B / R), rests at a lit WayLamp. Every combat input and the
 ## flask are read after the menu guard (Progress.input_blocked), so the B that closes a menu never drinks.
 ## Light and regen follow GAME_PLAN §5 (update_hand_lamp, _update_warmth).
 
 @export var speed := 160.0
 const REACH := 52.0   # px to interact with a lantern or resource
-const HOLD_TO_GATHER := 0.3   # s: holding interact this long gathers the nearest resource (tap still refuels)
 
 var lamp: PointLight2D
 var lamp_charge := 1.0          # 0 = ember, 1 = full hand lamp
-var fuel_poured := 0.0
-var last_feed := ""          # what happened the last time you fed a WayLamp (for prompts and tests)
-var warmth := 100.0            # PROTOTYPE: the keeper's "health". Never kills; fainting sends you home.
-var warding := false
-var combat: KeeperCombat        # PROTOTYPE: beam, burst and dash
-var _ward_grow := 0.0          # 0..1, how far the glow has swelled
-var _since_ward := 99.0        # seconds since the ward was last used
+var last_touch := ""         # what happened the last time you touched a WayLamp (for prompts and tests)
+var warmth := 100.0            # the keeper's "health". Never kills; fainting wakes you by a light.
+var combat: KeeperCombat        # the fire kit (M1a)
 var faints := 0
-var _gather_target: ResourceNode = null
-var _gather_acc := 0.0
-var _hold_t := 0.0             # how long interact has been held (holding gathers, even beside a lantern)
+var last_wake := Vector2.ZERO  # where the last faint woke you (tests)
 var build_hint_t := 0.0        # > 0: a failed build shows its outline and reason for a moment
 var build_hint := ""
 var _facing_left := false
@@ -65,21 +59,21 @@ func _ready() -> void:
 
 # --- Hand lamp -------------------------------------------------------------
 
+## The hand lamp's light: 44 px at no charge up to 104 px (+12 per lamp glass) at full charge.
 func get_light_radius() -> float:
-	var r := lerpf(Tuning.hand_lamp_ember_radius, Progress.lamp_max_radius(), lamp_charge)
-	return maxf(r, Tuning.ward_radius * _ward_grow)   # the ward also pushes the fog back
+	return lerpf(Tuning.hand_lamp_ember_radius, Progress.lamp_max_radius(), clampf(lamp_charge / Progress.charge_max(), 0.0, 1.0))
 
 func in_lantern_light() -> bool:
 	for w in get_tree().get_nodes_in_group("waylamp"):
 		if w.is_lit() and w.global_position.distance_to(global_position) < w.get_light_radius() * 0.85:
 			return true
 	for l in get_tree().get_nodes_in_group("lantern"):
-		if l.is_lit() and l.global_position.distance_to(global_position) < l.get_light_radius() * 0.85:
+		if l.is_lit() and l.global_position.distance_to(global_position) < l.get_light_radius() * l.refill_frac():
 			return true
 	return false
 
 ## in_lantern_light() for the foes (performance): every Wickling asks it every frame. Worked out once per
-## frame and place (and again when a lantern is placed, picked up or refuelled: LightSense.bump()).
+## frame and place (and again when a lantern is placed, picked up, lit or snuffed: LightSense.bump()).
 var _lit_key := []
 var _lit_val := false
 func in_light_cached() -> bool:
@@ -91,17 +85,15 @@ func in_light_cached() -> bool:
 
 ## Lamp charge (GAME_PLAN §5): +kl_charge_regen everywhere; in light +hand_lamp_recharge_per_sec out of a fight
 ## or +kl_light_charge_hunted while hunted; no charge from light while the Beam is on. (M1a cut the passive
-## dimming in the dark and the top-up from carried fuel: the regen table replaces them.)
+## dimming in the dark and the top-up from carried fuel: the regen table replaces them.) Charge runs up to
+## Progress.charge_max(): 1.0, +0.1 per lamp glass (M1b).
 func update_hand_lamp(delta: float) -> void:
-	var gain := Tuning.kl_charge_regen
-	if in_lantern_light() and not warding and not (combat and combat.beaming):   # light weapons are never free
-		gain += Tuning.kl_light_charge_hunted if hunted else Tuning.hand_lamp_recharge_per_sec
-	lamp_charge = clampf(lamp_charge + gain * delta, 0.0, 1.0)
+	lamp_charge = clampf(lamp_charge + charge_rate() * delta, 0.0, Progress.charge_max())
 
 ## Charge a second the keeper would gain here and now (for tests and the HUD).
 func charge_rate() -> float:
 	var gain := Tuning.kl_charge_regen
-	if in_lantern_light() and not warding and not (combat and combat.beaming):
+	if in_lantern_light() and not (combat and combat.beaming):   # light weapons are never free
 		gain += Tuning.kl_light_charge_hunted if hunted else Tuning.hand_lamp_recharge_per_sec
 	return gain
 
@@ -131,7 +123,7 @@ func drink() -> bool:
 	drink_t = Tuning.kl_fx_drink_time
 	flask_lock = Tuning.kl_flask_lockout
 	warmth = minf(Tuning.warmth_max, warmth + Tuning.warmth_max * Tuning.kl_flask_heal)
-	lamp_charge = minf(1.0, lamp_charge + Tuning.kl_flask_charge)
+	lamp_charge = minf(Progress.charge_max(), lamp_charge + Tuning.kl_flask_charge)
 	Sfx.play("refuel", -8.0, 0.1)
 	var arena := get_tree().get_first_node_in_group("wickling_spawner")
 	if arena:
@@ -170,7 +162,6 @@ func _physics_process(delta: float) -> void:
 		_update_art()
 	if Tuning.ui_open:
 		velocity = Vector2.ZERO
-		_gather_target = null
 		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	# The menu guard comes first (GAME_PLAN §3, M6): for a moment after a menu closes, no combat input and no
@@ -193,8 +184,6 @@ func _physics_process(delta: float) -> void:
 		slow = lerpf(1.0, Tuning.fog_slow_min, fog.density_at(global_position + dir * 24.0))
 	if fog and fog.terrain_at(global_position) == FogGrid.T_MARSH:
 		slow *= 0.85   # wading through the marsh
-	if warding:
-		slow *= Tuning.ward_walk_mult
 	if combat.beaming:
 		slow *= Tuning.kl_steady_hand_walk if Progress.has_combat_upgrade("steady_hand") else Tuning.kl_beam_walk
 	velocity = combat.dash_velocity() if combat.is_dashing() else dir * speed * slow
@@ -205,7 +194,6 @@ func _physics_process(delta: float) -> void:
 	if fog:
 		position = position.clamp(Vector2.ZERO, fog.world_size())
 	if blocked:
-		_gather_target = null
 		return
 	if Input.is_action_just_pressed("place_lantern"):
 		var near := nearest_target()
@@ -218,15 +206,10 @@ func _physics_process(delta: float) -> void:
 		begin_interact()
 	build_hint_t = maxf(0.0, build_hint_t - delta)
 	if Input.is_action_pressed("interact"):
-		_hold_t += delta
-		if not is_gathering() and _hold_t >= HOLD_TO_GATHER:
-			var r := nearest_resource()
-			if r:
-				_gather_target = r
-				_gather_acc = 0.0
-		continue_gather(delta)
-		# Hold by a lantern (with nothing to gather in reach): pick it up (GAME_PLAN §3: right mouse is a skill now).
-		if not is_gathering() and nearest_resource() == null and nearest_lantern() != null:
+		# Hold by a planted lantern, with no scrap pile in reach (a tap takes the pile): pick it up (GAME_PLAN §3:
+		# right mouse is a skill now). Old lamps stay.
+		var nl := nearest_lantern()
+		if nl != null and nl.can_pick_up() and nearest_resource() == null:
 			_pick_t += delta
 			if _pick_t >= Tuning.kl_pickup_hold:
 				_pick_t = -1000.0   # one pick-up per hold
@@ -234,9 +217,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			_pick_t = minf(_pick_t, 0.0)
 	else:
-		_hold_t = 0.0
 		_pick_t = 0.0
-		_gather_target = null
 
 ## 0..1 while interact is held by a lantern (the pick-up ring).
 func pick_up_progress() -> float:
@@ -272,29 +253,7 @@ func _footsteps(dir: Vector2, delta: float, fog: FogGrid) -> void:
 func _fog() -> FogGrid:
 	return get_tree().get_first_node_in_group("fog_grid") as FogGrid
 
-# --- Warding glow, warmth, fainting --------------------------------------
-
-## Hold to swell the hand lamp into a warding glow. Spends lamp charge, not fuel.
-func update_ward(delta: float, held: bool) -> void:
-	warding = held and lamp_charge > Tuning.ward_min_charge
-	_since_ward = 0.0 if warding else _since_ward + delta
-	_ward_grow = move_toward(_ward_grow, 1.0 if warding else 0.0, delta * (5.0 if warding else 3.0))
-	if warding:
-		lamp_charge = maxf(0.0, lamp_charge - Progress.ward_drain_per_sec() * delta)
-		apply_ward(delta)
-
-## Burns and pushes back every Wickling inside the glow (including ones right on top of you).
-func apply_ward(delta: float) -> int:
-	var hit := 0
-	var r := Tuning.ward_radius * maxf(_ward_grow, 0.35)
-	for w in get_tree().get_nodes_in_group("wickling"):
-		var v: Vector2 = w.global_position - global_position
-		if v.length() <= r:
-			w.hurt(Tuning.ward_dps * delta, false)
-			if is_instance_valid(w) and not w.is_queued_for_deletion():
-				w.push((v.normalized() if v.length() > 0.5 else Vector2.RIGHT) * Tuning.ward_push * delta)
-			hit += 1
-	return hit
+# --- Warmth, shake, fainting ----------------------------------------------
 
 var _shake := 0.0          # trauma, 0..1
 var _shake_noise: FastNoiseLite
@@ -339,45 +298,34 @@ func _update_warmth(delta: float) -> void:
 	if not hunted and in_lantern_light():
 		warmth = minf(Tuning.warmth_max, warmth + Tuning.kl_warmth_regen * delta)
 
-## Out of warmth: drop part of what you carry where you fell, wake at the nearest lit lantern (or the hut).
+## Out of warmth: the faint rule (GAME_PLAN §12, FaintRule). Nothing carried is lost; unspent wick waits where you
+## fell (a second faint makes a second drop); cleared packs stay cleared; a half-fought pack is whole and asleep
+## again, keeping its dead; the Clinker and the Ashbrood go back to the start of their phase. You wake by the
+## nearest lit light in the region at 60% warmth, skipping any light near an unbeaten fight.
 func faint() -> void:
 	faints += 1
-	for pack_key in Progress.cleared.keys():
-		if str(pack_key).begins_with("pack_"):
-			Progress.cleared.erase(pack_key)
 	var main := get_tree().get_first_node_in_group("main")
+	var fell := global_position
 	if Progress.wick > 0:
 		var drop := WickDrop.new()
 		drop.amount = Progress.wick
-		drop.position = global_position
+		drop.position = fell
 		var arena := get_tree().get_first_node_in_group("wickling_spawner")
 		if arena:
 			arena.add_child(drop)
 		Progress.wick = 0
-	for kind in ["fuel", "scrap"]:
-		var lost := int(floor(Inventory.get_count(kind) * Tuning.faint_drop))
-		if lost > 0 and main:
-			Inventory.spend(kind, lost)
-			main.drop_pile(kind, global_position + Vector2(randf_range(-12, 12), randf_range(-12, 12)), lost)
-	var home: Vector2 = main.start if main else global_position
-	var best := INF
-	for l in get_tree().get_nodes_in_group("lantern"):
-		if l.is_lit():
-			var d: float = l.global_position.distance_to(global_position)
-			if d < best:
-				best = d
-				home = l.global_position + Vector2(0, 24)
-	global_position = home
+		Progress.wick_changed.emit(Progress.wick, Progress.wick_needed(), Progress.level)
+	FaintRule.reset_fights(get_tree())
+	global_position = FaintRule.wake_spot(get_tree(), fell, main.start if main else fell)
+	last_wake = global_position
 	reset_physics_interpolation()
-	warmth = Tuning.warmth_max * 0.6
-	for w in get_tree().get_nodes_in_group("wickling"):
-		w.state = Wickling.State.FLEE
-		w._flee_t = 3.0
-	Progress.note_opened.emit("You faint...", "The cold takes you. You wake by the warmth of a lantern.\nSome of what you carried lies where you fell.")
+	warmth = Tuning.warmth_max * Tuning.kl_faint_warmth
+	# The faint note: DRAFT (M1b; STORY §15). Its second line was "Some of what you carried lies where you fell."
+	Progress.note_opened.emit("You faint...", "The cold takes you. You wake by the warmth of a lantern.\nYour unspent wick waits where you fell.")
 
-# --- Interact: refuel or gather -------------------------------------------
+# --- Interact: read, light, take, turn ------------------------------------
 
-## Nearest lantern, gatherable resource or revealed landmark within reach (or null).
+## Nearest lantern, scrap pile or revealed landmark within reach (or null).
 func nearest_target() -> Node2D:
 	var best: Node2D = null
 	var best_d := REACH
@@ -399,7 +347,7 @@ func nearest_target() -> Node2D:
 			best = l
 			best_d = d
 	for r in get_tree().get_nodes_in_group("resource"):
-		if not r.can_gather():
+		if not r.can_take():
 			continue
 		var d: float = r.global_position.distance_to(global_position)
 		if d < best_d:
@@ -407,12 +355,12 @@ func nearest_target() -> Node2D:
 			best_d = d
 	return best
 
-## Nearest resource you can gather within reach (or null), whatever else is closer.
+## Nearest scrap pile you can take within reach (or null), whatever else is closer.
 func nearest_resource() -> ResourceNode:
 	var best: ResourceNode = null
 	var best_d := REACH
 	for r in get_tree().get_nodes_in_group("resource"):
-		if not r.can_gather():
+		if not r.can_take():
 			continue
 		var d: float = r.global_position.distance_to(global_position)
 		if d < best_d:
@@ -430,60 +378,40 @@ func nearest_lantern() -> Lantern:
 			best_d = d
 	return best
 
-func is_gathering() -> bool:
-	return _gather_target != null and is_instance_valid(_gather_target)
-
+## A (E): read a note, light a WayLamp or an old cold lamp by touch, take a scrap pile, turn a mirror right.
 func begin_interact() -> void:
 	var t := nearest_target()
 	if t is WayLamp:
-		last_feed = t.feed()
-		if last_feed == "held":
+		last_touch = t.touch()
+		if last_touch == "held":
 			# A lit WayLamp: the fast-travel list (refused, with a sound, while something hunts you).
 			var menu := get_tree().get_first_node_in_group("travel_menu")
 			if menu and not menu.open(t):
-				last_feed = "travel_blocked"
+				last_touch = "travel_blocked"
 	elif t is Landmark:
 		t.activate()
 	elif t is Lantern:
 		if t.kind == "mirror":
 			t.turn()
 			Sfx.play("ui_tick", -10.0)
-		else:
-			refuel(t)
+		elif t.light_by_touch():
+			Sfx.play("relight", -8.0)
+		elif nearest_resource() != null:
+			take(nearest_resource())   # a lit lamp has nothing to tap: take the pile beside it
 	elif t is ResourceNode:
-		_gather_target = t
-		_gather_acc = 0.0
+		take(t)
 
-func continue_gather(delta: float) -> void:
-	if not is_gathering():
-		return
-	var target := _gather_target
-	if not target.can_gather() or target.global_position.distance_to(global_position) > REACH:
-		_gather_target = null
-		return
-	_gather_acc += delta
-	while _gather_acc >= Tuning.gather_interval:
-		_gather_acc -= Tuning.gather_interval
-		if Inventory.space(target.kind) <= 0 or not target.can_gather():
-			_gather_target = null
-			return
-		target.take()
-		Inventory.add(target.kind, 1)
-		Sfx.play("gather_fuel" if target.kind == "fuel" else "gather_scrap", -12.0)
-
-## Pours carried fuel into a lantern (relights it if cold). Returns units used.
-func refuel(l: Lantern) -> int:
-	var missing := l.max_fuel() - l.fuel   # a Reservoir's tank is bigger than a Post Lamp's
-	var units := mini(ceili(missing / Tuning.fuel_per_unit), Inventory.get_count("fuel"))
-	if units <= 0:
-		return 0
-	var was_cold := not l.is_lit()
-	Inventory.spend("fuel", units)
-	fuel_poured += l.refuel(units * Tuning.fuel_per_unit)
-	Sfx.play("refuel", -10.0)
-	if was_cold:
-		Sfx.play("relight", -12.0)
-	return units
+## Takes a scrap pile in one press (what fits; the rest stays). Returns how much was taken.
+func take(r: ResourceNode) -> int:
+	var got := r.take_all()
+	if got > 0:
+		Sfx.play("gather_scrap", -10.0)
+		var arena := get_tree().get_first_node_in_group("wickling_spawner")
+		if arena:
+			FloatText.spawn(arena, r.global_position + Vector2(0, -24), "+%d scrap" % got, Color(0.75, 0.82, 0.92))
+	else:
+		Sfx.play("ui_error", -16.0)
+	return got
 
 # --- Build / pick up -------------------------------------------------------
 
@@ -511,7 +439,7 @@ func place_block_reason(p: Vector2) -> String:
 	var k := Progress.selected
 	if not Progress.is_unlocked(k):
 		return "not found yet"
-	if Inventory.get_count("scrap") < Lantern.cost(k) or Inventory.get_count("glass") < Lantern.glass_cost(k):
+	if Inventory.get_count("scrap") < Lantern.cost(k):
 		return "needs " + Lantern.cost_text(k)
 	return ""
 
@@ -527,7 +455,6 @@ func try_place() -> Lantern:
 		return null
 	build_hint_t = 0.0
 	Inventory.spend("scrap", Lantern.cost(Progress.selected))
-	Inventory.spend("glass", Lantern.glass_cost(Progress.selected))
 	var lamp_node := Lantern.new()
 	lamp_node.kind = Progress.selected
 	lamp_node.position = p   # lantern root sits at the origin
@@ -536,15 +463,13 @@ func try_place() -> Lantern:
 	Story.note_built(lamp_node.kind)
 	return lamp_node
 
-## Refunds part of the scrap plus the fuel left in the tank.
+## Refunds part of the scrap (as built; the owner is redesigning lanterns, so the plan's limit and full refund
+## wait). The valley's old lamps can't be picked up.
 func pick_up_nearest() -> void:
 	var l := nearest_lantern()
-	if l == null:
+	if l == null or not l.can_pick_up():
 		return
 	Inventory.add("scrap", floori(Lantern.cost(l.kind) * Tuning.pickup_refund))
-	Inventory.add("glass", floori(Lantern.glass_cost(l.kind) * Tuning.pickup_refund))
-	if l.needs_fuel():
-		Inventory.add("fuel", floori(l.fuel / Tuning.fuel_per_unit))
 	Sfx.play("pickup_lantern", -10.0)
 	l.remove_from_group("lantern")
 	l.remove_from_group("light_source")
@@ -613,15 +538,6 @@ func _draw() -> void:
 	var fog := _fog()
 	if fog == null:
 		return
-	# Warding glow ring.
-	if _ward_grow > 0.01:
-		var r := Tuning.ward_radius * _ward_grow
-		draw_circle(Vector2(0, -6), r, Color(1.0, 0.85, 0.5, 0.08 * _ward_grow))
-		draw_arc(Vector2(0, -6), r, 0.0, TAU, 48, Color(1.0, 0.88, 0.6, 0.55 * _ward_grow), 2.0)
-	# Gathering progress ring.
-	if is_gathering():
-		var t := to_local(_gather_target.global_position)
-		draw_arc(t, 18.0, -PI / 2.0, -PI / 2.0 + TAU * (_gather_acc / Tuning.gather_interval), 24, Color(1, 0.85, 0.5, 0.9), 2.0)
 	# Picking up a lantern (hold interact): a ring fills over it.
 	var pick := pick_up_progress()
 	if pick > 0.05:

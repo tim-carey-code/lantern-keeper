@@ -1,13 +1,13 @@
 extends Node
-## Autoload "Inventory": what the keeper carries. Each resource has its own carry limit.
+## Autoload "Inventory": what the keeper carries. M1b: scrap is the one material (fuel and glass are cut).
 
 signal changed
 
 var carry_limit := 30
-var counts := {"fuel": 0, "scrap": 0, "glass": 0}
+var counts := {"scrap": 0}
 
 func reset() -> void:
-	counts = {"fuel": 0, "scrap": 0, "glass": 0}
+	counts = {"scrap": 0}
 	changed.emit()
 
 func get_count(kind: String) -> int:

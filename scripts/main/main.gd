@@ -1,17 +1,16 @@
 extends Node2D
 ## The valley (M5): Region 1 The Hollow (start), Region 2 The Reedmarsh (east),
 ## Region 3 The Windward Ridge (north). The marsh is soft ground; lanterns stand on
-## boardwalks and islands; its pumphouse unlocks the Reservoir Lamp. The Ridge is
-## windswept, holds glass, and its glazier's workshop and signal station unlock the
-## Hooded Lamp and the Mirror Post. (Region 4, The Still Lake, comes next.)
+## boardwalks and islands; its pumphouse unlocks the Reservoir Lamp. The Ridge's glazier's
+## workshop and signal station unlock the Hooded Lamp and the Mirror Post. (Region 4, The Still Lake, comes next.)
+## M1b (no more tending): scrap is the one material, in one-off piles; fuel spots, peat, glass and the woodpile's
+## fuel are gone (the woodpile is scenery). The hut's lamp and the north path's lamp are old lamps lit by touch.
 ## The map is 224 x 200 tiles (2026-11-27: every region 4x the area, owner); the north-east
 ## quarter above the Reedmarsh is kept free for the Lakeshore and the Still Lake.
 
 const SEED := 11
-# Resource spots per region: 4x the old counts for 4x the area.
-const HOLLOW_FUEL := 72
+# Scrap piles per region: 4x the old counts for 4x the area (one-off since M1b).
 const HOLLOW_SCRAP := 64
-const MARSH_PEAT := 96
 const MARSH_SCRAP := 24
 
 const Y := 72   # the Hollow and Reedmarsh sit below the Ridge
@@ -27,8 +26,6 @@ const ISLANDS := [
 ]
 const RIDGE_C := Vector2(68, 34)
 const RIDGE_R := Vector2(60, 26)
-const RIDGE_GLASS := 56
-const RIDGE_FUEL := 32
 const RIDGE_SCRAP := 28
 const RIDGE_OUTCROPS := 88
 
@@ -68,18 +65,16 @@ func _ready() -> void:
 	start = fog.tile_center(Vector2i(HOLLOW_C))
 	player.position = start
 	_taken.append(start)
-	# The old lantern by the hut starts cold: relighting it is the keeper's first task.
-	var first := _add_lantern(start + Vector2(96, 0))
-	first.fuel = 0.0
+	# The old lantern by the hut starts cold: lighting it by touch is the keeper's first task (M1b).
+	var first := _add_old_lamp(start + Vector2(96, 0))
 	start_lantern_pos = first.position
 	# A second cold old lantern on the north path (onboarding, owner 2026-11-27): a safe spot and an easy win.
-	var waypost := _add_lantern(start + Vector2(WAYPOST_OFFSET) * FogGrid.TILE)
-	waypost.fuel = 0.0
+	var waypost := _add_old_lamp(start + Vector2(WAYPOST_OFFSET) * FogGrid.TILE)
 	waypost_lantern_pos = waypost.position
 	_taken.append(waypost_lantern_pos)
-	# Near the hut: a woodpile that always regrows (no soft-lock) and a little scrap.
-	_add_resource("fuel", start + Vector2(-64, 32), 3, 5, 10.0, true)
-	_add_resource("scrap", start + Vector2(64, -32), 6, 6, 60.0, false)   # beside the hut, clear of its wall
+	# Near the hut: a little scrap, beside the hut and clear of its wall. (The woodpile is scenery: _build_terrain.)
+	_taken.append(fog.tile_center(fog.tile_of(start + WOODPILE_OFFSET)))
+	_add_resource("scrap", start + Vector2(64, -32), 6)
 	_place_landmarks()
 	_place_upgrades()
 	var bars := Node2D.new()
@@ -132,12 +127,9 @@ func _ready() -> void:
 	if not loaded_save and not Story.skip_opening:
 		$Opening.start.call_deferred()
 
-## A WayLamp caught: every lantern in its region flares back to a full tank and is held from now on.
-func _on_region_settled(region_id: int, _name: String) -> void:
+## A WayLamp caught: its region is held (nothing comes there; rest and travel). Lamps need nothing (M1b).
+func _on_region_settled(_region_id: int, _name: String) -> void:
 	Story.update(self)
-	for l in get_tree().get_nodes_in_group("lantern"):
-		if l.needs_fuel() and fog.region_at(l.global_position) == region_id:
-			l.fuel = l.max_fuel()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -378,13 +370,9 @@ func _ridge_open(t: Vector2i) -> bool:
 	return fog.terrain_of(t + Vector2i.LEFT) == FogGrid.T_GROUND or fog.terrain_of(t + Vector2i.RIGHT) == FogGrid.T_GROUND
 
 func _scatter() -> void:
-	_scatter_kind("fuel", "", HOLLOW_FUEL, func(t): return _hollow_spot(t), 4, 8, 8, 60.0)
-	_scatter_kind("scrap", "", HOLLOW_SCRAP, func(t): return _hollow_spot(t), 4, 7, 7, 75.0)
-	_scatter_kind("fuel", "Peat", MARSH_PEAT, func(t): return _peat_spot(t), 5, 9, 9, 45.0)
-	_scatter_kind("scrap", "", MARSH_SCRAP, func(t): return _island_spot(t), 4, 7, 7, 75.0)
-	_scatter_kind("glass", "", RIDGE_GLASS, func(t): return _ridge_open(t), 2, 4, 4, 120.0)
-	_scatter_kind("fuel", "", RIDGE_FUEL, func(t): return _ridge_open(t), 3, 6, 6, 60.0)
-	_scatter_kind("scrap", "", RIDGE_SCRAP, func(t): return _ridge_open(t), 3, 6, 6, 75.0)
+	_scatter_kind(HOLLOW_SCRAP, func(t): return _hollow_spot(t), 4, 7)
+	_scatter_kind(MARSH_SCRAP, func(t): return _island_spot(t), 4, 7)
+	_scatter_kind(RIDGE_SCRAP, func(t): return _ridge_open(t), 3, 6)
 
 func _hollow_spot(t: Vector2i) -> bool:
 	var p := fog.tile_center(t)
@@ -396,19 +384,11 @@ func _hollow_spot(t: Vector2i) -> bool:
 				return false
 	return true
 
-func _peat_spot(t: Vector2i) -> bool:
-	if fog.terrain_of(t) != FogGrid.T_MARSH:
-		return false
-	for d in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-		var n := fog.terrain_of(t + d)
-		if n == FogGrid.T_BOARDWALK or (n == FogGrid.T_GROUND and fog.region[fog.idx(t + d)] == FogGrid.R_MARSH):
-			return true
-	return false
-
 func _island_spot(t: Vector2i) -> bool:
 	return fog.terrain_of(t) == FogGrid.T_GROUND and fog.region[fog.idx(t)] == FogGrid.R_MARSH and t.x > 114
 
-func _scatter_kind(kind: String, label: String, count: int, ok: Callable, lo: int, hi: int, cap: int, regrow: float) -> void:
+## One-off scrap piles of lo..hi scrap on spots where ok(tile) holds, 2 tiles apart at least.
+func _scatter_kind(count: int, ok: Callable, lo: int, hi: int) -> void:
 	var placed := 0
 	var tries := 0
 	while placed < count and tries < 30000:
@@ -424,30 +404,27 @@ func _scatter_kind(kind: String, label: String, count: int, ok: Callable, lo: in
 				break
 		if too_close:
 			continue
-		var r := _add_resource(kind, p, rng.randi_range(lo, hi), cap, regrow, false)
-		r.label = label
+		_add_resource("scrap", p, rng.randi_range(lo, hi))
 		placed += 1
 
-## PROTOTYPE: what the keeper drops on fainting. A one-off pile, no regrowth.
-func drop_pile(kind: String, p: Vector2, amount: int) -> ResourceNode:
-	var r := _add_resource(kind, p, amount, amount, 1.0e9, false)
-	r.label = "Dropped " + ("fuel" if kind == "fuel" else "scrap")
-	return r
-
-func _add_lantern(p: Vector2, kind: String = "post") -> Lantern:
+## One of the valley's old lamps: a Post Lamp that starts cold and is lit by touch (M1b); it can't be picked up.
+func _add_old_lamp(p: Vector2) -> Lantern:
 	var l := Lantern.new()
-	l.kind = kind
+	l.kind = "post"
+	l.old = true
+	l.cold = true
 	l.position = fog.tile_center(fog.tile_of(p))
 	$Lanterns.add_child(l)
 	return l
 
-func _add_resource(kind: String, p: Vector2, amount: int, max_amount: int, regrow: float, always: bool) -> ResourceNode:
+## True for the tile of one of the valley's old lamps (the hut's, the north path's).
+func is_old_lamp_spot(p: Vector2) -> bool:
+	return p.distance_to(start_lantern_pos) < 8.0 or p.distance_to(waypost_lantern_pos) < 8.0
+
+func _add_resource(kind: String, p: Vector2, amount: int) -> ResourceNode:
 	var r := ResourceNode.new()
 	r.kind = kind
 	r.amount = amount
-	r.max_amount = max_amount
-	r.regrow_sec = regrow
-	r.always_regrow = always
 	r.position = fog.tile_center(fog.tile_of(p))
 	_taken.append(r.position)
 	$Resources.add_child(r)
@@ -480,6 +457,12 @@ func _build_terrain() -> void:
 			c.t0 = Vector2i(cx, cy)
 			c.position = Vector2(cx, cy) * FogGrid.TILE
 			terrain.add_child(c)
+	# The woodpile by the hut: scenery since M1b (it was the fuel source that could never run out).
+	var woodpile := Node2D.new()
+	woodpile.name = "Woodpile"
+	woodpile.position = fog.tile_center(fog.tile_of(start + WOODPILE_OFFSET))
+	woodpile.draw.connect(func(): Art.cell_at_foot(woodpile, Art.TOWN, Art.LOG, Vector2(0, 14)))
+	terrain.add_child(woodpile)
 	var hut := Node2D.new()
 	hut.name = "Hut"
 	hut.position = start + Vector2(-48, -112)   # 3 tiles wide, roof over walls, just north of the start
@@ -495,6 +478,7 @@ func _build_terrain() -> void:
 ## nest A (nest 4, +2,-30). The loop (owner 2026-11-27): from nest A the road turns east, to one pack (pack 2,
 ## +12,-23), the Clinker (+22,-17) and the WayLamp (+30,-12), then out by the carved stone and the passage east.
 const WAYPOST_OFFSET := Vector2i(2, -12)
+const WOODPILE_OFFSET := Vector2(-64, 32)   # px from the start: scenery by the hut
 const CROOK_OFFSET := Vector2i(-1, -19)
 const CLINKER_TILE := Vector2i(70, 119)    # a mid-boss before the WayLamp, about 9.4 tiles from it: out of the Ashbrood fight
 const HOLLOW_WAYLAMP := Vector2i(78, 124)  # north-east of the hut, 8 tiles above the carved stone and the passage east
@@ -543,29 +527,30 @@ func _place_hollow_prototype() -> void:
 
 ## Nests (4x for the 4x Hollow): one on the main route (nest 4, nest A: the first thing the Post Lamp unlocks,
 ## more than its wake radius past the crook), the rest optional on the flanks and in the south, all at least
-## 30 tiles from the hut. [tile, foe level]: 1 on the hut row and south, 2-6 in the north half;
+## 30 tiles from the hut. [tile, foe level]: 1 on the hut row and south, 2-4 in the north half (M1b: Hollow foes
+## are Lv 1-4, GAME_PLAN §8.2; the old 3/4/5/6 became 2/3/4/4);
 ## hatchlings take their nest's level (DESIGN §9, level-gap wick). The loop moved nest 7 (to the old climb's foot)
 ## and nest 9 (out of the passage mouth, south) off the road east.
 const HOLLOW_NESTS := [
-	[Vector2i(32, 100), 5], [Vector2i(42, 90), 6], [Vector2i(76, 98), 6],     # the north flanks; nest 3 in the north-east corner, above the road
-	[Vector2i(50, 106), 2], [Vector2i(22, 106), 3],                           # nest A on the route; nest 5 out west
-	[Vector2i(20, 112), 3], [Vector2i(60, 91), 3], [Vector2i(14, 130), 1], [Vector2i(80, 150), 1],
+	[Vector2i(32, 100), 4], [Vector2i(42, 90), 4], [Vector2i(76, 98), 4],     # the north flanks; nest 3 in the north-east corner, above the road
+	[Vector2i(50, 106), 2], [Vector2i(22, 106), 2],                           # nest A on the route; nest 5 out west
+	[Vector2i(20, 112), 2], [Vector2i(60, 91), 2], [Vector2i(14, 130), 1], [Vector2i(80, 150), 1],
 	[Vector2i(30, 160), 1], [Vector2i(66, 162), 1], [Vector2i(48, 172), 1],
 ]
 
 ## Fixed packs (4x for the 4x Hollow). [tile, how many, Spitwicks, shelled elites, foe level, (wake radius in tiles)]:
-## tough in the north half, quiet in the south. Levels (DESIGN §9): 1 on the hut row and south of it, 2-4 through
-## the middle, 5-6 in the north. The main route (onboarding) holds three: pack 20 (the lone Wickling) and pack 23
+## tough in the north half, quiet in the south. Levels (DESIGN §9; M1b: 1-4): 1 on the hut row and south of it, 2-3
+## through the middle, 4 in the north. The main route (onboarding) holds three: pack 20 (the lone Wickling) and pack 23
 ## (3 Wicklings) wake closer than the rest, so nothing wakes at the hut; pack 2 is the first Spitwick and elite,
 ## after nest A, on the road east. The rest are optional side content: no Spitwick or elite within 25 tiles of
 ## the hut, and none wakes from the route. The loop (2026-11-27) moved packs 4, 8, 9, 11, 13 and 15 off the road east.
 const HOLLOW_PACKS := [
 	# The north: elites.
-	[Vector2i(74, 102), 5, 1, 1, 6], [Vector2i(60, 113), 4, 1, 1, 4], [Vector2i(36, 94), 4, 0, 1, 5],
-	[Vector2i(66, 99), 4, 1, 1, 5], [Vector2i(34, 104), 4, 1, 0, 4], [Vector2i(26, 100), 4, 0, 1, 5],
+	[Vector2i(74, 102), 5, 1, 1, 4], [Vector2i(60, 113), 4, 1, 1, 3], [Vector2i(36, 94), 4, 0, 1, 4],
+	[Vector2i(66, 99), 4, 1, 1, 4], [Vector2i(34, 104), 4, 1, 0, 3], [Vector2i(26, 100), 4, 0, 1, 4],
 	# The middle: Spitwicks on the flanks.
-	[Vector2i(24, 110), 4, 1, 0, 4], [Vector2i(36, 112), 4, 1, 0, 4], [Vector2i(24, 128), 4, 0, 0, 2],
-	[Vector2i(30, 120), 4, 0, 0, 3], [Vector2i(52, 93), 4, 1, 0, 2],
+	[Vector2i(24, 110), 4, 1, 0, 3], [Vector2i(36, 112), 4, 1, 0, 3], [Vector2i(24, 128), 4, 0, 0, 2],
+	[Vector2i(30, 120), 4, 0, 0, 2], [Vector2i(52, 93), 4, 1, 0, 2],
 	[Vector2i(16, 122), 4, 0, 0, 2], [Vector2i(66, 140), 4, 0, 0, 1], [Vector2i(72, 150), 4, 0, 0, 1],
 	[Vector2i(66, 146), 4, 0, 0, 1], [Vector2i(80, 160), 4, 0, 0, 1],
 	# The quiet south and the west.
@@ -578,19 +563,20 @@ const HOLLOW_PACKS := [
 
 ## Side caches: an old keeper's stash at a dead end of each region, worth a detour. One-off (no regrowth).
 ## [region, tile, kind, amount]
+## M1b: the two fuel caches and the two glass caches hold scrap now (same amounts).
 const CACHES := [
-	[FogGrid.R_HOLLOW, Vector2i(12, 150), "scrap", 10], [FogGrid.R_HOLLOW, Vector2i(84, 168), "fuel", 10],
+	[FogGrid.R_HOLLOW, Vector2i(12, 150), "scrap", 10], [FogGrid.R_HOLLOW, Vector2i(84, 168), "scrap", 10],
 	[FogGrid.R_HOLLOW, Vector2i(16, 104), "scrap", 8],
 	[FogGrid.R_HOLLOW, Vector2i(48, 117), "scrap", 6],   # at Oswin's crook: enough for a Post Lamp right away
-	[FogGrid.R_MARSH, Vector2i(122, 112), "scrap", 10], [FogGrid.R_MARSH, Vector2i(170, 172), "fuel", 10],
-	[FogGrid.R_RIDGE, Vector2i(20, 26), "glass", 6], [FogGrid.R_RIDGE, Vector2i(120, 46), "glass", 6],
+	[FogGrid.R_MARSH, Vector2i(122, 112), "scrap", 10], [FogGrid.R_MARSH, Vector2i(170, 172), "scrap", 10],
+	[FogGrid.R_RIDGE, Vector2i(20, 26), "scrap", 6], [FogGrid.R_RIDGE, Vector2i(120, 46), "scrap", 6],
 ]
 
 func _place_caches() -> void:
 	for c in CACHES:
 		var t: Vector2i = c[1]
 		var p := _spot_in_region(t, int(c[0]))
-		var r := _add_resource(str(c[2]), p, int(c[3]), int(c[3]), 1.0e9, false)
+		var r := _add_resource(str(c[2]), p, int(c[3]))
 		r.label = "Old cache"
 
 ## Upgrades in the far corners of each region: a keeper's satchel (carry more) and a lamp glass

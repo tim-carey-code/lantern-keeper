@@ -171,7 +171,7 @@ func _fill_card(card: PanelContainer, k: String, cursor: bool) -> void:
 		var cost := HBoxContainer.new()
 		cost.add_theme_constant_override("separation", 6)
 		v.add_child(cost)
-		for res in [["scrap", Lantern.cost(k)], ["glass", Lantern.glass_cost(k)]]:
+		for res in [["scrap", Lantern.cost(k)]]:   # M1b: scrap is the one material
 			if res[1] <= 0:
 				continue
 			cost.add_child(UiStyle.icon_rect("icon_" + res[0], 22))

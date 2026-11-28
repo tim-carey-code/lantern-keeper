@@ -1,13 +1,13 @@
 extends Node
 ## Autoload "SaveGame": one save slot (JSON) plus autosave.
-## Saved: keeper (position, warmth, hand lamp), inventory, progress (unlocks, selected
-## lantern, regions found, notes read), every lantern (kind, position, fuel), every
-## resource node (including piles dropped when fainting), and the fog map (density and
-## what has been seen). Not saved: Wicklings, embers and wind (they come back on their own).
+## Saved: keeper (position, warmth, hand lamp), inventory (scrap), progress (unlocks, selected
+## lantern, regions found, notes read), every lantern (kind, position, whether an old lamp is still cold),
+## every scrap pile left, and the fog map (density and what has been seen). Not saved: Wicklings, embers,
+## a snuffed lamp's timer and wind (they come back on their own).
 ## File: user://save.json  (on Linux: ~/.local/share/godot/app_userdata/Lantern Keeper/)
 
-const VERSION := 5   # 3: isolated Keeper's Light prototype progression; 4: the map is 224 x 200 (regions 4x);
-                     # 5: M1a, the action bar and lamp-oil flasks
+const VERSION := 6   # 3: isolated Keeper's Light prototype progression; 4: the map is 224 x 200 (regions 4x);
+                     # 5: M1a, the action bar and lamp-oil flasks; 6: M1b, no more tending (no fuel or glass)
 const MIN_VERSION := 4   # older saves are for the small map and start fresh; version 4 is migrated on load (migrate_data)
 const AUTOSAVE_SEC := 60.0
 
@@ -101,7 +101,6 @@ func save(main: Node) -> bool:
 			"regions_seen": Progress.regions_seen.keys(),
 			"notes_read": Progress.notes_read.keys(),
 			"settled": Progress.settled.keys(),
-			"waylamp_fuel": Progress.waylamp_fuel.duplicate(),
 			"wick": Progress.wick, "wick_frac": Progress.wick_frac, "level": Progress.level,
 			"cleared": Progress.cleared.duplicate(),
 			"combat_upgrades": Progress.combat_upgrades.duplicate(),
@@ -115,10 +114,11 @@ func save(main: Node) -> bool:
 			"remembered": Marshalls.raw_to_base64(fog.remembered)},
 	}
 	for l in get_tree().get_nodes_in_group("lantern"):
-		data["lanterns"].append({"kind": l.kind, "x": l.position.x, "y": l.position.y, "fuel": l.fuel, "dir": l.mirror_dir})
+		data["lanterns"].append({"kind": l.kind, "x": l.position.x, "y": l.position.y, "cold": l.cold, "dir": l.mirror_dir})
 	for r in get_tree().get_nodes_in_group("resource"):
-		data["resources"].append({"kind": r.kind, "label": r.label, "x": r.position.x, "y": r.position.y,
-			"amount": r.amount, "max": r.max_amount, "regrow": r.regrow_sec, "always": r.always_regrow})
+		if r.is_queued_for_deletion():
+			continue
+		data["resources"].append({"kind": r.kind, "label": r.label, "x": r.position.x, "y": r.position.y, "amount": r.amount})
 	for drop in get_tree().get_nodes_in_group("wick_drop"):
 		data["wick_drops"].append({"x": drop.position.x, "y": drop.position.y, "amount": drop.amount})
 	var f := FileAccess.open(path, FileAccess.WRITE)
@@ -129,9 +129,14 @@ func save(main: Node) -> bool:
 	f.close()
 	return true
 
-## Brings an older save up to this version (only version 4 can be loaded at all: older ones are for the small
-## map). 4 -> 5 (M1a): the action bar starts as the default one, with Lance on slot 3 if the keeper is already
-## level 2 or more, and all flasks full. Nothing else changed shape. Public for tests.
+## Brings an older save up to this version (only version 4 and up can be loaded at all: older ones are for the
+## small map). 4 -> 5 (M1a): the action bar starts as the default one, with Lance on slot 3 if the keeper is
+## already level 2 or more, and all flasks full. 5 -> 6 (M1b, no more tending): fuel and glass leave the
+## inventory; what WayLamps were fed is dropped (they are lit by touch now); a lantern keeps its kind, place and
+## mirror direction, and is cold only if its tank was empty (load_into() lets only the old lamps stay cold);
+## fuel spots, peat, glass shards and the woodpile go; untaken fuel and glass caches become scrap caches; scrap
+## piles keep what is left in them (one-off now); charge is kept (capped on load). Level, wick, the bar, flasks,
+## upgrades, notes, cleared fights and the story are kept as they are. Public for tests.
 static func migrate_data(data: Dictionary) -> Dictionary:
 	var v := int(data.get("version", 0))
 	if v == 4:
@@ -147,6 +152,33 @@ static func migrate_data(data: Dictionary) -> Dictionary:
 		pl["flasks"] = Tuning.kl_flask_max
 		data["player"] = pl
 		data["version"] = 5
+	if int(data.get("version", 0)) == 5:
+		var inv: Dictionary = data.get("inventory", {})
+		data["inventory"] = {"scrap": int(inv.get("scrap", 0))}
+		var p: Dictionary = data.get("progress", {})
+		p.erase("waylamp_fuel")
+		data["progress"] = p
+		var lamps := []
+		for l in data.get("lanterns", []):
+			if typeof(l) != TYPE_DICTIONARY:
+				continue
+			lamps.append({"kind": str(l.get("kind", "post")), "x": float(l.get("x", 0.0)), "y": float(l.get("y", 0.0)),
+				"cold": float(l.get("fuel", 1.0)) <= 0.0, "dir": int(l.get("dir", 0))})
+		data["lanterns"] = lamps
+		var piles := []
+		for r in data.get("resources", []):
+			if typeof(r) != TYPE_DICTIONARY:
+				continue
+			var kind := str(r.get("kind", ""))
+			var label := str(r.get("label", ""))
+			var amount := int(r.get("amount", 0))
+			if kind != "scrap" and label == "Old cache":
+				kind = "scrap"   # the fuel and glass caches hold scrap now (same amounts)
+			if kind != "scrap" or amount <= 0:
+				continue   # fuel spots, peat, glass shards, the woodpile, dropped fuel, empty piles
+			piles.append({"kind": "scrap", "label": label if label in ["Old cache"] else "", "x": float(r.get("x", 0.0)), "y": float(r.get("y", 0.0)), "amount": amount})
+		data["resources"] = piles
+		data["version"] = 6
 	return data
 
 ## A saved action bar, checked slot by slot with Progress.bind_reason() (call it after level and lance_given are
@@ -209,9 +241,8 @@ func load_into(main: Node) -> bool:
 	if rem.size() == fog.remembered.size():
 		fog.remembered = rem
 	fog.mark_all_dirty()   # the fog's sparse update and texture must see the loaded map
-	# Inventory and progress.
-	for k in data["inventory"]:
-		Inventory.counts[k] = int(data["inventory"][k])
+	# Inventory (scrap only) and progress.
+	Inventory.counts = {"scrap": int(data["inventory"].get("scrap", 0))}
 	var p: Dictionary = data["progress"]
 	Progress.unlocks = {}
 	for k in p["unlocks"]:
@@ -231,10 +262,6 @@ func load_into(main: Node) -> bool:
 	Progress.settled = {}
 	for r in p.get("settled", []):
 		Progress.settled[int(r)] = true
-	Progress.waylamp_fuel = {}
-	var wf: Dictionary = p.get("waylamp_fuel", {})
-	for k in wf:
-		Progress.waylamp_fuel[str(k)] = int(wf[k])
 	Progress.wick = int(p.get("wick", 0))
 	Progress.wick_frac = float(p.get("wick_frac", 0.0))
 	Progress.level = int(p.get("level", 1))
@@ -256,23 +283,22 @@ func load_into(main: Node) -> bool:
 	for l in data["lanterns"]:
 		var lamp := Lantern.new()
 		lamp.kind = l["kind"]
-		lamp.fuel = float(l["fuel"])
 		lamp.mirror_dir = int(l.get("dir", 0))
 		lamp.position = Vector2(l["x"], l["y"])
+		# The valley's old lamps are known by their place; only they can still be cold (lit by touch).
+		lamp.old = lamp.kind == "post" and main.has_method("is_old_lamp_spot") and main.is_old_lamp_spot(lamp.position)
+		lamp.cold = lamp.old and bool(l.get("cold", false))
 		lroot.add_child(lamp)
-	# Resources: replace the generated ones (keeps amounts and dropped piles).
+	# Scrap piles: replace the generated ones with what was left (one-off: taken piles stay gone).
 	var rroot: Node = main.get_node("Resources")
 	for c in rroot.get_children():
 		rroot.remove_child(c)
 		c.queue_free()
 	for r in data["resources"]:
 		var n := ResourceNode.new()
-		n.kind = r["kind"]
-		n.label = r["label"]
+		n.kind = "scrap"
+		n.label = str(r.get("label", ""))
 		n.amount = int(r["amount"])
-		n.max_amount = int(r["max"])
-		n.regrow_sec = float(r["regrow"])
-		n.always_regrow = bool(r["always"])
 		n.position = Vector2(r["x"], r["y"])
 		rroot.add_child(n)
 	var arena := get_tree().get_first_node_in_group("wickling_spawner")
@@ -291,7 +317,7 @@ func load_into(main: Node) -> bool:
 	var pd: Dictionary = data["player"]
 	main.player.global_position = Vector2(pd["x"], pd["y"])
 	main.player.warmth = float(pd["warmth"])
-	main.player.lamp_charge = float(pd["lamp_charge"])
+	main.player.lamp_charge = clampf(float(pd["lamp_charge"]), 0.0, Progress.charge_max())
 	main.player.faints = int(pd["faints"])
 	main.player.flasks = clampi(int(pd.get("flasks", Tuning.kl_flask_max)), 0, main.player.flask_max())
 	main.player.reset_physics_interpolation()

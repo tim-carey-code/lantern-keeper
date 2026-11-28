@@ -42,15 +42,15 @@ func ring() -> int:
 	var hit := 0
 	for w in found:
 		var v: Vector2 = w.global_position - center
-		w.hurt(Tuning.kl_burst_dmg, true, "ring")
+		w.hurt(Tuning.kl_burst_dmg * Progress.dmg_mult(), true, "ring")
 		if is_instance_valid(w) and not w.is_queued_for_deletion() and not w._dead:
-			w.ignite(Tuning.kl_burst_burn_dps, Tuning.kl_burst_burn_time)
+			w.ignite(Tuning.kl_burst_burn_dps * Progress.dmg_mult(), Tuning.kl_burst_burn_time)
 			w.knock((v.normalized() if v.length() > 0.5 else Vector2.RIGHT) * Tuning.kl_burst_knock)
 			if Progress.has_combat_upgrade("heavy_flare"):
 				w.stun(Tuning.kl_heavy_flare_stun)
 		hit += 1
 	if hit > 0 and Progress.has_combat_upgrade("spill"):
-		k.lamp_charge = minf(1.0, k.lamp_charge + Tuning.kl_spill_charge * hit)
+		k.lamp_charge = minf(Progress.charge_max(), k.lamp_charge + Tuning.kl_spill_charge * hit)
 	last_hits = hit
 	combat._burst_fx = 0.3
 	return hit

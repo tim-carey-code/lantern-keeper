@@ -1,5 +1,7 @@
 extends Node
-## The Windward Ridge: glass, constant wind, the Hooded Lamp and the Mirror Post. Run:
+## The Windward Ridge: its layout, the Hooded Lamp and the Mirror Post unlocks, mirrors and their beams.
+## M1b: its tending, ward and wind-burn checks are gone (lamps never burn; the ward is cut; wind is inert until M6,
+## when the wind checks come back). Glass is cut: no glass on the Ridge, and lamp costs are scrap. Run:
 ##   godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_ridge.tscn
 
 var main: Node
@@ -8,9 +10,6 @@ var fails := 0
 var fog: FogGrid
 var player: Node
 var wind: Wind
-var post_exposed: Lantern
-var post_sheltered: Lantern
-var hooded: Lantern
 var source: Lantern
 var m1: Lantern
 var m2: Lantern
@@ -87,13 +86,11 @@ func _process(_delta: float) -> void:
 			player = main.player
 			wind = main.get_node("Wind")
 			wind.force(Wind.State.CALM, Vector2i.RIGHT, 9999.0)
-			Tuning.lantern_burn_per_sec = 0.5
 			var ridge := _ridge_tile(func(t): return true)
 			check(ridge.x >= 0, "the Windward Ridge exists")
 			check(_connected(fog.tile_of(main.start), fog.tile_of(_landmark("station").global_position)), "walkable path from the hut up to the signal station")
-			var glass := get_tree().get_nodes_in_group("resource").filter(func(r): return r.kind == "glass")
-			check(glass.size() >= 10, "glass on the Ridge (%d)" % glass.size())
-			check(glass.all(func(r): return fog.region_at(r.global_position) == FogGrid.R_RIDGE), "glass only on the Ridge")
+			var ridge_piles := get_tree().get_nodes_in_group("resource").filter(func(r): return fog.region_at(r.global_position) == FogGrid.R_RIDGE)
+			check(ridge_piles.size() >= 10 and ridge_piles.all(func(r): return r.kind == "scrap"), "scrap piles on the Ridge, and no glass (%d)" % ridge_piles.size())
 			# Hooded Lamp and Mirror Post unlocks.
 			check(not Progress.is_unlocked("hooded") and not Progress.is_unlocked("mirror"), "Hooded Lamp and Mirror Post start locked")
 			_landmark("glazier").activate()
@@ -101,23 +98,8 @@ func _process(_delta: float) -> void:
 			_landmark("station").activate()
 			main.get_node("NoteReader").close()
 			check(Progress.is_unlocked("hooded") and Progress.is_unlocked("mirror"), "the glazier and the signal station unlock them")
-			# Costs need glass.
 			Inventory.counts["scrap"] = 30
-			Inventory.counts["glass"] = 0
-			# Ridge wind: an exposed Post Lamp burns faster than a sheltered one (rock to the west).
-			var exposed_t := _ridge_tile(func(t): return not _rock_within(t, Vector2i.LEFT, 2) and absi(t.y - 17) <= 1)
-			var shelter_t := _ridge_tile(func(t): return fog.terrain_of(t + Vector2i.LEFT) == FogGrid.T_ROCK)
-			post_exposed = _lamp("post", fog.tile_center(exposed_t))
-			post_sheltered = _lamp("post", fog.tile_center(shelter_t))
-			hooded = _lamp("hooded", fog.tile_center(exposed_t + Vector2i(0, 4)))
 		4:
-			check(post_exposed.in_ridge_wind() and is_equal_approx(post_exposed.burn_rate(), Tuning.lantern_burn_per_sec * Tuning.ridge_burn_mult), "an exposed lantern on the Ridge burns faster, even between gusts")
-			check(not post_sheltered.in_ridge_wind(), "rock to the west shelters a lantern from the Ridge wind")
-			check(post_exposed.get_light_radius() < Tuning.lantern_max_radius, "the Ridge wind shrinks exposed light")
-			wind.force(Wind.State.GUST, Vector2i.RIGHT)
-			check(post_exposed.burn_rate() > Tuning.lantern_burn_per_sec * Tuning.ridge_burn_mult, "gusts stack on top of the Ridge wind")
-			check(not hooded.in_gust() and not hooded.in_ridge_wind() and is_equal_approx(hooded.burn_rate(), Tuning.lantern_burn_per_sec), "the Hooded Lamp ignores all wind")
-			wind.force(Wind.State.CALM, Vector2i.RIGHT, 9999.0)
 			# Mirrors, on open Hollow ground east of the hut: a burning source, a mirror in its
 			# light pointing east, a second mirror down the first one's beam, and a lone mirror.
 			var base: Vector2 = main.start + Vector2(0, 160)
@@ -130,7 +112,7 @@ func _process(_delta: float) -> void:
 			check(m1.is_lit(), "a mirror in a lantern's light catches it")
 			check(m2.is_lit(), "a mirror in another mirror's beam catches it (chains work)")
 			check(not lone.is_lit(), "a mirror on its own stays dark")
-			check(not lone.needs_fuel() and not get_tree().get_first_node_in_group("lantern_markers").needs_attention().has(lone), "mirrors never ask for fuel")
+			check(not get_tree().get_first_node_in_group("lantern_markers").unlit_old_lamps().has(lone), "a dark mirror has no cold-lamp lure")
 			var w: Wickling = main.get_node("FogLayer/Wicklings").spawn_at(m1.global_position + Vector2(140, 0))
 			check(w.beam_level_at(w.global_position) > 0.0, "a Wickling in a mirror beam is caught by it")
 			beam_victim = w
@@ -154,24 +136,20 @@ func _process(_delta: float) -> void:
 			check(not is_instance_valid(beam_victim), "a mirror beam burns a Wickling away in about a second")
 			if is_instance_valid(smotherer):
 				check(m2.is_smothered() and not m2.is_lit(), "a Wickling clinging to a mirror smothers it: it goes dark")
-				player.position = m2.global_position + Vector2(30, 0)
-				player.lamp_charge = 1.0
-				player.update_ward(0.5, true)
-				player.update_ward(0.5, true)
-				check(not is_instance_valid(smotherer) or smotherer.hp < Tuning.wick_hp, "your ward burns it off the mirror")
-				if is_instance_valid(smotherer):
-					smotherer.queue_free()
+				smotherer.queue_free()
 			else:
 				check(false, "a Wickling clinging to a mirror drinks the beam instead of burning")
 		200:
 			check(fog.density_at(far_tile) < 0.4, "a beam clears fog far from any lantern (%.2f)" % fog.density_at(far_tile))
-			# Glass cost (on lit ground, so "too dark" doesn't come first).
-			Inventory.counts["glass"] = 0
+			# Costs are scrap only (M1b: glass is cut; GAME_PLAN §6).
+			Inventory.counts["scrap"] = Tuning.mirror_cost_scrap - 1
 			Progress.selected = "mirror"
 			player.position = source.global_position + Vector2(0, 64)
-			check(player.place_block_reason(player.place_pos()).contains("glass"), "a Mirror Post costs glass (%s)" % player.place_block_reason(player.place_pos()))
-			Inventory.counts["glass"] = 5
-			check(player.try_place() != null and Inventory.get_count("glass") == 5 - Tuning.mirror_cost_glass, "building a Mirror Post spends glass")
+			check(player.place_block_reason(player.place_pos()) == "needs %d scrap" % Tuning.mirror_cost_scrap, "a Mirror Post costs %d scrap (%s)" % [Tuning.mirror_cost_scrap, player.place_block_reason(player.place_pos())])
+			Inventory.counts["scrap"] = Tuning.mirror_cost_scrap
+			check(player.try_place() != null and Inventory.get_count("scrap") == 0, "building a Mirror Post spends scrap only")
+			Progress.selected = "hooded"
+			check(Lantern.cost_text("hooded") == "%d scrap" % Tuning.hooded_cost_scrap, "a Hooded Lamp costs %d scrap" % Tuning.hooded_cost_scrap)
 			Progress.selected = "post"
 		210:
 			# Save and load keep mirror direction.
@@ -187,9 +165,3 @@ func _process(_delta: float) -> void:
 			Art._ph.clear()
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)
-
-func _rock_within(t: Vector2i, dir: Vector2i, n: int) -> bool:
-	for k in range(1, n + 1):
-		if fog.terrain_of(t + dir * k) == FogGrid.T_ROCK:
-			return true
-	return false

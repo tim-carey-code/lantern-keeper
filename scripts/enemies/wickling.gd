@@ -2,11 +2,10 @@ class_name Wickling
 extends Foe
 ## A small shadow from the Soul of the Wick. It never kills anyone.
 ## Healthy light pushes it back into the dark (PROTOTYPE, WayLamps). It goes after what is weak:
-##   - a dying lantern (under Tuning.dying_frac of its tank) that no healthy light protects: it drains it
 ##   - a mirror out in the dark: it clings to it and smothers it (drinking any beam that reaches it)
 ##   - a WayLamp while it kindles: it sits on it and undoes the kindling
 ##   - the keeper, when they wander into the dark: its touch drains warmth
-## A lantern's bright core and mirror beams burn it; so does the keeper's ward.
+## A lantern's bright core and mirror beams burn it. (M1b: lamps never die, so it no longer drains them.)
 ## "Bold" Wicklings (the swarm drawn by a kindling WayLamp) ignore the push of healthy light.
 ## Inside a held region (its WayLamp lit) it fades away.
 ## Lives on the fog layer so it is visible as a silhouette in the dark.
@@ -73,8 +72,7 @@ func _ready() -> void:
 
 # --- Senses (the light senses are in Foe) --------------------------------------
 
-## What it would go after, nearest first: kindling WayLamps, unprotected dying lanterns,
-## mirrors out in the dark.
+## What it would go after, nearest first: kindling WayLamps, mirrors out in the dark.
 func _find_prey(max_dist: float) -> Node2D:
 	var best: Node2D = null
 	var bd := max_dist
@@ -86,15 +84,7 @@ func _find_prey(max_dist: float) -> Node2D:
 		if w.kindling and d < bd:
 			best = w
 			bd = d
-	# Dying lanterns no healthy light covers: worked out once a frame for every Wickling (LightSense.prey_flags).
-	var prey := LightSense.prey_flags(get_tree())
-	for i in LightSense.nodes.size():   # the snapshot has every non-mirror lantern
-		if prey[i] == 0:
-			continue
-		var d := LightSense.pos[i].distance_to(global_position)
-		if d < bd:
-			best = LightSense.nodes[i]
-			bd = d
+	# M1b: lamps never die, so nothing is drained; Wicklings hunt the keeper (GAME_PLAN §6).
 	for l in LightSense.mirrors:
 		if not is_instance_valid(l):
 			continue
@@ -114,10 +104,6 @@ func _on_hurt(scare: bool, _source: String) -> void:
 	if scare and not elite:
 		state = State.FLEE
 		_flee_t = 2.0
-
-## Shoved by the keeper's ward.
-func push(v: Vector2) -> void:
-	global_position += v
 
 # --- Brain -------------------------------------------------------------------
 
@@ -189,23 +175,9 @@ func _process(delta: float) -> void:
 				state = State.SEEK_LANTERN
 				goal = target.global_position
 		State.SEEK_LANTERN, State.SNUFF:
-			# A dying lantern: drain it from the rim. Once it is healthy again (refuelled), or a healthy
-			# light now covers it, leave it.
-			if target == null or not is_instance_valid(target) or not target.is_lit() or not target.is_dying() \
-					or healthy_level_at(target.global_position, target) > 0.0:
-				target = null
-				state = State.WANDER
-			else:
-				var to := target.global_position - global_position
-				if lantern_level_at(global_position) >= Tuning.wick_rim:
-					state = State.SNUFF
-					target.fuel = maxf(0.0, target.fuel - Tuning.wick_drain_per_sec * delta)
-					goal = global_position
-				else:
-					state = State.SEEK_LANTERN
-					goal = target.global_position
-				if to.length() < 1.0:
-					goal = global_position
+			# Nothing else to go after (M1b: lamps can't be drained).
+			target = null
+			state = State.WANDER
 		_:
 			if waiting_for_keeper and (player == null or not player.in_light_cached() or player.global_position.distance_to(global_position) > Tuning.travel_hunt_radius):
 				waiting_for_keeper = false

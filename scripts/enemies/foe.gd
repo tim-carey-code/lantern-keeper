@@ -22,6 +22,7 @@ var shell_max := 0.0
 var shell_regrows := false      # an unbroken shell grows back once it has been out of every beam for a while
 var foe_id := ""                # fixed foes (the Clinker, nests): marked in Progress.cleared when burned away
 var pack_id := ""               # fixed pack membership, used to keep a beaten pack beaten
+var pack_slot := -1             # which member of its pack it is (EnemyPack keeps beaten members dead after a faint)
 var wick_value := 1             # base wick; what a kill pays is scaled by level and the level gap (Progress.kill_wick)
 var level := 1                  # foe level: set by its pack, nest or tuning.gd; hatched and called ones take their maker's
 var summoned := false           # hatched by a nest or called by a guardian (pays like any other foe of its level)
@@ -48,8 +49,30 @@ var _dead := false
 func _enter_tree() -> void:
 	add_to_group("foe")
 
+## Foe scaling (M1b, GAME_PLAN §4.6): health and shell grow kl_foe_hp_per_level (12%) a level over 1.
+func level_mult() -> float:
+	return 1.0 + Tuning.kl_foe_hp_per_level * float(maxi(1, level) - 1)
+
+var _scaled := false
+
+## Scales the health and shell its _ready() set from tuning.gd by its level, once. Runs after the kind's own
+## _ready() (a script's NOTIFICATION_READY comes after _ready), so the level set by its pack, nest or tuning
+## counts. Guardians that refill their health per phase use level_mult() themselves.
+func _apply_level_scaling() -> void:
+	if _scaled:
+		return
+	_scaled = true
+	var m := level_mult()
+	hp *= m
+	shell *= m
+	shell_max *= m
+	if hp_max > 0.0:
+		hp_max = hp
+
 ## The hurtbox is made once the foe is ready (body_radius() may depend on fields set before add_child).
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_READY:
+		_apply_level_scaling()
 	if what == NOTIFICATION_READY and hurtbox == null:
 		hurtbox = Area2D.new()
 		hurtbox.name = "Hurtbox"
@@ -90,7 +113,7 @@ func lantern_level_at(p: Vector2) -> float:
 		best = maxf(best, 1.0 - LightSense.pos[i].distance_to(p) / r)
 	return best
 
-## Lights strong enough to push small dark back: burning lanterns that aren't dying, and lit WayLamps.
+## Lights strong enough to push small dark back: lit lanterns that keep small dark out, and lit WayLamps.
 func _healthy_lights() -> Array:
 	LightSense.refresh(get_tree())
 	var out := []
@@ -311,21 +334,14 @@ func tick_foe(delta: float) -> void:
 		shell = minf(shell_max, shell + Tuning.kl_shell_regrow_per_sec * delta)
 	if _dead or is_queued_for_deletion():
 		return
-	# Every ordinary foe is burned by a lantern's bright core; only Wicklings can drink a mirror beam.
-	# Elites and guardians don't care about lanterns at all (owner, 2026-11-27).
-	var ignores_lanterns: bool = (self is Wickling and self.elite) or self is Clinker or self is Ashbrood
-	if not ignores_lanterns:
-		LightSense.refresh(get_tree())
-		for i in LightSense.nodes.size():
-			if LightSense.lit[i] == 0:
-				continue
-			var radius := LightSense.radius[i]
-			if radius > 0.0 and global_position.distance_to(LightSense.pos[i]) < radius * (1.0 - Tuning.wick_core):
-				var core_dps := Tuning.kl_nest_core_dps if self is WickNest else Tuning.wick_light_burn
-				if Progress.has_combat_upgrade("hot_core"):
-					core_dps *= Tuning.kl_hot_core_mult
-				hurt(core_dps * delta, false, "core")
-				break
+	# A lantern's bright core: what it does to this foe is the lantern's call (Lantern.core_dps_for; elites and
+	# guardians don't care about lanterns at all, owner 2026-11-27). Only Wicklings can drink a mirror beam.
+	LightSense.refresh(get_tree())
+	var core_lamp := LightSense.core_lantern_at(global_position)
+	if core_lamp:
+		var core_dps: float = core_lamp.core_dps_for(self)
+		if core_dps > 0.0:
+			hurt(core_dps * delta, false, "core")
 	if _dead or is_queued_for_deletion():
 		return
 	if not (self is Wickling):
@@ -366,7 +382,7 @@ func _die() -> void:
 	if keeper and big and keeper.has_method("hit_stop"):
 		keeper.hit_stop(Tuning.kl_hitstop)
 	if keeper and Progress.has_combat_upgrade("kindled_kills"):
-		keeper.lamp_charge = minf(1.0, keeper.lamp_charge + Tuning.kl_kindled_kill_charge)
+		keeper.lamp_charge = minf(Progress.charge_max(), keeper.lamp_charge + Tuning.kl_kindled_kill_charge)
 	if is_inside_tree():
 		FireFx.kill_burst(global_position, body_radius(), big)
 	if foe_id != "":
@@ -405,13 +421,13 @@ func wick_earned() -> float:
 func bar_name() -> String:
 	return "%s Lv %d" % [foe_name, level] if foe_name != "" else ""
 
-## What it leaves: by default one ember worth a little fuel, and sometimes a bit of scrap (lamps still burn in
-## M1a). Lamp oil: a cleared pack's last foe always drops 1, an elite sometimes (GAME_PLAN §5).
+## What it leaves: sometimes a bit of scrap (M1b: no more fuel embers; the ember's glow and magnet carry scrap
+## and oil now). Lamp oil: a cleared pack's last foe always drops 1, an elite sometimes (GAME_PLAN §5).
 ## Summoned foes (nest hatchlings, a guardian's adds) drop nothing at all (GAME_PLAN §10, M10); they still pay wick.
 func _drop() -> void:
 	if summoned:
 		return
-	drop_embers(1, Tuning.wick_scrap_chance)
+	drop_scrap(Tuning.wick_scrap_chance)
 	drop_pack_oil()
 
 ## Oil from a pack's last foe, and sometimes from an elite.
@@ -440,11 +456,7 @@ func drop_oil(at: Vector2) -> void:
 	get_parent().add_child(e)
 
 ## Drops land on the fog layer (our parent) so they glow through the dark.
-func drop_embers(embers: int, scrap_chance: float) -> void:
-	for i in embers:
-		var e := Ember.new()
-		e.position = walkable_near(global_position + (Vector2.ZERO if i == 0 else Vector2.from_angle(i * 2.4) * 14.0))
-		get_parent().add_child(e)
+func drop_scrap(scrap_chance: float) -> void:
 	if randf() < scrap_chance:
 		var s := Ember.new()
 		s.kind = "scrap"

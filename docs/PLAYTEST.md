@@ -1,5 +1,49 @@
 # Playtests
 
+## M1b: what to try (owner, pad)
+
+**Build:** branch `proto/kl-m1b` (no more tending). Open its worktree in Godot and press F5. **Your save:** a version 5 save (yours is) loads and becomes version 6: you keep your level, wick, action bar, flasks, notes, upgrades and cleared fights; fuel and glass are gone, and old fuel and glass caches you never opened now hold scrap. Once it is saved as version 6, the M1a and readability builds can't load it (they start fresh), so **copy your save slot files first** if you want to go back. For steps 1 and 2, start a **new game** in another slot. Sound as before; nothing new was added. What was built is DESIGN §5, §6, §7.1, §8.1, §9, §12.3; every changed text is STORY §15 (DRAFT).
+
+**Not in this build** (your call during M1b): the 3-lamp limit, the full refund and the 15 s replant delay. Building and picking up lamps work as before (half the scrap back).
+
+**Play on a gamepad.** The new numbers are at the end of the tuning panel (L3): "Foe health and shell + a level", "Keeper damage + a level", "Ashbrood dive snuffs a lamp (s)", the faint rows and "Lamp glass: + max charge".
+
+**What to try**
+1. **No fuel anywhere.** Play the first ten minutes. No prompt, tip or HUD item should say fuel, refuel or gather, and no lamp should ever dim or go out on its own. The HUD shows only scrap. Scrap piles go in one press of A.
+2. **Light by touch.** The hut's lamp (the first goal), the north path's lamp and the Hollow's WayLamp all light with one press of A, no fuel. The WayLamp: the first press reads it, the next lights it and **wakes the Ashbrood**.
+3. **The Ashbrood's ember.** During the fight, a small amber ember glows low in the WayLamp's cold cage, above the Ashbrood: the lamp's light, not the creature's. In phase 2 its dive **snuffs** a lamp for 8 s, which then relights by itself. When it dies, the ember rises into the lamp and swells into its flame as the lamp lights (the level-up cards wait for it).
+4. **Faint on purpose** (let a pack chill you, and later the Ashbrood):
+   - cleared packs stay cleared;
+   - a pack you had half-fought is asleep again, with only its survivors, at full health;
+   - nothing you carried is gone (scrap, flasks); your unspent wick waits where you fell (walk back for it);
+   - you wake by the nearest lit lamp, but not one right next to a fight you haven't won;
+   - the Ashbrood starts its current phase again (full health and shell), and the Clinker is back asleep on its post.
+5. **Lures through the fog.** Stand in the dark near the crook: a pack shows small pale eyes in pairs, a pack with a shelled elite shows one bigger pair with a pale ring, and a nest a slow cold blue glow. Can you tell them apart at a glance?
+6. **Levels.** Level 2 should come at the crook (with the guard). The last Hollow level comes on the Ashbrood kill: about **level 5** if you go straight there, **level 6** if you clear most of the Hollow first. Foes now get tougher with their level (+12% health a level), and so do you (+10% damage a level). Does the Clinker still take about 30 s, the Ashbrood about 2 minutes?
+
+**Questions**
+
+| Question | Your answer |
+|---|---|
+| Does anything still feel like tending, or point at fuel? | |
+| Lit by touch: right, or should lighting a WayLamp take more than one press? | |
+| The ember: does it read as the lamp's light? Is the rise into the lamp worth keeping, too small, too slow? | |
+| After a faint, did the world come back the way you expected? | |
+| Pack, elite and nest lures: clear enough? | |
+| Levels: level 2 at the crook, 5 or 6 at the Ashbrood kill: right pace? | |
+| The DRAFT texts in STORY §15, especially the five approved texts the build had to change (§15.1): keep, change or cut? | |
+
+**Your answers to steps 1-6** (pass, or what went wrong)
+
+| Step | Result |
+|---|---|
+| 1. No fuel anywhere | |
+| 2. Light by touch | |
+| 3. The Ashbrood's ember | |
+| 4. The faint rule | |
+| 5. Lures | |
+| 6. Levels | |
+
 ## Readability: what to try (owner, pad)
 
 **Build:** branch `proto/kl-readability` (the readability step, before M1b). Open its worktree in Godot and press F5. Your M1a save loads as before. Every foe's wind-up now has a marker drawn over the fog in the pale cold blue, and your keeper shows its own dash, casts, drinks and hits. Nothing else changed: lamps still burn, and the WayLamp still takes fuel. No new sounds; old ones, pitched down, mark each wind-up. What was built, with every timing, is DESIGN §8.4.

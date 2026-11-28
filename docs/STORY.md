@@ -2,6 +2,7 @@
 
 > **Synced to commit c6d3ee0** on `proto/kl-replan` (2026-11-27), refreshed for the approved game plan (`docs/replan/GAME_PLAN.md` §13). In the code today: the title card, the name prompt, the letter, **23 goals**, **11 journal entries** (1-8 and 13-15), **21 tips**, **12 readable landmark notes** plus the rack (scenery), **6 upgrade-find notes**, **3 WayLamp notes**, the fast-travel texts, and the UI lines in §12. They match `systems/story/story.gd`, `scripts/main/main.gd`, `scripts/world/` and `scripts/ui/` word for word. **Built** = in the game at c6d3ee0; **Planned** = written, not built yet.
 > **M1a** (branch `proto/kl-m1a`, build commit 6663292, checked at f97b531). The fire kit added new texts and changed a few old ones. All of them are in **§14**, marked **DRAFT (M1a, not yet owner-approved)**. Where M1a changed a text, the new code wording is recorded as DRAFT and the old one is kept as "was". No APPROVED text was changed in the code.
+> **M1b** (branch `proto/kl-m1b`, 2026-11-27): no more tending. In the code now: **22 goals** (`gather_fuel` cut), **11 journal entries**, **18 tips** (`cold_lantern`, `low_lantern`, `dying_lantern` and `glass` cut). Every text M1b added or changed is in **§15**, marked **DRAFT (M1b)**, with the old wording kept as "was". **Five APPROVED texts had to change** because they talk about fuel, lamps burning down or holding the WayLamp: the `waylamp_seen` tip, journal entry 13, the WayLamp note footer, the held line, and the `dying_lantern` tip (cut). Their new wording is a **proposed rewrite for the owner** (§15.1); the old approved wording is kept there word for word.
 > **Marks.** **APPROVED**: the owner approved this exact wording; keep it word for word, and change it only with the owner. **DECIDED**: an owner decision about the story (who, what, where). **DEFAULT**: a draft choice the owner let stand; ask before changing it. **DRAFT**: not yet approved. Owner-reviewed 2026-11-26 (milestone M5a); later approvals are dated.
 > **The re-plan.** The game plan changes how the game plays (fire skills, no lamp tending, WayLamps won by fighting, a finale fight, people who speak). Approved texts below stay as they are until the owner approves new wording. §13 lists every text the plan needs rewritten, as DRAFT suggestions.
 > Sources: DECISIONS.md (overrides), the game plan, `systems/story/story.gd`, `scripts/main/main.gd`, DESIGN.md, ROADMAP.md.
@@ -117,14 +118,14 @@ DEFAULT: keep the far light.
 
 One goal shows on the HUD at a time; the journal lists the current goal and finished ones. The pointer (amber arrow) is **on for G01-G06 (the Hollow)** and off by default after, unless turned back on in settings. If the player finishes a goal early, skip to the first unfinished one.
 
-**Built:** 23 goals: the 20 rows in this table up to `descend` (3b and 4b included), plus `kindle_hollow`, `kindle_marsh` and `kindle_ridge` (§11). Ids, HUD texts, order and pointer targets as in `Story.GOALS`. **Planned:** goals 19-24 (the Still Lake), and the Lakeshore's goals (M7). Goals are checked four times a second.
+**Built:** 22 goals (M1b: `gather_fuel` is cut, so the first goal is `relight_first`): the 19 rows in this table up to `descend` (3b and 4b included), plus `kindle_hollow`, `kindle_marsh` and `kindle_ridge` (§11). M1b left the wording of `relight_first` and `relight_waypost` as it was: "Relight" still fits lighting by touch. Ids, HUD texts, order and pointer targets as in `Story.GOALS`. **Planned:** goals 19-24 (the Still Lake), and the Lakeshore's goals (M7). Goals are checked four times a second.
 
 | # | id | HUD text | Completes when | Pointer target |
 |---|----|----------|----------------|----------------|
-| 1 | `gather_fuel` | Take fuel from the woodpile | Carrying at least 1 fuel (also done once the old lantern is relit) | Woodpile |
-| 2 | `relight_first` | Relight the old lantern by the hut | Start lantern lit | Start lantern |
+| ~~1~~ | ~~`gather_fuel`~~ | ~~Take fuel from the woodpile~~ | **Cut in M1b** (no fuel; the woodpile is scenery) | — |
+| 2 | `relight_first` | Relight the old lantern by the hut | Start lantern lit (M1b: by touch, A / E) | Start lantern |
 | 3 | `read_ledger` | Read the ledger by the hut | `ledger` read | Ledger |
-| 3b | `relight_waypost` | Relight the old lamp on the north path | The second cold old lantern, 12 tiles north of the hut, is lit (or `build_post` is done: never sent back) | The north path's lamp |
+| 3b | `relight_waypost` | Relight the old lamp on the north path | The second cold old lantern, 12 tiles north of the hut, is lit by touch (or `build_post` is done: never sent back) | The north path's lamp |
 | 4 | `build_post` | Take back the lamp from Oswin's crook | The keeper reads `crook_post` (or builds a Post Lamp in tests) | `crook_post` |
 | 4b | `burn_nest` | Burn out the nest with a Post Lamp | Any Hollow nest is burned out (or the Hollow is held) | Nest A, the route's nest (then the nearest nest left) |
 | 5 | `stone_way` | Light the way east to the carved stone | `stone_way` read | Carved stone |
@@ -311,22 +312,22 @@ DEFAULT: first person.
 
 ## 8. First-time tips
 
-Shown once each, in a panel near the bottom of the screen, for 6 s, one at a time. Built: these 12, the 6 onboarding tips below, the 3 WayLamp tips (§11) and the M1a Beam hint (§14.3), 22 in all, as in `Story.TIPS`. A token such as [beam] becomes the button for the device in use (`Story.tip_text`).
+Shown once each, in a panel near the bottom of the screen, for 6 s, one at a time. Built: these 12 less the 3 M1b cut, the 6 onboarding tips below, 2 of the 3 WayLamp tips (§11) and the M1a Beam hint (§14.3), 18 in all, as in `Story.TIPS`. A token such as [beam] becomes the button for the device in use (`Story.tip_text`).
 
 **Since M1a** the tip texts are unchanged, but some tokens name other buttons, so what the player reads changed (§14.10). The legend below is the M1a one.
 
 | id | Trigger (as built) | Tip |
 |----|--------------------|-----|
-| `cold_lantern` | First cold lantern (shows at the start: the hut lantern starts cold) | A cold lantern keeps its frame. A little fuel will wake it. |
-| `low_lantern` | First lit lantern below 25% | Lanterns burn down. Top them up before they go cold. |
+| ~~`cold_lantern`~~ | **Cut in M1b** | ~~A cold lantern keeps its frame. A little fuel will wake it.~~ |
+| ~~`low_lantern`~~ | **Cut in M1b** | ~~Lanterns burn down. Top them up before they go cold.~~ |
 | `fog_edge` | After 90 s of play (stands in for "first fog edge") | Fog comes back where light fades. Light holds the ground. |
 | `gust` | First gust warning | Wind is coming. Rock on the windward side shelters a flame. |
 | `wickling_seen` | First Wickling within 420 px | Something small moves in the dark. It is drawn to your lights. |
 | `wickling_close` | First Wickling within 130 px | Hold [beam] to shine on it. Aim with [aim]. (APPROVED 2026-11-27, onboarding; was "Hold your beam on them: left click or RT, aimed. F or RB throws them back.") |
 | `lamp_empty` | Hand lamp down to an ember | Your lamp is down to an ember. Rest in a lantern's light to fill it. |
 | `warmth_low` | Warmth below 35% | You are getting cold. Stand in a lantern's light. |
-| `faint` | First faint | You woke by the nearest light. What you dropped waits where you fell. |
-| `glass` | First glass carried | Glass. The keepers on the ridge made lamps from it. |
+| `faint` | First faint | You woke by the nearest light. Your unspent wick waits where you fell. **DRAFT (M1b)**; was "You woke by the nearest light. What you dropped waits where you fell." |
+| ~~`glass`~~ | **Cut in M1b** | ~~Glass. The keepers on the ridge made lamps from it.~~ |
 | `mirror_placed` | First Mirror Post placed | A mirror needs light. Stand it inside a burning lantern's glow. |
 | `mirror_lit` | First lit mirror | Interact to turn the beam. Beams pass from mirror to mirror. |
 
@@ -441,7 +442,7 @@ Each quoted line is one line on screen.
 > Cut into the base: WHILE THIS BURNS, THE RIDGE IS KEPT.
 > Under a stone: When this went out, the small dark ones came up the steps. - Oswin
 
-Under each inspection text, the note explains the WayLamp (one line on screen each):
+Under each inspection text, the note explains the WayLamp (one line on screen each). **Changed in M1b** (DRAFT, a proposed rewrite of the approved footer; §15.1). Was (APPROVED):
 > Feed it 15 fuel.
 > While it kindles, the dark will come for it. Keep them off it.
 > Lit, it holds this whole region: its lanterns stop burning down, and nothing comes here.
@@ -470,7 +471,7 @@ Suggested entry numbers 13-15, so the existing numbers don't move. The journal l
 
 | # | Written when | Title | Entry |
 |---|---|---|---|
-| 13 | `kindle_hollow` done | The first WayLamp | *I held the WayLamp until it took. Now the Hollow keeps its own lamps.* |
+| 13 | `kindle_hollow` done | The first WayLamp | *The Ashbrood is gone. I took the last ember back from its bowl, and the WayLamp caught. The Hollow is kept.* **DRAFT (M1b), a proposed rewrite of the approved entry** (§15.1); was *I held the WayLamp until it took. Now the Hollow keeps its own lamps.* |
 | 14 | `kindle_marsh` done | The marsh WayLamp | *The old keepers left dry wicks for whoever came next. The marsh is held again.* |
 | 15 | `kindle_ridge` done | The ridge WayLamp | *The ridge is held. Nothing comes up the steps now, and only the lake is left.* |
 
@@ -481,16 +482,18 @@ Shown in the large centre banner where region names fade in:
 
 "The Hollow is held", "The Reedmarsh is held", "The Windward Ridge is held" (longest: 26 characters).
 
-With it, a line on the tip line at the bottom of the screen:
-> The WayLamp took. Its lanterns won't burn down now, and nothing comes here.
+With it, a line on the tip line at the bottom of the screen. **Changed in M1b** (DRAFT, §15.1):
+> The WayLamp took. Nothing comes here now, and you can rest by it.
+
+Was (APPROVED): "The WayLamp took. Its lanterns won't burn down now, and nothing comes here."
 
 ### Tips (shown once each)
 
 | id | Trigger | Tip |
 |----|---------|-----|
-| `waylamp_seen` | The light first finds a WayLamp | A WayLamp. Feed it fuel, then hold it until it takes. |
-| `dying_lantern` | First lantern below a quarter of its tank | A lantern below a quarter is dying. Wicklings can drain it, so keep it fed. |
-| `kindle_attack` | First time Wicklings come for a WayLamp being kindled | Wicklings have come for the WayLamp. Ward them off until it takes. |
+| `waylamp_seen` | The light first finds a WayLamp | A WayLamp. Touch your flame to it. Something will come for the light. **DRAFT (M1b), a proposed rewrite of the approved tip** (§15.1); was "A WayLamp. Feed it fuel, then hold it until it takes." |
+| ~~`dying_lantern`~~ | **Cut in M1b** (nothing dies or is drained) | ~~A lantern below a quarter is dying. Wicklings can drain it, so keep it fed.~~ |
+| `kindle_attack` | First time Wicklings come for a WayLamp being kindled (M1b: only at the hold fights, the Reedmarsh's and the Ridge's; not the Hollow's, where the Ashbrood comes) | Wicklings have come for the WayLamp. Ward them off until it takes. (unchanged; "Ward" names a cut skill, see §13) |
 
 `dying_lantern` fires at the same moment as the built `low_lantern` tip (also below 25%). Suggestion: while the prototype is on, show `dying_lantern` instead of `low_lantern`.
 
@@ -543,10 +546,10 @@ The boss bar's title reads "{name}   phase {N} / 2: {hint}". The hints (M1a chan
 
 ### Fainting (`scripts/player/player.gd` `faint()`)
 
-A note with a title and two lines:
+A note with a title and two lines (the second line changed in M1b, DRAFT; was "Some of what you carried lies where you fell."):
 > **You faint...**
 > The cold takes you. You wake by the warmth of a lantern.
-> Some of what you carried lies where you fell.
+> Your unspent wick waits where you fell.
 
 ### HUD lines (`scripts/ui/hud.gd`, `scripts/world/landmark.gd`)
 
@@ -579,39 +582,41 @@ From GAME_PLAN §13. **Everything in this section is DRAFT, for the owner.** Not
    - Suggestion (from the plan): "The wind starts up there. Light the marsh before you climb. - Oswin"
 
 ### Goals
-- `gather_fuel` "Take fuel from the woodpile", `relight_first` "Relight the old lantern by the hut", `relight_waypost` (APPROVED) "Relight the old lamp on the north path": lamps are relit by touch, and there is no fuel (M1b).
+- **Done in M1b:** `gather_fuel` "Take fuel from the woodpile" is cut. `relight_first` "Relight the old lantern by the hut" and `relight_waypost` (APPROVED) "Relight the old lamp on the north path" are kept word for word: they still fit lighting by touch. The owner may still want new wording.
 - `build_reservoir`, `build_hooded`, `build_mirror`: become "use each lamp" goals, matching each find's new job (M5, M6, M7).
 - `kindle_hollow` (APPROVED), `kindle_marsh`, `kindle_ridge`: WayLamps are lit by touch, then you fight (M1b for the Hollow; M5 and M6 for the others). `kindle_marsh` "Kindle the WayLamp by the pumphouse" is also wrong once the marsh WayLamp moves to the north island (M5).
 - `burn_nest` (APPROVED) stays.
 - New: the Lakeshore's goals (M7); goals 19-24 for the Still Lake (M8) need a look against the fight.
 
 ### Tips
-- **Cut** (M1b): `cold_lantern`, `low_lantern`, `dying_lantern` (APPROVED), `glass`.
+- **Cut** (done in M1b): `cold_lantern`, `low_lantern`, `dying_lantern` (APPROVED), `glass`.
+- **Rewritten in M1b** (DRAFT, §15): `waylamp_seen` (APPROVED, proposed rewrite) and `faint`.
 - **Rewrite:**
   - `wickling_close` (APPROVED): teach Lampfire first, not the beam (M1a).
   - `burst`, `shell`, `dash` (all APPROVED): the burst becomes the optional Hearth ring, and Lance breaks shells (M1a).
   - `haven` (APPROVED), "...Fight near it.": in a fight, light no longer warms you and refills charge only slowly (M1a).
   - `build_here` (APPROVED): the plan lists it for rewrite without a reason; likely the new lamp rules (M1b). **Uncertain.**
   - `lamp_empty`, `warmth_low`, `faint`: flasks heal in a fight, and a faint loses nothing (M1a, M1b).
-  - `waylamp_seen`, `kindle_attack` (both APPROVED): lit by touch, then a guardian; no ward (M1b).
+  - `kindle_attack` (APPROVED): it still says "Ward them off"; the ward is cut. M1b shows it only at the two hold fights (the marsh's and the Ridge's WayLamps), which their guardians replace in M5 and M6; rewrite it then. (`waylamp_seen` was rewritten in M1b, §15.)
+  - `wickling_seen`, "...It is drawn to your lights.": since M1b Wicklings no longer drain lamps (they go for the keeper, a kindling WayLamp or a mirror in the dark). Suggestion: "Something small moves in the dark. It is looking for you." Not changed: no fuel in it, and the owner reviewed it.
   - `gust` (M6), `mirror_placed` (M7).
 - **New** (M1a unless marked): the flask, Fireglobe, Lance, rest at a WayLamp, a level point (M2), loot and a full bag (M3). **Not written in M1a:** the build added no new tips. The skills, the flask and Rest are explained by the Skills list, the action bar, the prompt and toasts (§14).
 
 ### Notes
-- **WayLamp notes:** keep the inscriptions and Oswin's lines (APPROVED). Rewrite the footer: "Feed it 15 fuel." / "While it kindles, the dark will come for it. Keep them off it." / "Lit, it holds this whole region: its lanterns stop burning down, and nothing comes here." (M1b). The Hollow note's Oswin line, "This has to be held until it takes. I could not hold it and keep the rest.", is APPROVED and is kept unless the owner says otherwise.
+- **WayLamp notes:** keep the inscriptions and Oswin's lines (APPROVED). The footer was rewritten in M1b (DRAFT, §15.1). The Hollow note's Oswin line, "This has to be held until it takes. I could not hold it and keep the rest.", is APPROVED and is kept unless the owner says otherwise.
 - **The marsh WayLamp's place:** its notes and the §11 story tie say "on the pumphouse island"; it moves to the north island in M5.
-- **Upgrade finds:** the lamp glass line "Your hand lamp reaches further, dims more slowly and wards for longer." (the ward is gone, and the glass gives charge from M1b). The satchel line "You can carry {N} of each now." (satchels become bag slots in M3). Both DRAFT already.
+- **Upgrade finds:** both lines rewritten in M1b (DRAFT, §15.3). The satchel line changes again in M3 (bag slots).
 - `crook_post` still fits.
 - **The stones** (M6): a toast when they fall, "The way is open."; a chalk note on them, readable from the Hollow side, "Stones down. The way up is through the marsh." Both are the plan's DRAFT lines.
 
 ### Journal
-- Entry 13 (APPROVED), "I held the WayLamp until it took. Now the Hollow keeps its own lamps.": the Hollow is won by killing the Ashbrood, and lamps no longer need keeping (M1b).
+- Entry 13 (APPROVED), "I held the WayLamp until it took. Now the Hollow keeps its own lamps.": rewritten in M1b as a proposal (DRAFT, §15.1), about the Ashbrood and its ember.
 - Entry 15 (APPROVED), "...and only the lake is left.": the Lakeshore comes before the Lake (M7).
 - New entries for each guardian (M1b for the Ashbrood; M5-M8).
 
 ### Code texts in §12
 - The boss-bar hints: "your beam" was replaced in M1a (§12, DRAFT). "phase N / 2" stays until M2 (three phases).
-- The faint note says "Some of what you carried lies where you fell." (M1b: nothing carried is lost; wick waits where you fell).
+- The faint note: rewritten in M1b (DRAFT, §12 and §15.2).
 - The card screen and its 12 cards go in M2. The four APPROVED names stay as branch picks and gear lines.
 - "Pick it in the lantern list (Tab / Y)": was wrong in the M1a build (Y is a skill slot now; on a pad the lantern list is D-pad right). **Changed in the M1a fixes** to the suggestion, "Pick it in the lantern list ({button}).", with the button for the device in use (§14.9, DRAFT). Needs the owner's OK.
 
@@ -720,8 +725,8 @@ Each row is a label, then the button for the device in use. M1a rewrote the whol
 | Skill slots 2, 3, 4 | RB, LB, Y | Right click, Q, F |
 | Dash | LT | Space / Shift |
 | Drink lamp oil | B | R |
-| Use: read, refuel, rest, travel | A | E |
-| Gather, pick up a lamp (hold) | A | E |
+| Use: read, light, take, rest, travel (M1b, DRAFT; was "Use: read, refuel, rest, travel") | A | E |
+| Pick up a lamp (hold) (M1b, DRAFT; was "Gather, pick up a lamp (hold)") | A | E |
 | Plant the selected lamp | X | C |
 | Next lamp kind (hold: the list) | D-pad right | Tab |
 | Skills | D-pad down | K |
@@ -777,3 +782,73 @@ No tip text changed in `Story.TIPS`. M1a changed what some tokens become (§8), 
 - The notes list the boss-bar hints nowhere; the code changed two of them (§12).
 - The notes don't list the facts lines (§14.1), the new controls rows other than "Drink lamp oil" and "Use: read, refuel, rest, travel" (§14.8), "Hold: pick up", or the lantern list's new pad hint (§14.9). All are in the code and recorded here.
 - The notes give the map title, the key reminders and the rest of the texts exactly as the code has them.
+
+---
+
+## 15. M1b texts (DRAFT, M1b, not yet owner-approved)
+
+Every player-facing text M1b ("no more tending") added, changed or cut, copied **from the code** on `proto/kl-m1b`, word for word, with the old wording kept as "was". **All of it is DRAFT (M1b).** In these texts `%s` and `%d` are filled in by the game.
+
+### 15.1 Proposed rewrites of APPROVED texts (the owner decides)
+
+These were approved, but they talk about fuel, lamps burning down or holding the WayLamp, which M1b removes. The code now shows the proposed wording; the approved wording is kept here, and either can go back in on the owner's word.
+
+| Where | Proposed (in the code now) | Was (APPROVED) |
+|---|---|---|
+| Tip `waylamp_seen` (`systems/story/story.gd`) | A WayLamp. Touch your flame to it. Something will come for the light. | A WayLamp. Feed it fuel, then hold it until it takes. |
+| Journal entry 13, "The first WayLamp" (`story.gd`) | The Ashbrood is gone. I took the last ember back from its bowl, and the WayLamp caught. The Hollow is kept. | I held the WayLamp until it took. Now the Hollow keeps its own lamps. |
+| WayLamp note footer, line 1 (`scripts/world/waylamp.gd`, `NOTE_TOUCH`) | Touch your flame to it to light it. | Feed it 15 fuel. |
+| Footer, line 2, the Hollow's (`NOTE_GUARDIAN`; it mentions the ember) | Something broods in its bowl, over one last ember. It will fight for it. | While it kindles, the dark will come for it. Keep them off it. |
+| Footer, line 2, the marsh's and the Ridge's (`NOTE_HOLD`; hold fights until M5-M6) | While it kindles, the dark will come for it. Keep them off it. (unchanged) | (the same) |
+| Footer, line 3 (`NOTE_HELD`) | Lit, it holds this whole region: nothing comes here, and you can rest by it. | Lit, it holds this whole region: its lanterns stop burning down, and nothing comes here. |
+| The held line on the tip line (`scripts/ui/hud.gd`, `HELD_TIP`) | The WayLamp took. Nothing comes here now, and you can rest by it. | The WayLamp took. Its lanterns won't burn down now, and nothing comes here. |
+| Tip `dying_lantern` | **cut** (nothing dies or is drained) | A lantern below a quarter is dying. Wicklings can drain it, so keep it fed. |
+
+The WayLamp inscriptions and Oswin's lines are unchanged (APPROVED), including the Hollow's "This has to be held until it takes. I could not hold it and keep the rest. - Oswin", which no longer fits the fight; the plan keeps it unless the owner says otherwise.
+
+### 15.2 Goals, tips and notes
+
+| Where | Now (DRAFT) | Was |
+|---|---|---|
+| Goal `gather_fuel` | **cut**: the first goal is now `relight_first`, "Relight the old lantern by the hut", done by touch | Take fuel from the woodpile |
+| Tips `cold_lantern`, `low_lantern`, `glass` | **cut** | (§8) |
+| Tip `faint` | You woke by the nearest light. Your unspent wick waits where you fell. | You woke by the nearest light. What you dropped waits where you fell. |
+| The faint note, line 2 (`scripts/player/player.gd`) | Your unspent wick waits where you fell. | Some of what you carried lies where you fell. |
+| Tip `kindle_attack` | unchanged; shown only at the hold fights now (not when the Ashbrood comes) | — |
+
+### 15.3 Prompts, the lantern list, upgrade notes, the map, the controls
+
+| Where | Now (DRAFT) | Was |
+|---|---|---|
+| Over an unlit WayLamp, after its note (`scripts/ui/world_prompt.gd`) | Light it | Feed fuel  %d / %d |
+| Over the Hollow's WayLamp during the fight | Something broods over its last ember | Kindling %ds: keep the dark off it |
+| Over an old lamp not yet lit | Light it | Refuel  cold |
+| Over a lit planted lamp | Hold: pick up (a lit old lamp shows nothing: it can't be picked up) | Refuel  %d%%, then Hold: pick up |
+| Over a snuffed lamp (the Ashbrood's dive) | Snuffed: it will relight | — (new) |
+| Over a scrap pile, or a lamp with a pile beside it | Take  %d scrap ("Take  6 scrap") | Hold to gather  %d left / Gathering...  %d left / Hold to gather %s  %d left |
+| Floating text when you take a pile (`scripts/player/player.gd`) | +%d scrap | — (new; the same words as a scrap drop) |
+| The satchel's note (`scripts/world/landmark.gd`) | You can carry %d scrap now. | You can carry %d of each now. |
+| The lamp glass's note | Your hand lamp reaches further and holds more charge. | Your hand lamp reaches further, dims more slowly and wards for longer. |
+| Lantern list, Post Lamp (`scripts/lanterns/lantern.gd` `blurb()`) | A steady light. Its bright core burns small foes and nests. | Burns fuel. Light shrinks as it runs low. |
+| Lantern list, Reservoir Lamp | A wide, dim light with no core. | Big tank, wide dim light. Slowly refuels other lanterns in its light. |
+| Lantern list, Hooded Lamp | A smaller light behind a hood. | Smaller light, but wind never touches it. |
+| Lantern list, Mirror Post | Place it in another lantern's light and it throws a long beam. [E / A] turns it. | No fuel. Place it in another lantern's light and it throws a long beam. [E / A] turns it. |
+| Lantern costs in the list | scrap only: Hooded Lamp 7, Mirror Post 8 | 5 scrap + 2 glass; 4 scrap + 3 glass |
+| The map's title (`scripts/ui/map_screen.gd`) | Map   (M / D-pad up to close)      amber = lit lantern   red = unlit   white = you | Map   (M / D-pad up to close)      amber = lit lantern   yellow = low fuel   red = cold   white = you |
+| Controls list, row (`systems/input/input_hint.gd`) | Use: read, light, take, rest, travel | Use: read, refuel, rest, travel |
+| Controls list, row | Pick up a lamp (hold) | Gather, pick up a lamp (hold) |
+| HUD chips (`scripts/ui/hud.gd`) | **cut**: "%d lantern(s) gone cold", "%d lantern(s) dying (under a quarter)", "Gust: %d lantern(s) exposed", "Wind rising: %d lantern(s) exposed" | (§12) |
+| HUD resource panel | scrap only | fuel, scrap, glass |
+| The wind's status text (`systems/wind/wind.gd`; shown nowhere now, wind is inert until M6) | Gust from the %s | Gust from the %s: exposed lanterns burn faster |
+
+### 15.4 The Ashbrood's ember (DECISIONS 2026-11-27)
+
+No words: the ember is code-drawn (`scripts/world/waylamp_ember.gd`). The texts that mention it are the Hollow's footer line 2 and journal entry 13 (§15.1) and the prompt "Something broods over its last ember" (§15.3), all DRAFT.
+
+### 15.5 Unchanged on purpose (they still fit)
+
+- Goals `relight_first` "Relight the old lantern by the hut" and `relight_waypost` "Relight the old lamp on the north path" (APPROVED): lighting by touch is still relighting.
+- Journal entry 1, "...The old lantern took the flame on the first try...": fits a touch.
+- The letter's "...with an old lantern by the door. Light that first.": fits.
+- The pumphouse's "Light has to be fed from somewhere." and "The ridge has glass." (APPROVED): suggestions only, already in §13.
+

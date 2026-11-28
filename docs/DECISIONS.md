@@ -14,7 +14,7 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 | The plan of record | `docs/replan/GAME_PLAN.md` v2, all nine answers as recommended, and its supersede table as a whole | [2026-11-27 (the game plan approved)](#2026-11-27-the-game-plan-approved) |
 | Genre | An action RPG | [2026-11-27 (Hollow prototype playtest)](#2026-11-27-hollow-prototype-playtest) |
 | Combat | The fire kit (Lampfire, Fireglobe, Lance); the Beam and Hearth ring optional; the pad map; light in a fight | [the game plan approved](#2026-11-27-the-game-plan-approved), [playtest: fuel and abilities](#2026-11-27-playtest-fuel-and-abilities) |
-| No tending | Lamps never burn; fuel becomes lamp-oil flasks; an action bar; lamps and WayLamps lit by touch; scrap the only material | [playtest: fuel and abilities](#2026-11-27-playtest-fuel-and-abilities), [the game plan approved](#2026-11-27-the-game-plan-approved) |
+| No tending | Lamps never burn; fuel becomes lamp-oil flasks; an action bar; lamps and WayLamps lit by touch; scrap the only material. The lamp limit, full refund and replant delay are on hold while lanterns are redesigned | [playtest: fuel and abilities](#2026-11-27-playtest-fuel-and-abilities), [the game plan approved](#2026-11-27-the-game-plan-approved), [M1b: lanterns are being redesigned](#2026-11-27-m1b-lanterns-are-being-redesigned) |
 | Progress | Level-gap wick; the Hollow's last level on the Ashbrood kill (now level 6, not 8); fixed skill branches replace the cards; the four approved cards keep their names and values | [wick by level gap](#2026-11-27-wick-by-level-gap), [the game plan approved](#2026-11-27-the-game-plan-approved) |
 | Loot and add-ons | Diablo-style loot in four slots (lens, burner, coat, wick); Dialogue Manager for talk; GLoot data for items; salvage in | [loot and agent skills](#2026-11-27-loot-and-agent-skills), [the game plan approved](#2026-11-27-the-game-plan-approved) |
 | Foes and pacing | No endless trickle; fixed packs and nests; cleared ground stays cleared (and after a faint, per the plan's faint rule); timid and brave Wicklings; names and bars | [Hollow prototype playtest](#2026-11-27-hollow-prototype-playtest), [the game plan approved](#2026-11-27-the-game-plan-approved) |
@@ -39,6 +39,11 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 **Still open:** the three loop calls (above); pronouns for Amos, Maud, Kit and Ivo (before M4); whether to keep the Beam and Hearth ring (after the M1a playtest); whether the `crook_post` note's wording is approved (STORY §6); "one nest on the main route: decide after playing" (`docs/archive/PLAN_ONBOARDING.md` §8).
 
 ---
+
+## 2026-11-27 (M1b: lanterns are being redesigned)
+- **The 3-lamp limit, the full refund and the 15 s replant delay are on hold** (owner, during the M1b build, relayed by the coordinator: the owner "feels the lanterns become useless without tending", and the lanterns' role is being redesigned now). M1b skips its scope item 2 and keeps building and picking up lamps as they were (half the scrap back on pick-up). GAME_PLAN §6's "Limits and cost" and question 4's limit part wait for the new lantern design; the rest of question 4 (lit by touch, lamps never burn) stands and is built.
+- **No new rules about what planted lamps do:** they keep their built effects (the safe pocket, the core that burns small foes and nests, clearing fog, the timid and brave reactions). Everything else in M1b goes ahead.
+- **Lantern code is kept easy to extend:** a lantern's effects live in one place (`scripts/lanterns/lantern.gd`, its "Effects" section), because new lantern mechanics will follow.
 
 ## 2026-11-27 (the Ashbrood's ember; M1b starts)
 - **The Ashbrood broods over the WayLamp's last ember** (owner: "yes to ashbrood ember"). A small amber ember sits in the WayLamp's cold bowl under it: the lamp's light, not the creature's, so "amber is only the keeper's fire" still holds. Kindling the WayLamp after the fight means taking that ember back. From the owner's Gemini concept sheet. Texts that mention it are DRAFT.

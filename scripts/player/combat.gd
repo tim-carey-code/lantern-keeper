@@ -171,8 +171,6 @@ func tick(delta: float, move_dir: Vector2, held: Dictionary = {}, pressed: Dicti
 			s.press()
 	if not beam_on_bar:
 		beaming = false
-	if fire_held or not pressed.is_empty() or dash_pressed:
-		k._since_ward = 0.0
 	if dash_pressed:
 		dash(move_dir)
 	queue_redraw()
@@ -198,7 +196,7 @@ func burn_along_beam(delta: float) -> int:
 	for w in get_tree().get_nodes_in_group("foe"):
 		var c: Vector2 = Geometry2D.get_closest_point_to_segment(w.global_position, seg[0], seg[1])
 		if c.distance_to(w.global_position) <= Tuning.kl_beam_half_width + w.body_radius():
-			w.hurt(Tuning.kl_beam_dps * delta, false, "beam")
+			w.hurt(Tuning.kl_beam_dps * Progress.dmg_mult() * delta, false, "beam")
 			hit += 1
 	return hit
 

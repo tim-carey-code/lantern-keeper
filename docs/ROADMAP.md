@@ -13,7 +13,7 @@
 | History: M0-M5b, the prototypes and the loop | done; see "History" at the end |
 | **M1a** Fire in the Hollow | **built, awaiting the owner's playtest.** On `proto/kl-m1a` (commits 6663292, 10099a8), not merged. DESIGN marks it BUILT (M1a); the playtest is in PLAYTEST.md |
 | **Readability step** (telegraphs and the keeper's feedback) | **built, awaiting the owner's playtest.** On `proto/kl-readability` (based on the play branch with M1a merged), not merged. DESIGN marks it BUILT (readability); the playtest is in PLAYTEST.md. The owner's order: readability, then M1b, then M2 (DECISIONS 2026-11-27) |
-| **M1b** No more tending | planned, after M1a and the readability step pass. **Merge to `main` once M1b passes.** |
+| **M1b** No more tending | **built, awaiting the owner's playtest.** On `proto/kl-m1b` (based on b3f5cd9), not merged. Started before the readability playtest (owner: "start m1b please"). **Scope change during the build** (owner, DECISIONS 2026-11-27): the lamp limit, full refund and replant delay are on hold while lanterns are redesigned. DESIGN marks it BUILT (M1b); the playtest is in PLAYTEST.md. **Merge to `main` once M1b passes,** with the README rewrite. |
 | **M2** Builds | planned |
 | **M3** Loot | planned |
 | **M4** People, part 1 | planned. Needs the owner's pronoun call for Amos (and the others before their milestones) |
@@ -97,23 +97,26 @@
 
 **Scope**
 - Lamps never burn, in every region's code paths. Fuel and glass cut. Scrap piles one-off. The woodpile becomes scenery.
-- Old lamps and WayLamps lit by touch. The lamp limit (3 outside held ground) and the 15 s replant delay.
+- Old lamps and WayLamps lit by touch. ~~The lamp limit (3 outside held ground) and the 15 s replant delay.~~ **On hold** (owner, during M1b: lanterns are being redesigned; building and pick-up stay as they were; DECISIONS 2026-11-27).
 - The faint rule (DESIGN §12.4).
 - Hollow foe levels 1-4 (Ashbrood 5), foe scaling, and the curve at base 7 and exponent 1.65.
 - The lures. The Hollow's goals and tips (new text as DRAFT in STORY). The lamp glass gives charge.
 - Ridge wind goes inert until M6. The unused ward code goes.
+- Added during M1b (owner-approved 2026-11-27): the Ashbrood broods over the WayLamp's last ember; its kill takes the ember back, which rises into the lamp as it lights.
+
+**Status:** built on `proto/kl-m1b`, awaiting the owner's playtest. Everything above is built except the lamp limit and replant delay (on hold). Notes: scrap keeps its carry limit (30, +10 a satchel) until the satchel becomes bag slots in M3; the Clinker's base wick went 20 → 28 so a pure beeline goes into the Ashbrood at L4 (DESIGN §19.1); the Clinker's and the Ashbrood's health stay as set in M1a (the re-check with scaling is in DESIGN §4.6).
 
 **Owner checks**
 1. No prompt, tip or HUD item says fuel, refuel or gather, and lamps never dim.
 2. The hut lamp, the north-path lamp and the WayLamp light by touch; the WayLamp wakes the Ashbrood.
-3. A 4th lamp outside held ground is refused, with the reason. A picked-up lamp can be planted again after 15 s.
+3. ~~A 4th lamp outside held ground is refused, with the reason. A picked-up lamp can be planted again after 15 s.~~ On hold with the lamp limit.
 4. After a faint, cleared packs stay cleared, a half-fought pack is whole and asleep, the Ashbrood restarts its phase, and nothing carried is lost.
 5. A pack, a nest and an elite look different through the fog.
 6. The last Hollow level comes on the Ashbrood kill.
 
-**Tests:** rewrite `test_core`, `test_threats` (light reactions; the ward goes), `test_waylamps` (light by touch, hold fights) and `test_upgrades` (the lamp glass part). **`test_ridge`:** keep its layout, trail and placement checks; delete its tending, ward and wind-burn checks (wind checks return in M6). New `test_faint`. `test_leveling` checks level 2 at the crook and the Ashbrood kill on both routes (L5 beeline, L6 explorer).
+**Tests:** rewrite `test_core`, `test_threats` (light reactions; the ward goes), `test_waylamps` (light by touch, hold fights) and `test_upgrades` (the lamp glass part). **`test_ridge`:** keep its layout, trail and placement checks; delete its tending, ward and wind-burn checks (wind checks return in M6). New `test_faint`. `test_leveling` checks level 2 at the crook and the Ashbrood kill on both routes (L5 beeline, L6 explorer). `test_save`: v5 → v6 from a test-only v5 file. (All done.)
 
-**Risks:** hidden fuel dependencies (goals, prompts, HUD); old saves start fresh.
+**Risks:** hidden fuel dependencies (goals, prompts, HUD); old saves. (Saves: version 5 saves migrate to version 6 and keep progress, level, the bar and flasks; DESIGN §15.)
 
 **Then:** merge to `main`, and rewrite the README (GAME_PLAN §17).
 
@@ -222,7 +225,7 @@ The plan describes these but names no milestone. Place each one when its neighbo
 | Item | Plan | Likely |
 |---|---|---|
 | The L3 tuning panel behind a dev-build flag | §3, §16 | not done in M1a; M1b or M9 |
-| Warmth +8 a level; foe damage +8% a level | §5 | M1b (with foe scaling) |
+| Warmth +8 a level; foe damage +8% a level | §5 | not in M1b's scope list (§18); M2 or a balance pass |
 | Fog slows walking to 85% at most, not 60% | §7 | M1b |
 | The map shows WayLamp icons, lures you've seen and the share explored | §14 | M1b or M2 |
 | `check_docs.py` reads skill and item texts | §17 | M2 and M3 |

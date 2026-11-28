@@ -347,11 +347,15 @@ func _travel_setup() -> void:
 	check(menu.lit_waylamps().is_empty(), "no WayLamp is lit at the start: nothing to travel to")
 	for w in get_tree().get_nodes_in_group("waylamp"):
 		Progress.notes_read["waylamp_" + w.id] = true
-	# Unlit: interact feeds, it doesn't open travel.
+	# Unlit: interact lights it (M1b: by touch, waking its guardian); it doesn't open travel.
 	var hollow := _waylamp("hollow")
 	main.player.global_position = menu.arrive_pos(hollow)
 	main.player.begin_interact()
-	check(not menu.is_open() and main.player.last_feed != "held", "a cold WayLamp doesn't open travel (%s)" % main.player.last_feed)
+	check(not menu.is_open() and main.player.last_touch == "lit", "a cold WayLamp doesn't open travel (%s)" % main.player.last_touch)
+	# Undo that fight for the travel checks below.
+	if hollow.guardian():
+		hollow.guardian().queue_free()
+	hollow.kindling = false
 	# Lit as a save would have them (Progress.settle would also pay kindling wick and open a level-up card).
 	Progress.settled[FogGrid.R_HOLLOW] = true
 	Progress.settled[FogGrid.R_MARSH] = true
@@ -398,7 +402,7 @@ func _travel_steps() -> void:
 			check(lit.size() == 2 and lit[0] == hollow and lit[1] == marsh, "lit WayLamps form the network: the Hollow and the Reedmarsh, not the cold Ridge")
 			main.player.global_position = menu.arrive_pos(hollow)
 			main.player.begin_interact()   # interact at a lit WayLamp
-			check(menu.is_open() and main.player.last_feed == "held", "interacting with a lit WayLamp opens the travel list")
+			check(menu.is_open() and main.player.last_touch == "held", "interacting with a lit WayLamp opens the travel list")
 			var texts: Array = menu.buttons.map(func(b): return b.text)
 			check(texts == ["WayLamp of the Hollow (you are here)", "WayLamp of the Reedmarsh", "Stay"], "it lists only lit WayLamps, marks where you are, and offers to stay (%s)" % str(texts))
 			check(menu.buttons[0].disabled and menu.buttons[0].focus_mode == Control.FOCUS_NONE, "where you are can't be picked or focused")
@@ -487,7 +491,7 @@ func _blocked() -> void:
 	w.state = Wickling.State.CHASE
 	check(menu.block_reason() == menu.BLOCK_HUNTED, "a Wickling chasing the keeper blocks travel")
 	keeper.begin_interact()
-	check(not menu.is_open() and keeper.last_feed == "travel_blocked", "interact then opens nothing")
+	check(not menu.is_open() and keeper.last_touch == "travel_blocked", "interact then opens nothing")
 	var lines: Array = wp.lines_for(hollow)
 	check(lines.any(func(ln): return ln[1] == menu.BLOCK_HUNTED), "and the WayLamp says why (%s)" % str(lines))
 	w.state = Wickling.State.WANDER

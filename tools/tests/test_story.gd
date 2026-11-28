@@ -52,18 +52,23 @@ func _process(_delta: float) -> void:
 			ptr = main.get_node("FogLayer/GoalPointer")
 			main.get_node("Wind").force(Wind.State.CALM, Vector2i.RIGHT, 9999.0)
 			Story.update(main)
-			check(Story.current == "gather_fuel", "first goal: take fuel from the woodpile (%s)" % Story.current)
-			check(ptr.target_pos() != null, "the pointer points at the woodpile")
-			check(not Story.tips_seen.has("cold_lantern") and main.get_node("FogLayer/LanternMarkers").needs_attention().is_empty(), "at the start only the pointer shows: no cold-lamp ring or tip before you have fuel")
-			Inventory.counts["fuel"] = 2
-			Story.update(main)
-			check(Story.done.has("gather_fuel") and Story.current == "relight_first", "carrying fuel moves on to: relight the old lantern")
-			check(Story.tips_seen.has("cold_lantern") and main.get_node("FogLayer/LanternMarkers").needs_attention().size() == 1, "with fuel in hand, the cold lamp gets its ring and the first tip")
-			check(ptr.target_pos() == main.start_lantern_pos, "the pointer moves to the old lantern")
+			# M1b: the opening is lighting the hut's old lamp by touch (no woodpile, no fuel).
+			check(Story.current == "relight_first", "first goal: relight the old lantern by the hut (%s)" % Story.current)
+			check(ptr.target_pos() == main.start_lantern_pos, "the pointer points at the old lantern")
+			check(main.get_node("FogLayer/LanternMarkers").unlit_old_lamps() == [lamp], "its cold frame shows through the fog (the north path's waits)")
+			check(not Story.TIPS.has("cold_lantern") and not Story.TIPS.has("low_lantern") and not Story.TIPS.has("dying_lantern") and not Story.TIPS.has("glass"), "the fuel-era tips are gone")
+			var all_text := ""
+			for g in Story.GOALS:
+				all_text += String(g["text"]) + " "
+			for k in Story.TIPS:
+				all_text += String(Story.TIPS[k]) + " "
+			all_text = all_text.to_lower()
+			var gather := RegEx.create_from_string("\\bgather\\b")   # ("gathering itself", the Clinker's tell in the dash tip, is not resource gathering)
+			check(not all_text.contains("fuel") and gather.search(all_text) == null, "no goal or tip mentions fuel, refuelling or gathering")
 			main.player.position = lamp.global_position + Vector2(0, 20)
-			main.player.refuel(lamp)
+			main.player.begin_interact()
 			Story.update(main)
-			check(Story.done.has("relight_first") and Story.entries.has(1), "relighting it completes the goal and writes 'Arrival'")
+			check(lamp.is_lit() and Story.done.has("relight_first") and Story.entries.has(1), "lighting it by touch completes the goal and writes 'Arrival'")
 			check(Story.current == "read_ledger", "next: read the ledger")
 			_read("ledger")
 			Story.update(main)
@@ -72,11 +77,10 @@ func _process(_delta: float) -> void:
 			check(Story.current == "relight_waypost" and ptr.target_pos() == main.waypost_lantern_pos, "next: relight the old lamp on the north path, and the pointer leads there (%s)" % Story.current)
 			var waypost: Node2D = get_tree().get_nodes_in_group("lantern").filter(func(l): return l.global_position.distance_to(main.waypost_lantern_pos) < 8.0)[0]
 			check(not waypost.is_lit(), "it starts cold")
-			Inventory.counts["fuel"] = 2
 			main.player.position = waypost.global_position + Vector2(0, 20)
-			main.player.refuel(waypost)
+			main.player.begin_interact()
 			Story.update(main)
-			check(Story.done.has("relight_waypost") and Story.tips_seen.has("haven"), "relighting it completes the goal and shows the haven tip")
+			check(waypost.is_lit() and Story.done.has("relight_waypost") and Story.tips_seen.has("haven"), "lighting it by touch completes the goal and shows the haven tip")
 			check(Story.current == "build_post" and ptr.target_pos() == _landmark("crook_post").global_position, "next: take back the lamp from Oswin's crook, and the pointer leads there")
 			check(Story.goal_text("build_post") == "Take back the lamp from Oswin's crook", "the goal names Oswin's crook")
 			Story.note_built("post")
@@ -150,17 +154,22 @@ func _process(_delta: float) -> void:
 			# The new HUD: prompts over things, the right button for the device, goal banner, chips.
 			var wp = main.get_node("FogLayer/WorldPrompt")
 			InputHint.pad = false
-			var lamp_lines: Array = wp.lines_for(lamp)
-			check(lamp_lines[0][0] == "E" and String(lamp_lines[0][1]).begins_with("Refuel"), "a lantern shows '[E] Refuel' on keyboard (%s)" % str(lamp_lines))
+			# M1b: a planted lamp has nothing to refuel; its only prompt is the pick-up. A lit old lamp has none.
+			var planted := Lantern.new()
+			planted.position = main.start + Vector2(0, 200)
+			main.get_node("Lanterns").add_child(planted)
+			var lamp_lines: Array = wp.lines_for(planted)
+			check(lamp_lines == [["E", "Hold: pick up"]], "a planted lantern shows '[E] Hold: pick up' on keyboard, and no refuelling (%s)" % str(lamp_lines))
+			check(wp.lines_for(lamp).is_empty(), "a lit old lamp shows nothing (it can't be picked up)")
 			InputHint.pad = true
 			# M1a: B is the flask now, so a lantern is picked up by holding A (GAME_PLAN §3).
-			check(wp.lines_for(lamp)[0][0] == "A" and wp.lines_for(lamp)[1][0] == "A" and String(wp.lines_for(lamp)[1][1]) == "Hold: pick up", "and '[A] Refuel  [A] Hold: pick up' on a controller")
+			check(wp.lines_for(planted) == [["A", "Hold: pick up"]], "and '[A] Hold: pick up' on a controller")
 			check(wp.lines_for(_landmark("ledger"))[0][1] == "Read again", "a read note says 'Read again'")
 			InputHint.pad = false
 			var hud = main.get_node("HUD")
 			hud._process(0.016)
 			check(hud.goal_panel.visible and hud.goal_label.text == Story.goal_text(Story.current), "the goal banner shows the current goal")
-			check(hud.counts["fuel"].text == str(Inventory.get_count("fuel")), "the resource panel shows what you carry")
+			check(hud.counts.keys() == ["scrap"] and hud.counts["scrap"].text == str(Inventory.get_count("scrap")), "the resource panel shows the scrap you carry, and no fuel or glass")
 			# Opening and name entry.
 			var o = main.get_node("Opening")
 			o.start()
@@ -180,7 +189,7 @@ func _process(_delta: float) -> void:
 			add_child(main)
 			check(Story.player_name == "Tess", "the keeper's name comes back")
 			check(Story.done.has("pumphouse") and Story.entries.has(4), "finished goals and journal entries come back")
-			check(Story.visited.has(FogGrid.R_MARSH) and Story.tips_seen.has("cold_lantern"), "where you've been and tips already seen come back")
+			check(Story.visited.has(FogGrid.R_MARSH) and Story.tips_seen.has("haven"), "where you've been and tips already seen come back")
 		10:
 			Story.update(main)
 			check(Story.current == "build_reservoir", "the current goal is picked up again (%s)" % Story.current)

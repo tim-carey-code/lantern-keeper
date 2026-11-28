@@ -121,7 +121,7 @@ func _layout() -> void:
 	check(walk_ok, "the main route is open ground all the way from the hut to the WayLamp")
 
 	# 1. A calm hut: nothing wakes while you gather, relight and read (owner 2026-11-27).
-	var woodpile: Vector2 = get_tree().get_nodes_in_group("resource").filter(func(r): return r.always_regrow)[0].global_position
+	var woodpile: Vector2 = main.get_node("Terrain/Woodpile").global_position   # scenery since M1b
 	var calm := {"the hut": start, "the hut lantern": main.start_lantern_pos, "the woodpile": woodpile, "the ledger": _landmark("ledger").global_position,
 		"the hut's scrap": main.fog.tile_center(main.fog.tile_of(start + Vector2(64, -32)))}
 	var wakes := []
@@ -224,9 +224,9 @@ func _layout() -> void:
 
 func _goals() -> void:
 	var ids := []
-	for g in Story.GOALS.slice(0, 7):
+	for g in Story.GOALS.slice(0, 6):
 		ids.append(g["id"])
-	check(ids == ["gather_fuel", "relight_first", "read_ledger", "relight_waypost", "build_post", "burn_nest", "kindle_hollow"], "the Hollow's goals in order (%s)" % str(ids))
+	check(ids == ["relight_first", "read_ledger", "relight_waypost", "build_post", "burn_nest", "kindle_hollow"], "the Hollow's goals in order, starting with the hut lamp lit by touch (%s)" % str(ids))
 	var ptr = get_tree().get_first_node_in_group("goal_pointer")
 	var missing := []
 	for id in ids:

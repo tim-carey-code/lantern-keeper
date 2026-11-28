@@ -70,8 +70,7 @@ func _process(_delta: float) -> void:
 				if w.id == "hollow":
 					lamp = w
 			Progress.notes_read["waylamp_hollow"] = true
-			Inventory.add("fuel", Tuning.waylamp_fuel_need)
-			check(lamp.feed() == "fed" and lamp.kindling, "15 fuel wakes the Hollow's guardian")
+			check(lamp.touch() == "lit" and lamp.kindling, "a touch on the WayLamp wakes the Hollow's guardian (M1b: no fuel)")
 		6:
 			var bosses := get_tree().get_nodes_in_group("foe").filter(func(f): return f is Ashbrood)
 			check(bosses.size() == 1, "the Ashbrood appears at the WayLamp")
@@ -79,14 +78,19 @@ func _process(_delta: float) -> void:
 				var boss: Ashbrood = bosses[0]
 				var bb = main.get_node("BossBar")
 				check(bb.boss() == boss and boss.foe_name == "The Ashbrood", "the guardian gets a named boss bar")
-				boss.hurt(Tuning.kl_ashbrood_hp + Tuning.kl_ashbrood_shell + 1.0, false, "beam")
-				check(boss.phase == 2 and boss.hp == Tuning.kl_ashbrood_hp, "breaking phase one opens the diving phase")
-				boss.hurt(Tuning.kl_ashbrood_hp + Tuning.kl_ashbrood_shell + 1.0, false, "beam")
-				check(boss.in_phase_pause() and boss.hp == Tuning.kl_ashbrood_hp, "it rises out of the bowl first, and can't be hurt meanwhile")
+				boss.hurt(boss.phase_hp() + boss.phase_shell() + 1.0, false, "beam")
+				check(boss.phase == 2 and boss.hp == boss.phase_hp(), "breaking phase one opens the diving phase")
+				check(boss.level == Tuning.kl_ashbrood_level and is_equal_approx(boss.phase_hp(), Tuning.kl_ashbrood_hp * (1.0 + Tuning.kl_foe_hp_per_level * (Tuning.kl_ashbrood_level - 1))), "a phase's health grows 12%% a level: Lv %d, %.0f a phase (M1b)" % [boss.level, boss.phase_hp()])
+				boss.hurt(boss.phase_hp() + boss.phase_shell() + 1.0, false, "beam")
+				check(boss.in_phase_pause() and boss.hp == boss.phase_hp(), "it rises out of the bowl first, and can't be hurt meanwhile")
 				boss.end_phase_pause()
-				boss.hurt(Tuning.kl_ashbrood_hp + Tuning.kl_ashbrood_shell + 1.0, false, "beam")
+				boss.hurt(boss.phase_hp() + boss.phase_shell() + 1.0, false, "beam")
 				check(Progress.is_settled(FogGrid.R_HOLLOW), "beating phase two holds the Hollow")
 		7:
+			# M1b: while the WayLamp takes its ember back (it rises into the lamp), the level-up cards wait.
+			var wl: WayLamp = get_tree().get_nodes_in_group("waylamp").filter(func(w): return w.id == "hollow")[0]
+			check(wl.ember_rise_t > 0.0 and not level_ui.root.visible, "the level-up cards wait while the ember rises into the WayLamp")
+			wl.ember_rise_t = 0.0
 			# A second level-up: the controller must land on the new cards (owner: the pad stopped working).
 			get_tree().paused = false
 			Tuning.ui_open = false

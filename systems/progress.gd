@@ -25,7 +25,6 @@ var selected := "post"
 var regions_seen := {}
 var notes_read := {}
 var settled := {}          # region id -> true once its WayLamp is lit ("held")
-var waylamp_fuel := {}     # WayLamp id -> carried fuel fed into it so far
 var wick := 0
 var wick_frac := 0.0        # fractions of wick from reduced kills, carried until they make a whole one
 var level := 1
@@ -45,7 +44,6 @@ func reset() -> void:
 	regions_seen = {}
 	notes_read = {}
 	settled = {}
-	waylamp_fuel = {}
 	wick = 0
 	wick_frac = 0.0
 	level = 1
@@ -221,11 +219,13 @@ func apply_upgrades() -> void:
 func lamp_max_radius() -> float:
 	return Tuning.hand_lamp_max_radius + Tuning.lamp_upgrade_radius * upgrade_level("lamp")
 
-func lamp_drain_per_sec() -> float:
-	return Tuning.hand_lamp_drain_per_sec * pow(Tuning.lamp_upgrade_dim_mult, upgrade_level("lamp"))
+## The most lamp charge the keeper can hold: 1.0, +lamp_upgrade_charge per lamp glass (M1b, GAME_PLAN §5).
+func charge_max() -> float:
+	return 1.0 + Tuning.lamp_upgrade_charge * upgrade_level("lamp")
 
-func ward_drain_per_sec() -> float:
-	return Tuning.ward_drain_per_sec * pow(Tuning.lamp_upgrade_ward_mult, upgrade_level("lamp"))
+## The keeper's fire grows with their level: +kl_dmg_per_level a level over 1 (M1b, GAME_PLAN §4.6).
+func dmg_mult() -> float:
+	return 1.0 + Tuning.kl_dmg_per_level * float(level - 1)
 
 func reveal_region(id: int, region_name: String) -> void:
 	if regions_seen.has(id):

@@ -67,6 +67,11 @@ func _on_level_up(_new_level: int) -> void:
 func _present_next() -> void:
 	if _queue <= 0 or root.visible:
 		return
+	if _ember_rising():
+		# M1b: the Ashbrood's kill gives the Hollow's last level while the WayLamp takes its ember back. The cards
+		# pause the world, so they wait until the ember has risen into the lamp.
+		get_tree().create_timer(0.2).timeout.connect(_present_next)
+		return
 	_queue -= 1
 	_offer.clear()
 	var pool: Array[Dictionary] = []
@@ -98,6 +103,13 @@ func _present_next() -> void:
 	Tuning.ui_open = true
 	get_tree().paused = true
 	(cards.get_child(0) as Button).grab_focus()
+
+## True while a WayLamp's ember rises into it (WayLamp.take_back_ember).
+func _ember_rising() -> bool:
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.ember_rise_t > 0.0:
+			return true
+	return false
 
 ## A short warm flash as the screen opens.
 func _flash() -> void:
