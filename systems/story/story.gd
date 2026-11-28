@@ -83,6 +83,9 @@ const TIPS := {
 	# M1a (DRAFT, STORY.md §14.3): once Lance is learned and the Beam is off the bar (a level-2 keeper, or a version 4
 	# save migrated past level 2), say where the Beam went. The level-2 Lance toast says it too, and marks this seen.
 	"beam_off_bar": "The Beam is in your Skills list ([skills]).",
+	# M1c (DRAFT, STORY.md §16): light against dark, and the lock.
+	"dark": "In the dark they shrug off your fire. Bring light to them.",
+	"lock": "[lock] locks onto a foe. Flick [aim] to switch.",
 }
 
 var player_name := ""
@@ -147,6 +150,7 @@ func tip_text(id: String) -> String:
 	var t: String = TIPS.get(id, "")
 	var ring_slot := Progress.slot_of("hearth_ring")
 	t = t.replace("[beam]", InputHint.key("skill_1")).replace("[burst]", InputHint.key(ring_slot if ring_slot != "" else "skill_4"))
+	t = t.replace("[lock]", InputHint.key("lock_on"))
 	t = t.replace("[dash]", InputHint.key("dash")).replace("[build]", InputHint.key("place_lantern")).replace("[skills]", InputHint.key("skills"))
 	return t.replace("[aim]", "the right stick" if InputHint.pad else "the mouse")
 

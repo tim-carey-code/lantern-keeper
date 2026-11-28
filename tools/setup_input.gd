@@ -61,6 +61,10 @@ func _init() -> void:
 		"select_3": [key(KEY_3)],
 		"select_4": [key(KEY_4)],
 		"debug_toggle": [key(KEY_F1), pad_button(JOY_BUTTON_LEFT_STICK)],    # live tuning panel (left stick click)
+		# M1c: the target lock (R3 by default; the pause menu can move it to Y, L3 or a back paddle). Read after the menu guard.
+		"lock_on": [mouse(MOUSE_BUTTON_MIDDLE), pad_button(JOY_BUTTON_RIGHT_STICK)],
+		"lock_next": [mouse(MOUSE_BUTTON_WHEEL_DOWN)],   # K&M: the wheel moves the lock around you
+		"lock_prev": [mouse(MOUSE_BUTTON_WHEEL_UP)],
 	}
 	for name in actions:
 		ProjectSettings.set_setting("input/" + name, {"deadzone": DEADZONE, "events": actions[name]})

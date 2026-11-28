@@ -49,6 +49,10 @@ func reset_for_faint() -> void:
 		_tell.finish()
 		_tell = null
 
+## Nests skip the light rule (M1c): only lamp cores hurt them anyway.
+func light_exempt() -> bool:
+	return true
+
 func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	if source != "core":
 		return

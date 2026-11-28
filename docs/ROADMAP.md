@@ -14,6 +14,8 @@
 | **M1a** Fire in the Hollow | **built, awaiting the owner's playtest.** On `proto/kl-m1a` (commits 6663292, 10099a8), not merged. DESIGN marks it BUILT (M1a); the playtest is in PLAYTEST.md |
 | **Readability step** (telegraphs and the keeper's feedback) | **built, awaiting the owner's playtest.** On `proto/kl-readability` (based on the play branch with M1a merged), not merged. DESIGN marks it BUILT (readability); the playtest is in PLAYTEST.md. The owner's order: readability, then M1b, then M2 (DECISIONS 2026-11-27) |
 | **M1b** No more tending | **built, awaiting the owner's playtest.** On `proto/kl-m1b` (based on b3f5cd9), not merged. Started before the readability playtest (owner: "start m1b please"). **Scope change during the build** (owner, DECISIONS 2026-11-27): the lamp limit, full refund and replant delay are on hold while lanterns are redesigned. DESIGN marks it BUILT (M1b); the playtest is in PLAYTEST.md. **Merge to `main` once M1b passes,** with the README rewrite. |
+| **M1b** playtest | **done** (owner, 2026-11-28; results in PLAYTEST.md): tending gone felt fine, light by touch stays one press, the level pace is right, the faint rule worked; the ember didn't read (fixed in M1c) |
+| **M1c** Lamps in the fight | **built, awaiting the owner's playtest.** On `proto/kl-m1c` (based on a98d41a: the play branch with M1b, the sprites and the approved lanterns addendum), not merged. From `docs/replan/PLAN_LANTERNS.md` §8, plus the owner's M1b playtest fixes (the damage fix, the Ashbrood fighting back, the ember) and the lamp slots (owner 2026-11-28). DESIGN marks it BUILT (M1c), §20; the playtest is in PLAYTEST.md |
 | **M2** Builds | planned |
 | **M3** Loot | planned |
 | **M4** People, part 1 | planned. Needs the owner's pronoun call for Amos (and the others before their milestones) |
@@ -119,6 +121,30 @@
 **Risks:** hidden fuel dependencies (goals, prompts, HUD); old saves. (Saves: version 5 saves migrate to version 6 and keep progress, level, the bar and flasks; DESIGN §15.)
 
 **Then:** merge to `main`, and rewrite the README (GAME_PLAN §17).
+
+---
+
+## M1c: Lamps in the fight
+
+From `docs/replan/PLAN_LANTERNS.md` §8 (approved 2026-11-27, "1-6 yes to all"), with the owner's M1b playtest fixes.
+
+**Scope**
+1. Light states (dark x0.7 with a shell floor, dim x1.0, lit x1.3 with shells x1.5), their looks, the linger, the first-time tip. Nests exempt.
+2. Combos: catch, flare (with the snap), chain. Feed too, because the Beam is still kept (its keep-or-cut is open).
+3. The Ashbrood: hurt only when lit; the rim lamp; the ember flare; smothering during the sit; the puff snuffs lamps; the boss bar hint. Beyond the plan (owner: "it just sits there"): ash bolts and a wing sweep in phase 1, never more than 2 s idle; dives every 1.5 s after a sit. Health re-measured to 340 a phase.
+4. Lamp slots by level (2 → 5), the HUD pips, the refusal reason, an 8 s replant, a full refund (owner 2026-11-28: build them now).
+5. Target lock on pad and keyboard/mouse; the marker; the breaks; per-skill use; Y takes any skill; the options.
+6. The damage fix: Wicklings chill in ticks with a swarm cap, the Clinker's roll is the hardest single hit and knocks back, foe damage +8% a level.
+7. The ember: one ember at the Ashbrood's feet, no quest arrow during the fight.
+8. DRAFT texts in STORY §16. Save version 7 (the rim lamp).
+
+**Status:** built on `proto/kl-m1c`, awaiting the owner's playtest. Nothing in the scope was cut. **Not in M1c:** lamp types' new jobs (turret and the rest), loot lines, claim posts, tides.
+
+**Owner checks** (pad, one WayLamp lit, plus a save from before the Ashbrood): PLAYTEST.md, "M1c: what to try".
+
+**Tests:** new `test_light_states`, `test_combos`, `test_lock`, `test_fights` (the damage fix and the Ashbrood's activity); M1c checks in `test_core` (slots), `test_skills` (the time-to-kill sums with light), `test_waylamps`, `test_input`, `test_telegraphs` and `test_save` (v6 → v7). Older tests turn the light rule and the slot limit off where they check other things. The bench: 6 lamps and 40 bolts, and the default 30 lamps and 20 foes, both under the 4 ms budget.
+
+**Risks** (the plan's): the dark may feel like a chore (Spitwicks fight from the dark); combos may trivialise packs; 8 s replant may allow lamp-dragging; R3 may click by accident; the dark/lit look on near-black Wickling art is subtle.
 
 ---
 

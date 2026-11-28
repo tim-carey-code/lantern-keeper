@@ -36,6 +36,7 @@ var chips: VBoxContainer
 var keys: Label
 var building: Label
 var building_pic: TextureRect
+var lamp_pips: Control         # M1c: one pip per lamp slot (lit: a lamp planted; empty: free)
 var _banner_t := 0.0
 var _toast_t := 0.0
 var _tip_t := 0.0
@@ -129,6 +130,11 @@ func _build_resource_panel() -> void:
 	building = UiStyle.label(20, UiStyle.PALE)
 	building.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b.add_child(building)
+	lamp_pips = Control.new()
+	lamp_pips.custom_minimum_size = Vector2(16 * Tuning.kl_lamp_slots_max, 24)
+	lamp_pips.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	lamp_pips.draw.connect(_draw_lamp_pips)
+	b.add_child(lamp_pips)
 
 func _meter(parent: Control, icon_name: String, fill: Color) -> ProgressBar:
 	var row := HBoxContainer.new()
@@ -302,6 +308,7 @@ func _process(delta: float) -> void:
 	building.text = "%s   [%s] switch" % [Lantern.display(sel), InputHint.key("build_menu")]
 	building_pic.texture = Art.placeholder({"post": "post_lamp_lit.png", "reservoir": "reservoir_lamp_lit.png", "hooded": "hooded_lamp_lit.png", "mirror": "mirror_post_lit.png"}.get(sel, "post_lamp_lit.png"))
 	_update_wick()
+	lamp_pips.queue_redraw()
 	# Status chips: rebuilt only when what they say changes.
 	var items := status_items()
 	if str(items) != str(_status):
@@ -314,6 +321,34 @@ func _process(delta: float) -> void:
 	else:
 		keys.text = "%s journal    %s map\n%s lamps    %s skills\n%s pause" % [InputHint.key("journal"), InputHint.key("map"), InputHint.key("build_menu"), InputHint.key("skills"), InputHint.key("pause")]
 	keys.modulate.a = clampf(_keys_t / 3.0, 0.0, 0.8)
+
+## What the lamp pips show (M1c): [slots, used, replant 0..1 still to wait]. Public for tests and captures.
+func lamp_pip_state() -> Array:
+	var player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return [Progress.lamp_slots(), 0, 0.0]
+	return [Progress.lamp_slots(), player.lamps_used(), clampf(player.replant_t / maxf(Tuning.kl_lamp_replant_cd, 0.01), 0.0, 1.0)]
+
+## Lamp slots as small lamp pips beside the lamp kind (like the flask pips): a lit pip is a lamp planted out in
+## the valley, an empty one a free slot; while a pick-up's replant wait runs, the first free pip fills as a ring.
+func _draw_lamp_pips() -> void:
+	if not Progress.is_unlocked("post"):
+		return
+	var st := lamp_pip_state()
+	var slots: int = st[0]
+	var used: int = st[1]
+	var wait: float = st[2]
+	for i in slots:
+		var c := Vector2(8 + i * 16, 12)
+		var lit := i < used
+		lamp_pips.draw_rect(Rect2(c + Vector2(-1, -9), Vector2(2, 3)), Color(0.5, 0.45, 0.4))
+		lamp_pips.draw_circle(c, 5.0, Color(0.05, 0.06, 0.1, 0.9))
+		if lit:
+			lamp_pips.draw_circle(c, 4.0, UiStyle.AMBER)
+			lamp_pips.draw_circle(c, 1.8, UiStyle.CREAM)
+		lamp_pips.draw_arc(c, 5.5, 0.0, TAU, 16, UiStyle.GOLD if lit else Color(0.56, 0.6, 0.66), 1.5)
+		if not lit and i == used and wait > 0.0:
+			lamp_pips.draw_arc(c, 3.0, -PI / 2.0, -PI / 2.0 + TAU * (1.0 - wait), 12, Color(UiStyle.AMBER, 0.8), 2.0)
 
 ## The level, the bar toward the next level and the count; a short gold flash when the level goes up.
 func _update_wick() -> void:

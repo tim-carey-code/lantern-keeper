@@ -15,6 +15,7 @@ func check(ok: bool, label: String) -> void:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	Story.skip_opening = true
+	# M1c (review): the real rules stay on here: light states, the Ashbrood hurt only when lit, lamp slots.
 	Tuning.wick_enabled = false
 	SaveGame.path = "user://test_hollow_prototype.json"
 	SaveGame.delete_save()
@@ -71,6 +72,9 @@ func _process(_delta: float) -> void:
 					lamp = w
 			Progress.notes_read["waylamp_hollow"] = true
 			check(lamp.touch() == "lit" and lamp.kindling, "a touch on the WayLamp wakes the Hollow's guardian (M1b: no fuel)")
+			# M1c: the bowl's rim lamp, lit by touch, is what lets the keeper hurt it (no scrap needed).
+			var rim: Array = get_tree().get_nodes_in_group("lantern").filter(func(l): return l.global_position.distance_to(main.rim_lamp_pos) < 8.0)
+			check(rim.size() == 1 and rim[0].light_by_touch(), "M1c: the rim lamp lights by touch")
 		6:
 			var bosses := get_tree().get_nodes_in_group("foe").filter(func(f): return f is Ashbrood)
 			check(bosses.size() == 1, "the Ashbrood appears at the WayLamp")
@@ -78,6 +82,7 @@ func _process(_delta: float) -> void:
 				var boss: Ashbrood = bosses[0]
 				var bb = main.get_node("BossBar")
 				check(bb.boss() == boss and boss.foe_name == "The Ashbrood", "the guardian gets a named boss bar")
+				check(boss.is_exposed(), "M1c: the rim lamp's light reaches the bowl: it is lit (exposed)")
 				boss.hurt(boss.phase_hp() + boss.phase_shell() + 1.0, false, "beam")
 				check(boss.phase == 2 and boss.hp == boss.phase_hp(), "breaking phase one opens the diving phase")
 				check(boss.level == Tuning.kl_ashbrood_level and is_equal_approx(boss.phase_hp(), Tuning.kl_ashbrood_hp * (1.0 + Tuning.kl_foe_hp_per_level * (Tuning.kl_ashbrood_level - 1))), "a phase's health grows 12%% a level: Lv %d, %.0f a phase (M1b)" % [boss.level, boss.phase_hp()])

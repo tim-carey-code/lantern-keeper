@@ -5,7 +5,7 @@ extends Node
 # Post Lamp. M1b (no more tending): lamps never burn, dim or need fuel; they shine at full radius while lit.
 var lantern_max_radius := 224.0         # px
 var post_lamp_cost_scrap := 5
-var pickup_refund := 0.5                # share of build cost returned on pick-up (as built; owner redesigning lanterns)
+var pickup_refund := 1.0                # share of build cost returned on pick-up (M1c: full, PLAN_LANTERNS §5)
 var kl_snuff_sec := 8.0                 # s a lamp stays snuffed after the Ashbrood's dive; then it relights itself
 
 # Hooded Lamp (unlocked at the glazier's workshop): a smaller light (its gust-proof job comes in M6)
@@ -65,7 +65,6 @@ var wick_beam_burn := 3.5           # hp/s inside a Mirror Post beam (3 hp -> un
 var ember_life := 30.0              # seconds before a scrap drop fades
 var wick_scrap_chance := 0.35       # chance a burned Wickling also drops 1 scrap
 var warmth_max := 100.0
-var warmth_drain_per_sec := 30.0    # while a Wickling touches the keeper
 var kl_warmth_regen := 20.0         # in lantern light when nothing hunts (GAME_PLAN §5)
 # The faint rule (M1b, GAME_PLAN §12): nothing carried is lost; wick waits where you fell.
 var kl_faint_warmth := 0.6          # share of max warmth you wake with
@@ -131,7 +130,7 @@ var kl_clinker_speed := 40.0
 var kl_clinker_roll_speed := 280.0
 var kl_clinker_roll_dist := 260.0
 var kl_clinker_roll_tell := 0.9         # was 0.8 (readability: §4.3 row 8)
-var kl_clinker_hit_warmth := 25.0
+var kl_clinker_hit_warmth := 30.0      # was 25 (M1c damage fix): Lv 4 x1.24 = 37, the Hollow's hardest single hit
 var kl_clinker_hit_range := 22.0
 var kl_clinker_target_range := 330.0
 var kl_clinker_wake_radius := 224.0     # px from its post: it sleeps until you come this close
@@ -146,14 +145,14 @@ var kl_nest_wake_radius := 320.0
 var kl_nest_hatch_count := 3
 var kl_nest_hatch_sec := 10.0
 var kl_nest_core_radius := 16.0
-var kl_ashbrood_hp := 220.0             # per phase; 2 phases in M1a, hand-set to the 2-minute target (GAME_PLAN §4.6)
+var kl_ashbrood_hp := 340.0             # per phase; was 220 (M1c: always fought lit, x1.3; re-measured to the 2-minute target, test_skills)
 var kl_ashbrood_shell := 12.0
 var kl_ashbrood_puff_period := 7.0
 var kl_ashbrood_puff_tell := 1.0        # was 0.8 (readability: §4.3 row 9)
 var kl_ashbrood_puff_radius := 140.0
 var kl_ashbrood_puff_warmth := 15.0
 var kl_ashbrood_wave_period := 8.0
-var kl_ashbrood_dive_period := 6.0
+var kl_ashbrood_dive_period := 1.5        # was 6 (M1c: "it just sits there"): s after a sit before the next dive
 var kl_ashbrood_dive_tell := 1.0        # was 0.7 (readability: §4.3 row 11)
 var kl_ashbrood_dive_warmth := 25.0
 var kl_ashbrood_sit_sec := 4.0
@@ -311,5 +310,93 @@ var kl_fx_drink_time := 0.6              # s: the warm glow rising up the keeper
 var kl_fx_hurt_time := 0.25              # s: the cold flash when something chills the keeper
 
 var kl_ambient_spawns := false           # the old endless trickle of Wicklings out of the fog (off: ARPG packs instead)
+
+# --- M1c: lamps in the fight (docs/replan/PLAN_LANTERNS.md; owner-approved 2026-11-27, starting values) ---
+# The damage fix (owner, M1b playtest: "the Wicklings fried me", "I was tanking hit after hit from the Clinker").
+# A touching Wickling chills in ticks, and all Wicklings together take at most kl_swarm_chill_cap a second:
+# 3 Wicklings and no dodging take a full keeper down in about 3.6 s (was 1.1 s at 30/s each, stacking).
+var kl_wick_chill_hit := 5.0             # warmth per touch tick (an elite: x kl_elite_chill_mult)
+var kl_wick_chill_tick := 0.5            # s between one Wickling's ticks
+var kl_swarm_chill_cap := 28.0           # warmth/s: the most every touching Wickling together can take
+var kl_swarm_chill_burst := 0.5          # s of the cap that can land at once (the swarm's budget refills at the cap)
+var kl_foe_dmg_per_level := 0.08         # foe damage +8% a level over 1 (hits, spit, touch, the guardians)
+var kl_clinker_knock := 120.0            # px the Clinker's roll throws the keeper, out of its lane
+var kl_hurt_shake_min := 10.0            # a chill this big or more is a hit: shake and the cold flash
+# Light states (§2.1): dark (outside every light), dim (only the hand lamp), lit (a lamp's light).
+var kl_dark_dmg_mult := 0.7              # damage a foe in the dark takes
+var kl_lit_dmg_mult := 1.3               # ...and a lit (exposed) one
+var kl_lit_shell_mult := 1.5             # a lit foe's shell wears this much faster
+var kl_dark_shell_floor := 1.0           # in the dark a shell wears down to this and no further (it can't break)
+var kl_exposed_linger := 0.5             # s a foe stays exposed after it leaves light
+var kl_ashbrood_needs_light := true      # the Ashbrood is hurt only when lit (dim counts as dark for it)
+# Combos (§3): at a lamp's flame (a planted lamp or a lit old lamp; WayLamps don't).
+var kl_catch_reach := 28.0               # px: a Lampfire bolt this close to a flame catches
+var kl_catch_dmg_add := 1.0              # ...and hits this much harder
+var kl_catch_split := 2                  # side bolts it throws
+var kl_catch_spread_deg := 18.0
+var kl_catch_split_dmg := 2.0
+var kl_catch_split_range := 240.0
+var kl_flare_reach := 40.0               # px: a Fireglobe landing this close to a flame snaps onto it and flares it
+var kl_flare_dmg := 16.0
+var kl_flare_radius := 160.0
+var kl_flare_ground_radius := 140.0
+var kl_flare_light_mult := 1.5           # the lamp's light while it flares
+var kl_flare_time := 3.0
+var kl_flare_lamp_cd := 6.0              # s before a lamp can flare again
+var kl_shake_flare := 0.6
+var kl_chain_reach := 28.0               # px: a Lance this close to two flames chains them
+var kl_chain_max_gap := 420.0
+var kl_chain_dmg := 6.0
+var kl_chain_width := 20.0
+var kl_chain_burn_dps := 2.0
+var kl_chain_burn_time := 2.0
+var kl_shake_chain := 0.3
+var kl_feed_light_mult := 1.3            # the Beam touching a flame (the Beam is still an optional skill)
+var kl_feed_core_mult := 2.0
+# Lamp slots by level (§5; owner 2026-11-28: build them now). 2 at the start, +1 at each level below, up to 5.
+var kl_lamp_slots_base := 2
+var kl_lamp_slot_level_a := 4            # the 3rd slot
+var kl_lamp_slot_level_b := 8            # the 4th
+var kl_lamp_slot_level_c := 12           # the 5th
+var kl_lamp_slots_max := 6               # with gear (M3); no gear adds slots yet
+var kl_lamp_replant_cd := 8.0            # s after picking a lamp up before you can plant again
+# The Ashbrood (§2.1, §8 item 3; owner playtest: "it just sits there").
+var kl_ashbrood_puff_snuff := 4.0        # s its ash puff snuffs every planted lamp inside the circle
+var kl_ember_flare_radius := 120.0       # a Fireglobe in the bowl stirs the ember: it lights this far
+var kl_ember_flare_time := 4.0
+var kl_ember_flare_cd := 8.0
+var kl_rim_lamp_dist := 180.0            # px from the WayLamp: the old lamp on the bowl's rim
+var kl_ashbrood_bolt_period := 2.2       # s between its ash bolts in the bowl (phase 1)
+var kl_ashbrood_bolt_tell := 0.7
+var kl_ashbrood_bolt_count := 3          # bolts in a fan
+var kl_ashbrood_bolt_spread_deg := 16.0
+var kl_ashbrood_bolt_speed := 230.0
+var kl_ashbrood_bolt_warmth := 10.0
+var kl_ashbrood_bolt_range := 420.0
+var kl_ashbrood_sweep_tell := 0.8        # its wing sweep (phase 1) when you stand close
+var kl_ashbrood_sweep_radius := 96.0
+var kl_ashbrood_sweep_warmth := 16.0
+var kl_ashbrood_sweep_knock := 90.0
+var kl_ashbrood_sweep_cd := 4.0
+var kl_ashbrood_dark_sit := 1.0          # s it sits after a dive that found no lit lamp (then ash bolts)
+var kl_ashbrood_idle_max := 2.0          # s: it never waits longer than this between attacks
+var kl_ashbrood_trail_period := 1.0      # phase 2: ash it drops along a dive's flight lingers as small puffs
+# Target lock (§6).
+var kl_lock_range := 400.0
+var kl_lock_cone_deg := 60.0
+var kl_lock_flick := 0.8
+var kl_lock_flick_time := 0.25
+var kl_lock_steer_time := 0.25
+var kl_lock_chain_radius := 160.0
+var kl_lock_break_range := 480.0
+var kl_lock_break_time := 0.5
+var kl_lock_los_grace := 0.75
+var kl_lock_fog_max := 0.8
+var kl_lock_fog_grace := 1.5
+var kl_lock_lead_max := 48.0
+var kl_lock_globe_min := 60.0
+var kl_lock_beam_turn := 180.0           # degrees a second
+var kl_y_autotarget_deg := 30.0
+var kl_sticky_click_radius := 24.0
 
 var ui_open := false                    # true while a menu has focus (player stops)

@@ -38,6 +38,15 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS   # keep counting frames when a note pauses the world
 	strip_real_input()
 	Story.skip_opening = true
+	# M1c: this test predates the light states and lamp slots (test_light_states, test_combos and test_core's slot
+	# checks cover those). The light rule and the slot limit are off here, so its sums stay as they were.
+	Tuning.kl_dark_dmg_mult = 1.0
+	Tuning.kl_lit_dmg_mult = 1.0
+	Tuning.kl_lit_shell_mult = 1.0
+	Tuning.kl_dark_shell_floor = 0.0
+	Tuning.kl_ashbrood_needs_light = false
+	Tuning.kl_lamp_slots_base = 6
+	Tuning.kl_lamp_replant_cd = 0.0
 	SaveGame.path = "user://test_waylamps_save.json"   # never read or write the player's real save
 	SaveGame.delete_save()
 	Tuning.waylamp_kindle_sec = 3.0   # keep the test short
@@ -194,6 +203,11 @@ func _process(_delta: float) -> void:
 			var embers := get_tree().get_nodes_in_group("waylamp_ember")
 			check(embers.size() == 1 and hollow.ember_showing() and hollow.ember_rise() == 0.0, "a small ember glows in the WayLamp's cold bowl under it")
 			check(embers.size() == 1 and embers[0].get_parent() == spawner, "drawn over the fog, by the lamp (not by the creature)")
+			# M1c (test_fights has the rest): one ember, at its feet on the sprite's own; no quest arrow; the rim lamp.
+			check(WayLamp.EMBER_BOWL == Ashbrood.EMBER_AT, "M1c: the ember lies at the Ashbrood's feet, on the sprite's own bowl ember (one ember)")
+			check(main.get_node("FogLayer/GoalPointer").target_pos() == null, "M1c: the quest arrow hides while the Ashbrood fights")
+			var rim := _old_lamp(main.rim_lamp_pos)
+			check(rim != null and rim.old and rim.global_position.distance_to(hollow.global_position) < Tuning.lantern_max_radius, "M1c: an old lamp on the bowl's rim, its light reaching the bowl")
 			# Kill both phases.
 			brood.end_phase_pause()
 			brood.shell = 0.0

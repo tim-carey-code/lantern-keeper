@@ -96,8 +96,10 @@ func _process(_delta: float) -> void:
 		128:
 			player.pick_up_nearest()
 		132:
-			check(get_tree().get_nodes_in_group("lantern").size() == 2, "pick up removes the lantern (the hut's and the north path's old lamps stay)")
-			check(Inventory.get_count("scrap") == 3, "pick up refunds half the scrap (as built)")
+			check(get_tree().get_nodes_in_group("lantern").size() == 3, "pick up removes the lantern (the hut's, the north path's and the bowl's rim lamp stay)")
+			check(Inventory.get_count("scrap") == 6, "pick up refunds all the scrap (M1c, PLAN_LANTERNS §5)")
+			check(player.replant_t > 0.0 and player.place_block_reason(player.place_pos()).begins_with("Your hands are full"), "and planting waits a moment (the 8 s replant)")
+			player.replant_t = 0.0
 			player.position = lamp.global_position + Vector2(6, 0)
 			player.pick_up_nearest()
 		134:
@@ -154,6 +156,7 @@ func _process(_delta: float) -> void:
 			check(Inventory.get_count("scrap") > scrap_before, "a tap beside a lit lantern takes the scrap pile (%d -> %d)" % [scrap_before, Inventory.get_count("scrap")])
 			check(is_instance_valid(hint_lantern) and hint_lantern.is_inside_tree(), "and holding on doesn't pick the lantern up while a pile was in reach")
 		481:
+			_slot_checks()
 			Art._ph.clear()   # release cached textures so exit is clean
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)
@@ -255,6 +258,53 @@ func _landmark(id: String) -> Landmark:
 		if m.id == id:
 			return m
 	return null
+
+## M1c lamp slots (PLAN_LANTERNS §5; owner 2026-11-28): 2 at the start, 3 at level 4, 4 at 8, 5 at 12; old lamps and
+## lamps in held ground are free; a refused plant says why; pick-up refunds all and replanting waits 8 s.
+func _slot_checks() -> void:
+	check(Progress.lamp_slots(1) == 2 and Progress.lamp_slots(3) == 2 and Progress.lamp_slots(4) == 3 and Progress.lamp_slots(7) == 3, "lamp slots: 2 at levels 1-3, 3 at 4-7")
+	check(Progress.lamp_slots(8) == 4 and Progress.lamp_slots(11) == 4 and Progress.lamp_slots(12) == 5, "4 at levels 8-11, 5 at level 12")
+	check(Progress.lamp_slots(12) <= Tuning.kl_lamp_slots_max, "never past kl_lamp_slots_max (%d)" % Tuning.kl_lamp_slots_max)
+	# Clear the planted lamps, then plant at level 3: the 3rd is refused with the reason; at level 4 it plants.
+	for l in get_tree().get_nodes_in_group("lantern"):
+		if not l.old:
+			l.remove_from_group("lantern")
+			l.queue_free()
+	LightSense.bump()
+	Progress.selected = "post"
+	Progress.level = 3
+	Inventory.counts["scrap"] = 30
+	player.replant_t = 0.0
+	var spots := [start + Vector2(-160, 160), start + Vector2(-60, 160), start + Vector2(40, 160)]
+	var placed := 0
+	for i in 2:
+		player.position = spots[i]
+		if player.try_place():
+			placed += 1
+	check(placed == 2 and player.lamps_used() == 2, "at level 3 two lamps plant (%d, %d used)" % [placed, player.lamps_used()])
+	player.position = spots[2]
+	check(player.place_block_reason(player.place_pos()) == Player_SLOTS_FULL(), "a 3rd is refused: \"%s\"" % player.place_block_reason(player.place_pos()))
+	check(player.try_place() == null and player.build_hint == player.SLOTS_FULL, "and the refusal shows the reason by the keeper")
+	var hud = main.get_node("HUD")
+	check(hud.lamp_pip_state()[0] == 2 and hud.lamp_pip_state()[1] == 2, "the HUD shows 2 pips, both lit (%s)" % str(hud.lamp_pip_state()))
+	Progress.level = 4
+	check(player.try_place() != null and player.lamps_used() == 3, "at level 4 the 3rd plants")
+	check(hud.lamp_pip_state()[0] == 3, "and the HUD shows 3 pips")
+	# Old lamps don't count.
+	var old_n := get_tree().get_nodes_in_group("lantern").filter(func(l): return l.old).size()
+	check(old_n == 3 and player.lamps_used() == 3, "the valley's old lamps use no slot (%d old)" % old_n)
+	# Pick one up: all the scrap back, then an 8 s wait before planting again (shown on the next free pip).
+	var before := Inventory.get_count("scrap")
+	player.position = spots[2] + Vector2(4, 0)
+	player.pick_up_nearest()
+	check(Inventory.get_count("scrap") == before + Tuning.post_lamp_cost_scrap, "pick-up gives back all %d scrap" % Tuning.post_lamp_cost_scrap)
+	check(is_equal_approx(player.replant_t, Tuning.kl_lamp_replant_cd) and Tuning.kl_lamp_replant_cd == 8.0, "and replanting waits %.0f s" % Tuning.kl_lamp_replant_cd)
+	check(hud.lamp_pip_state()[2] > 0.99, "the HUD shows the wait on the free pip")
+	player.replant_t = 0.0
+	Progress.level = 1
+
+func Player_SLOTS_FULL() -> String:
+	return "All your lamps are lit."
 
 func _m3_checks() -> void:
 	check(Progress.regions_seen.has(FogGrid.R_HOLLOW), "lighting the Hollow reveals its name")

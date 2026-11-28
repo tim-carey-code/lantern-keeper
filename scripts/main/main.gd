@@ -35,6 +35,7 @@ const RIDGE_OUTCROPS := 88
 var start := Vector2.ZERO
 var start_lantern_pos := Vector2.ZERO
 var waypost_lantern_pos := Vector2.ZERO   # the second cold lantern on the north path (onboarding)
+var rim_lamp_pos := Vector2.INF            # M1c: the old lamp on the rim of the Ashbrood's bowl (lit by touch)
 var loaded_save := false
 var stone_tiles: Array[Vector2i] = []       # the old climb's fallen stones (the later shortcut)
 var climb_stones: ClimbStones
@@ -294,6 +295,7 @@ func _build_rock_collision() -> void:
 func _place_landmarks() -> void:
 	_place_ridge_landmarks()
 	_place_waylamps()
+	_place_rim_lamp()
 	# The rack by the hut is scenery now (owner: too much to read at the start); the letter is the opening.
 	var rack := _add_landmark("rack", "Lantern rack", "rack", start + Vector2(-80, -40), "")
 	rack.scenery = true
@@ -417,9 +419,68 @@ func _add_old_lamp(p: Vector2) -> Lantern:
 	$Lanterns.add_child(l)
 	return l
 
-## True for the tile of one of the valley's old lamps (the hut's, the north path's).
+## True for the tile of one of the valley's old lamps (the hut's, the north path's, the bowl's rim).
 func is_old_lamp_spot(p: Vector2) -> bool:
-	return p.distance_to(start_lantern_pos) < 8.0 or p.distance_to(waypost_lantern_pos) < 8.0
+	return p.distance_to(start_lantern_pos) < 8.0 or p.distance_to(waypost_lantern_pos) < 8.0 or p.distance_to(rim_lamp_pos) < 8.0
+
+## Every old lamp's place (saves made before one existed get it back, cold: SaveGame.load_into).
+func old_lamp_spots() -> Array:
+	var out := [start_lantern_pos, waypost_lantern_pos]
+	if rim_lamp_pos != Vector2.INF:
+		out.append(rim_lamp_pos)
+	return out
+
+## M1c (PLAN_LANTERNS §2.1): one old lamp on the rim of the Ashbrood's bowl, about kl_rim_lamp_dist out on the
+## side you come from (west), lit by touch like the hut's. Its light reaches the bowl, so the guardian can always
+## be lit without scrap: the no-soft-lock rule. The Ashbrood can smother it; it relights by itself.
+func _place_rim_lamp() -> void:
+	var w: WayLamp = null
+	for n in $Landmarks.get_children():
+		if n is WayLamp and n.id == "hollow":
+			w = n
+	if w == null:
+		return
+	var best := Vector2.INF
+	var best_s := INF
+	var want := w.global_position + Vector2(-Tuning.kl_rim_lamp_dist, 0)
+	var c := fog.tile_of(w.global_position)
+	for dy in range(-8, 9):
+		for dx in range(-8, 9):
+			var t := c + Vector2i(dx, dy)
+			if not fog.in_bounds(t) or fog.solid[fog.idx(t)] == 1 or fog.terrain_of(t) != FogGrid.T_GROUND:
+				continue
+			var p := fog.tile_center(t)
+			var d := p.distance_to(w.global_position)
+			if d < Tuning.kl_rim_lamp_dist - 24.0 or d > Tuning.kl_rim_lamp_dist + 24.0:
+				continue
+			if p.distance_to(fog.tile_center(Vector2i(CLINKER_TILE))) < 96.0:
+				continue
+			var s := p.distance_to(want)
+			if s < best_s:
+				best_s = s
+				best = p
+	if best == Vector2.INF:
+		# Review fix: never lose the no-soft-lock lamp silently. Take the ground tile nearest the wanted spot whose
+		# light (a Post Lamp's) still reaches the bowl; with none, say so loudly.
+		push_warning("Rim lamp: no ground tile %.0f px from the Hollow's WayLamp; using the nearest one that lights the bowl" % Tuning.kl_rim_lamp_dist)
+		for dy in range(-7, 8):
+			for dx in range(-7, 8):
+				var t := c + Vector2i(dx, dy)
+				if not fog.in_bounds(t) or fog.solid[fog.idx(t)] == 1 or fog.terrain_of(t) != FogGrid.T_GROUND:
+					continue
+				var p := fog.tile_center(t)
+				var d := p.distance_to(w.global_position)
+				if d < 64.0 or d > Tuning.lantern_max_radius - 24.0:
+					continue
+				if p.distance_to(want) < best_s or best == Vector2.INF:
+					best_s = p.distance_to(want)
+					best = p
+	if best == Vector2.INF:
+		push_error("Rim lamp: no ground tile within a lamp's light of the Hollow's WayLamp: the Ashbrood can't be lit without scrap")
+		return
+	var l := _add_old_lamp(best)
+	rim_lamp_pos = l.position
+	_taken.append(rim_lamp_pos)
 
 func _add_resource(kind: String, p: Vector2, amount: int) -> ResourceNode:
 	var r := ResourceNode.new()

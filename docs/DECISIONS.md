@@ -2,6 +2,19 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-28 (M1c review fixes)
+- From the independent review (`REVIEW_M1C.md`, relayed by the coordinator), fixed before the owner's playtest: phase 2 never sits in the dark (a dive that finds no lit lamp recovers in 1 s and throws ash bolts); the M1c cost on the bench is mostly gone (3.1 → about 2.3 ms; the base was 2.0); the quest arrow hides only near the fight; real Ashbrood kills and the scrap economy with real slots are tested.
+- **Agent's calls, to confirm:** the lock-button option drops "Back paddle" (a standard Xbox pad has none); with the lock on Y, slot 4 moves to R3. The mouse's sticky click gets its own option and is off when the lock is Off. A version 6 save with a lamp planted where the rim lamp now stands gets that lamp's scrap back, and the rim lamp takes the tile.
+- **Left for the playtest:** standing at your own lamp makes every Lampfire bolt catch (PLAYTEST "Watch this").
+
+## 2026-11-28 (M1b playtest; M1c built)
+- **M1b playtest results** (owner, on a pad; PLAYTEST.md): nothing felt like tending; lighting by touch stays **one press**; the faint rule worked and cleared packs stayed cleared; the level pace is right; everything else passed. The Ashbrood's ember **didn't read**: "it was right above the yellow quest arrow, I didn't know what was going on". The owner wants art and sound (they stay the owner's job).
+- **Lamp slots: build them now** (owner, 2026-11-28). This overrides the M1b call to keep "no lamp limit" while lanterns were redesigned ([M1b: lanterns are being redesigned](#2026-11-27-m1b-lanterns-are-being-redesigned)). Built in M1c as PLAN_LANTERNS §5: 2 slots at levels 1-3, 3 at 4-7, 4 at 8-11, 5 at 12 (6 with gear in M3); old lamps and lamps in held ground are free; a refused plant says why; a full refund and an 8 s replant.
+- **The damage fix** (owner: "the Clinker did less damage to me than a couple of Wicklings, they fried me; I was tanking hit after hit from the Clinker"). Wicklings now chill in ticks (5 every 0.5 s each) and the whole swarm takes at most 28 warmth a second, so three Wicklings take a full keeper down in about 4 s with no dodging (was about 1 s). The Clinker's roll is the hardest single hit in the Hollow (30, 37 at its Lv 4) and throws you out of its lane. Foe damage grows 8% a level. All in the tuning panel.
+- **The Ashbrood fights back** (owner: "the Ashbrood fight is boring as fuck, it doesn't do anything, it just sits there"). Beyond the plan: in phase 1 it throws fans of ash bolts at you every 2.2 s and sweeps its wings when you stand close, and never waits more than 2 s; in phase 2 it dives 1.5 s after each sit (about one dive every 7 s, was about 11 s). It keeps the plan's rework (hurt only when lit, the rim lamp, the ember flare, the smother, the puff snuffing lamps).
+- **The ember: one ember, and no quest arrow during the fight** (agent's call on the owner's report, to confirm). The WayLamp's ember is drawn at the Ashbrood's feet, on the sprite's own small bowl ember, so the two read as one (the sprite is unchanged); a thin warm thread runs up to the cold cage so it reads as the lamp's. The goal arrow hides while the Ashbrood fights. This replaces "the Ashbrood's ember is left as it is" ([the sprites approved](#2026-11-27-the-sprites-approved)).
+- **Agent's calls in M1c, for the owner to confirm:** the Ashbrood's health is **340 a phase** (was 220), re-measured to about 2 minutes now that it is hurt only when lit; **Feed** was built because the Beam is still kept (keep-or-cut is open); with a full lock on keyboard and mouse the cursor steers while it moves; the rim lamp stands west of the bowl (the side you come from); the save becomes **version 7** (the rim lamp is a saved old lamp; a version 6 save gets it back cold). Nothing in the M1c scope was cut.
+
 ## 2026-11-27 (the sprites approved)
 - **The latest previews of all six sprite samples are approved as they are** (owner, relayed by the coordinator): the Wicklings (timid, brave, shelled), the Spitwick, the nest, the keeper (sheet v2), the Ashbrood and Amos with his cart. They go in the game now, made by the sprite tool and committed (`tools/art/make_sprites.sh`). Accepted quirks: Amos's grey hair barely shows; there may be grey wing tips inside the Ashbrood's bowl band. Touch-ups in Pixelorama stay welcome: the tool never overwrites a strip the owner changed.
 - **This changes "AI output is reference only; what goes in the game is the owner's redraw"** (2026-11-27, M1a playtest; art) for these six subjects: the approved strips ship as made from the concept sheets. The sheets themselves stay private and out of the repo (`tools/art/samples/`, ignored).
@@ -22,7 +35,8 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 | The plan of record | `docs/replan/GAME_PLAN.md` v2, all nine answers as recommended, and its supersede table as a whole | [2026-11-27 (the game plan approved)](#2026-11-27-the-game-plan-approved) |
 | Genre | An action RPG | [2026-11-27 (Hollow prototype playtest)](#2026-11-27-hollow-prototype-playtest) |
 | Combat | The fire kit (Lampfire, Fireglobe, Lance); the Beam and Hearth ring optional; the pad map; light in a fight | [the game plan approved](#2026-11-27-the-game-plan-approved), [playtest: fuel and abilities](#2026-11-27-playtest-fuel-and-abilities) |
-| No tending | Lamps never burn; fuel becomes lamp-oil flasks; an action bar; lamps and WayLamps lit by touch; scrap the only material. The lamp limit, full refund and replant delay are on hold while lanterns are redesigned | [playtest: fuel and abilities](#2026-11-27-playtest-fuel-and-abilities), [the game plan approved](#2026-11-27-the-game-plan-approved), [M1b: lanterns are being redesigned](#2026-11-27-m1b-lanterns-are-being-redesigned) |
+| No tending | Lamps never burn; fuel becomes lamp-oil flasks; an action bar; lamps and WayLamps lit by touch (one press); scrap the only material. Lamp slots by level (2 to 5), a full refund and an 8 s replant (built in M1c) | [playtest: fuel and abilities](#2026-11-27-playtest-fuel-and-abilities), [the game plan approved](#2026-11-27-the-game-plan-approved), [M1b playtest; M1c built](#2026-11-28-m1b-playtest-m1c-built) |
+| Lamps in the fight | Light states, combos, the Ashbrood hurt only when lit, the target lock, Y takes any skill (the lanterns addendum); the damage fix; the Ashbrood fights back | [the lanterns addendum approved](#2026-11-27-the-lanterns-addendum-approved), [M1b playtest; M1c built](#2026-11-28-m1b-playtest-m1c-built) |
 | Progress | Level-gap wick; the Hollow's last level on the Ashbrood kill (now level 6, not 8); fixed skill branches replace the cards; the four approved cards keep their names and values | [wick by level gap](#2026-11-27-wick-by-level-gap), [the game plan approved](#2026-11-27-the-game-plan-approved) |
 | Loot and add-ons | Diablo-style loot in four slots (lens, burner, coat, wick); Dialogue Manager for talk; GLoot data for items; salvage in | [loot and agent skills](#2026-11-27-loot-and-agent-skills), [the game plan approved](#2026-11-27-the-game-plan-approved) |
 | Foes and pacing | No endless trickle; fixed packs and nests; cleared ground stays cleared (and after a faint, per the plan's faint rule); timid and brave Wicklings; names and bars | [Hollow prototype playtest](#2026-11-27-hollow-prototype-playtest), [the game plan approved](#2026-11-27-the-game-plan-approved) |
@@ -47,6 +61,26 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 **Still open:** the three loop calls (above); pronouns for Amos, Maud, Kit and Ivo (before M4); whether to keep the Beam and Hearth ring (after the M1a playtest); whether the `crook_post` note's wording is approved (STORY §6); "one nest on the main route: decide after playing" (`docs/archive/PLAN_ONBOARDING.md` §8).
 
 ---
+
+## 2026-11-27 (the lanterns addendum approved)
+- **docs/replan/PLAN_LANTERNS.md is approved as recommended** (owner: "1-6 yes to all"):
+  1. three light states: dark x0.7 with no shell breaks, dim x1.0, lit x1.3 with shells wearing x1.5;
+  2. the Ashbrood can only be hurt in lamp light, with the rim lamp, the ember flare, smothering during its sit, and its puff snuffing lamps;
+  3. target lock: R3 toggles, a flick switches, holding the stick steers, the lock moves on after a kill; a sticky click and middle mouse on keyboard and mouse; free aim stays the default;
+  4. a warm amber lock marker (cold stays "a foe's attack");
+  5. Y may take aimed skills (it fires at the lock, else the best foe within 30 degrees, else straight);
+  6. parts 3 and 4 as placed: lamp slots by level (2 to 5, up to 6 with gear) replace the 3-lamp limit, with an 8 s replant; lamp jobs and their loot lines in M3; claim posts as a reward; tides from the Lakeshore on.
+- The addendum's §7 supersede list is approved with it. **Next:** M1c after M1b (§8).
+
+## 2026-11-27 (lanterns at the centre; target lock)
+- **Without tending, lanterns felt useless** (owner: "with this new system i feel like the lanterns are useless and therefore making the game useless lol"). M1b keeps lamps as they are (no 3-lamp limit, no new lamp rules) while their role is redesigned.
+- **Lanterns become the centre of combat and of the build** (owner: "yes that direction feels right"):
+  1. light against dark sets the fight's rules (foes tougher in darkness, exposed in light);
+  2. the keeper's fire combos with lamps;
+  3. lantern types are build pieces, upgraded by loot;
+  4. lit lamps claim the valley, and later the dark fights back.
+  Plan addendum to write: docs/replan/PLAN_LANTERNS.md.
+- **Target lock on the right stick is to be explored** (owner: "what about target lock on with the right stick? I feel like the shooting might be better with the classic ARPG target lock on?"). Goes into the same addendum.
 
 ## 2026-11-27 (M1b: lanterns are being redesigned)
 - **The 3-lamp limit, the full refund and the 15 s replant delay are on hold** (owner, during the M1b build, relayed by the coordinator: the owner "feels the lanterns become useless without tending", and the lanterns' role is being redesigned now). M1b skips its scope item 2 and keeps building and picking up lamps as they were (half the scrap back on pick-up). GAME_PLAN §6's "Limits and cost" and question 4's limit part wait for the new lantern design; the rest of question 4 (lit by touch, lamps never burn) stands and is built.

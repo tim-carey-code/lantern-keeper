@@ -4,6 +4,7 @@ extends Node2D
 ## On in the Hollow, off once you reach the Reedmarsh (unless turned on in the pause menu).
 
 const COL := Color(1.0, 0.82, 0.45)
+const HIDE_NEAR_FIGHT := Ashbrood.ARENA + 200.0   # px from a guardian's WayLamp: no arrow while it fights
 
 func _ready() -> void:
 	z_index = 9
@@ -17,6 +18,12 @@ func target_pos() -> Variant:
 	var main := _main()
 	if main == null or not Story.pointer_on() or Story.current == "":
 		return null
+	# M1c (owner, M1b playtest: the WayLamp's ember "was right above the yellow quest arrow"): no pointer while
+	# the Ashbrood fights and the keeper is at the fight; the ember is the only amber over the bowl. Away from it
+	# (after a faint, say) the arrow shows the way back.
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.guardian_awake() and main.player.global_position.distance_to(w.global_position) <= HIDE_NEAR_FIGHT:
+			return null
 	var key := Story.goal_target(Story.current)
 	match key:
 		"":

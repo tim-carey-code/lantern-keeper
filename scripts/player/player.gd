@@ -18,6 +18,7 @@ var faints := 0
 var last_wake := Vector2.ZERO  # where the last faint woke you (tests)
 var build_hint_t := 0.0        # > 0: a failed build shows its outline and reason for a moment
 var build_hint := ""
+var replant_t := 0.0           # > 0: a lamp was just picked up; planting waits (M1c: kl_lamp_replant_cd)
 var _facing_left := false
 var _dir_row := 0          # Puny sheet row: 0 S, 1 SE, 2 E, 3 NE, 4 N, 5 NW, 6 W, 7 SW
 var _idle_t := 0.0
@@ -33,11 +34,16 @@ var _pick_t := 0.0             # how long interact has been held by a lantern (p
 var drink_t := 0.0             # > 0: the warm glow of a flask rising up the coat
 var hurt_t := 0.0              # > 0: a hit chilled the keeper (cold flash, flinch frames)
 var frost_t := 0.0             # > 0: a Wickling's touch is draining the keeper (frost edge)
+var swarm_budget := 0.0        # warmth the touching Wicklings can still take now (M1c: the swarm cap)
+var swarm_taken := 0.0         # warmth Wicklings' touches took in all (tests)
+var _knock_v := Vector2.ZERO   # > 0 length while a hit throws the keeper (the Clinker's roll, the Ashbrood's sweep)
+var _knock_t := 0.0
 var _art: FoeSprite             # owner-drawn keeper poses (assets/art/keeper/), when they exist
 const ART_FOOT := 18.0          # where the owner strips' feet go (32 x 32, foot anchor): the Puny keeper's feet
 
 func _ready() -> void:
 	flasks = Tuning.kl_flask_max
+	swarm_budget = Tuning.kl_swarm_chill_cap * Tuning.kl_swarm_chill_burst
 	combat = KeeperCombat.new()
 	add_child(combat)
 	add_to_group("light_source")
@@ -151,9 +157,11 @@ func hit_stop(seconds: float) -> void:
 func _physics_process(delta: float) -> void:
 	hunted = Hunt.is_hunted(get_tree(), global_position)
 	flask_lock = maxf(0.0, flask_lock - delta)
+	replant_t = maxf(0.0, replant_t - delta)
 	drink_t = maxf(0.0, drink_t - delta)
 	hurt_t = maxf(0.0, hurt_t - delta)
 	frost_t = maxf(0.0, frost_t - delta)
+	swarm_budget = minf(Tuning.kl_swarm_chill_cap * Tuning.kl_swarm_chill_burst, swarm_budget + Tuning.kl_swarm_chill_cap * delta)
 	update_hand_lamp(delta)
 	_update_warmth(delta)
 	lamp.texture_scale = LightTex.scale_for(get_light_radius())
@@ -163,6 +171,8 @@ func _physics_process(delta: float) -> void:
 		_update_art()
 	if Tuning.ui_open:
 		velocity = Vector2.ZERO
+		if combat.lock.has_target():
+			combat.lock.release("menu")   # a lock never leaks out of a menu
 		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	# The menu guard comes first (GAME_PLAN §3, M6): for a moment after a menu closes, no combat input and no
@@ -177,6 +187,9 @@ func _physics_process(delta: float) -> void:
 			if Input.is_action_just_pressed(slot):
 				pressed[slot] = true
 		_handle_flask_input(Input.is_action_just_pressed("flask"), false)
+		for a in ["lock_on", "lock_next", "lock_prev"]:
+			if Input.is_action_just_pressed(a):
+				pressed[a] = true
 	combat.tick(delta, dir, held, pressed, not blocked and Input.is_action_just_pressed("dash"))
 	_hitstop_t = maxf(0.0, _hitstop_t - delta)
 	var fog := _fog()
@@ -190,6 +203,9 @@ func _physics_process(delta: float) -> void:
 	velocity = combat.dash_velocity() if combat.is_dashing() else dir * speed * slow
 	if _hitstop_t > 0.0 and not combat.is_dashing():
 		velocity = Vector2.ZERO
+	if _knock_t > 0.0 and not combat.is_dashing():
+		_knock_t -= delta
+		velocity = _knock_v   # a hit throws the keeper (it beats walking for a moment)
 	move_and_slide()
 	_footsteps(dir, _physics_delta(), fog)
 	if fog:
@@ -284,10 +300,35 @@ func _process(delta: float) -> void:
 	_shake_t += delta
 	cam.offset = shake_offset()
 
+## A Wickling's touch tick (M1c damage fix): every touching Wickling shares one budget that refills at
+## kl_swarm_chill_cap a second (holding at most kl_swarm_chill_burst of it), so a swarm threatens but can't fry you.
+## Returns the warmth it took.
+func swarm_chill(amount: float) -> float:
+	if combat and combat.is_dashing():
+		return 0.0
+	var take := minf(amount, maxf(0.0, swarm_budget))
+	if take <= 0.0:
+		return 0.0
+	swarm_budget -= take
+	swarm_taken += take
+	chill(take)
+	return take
+
+## Thrown by a hit (the Clinker's roll, the Ashbrood's wing sweep): `dist` px along `dir` over a short moment.
+## A dash ignores it.
+func knockback(dir: Vector2, dist: float, secs: float = 0.18) -> void:
+	if (combat and combat.is_dashing()) or dist <= 0.0 or dir.length() < 0.001:
+		return
+	_knock_t = secs
+	_knock_v = dir.normalized() * dist / maxf(secs, 0.01)
+
+func is_knocked() -> bool:
+	return _knock_t > 0.0
+
 func chill(amount: float) -> void:
 	if combat and combat.is_dashing():
 		return   # nothing can chill you mid-dash
-	if amount >= 5.0:
+	if amount >= Tuning.kl_hurt_shake_min:
 		shake(0.45)   # a real hit (a spit, a roll), not the steady touch of a Wickling
 		hurt_t = Tuning.kl_fx_hurt_time
 	warmth = maxf(0.0, warmth - amount)
@@ -305,6 +346,9 @@ func _update_warmth(delta: float) -> void:
 ## nearest lit light in the region at 60% warmth, skipping any light near an unbeaten fight.
 func faint() -> void:
 	faints += 1
+	_knock_t = 0.0
+	if combat:
+		combat.lock.release("faint")
 	var main := get_tree().get_first_node_in_group("main")
 	var fell := global_position
 	if Progress.wick > 0:
@@ -440,9 +484,32 @@ func place_block_reason(p: Vector2) -> String:
 	var k := Progress.selected
 	if not Progress.is_unlocked(k):
 		return "not found yet"
+	var fog_region := fog.region_at(p)
+	if not Progress.is_settled(fog_region):
+		if lamps_used() >= Progress.lamp_slots():
+			return SLOTS_FULL
+		if replant_t > 0.0:
+			return REPLANT_WAIT % ceili(replant_t)
 	if Inventory.get_count("scrap") < Lantern.cost(k):
 		return "needs " + Lantern.cost_text(k)
 	return ""
+
+## DRAFT (M1c, STORY §16): why a plant is refused.
+const SLOTS_FULL := "All your lamps are lit."
+const REPLANT_WAIT := "Your hands are full for %d s."
+
+## Lamp slots in use (M1c, PLAN_LANTERNS §5): every planted lamp outside held ground. The valley's old lamps and
+## lamps in a held region are free.
+func lamps_used() -> int:
+	var fog := _fog()
+	var n := 0
+	for l in get_tree().get_nodes_in_group("lantern"):
+		if l.old or l.is_queued_for_deletion():
+			continue
+		if fog and Progress.is_settled(fog.region_at(l.global_position)):
+			continue
+		n += 1
+	return n
 
 func can_place(p: Vector2) -> bool:
 	return place_block_reason(p) == ""
@@ -464,13 +531,14 @@ func try_place() -> Lantern:
 	Story.note_built(lamp_node.kind)
 	return lamp_node
 
-## Refunds part of the scrap (as built; the owner is redesigning lanterns, so the plan's limit and full refund
-## wait). The valley's old lamps can't be picked up.
+## Gives the scrap back (M1c: all of it, Tuning.pickup_refund) and starts the replant wait. The valley's old lamps
+## can't be picked up.
 func pick_up_nearest() -> void:
 	var l := nearest_lantern()
 	if l == null or not l.can_pick_up():
 		return
 	Inventory.add("scrap", floori(Lantern.cost(l.kind) * Tuning.pickup_refund))
+	replant_t = Tuning.kl_lamp_replant_cd   # M1c: a short wait before the next plant (PLAN_LANTERNS §5)
 	Sfx.play("pickup_lantern", -10.0)
 	l.remove_from_group("lantern")
 	l.remove_from_group("light_source")

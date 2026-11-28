@@ -15,6 +15,15 @@ func _ready() -> void:
 			if e is InputEventJoypadButton or e is InputEventJoypadMotion: InputMap.action_erase_event(action, e)
 	Tuning.wick_enabled = false
 	Story.skip_opening = true
+	# M1c: this test predates the light states and lamp slots (test_light_states, test_combos and test_core's slot
+	# checks cover those). The light rule and the slot limit are off here, so its sums stay as they were.
+	Tuning.kl_dark_dmg_mult = 1.0
+	Tuning.kl_lit_dmg_mult = 1.0
+	Tuning.kl_lit_shell_mult = 1.0
+	Tuning.kl_dark_shell_floor = 0.0
+	Tuning.kl_ashbrood_needs_light = false
+	Tuning.kl_lamp_slots_base = 6
+	Tuning.kl_lamp_replant_cd = 0.0
 	Settings.path = "user://test_flasks_settings.cfg"   # never the owner's settings
 	Settings.use_defaults()
 	SaveGame.path = "user://test_flasks_save.json"

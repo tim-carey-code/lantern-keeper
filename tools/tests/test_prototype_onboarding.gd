@@ -28,6 +28,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	strip_real_input()
 	Story.skip_opening = true
+	# M1c (review): the real rules stay on here (light states, lamp slots): the first 10 minutes as the owner plays them.
 	Tuning.wick_enabled = false
 	SaveGame.path = "user://test_onboarding.json"
 	SaveGame.delete_save()

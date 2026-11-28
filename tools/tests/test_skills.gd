@@ -32,6 +32,15 @@ func _ready() -> void:
 	strip_real_input()
 	Tuning.wick_enabled = false   # only the foes this test makes
 	Story.skip_opening = true
+	# M1c: this test predates the light states and lamp slots (test_light_states, test_combos and test_core's slot
+	# checks cover those). The light rule and the slot limit are off here, so its sums stay as they were.
+	Tuning.kl_dark_dmg_mult = 1.0
+	Tuning.kl_lit_dmg_mult = 1.0
+	Tuning.kl_lit_shell_mult = 1.0
+	Tuning.kl_dark_shell_floor = 0.0
+	Tuning.kl_ashbrood_needs_light = false
+	Tuning.kl_lamp_slots_base = 6
+	Tuning.kl_lamp_replant_cd = 0.0
 	Settings.path = "user://test_skills_settings.cfg"   # never the owner's settings
 	Settings.use_defaults()
 	InputHint.pad = false
@@ -121,7 +130,9 @@ func _bar() -> void:
 	check(c.slot_skill("skill_1").id == "lampfire" and c.slot_skill("skill_2").id == "fireglobe" and c.slot_skill("skill_3").id == "beam" and c.slot_skill("skill_4") == null, "RT Lampfire, RB Fireglobe, LB the Beam, Y empty")
 	check(not Progress.knows("lance"), "no Lance at level 1")
 	check(Progress.bind("skill_1", "fireglobe") != "" and Progress.bind("skill_2", "lampfire") != "", "slot 1 is always Lampfire, and Lampfire stays there")
-	check(Progress.bind("skill_4", "fireglobe") != "" and Progress.bind("skill_2", "hearth_ring") != "", "Y takes self-cast skills only; an aimed slot refuses Hearth ring")
+	check(Progress.bind("skill_4", "fireglobe") == "" and Progress.bind("skill_2", "hearth_ring") != "", "Y takes any skill (M1c: an aimed one fires at the lock); an aimed slot refuses Hearth ring")
+	Progress.bind("skill_2", "fireglobe")   # back to the default bar
+	Progress.bind("skill_4", "")
 	check(Progress.bind("skill_3", "lance") != "", "Lance can't go on the bar before it is learned")
 	check(Progress.bind("skill_4", "hearth_ring") == "" and c.slot_skill("skill_4").id == "hearth_ring", "Hearth ring goes on slot 4")
 	check(Progress.bind("skill_2", "beam") == "" and Progress.bar["skill_3"] == "" and Progress.bar["skill_2"] == "beam", "binding a skill moves it: the Beam to slot 2 leaves slot 3 empty")
@@ -537,6 +548,31 @@ func _juice() -> void:
 
 # --- Time to kill (GAME_PLAN §4.6, the balance method in the ARPG skill) ------------------------------------
 
+## M1c (PLAN_LANTERNS §2.1, §8 item 3): the light rule's numbers come from tuning.gd's defaults (this test turns the
+## rule off for its older checks). The Ashbrood is hurt only when lit: phase 1 in the bowl lit by a lamp (the rim
+## lamp: always lit while it burns), 35% uptime as before (dodging its bolts, sweeps and puffs); phase 2 only while it
+## sits on a lamp (kl_ashbrood_sit_sec of each dive cycle; you unload into the sit, 80%), with the lamps it smothers
+## going out in turn. The Clinker: dim (close in) as before, or lit (a lamp planted by its post).
+func _m1c_time_to_kill(lf_dps: float, lf_shell: float, lance_dark: float, lance_lamp: float, clinker_scale: float, brood_scale: float, brood_scale_l5: float) -> void:
+	var d = load("res://systems/tuning.gd").new()
+	var lit: float = d.kl_lit_dmg_mult
+	var wear: float = d.kl_lit_shell_mult
+	var hp: float = d.kl_ashbrood_hp
+	var phase_lit: float = d.kl_ashbrood_shell / ((lf_shell + lance_lamp) * wear) + hp / ((lf_dps + lance_lamp) * lit)
+	var cycle: float = d.kl_ashbrood_sit_sec + d.kl_ashbrood_dive_period + d.kl_ashbrood_dive_tell + d.kl_ashbrood_dive_travel
+	var up2: float = 0.8 * d.kl_ashbrood_sit_sec / cycle
+	var fight: float = phase_lit * brood_scale / 0.35 + phase_lit * brood_scale / up2
+	var fight_l5: float = phase_lit * brood_scale_l5 / 0.35 + phase_lit * brood_scale_l5 / up2
+	print("    M1c Ashbrood (lit only, %.0f hp a phase): phase 1 %.0f s at 35%%, phase 2 %.0f s at %.0f%% (sits %.1f s of each %.1f s dive): %.0f s at L4, %.0f s at L5" % [hp, phase_lit * brood_scale / 0.35, phase_lit * brood_scale / up2, up2 * 100.0, d.kl_ashbrood_sit_sec, cycle, fight, fight_l5])
+	check(fight > 110.0 and fight < 180.0, "M1c: the Ashbrood, hurt only when lit, takes 2-3 minutes at L4 (%.0f s)" % fight)
+	check(fight_l5 > 105.0 and fight_l5 < 180.0, "and about 2 minutes for a L5 explorer (%.0f s)" % fight_l5)
+	# The Clinker: dim is the old sum; lit (a lamp by its post) is faster; dark can't break its shell at all.
+	var cl_lit: float = d.kl_clinker_shell / ((lf_shell + lance_dark) * wear) + d.kl_clinker_hp / ((lf_dps + lance_dark) * lit)
+	var cl_dim: float = d.kl_clinker_shell / (lf_shell + lance_dark) + d.kl_clinker_hp / (lf_dps + lance_dark)
+	print("    M1c Clinker: %.0f s dim (close in), %.0f s lit (a lamp by its post), at 25%% uptime; in the dark its shell holds" % [cl_dim * clinker_scale / 0.25, cl_lit * clinker_scale / 0.25])
+	check(cl_lit * clinker_scale / 0.25 > 18.0 and cl_lit * clinker_scale / 0.25 < 40.0, "M1c: the Clinker lit still takes about 20-30 s (%.0f s)" % (cl_lit * clinker_scale / 0.25))
+	d.free()
+
 func _time_to_kill() -> void:
 	# The sums, from tuning.gd (GAME_PLAN §4.6). M1b: foe health and shell grow 12% a level over 1, and the keeper's
 	# damage 10% a level over 1. The keeper meets the Clinker (Lv 4) at L3-L4 and the Ashbrood (Lv 5) at L4 (a pure
@@ -564,9 +600,9 @@ func _time_to_kill() -> void:
 	var fight_dark := phase_dark * brood_scale * 2.0 / 0.35
 	var fight_l5 := phase_lamp * brood_scale_l5 * 2.0 / 0.35
 	print("    scaled: the Clinker Lv %d (x%.2f health) against a L3 keeper (x%.1f damage); the Ashbrood Lv %d (x%.2f) against L4 (x%.1f): %.0f s, or %.0f s at L5" % [Tuning.kl_clinker_level, foe_m.call(Tuning.kl_clinker_level), dmg_m.call(3), Tuning.kl_ashbrood_level, foe_m.call(Tuning.kl_ashbrood_level), dmg_m.call(4), fight_lamp, fight_l5])
-	check(fight_l5 > 90.0 and fight_l5 < 150.0, "the Ashbrood takes about 2 minutes for a L5 explorer too (%.0f s)" % fight_l5)
+	# M1c: these two Ashbrood sums are light-blind (the old rule); the target is now the lit-only sum below.
 	print("    Ashbrood: 2 phases; %.0f s with a lamp near (charge %.2f/s), %.0f s without (%.2f/s), at 35%% uptime (target about 2 min, 2.6 without a lamp)" % [fight_lamp, income_lamp, fight_dark, income_dark])
-	check(fight_lamp > 90.0 and fight_lamp < 150.0 and fight_dark > fight_lamp, "the Ashbrood (%s hp a phase) takes about 2 minutes (%.0f s; %.0f s with no lamp near)" % [str(Tuning.kl_ashbrood_hp), fight_lamp, fight_dark])
+	_m1c_time_to_kill(lf_dps, lf_shell, lance_dps_dark, lance_dps_lamp, clinker_scale, brood_scale, brood_scale_l5)
 	# A real fight: Lampfire alone on a shelled elite (the crook's guard) from 120 px.
 	_reset_keeper()
 	var e := _w(spot + Vector2(120, -10), true)

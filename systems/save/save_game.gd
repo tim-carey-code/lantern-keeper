@@ -6,8 +6,9 @@ extends Node
 ## a snuffed lamp's timer and wind (they come back on their own).
 ## File: user://save.json  (on Linux: ~/.local/share/godot/app_userdata/Lantern Keeper/)
 
-const VERSION := 6   # 3: isolated Keeper's Light prototype progression; 4: the map is 224 x 200 (regions 4x);
-                     # 5: M1a, the action bar and lamp-oil flasks; 6: M1b, no more tending (no fuel or glass)
+const VERSION := 7   # 3: isolated Keeper's Light prototype progression; 4: the map is 224 x 200 (regions 4x);
+                     # 5: M1a, the action bar and lamp-oil flasks; 6: M1b, no more tending (no fuel or glass);
+                     # 7: M1c, the old lamp on the Ashbrood's rim is one of the saved lanterns (lit or cold)
 const MIN_VERSION := 4   # older saves are for the small map and start fresh; version 4 is migrated on load (migrate_data)
 const AUTOSAVE_SEC := 60.0
 
@@ -136,7 +137,8 @@ func save(main: Node) -> bool:
 ## mirror direction, and is cold only if its tank was empty (load_into() lets only the old lamps stay cold);
 ## fuel spots, peat, glass shards and the woodpile go; untaken fuel and glass caches become scrap caches; scrap
 ## piles keep what is left in them (one-off now); charge is kept (capped on load). Level, wick, the bar, flasks,
-## upgrades, notes, cleared fights and the story are kept as they are. Public for tests.
+## upgrades, notes, cleared fights and the story are kept as they are. 6 -> 7 (M1c): no field changes; the rim lamp
+## a version 6 save lacks is put back cold on load. Public for tests.
 static func migrate_data(data: Dictionary) -> Dictionary:
 	var v := int(data.get("version", 0))
 	if v == 4:
@@ -179,6 +181,12 @@ static func migrate_data(data: Dictionary) -> Dictionary:
 			piles.append({"kind": "scrap", "label": label if label in ["Old cache"] else "", "x": float(r.get("x", 0.0)), "y": float(r.get("y", 0.0)), "amount": amount})
 		data["resources"] = piles
 		data["version"] = 6
+	if int(data.get("version", 0)) == 6:
+		# 6 -> 7 (M1c): nothing in the file changes. A version 6 save has no rim lamp in its lantern list (it didn't
+		# exist); load_into() puts every missing old lamp back, cold, so the rim lamp is there to light by touch.
+		# Lamp slots come from the level (nothing to save); snuff, flare and smother timers are not saved.
+		data["version"] = 7
+		data["from_v6"] = true   # load_into: a lamp the keeper planted on the new rim lamp's tile is refunded
 	return data
 
 ## A saved action bar, checked slot by slot with Progress.bind_reason() (call it after level and lance_given are
@@ -280,7 +288,16 @@ func load_into(main: Node) -> bool:
 	for c in lroot.get_children():
 		lroot.remove_child(c)
 		c.queue_free()
+	var rim: Vector2 = main.rim_lamp_pos if "rim_lamp_pos" in main else Vector2.INF
+	var kept: Array = []
 	for l in data["lanterns"]:
+		# Review fix (M1c): a version 6 save may have a planted lamp where the rim lamp now stands. Its scrap goes
+		# back to the keeper and the rim lamp takes the tile (below), so the no-scrap way to light the Ashbrood stays.
+		if data.get("from_v6", false) and rim != Vector2.INF and Vector2(l["x"], l["y"]).distance_to(rim) < FogGrid.TILE * 1.5:
+			Inventory.counts["scrap"] = Inventory.get_count("scrap") + Lantern.cost(str(l["kind"]))
+			continue
+		kept.append(l)
+	for l in kept:
 		var lamp := Lantern.new()
 		lamp.kind = l["kind"]
 		lamp.mirror_dir = int(l.get("dir", 0))
@@ -289,6 +306,21 @@ func load_into(main: Node) -> bool:
 		lamp.old = lamp.kind == "post" and main.has_method("is_old_lamp_spot") and main.is_old_lamp_spot(lamp.position)
 		lamp.cold = lamp.old and bool(l.get("cold", false))
 		lroot.add_child(lamp)
+	# An old lamp the save doesn't list (the rim lamp, in a save from before M1c) comes back cold.
+	if main.has_method("old_lamp_spots"):
+		for spot in main.old_lamp_spots():
+			var found := false
+			for l in kept:
+				if Vector2(l["x"], l["y"]).distance_to(spot) < 8.0:
+					found = true
+					break
+			if not found:
+				var old_lamp := Lantern.new()
+				old_lamp.kind = "post"
+				old_lamp.old = true
+				old_lamp.cold = true
+				old_lamp.position = spot
+				lroot.add_child(old_lamp)
 	# Scrap piles: replace the generated ones with what was left (one-off: taken piles stay gone).
 	var rroot: Node = main.get_node("Resources")
 	for c in rroot.get_children():

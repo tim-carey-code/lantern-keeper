@@ -35,6 +35,15 @@ func _ready() -> void:
 	strip_real_input()
 	Tuning.wick_enabled = false
 	Story.skip_opening = true
+	# M1c: this test predates the light states and lamp slots (test_light_states, test_combos and test_core's slot
+	# checks cover those). The light rule and the slot limit are off here, so its sums stay as they were.
+	Tuning.kl_dark_dmg_mult = 1.0
+	Tuning.kl_lit_dmg_mult = 1.0
+	Tuning.kl_lit_shell_mult = 1.0
+	Tuning.kl_dark_shell_floor = 0.0
+	Tuning.kl_ashbrood_needs_light = false
+	Tuning.kl_lamp_slots_base = 6
+	Tuning.kl_lamp_replant_cd = 0.0
 	Settings.path = "user://test_save_settings.cfg"   # never the owner's settings
 	Settings.use_defaults()
 	SaveGame.path = "user://test_save.json"
@@ -44,6 +53,7 @@ func _ready() -> void:
 ## Test-only files next to the test save (never the owner's slots or settings).
 const V4_PATH := "user://test_save_v4.json"
 const V5_PATH := "user://test_save_v5.json"
+const V6_PATH := "user://test_save_v6.json"
 const BAD_BAR_PATH := "user://test_save_bad_bar.json"
 
 func _read_json(path: String) -> Dictionary:
@@ -70,11 +80,12 @@ func _load_file(path: String, data: Dictionary) -> bool:
 ## and at level 1; a saved bar with things it may not hold falls back to the default bar slot by slot.
 func _old_and_bad_files() -> void:
 	var v6 := _read_json(SaveGame.path)
-	check(int(v6.get("version", 0)) == SaveGame.VERSION and SaveGame.VERSION == 6, "the test save is version 6 (%d)" % SaveGame.VERSION)
+	check(int(v6.get("version", 0)) == SaveGame.VERSION and SaveGame.VERSION == 7, "the test save is version 7 (%d)" % SaveGame.VERSION)
 	var text := FileAccess.get_file_as_string(SaveGame.path)
 	check(not text.contains("fuel") and not text.contains("glass") and not text.contains("regrow"), "a version 6 save has no fuel, glass or regrowth in it")
 	var v5 := _v5_from(v6)
 	_v5_file(v5)
+	_v6_file(v6)
 	var v4: Dictionary = _v5_from(v6)
 	v4["version"] = 4
 	v4["progress"].erase("bar")
@@ -104,7 +115,7 @@ func _old_and_bad_files() -> void:
 	check(Progress.bar == Progress.default_bar(), "each bad slot falls back to the default bar: Lampfire on 1, Fireglobe, the Beam, empty (%s)" % str(Progress.bar))
 	bad["progress"]["bar"] = {"skill_1": "lampfire", "skill_2": "beam", "skill_3": 7, "skill_4": "fireglobe"}
 	check(_load_file(BAD_BAR_PATH, bad), "and another")
-	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "beam", "skill_3": "", "skill_4": ""}, "good slots stay, a bad slot whose default is already used goes empty, an aimed skill leaves slot 4 (%s)" % str(Progress.bar))
+	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "beam", "skill_3": "", "skill_4": "fireglobe"}, "good slots stay, a bad slot whose default is already used goes empty; an aimed skill on slot 4 stays (M1c: Y takes any skill) (%s)" % str(Progress.bar))
 	bad["progress"]["bar"] = {"skill_1": "lampfire", "skill_2": "lampfire", "skill_3": "fireglobe", "skill_4": "hearth_ring"}
 	_load_file(BAD_BAR_PATH, bad)
 	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "beam", "skill_4": "hearth_ring"}, "a skill twice keeps only the first (the later slot takes its default); a self-cast on slot 4 stays (%s)" % str(Progress.bar))
@@ -126,6 +137,8 @@ func _v5_from(v6: Dictionary) -> Dictionary:
 	v5["progress"]["waylamp_fuel"] = {"hollow": 9}
 	var lamps := []
 	for l in v6["lanterns"]:
+		if Vector2(l["x"], l["y"]).distance_to(main.rim_lamp_pos) < 8.0:
+			continue   # a real version 5 save never had the rim lamp (M1c)
 		var old: Dictionary = (l as Dictionary).duplicate()
 		old.erase("cold")
 		old["fuel"] = 0.0 if bool(l.get("cold", false)) else 77.0
@@ -158,6 +171,36 @@ func _v5_from(v6: Dictionary) -> Dictionary:
 	v5["player"]["lamp_charge"] = 1.0
 	return v5
 
+## The v6 -> v7 migration through a real file (M1c): a v6 save never had the rim lamp; it comes back cold, to light
+## by touch. A v7 save keeps the rim lamp lit once it is lit.
+func _v6_file(v7: Dictionary) -> void:
+	var v6: Dictionary = v7.duplicate(true)
+	v6["version"] = 6
+	var kept := []
+	for l in v6["lanterns"]:
+		if Vector2(l["x"], l["y"]).distance_to(main.rim_lamp_pos) >= 8.0:
+			kept.append(l)
+	v6["lanterns"] = kept
+	check(main.rim_lamp_pos != Vector2.INF and kept.size() == v7["lanterns"].size() - 1, "a v6 file has no rim lamp (%d of %d lanterns)" % [kept.size(), v7["lanterns"].size()])
+	check(_load_file(V6_PATH, v6), "a version 6 save file loads")
+	var rim := get_tree().get_nodes_in_group("lantern").filter(func(x): return x.position.distance_to(main.rim_lamp_pos) < 8.0)
+	check(rim.size() == 1 and rim[0].old and rim[0].cold and not rim[0].can_pick_up(), "the bowl's rim lamp is put back, cold, an old lamp (lit by touch)")
+	# A v6 save with a planted Mirror Post on that tile: its scrap comes back, and the rim lamp still stands there.
+	var crowded: Dictionary = v6.duplicate(true)
+	crowded["lanterns"].append({"kind": "mirror", "x": main.rim_lamp_pos.x, "y": main.rim_lamp_pos.y, "cold": false, "dir": 0})
+	var scrap_saved := int(crowded["inventory"].get("scrap", 0))
+	check(_load_file(V6_PATH, crowded), "a version 6 save with a lamp planted on the rim lamp's tile loads")
+	rim = get_tree().get_nodes_in_group("lantern").filter(func(x): return x.position.distance_to(main.rim_lamp_pos) < 8.0)
+	check(rim.size() == 1 and rim[0].old and rim[0].kind == "post", "the rim lamp takes the tile")
+	check(Inventory.get_count("scrap") == scrap_saved + Tuning.mirror_cost_scrap, "and the planted lamp's %d scrap comes back (%d -> %d)" % [Tuning.mirror_cost_scrap, scrap_saved, Inventory.get_count("scrap")])
+	var lit7: Dictionary = v7.duplicate(true)
+	for l in lit7["lanterns"]:
+		if Vector2(l["x"], l["y"]).distance_to(main.rim_lamp_pos) < 8.0:
+			l["cold"] = false
+	check(_load_file(V6_PATH, lit7), "a version 7 save with the rim lamp lit loads")
+	rim = get_tree().get_nodes_in_group("lantern").filter(func(x): return x.position.distance_to(main.rim_lamp_pos) < 8.0)
+	check(rim.size() == 1 and rim[0].is_lit(), "and the rim lamp stays lit")
+
 ## The v5 -> v6 migration through a real file (test-only, next to the test save; never the owner's slots).
 func _v5_file(v5: Dictionary) -> void:
 	check(_load_file(V5_PATH, v5), "a version 5 save file loads (the owner's current save is v5)")
@@ -170,7 +213,7 @@ func _v5_file(v5: Dictionary) -> void:
 	check(not ("waylamp_fuel" in Progress), "nothing remembers fuel fed to a WayLamp")
 	var lamps := get_tree().get_nodes_in_group("lantern")
 	var res := lamps.filter(func(x): return x.position == lamp_pos)
-	check(lamps.size() == 4 and res.size() == 1 and res[0].kind == "reservoir" and res[0].is_lit(), "every lantern comes back, lit (%d)" % lamps.size())
+	check(lamps.size() == 5 and res.size() == 1 and res[0].kind == "reservoir" and res[0].is_lit(), "every lantern comes back, lit, and the bowl's rim lamp it never had is put back (%d)" % lamps.size())
 	var hut := lamps.filter(func(x): return x.position.distance_to(main.start_lantern_pos) < 8.0)
 	var way := lamps.filter(func(x): return x.position.distance_to(main.waypost_lantern_pos) < 8.0)
 	check(hut.size() == 1 and hut[0].old and hut[0].is_lit(), "a fuelled old lamp comes back lit")
@@ -229,13 +272,15 @@ func _process(_delta: float) -> void:
 			check(not main.loaded_save, "a fresh start has no save to load")
 			var v4 := {"version": 4, "progress": {"level": 2}, "player": {"warmth": 73.0}}
 			var v6: Dictionary = SaveGame.migrate_data(v4)
-			check(v6.version == 6 and v6.progress.bar.skill_3 == "lance" and v6.progress.lance_given, "version 4 saves migrate (through v5) to v6 with Lance on LB at level 2")
+			check(v6.version == 7 and v6.progress.bar.skill_3 == "lance" and v6.progress.lance_given, "version 4 saves migrate (through v5 and v6) to v7 with Lance on LB at level 2")
 			check(v6.player.flasks == Tuning.kl_flask_max and v6.player.warmth == 73.0, "migration fills flasks and preserves the old keeper state")
 			var v5 := {"version": 5, "inventory": {"fuel": 3, "scrap": 4, "glass": 1}, "progress": {"level": 6, "waylamp_fuel": {"marsh": 2}},
 				"lanterns": [{"kind": "post", "x": 1.0, "y": 2.0, "fuel": 0.0, "dir": 0}, {"kind": "mirror", "x": 5.0, "y": 6.0, "fuel": 1.0, "dir": 3}],
 				"resources": [{"kind": "fuel", "label": "", "x": 0.0, "y": 0.0, "amount": 4, "max": 8, "regrow": 60.0, "always": false}], "player": {"flasks": 1}}
 			var m: Dictionary = SaveGame.migrate_data(v5)
-			check(m.version == 6 and m.inventory == {"scrap": 4} and not m.progress.has("waylamp_fuel") and m.progress.level == 6 and m.player.flasks == 1, "a v5 save migrates to v6: fuel and glass dropped, progress kept")
+			check(m.version == 7 and m.inventory == {"scrap": 4} and not m.progress.has("waylamp_fuel") and m.progress.level == 6 and m.player.flasks == 1, "a v5 save migrates to v7: fuel and glass dropped, progress kept")
+			var m6: Dictionary = SaveGame.migrate_data({"version": 6, "lanterns": [{"kind": "post", "x": 1.0, "y": 2.0, "cold": true, "dir": 0}], "progress": {"level": 3}})
+			check(m6.version == 7 and m6.lanterns.size() == 1 and m6.lanterns[0].cold and m6.progress.level == 3, "a v6 save migrates to v7 with nothing in it changed (M1c)")
 			check(m.lanterns.size() == 2 and m.lanterns.all(func(l): return not l.has("fuel")) and m.lanterns[0].cold and m.lanterns[1].dir == 3 and m.resources.is_empty(), "lanterns lose their tanks (an empty one is marked cold); fuel spots go")
 		120:
 			# Change everything a save should keep.
@@ -290,7 +335,7 @@ func _process(_delta: float) -> void:
 			check(main.loaded_save, "starting the game loads the save")
 			var lamps := get_tree().get_nodes_in_group("lantern")
 			var found = lamps.filter(func(x): return x.position == lamp_pos)
-			check(lamps.size() == 3 and found.size() == 1, "lanterns come back: the two old lamps and the built one (%d)" % lamps.size())
+			check(lamps.size() == 4 and found.size() == 1, "lanterns come back: the three old lamps (hut, north path, the bowl's rim) and the built one (%d)" % lamps.size())
 			if found.size() == 1:
 				check(found[0].kind == "reservoir" and found[0].is_lit(), "with their type, lit")
 			var hut := lamps.filter(func(x): return x.position.distance_to(main.start_lantern_pos) < 8.0)

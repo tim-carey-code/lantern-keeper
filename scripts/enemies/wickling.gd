@@ -30,6 +30,7 @@ var timid := true                # afraid of lantern light (about half are); the
 var _in_light := 0.0             # seconds a brave one has stood in healthy light
 var _latch: Telegraph.Tell       # reaching for the keeper (before the drain)
 var latched := false             # its touch is draining the keeper
+var _chill_cd := 0.0             # s to its next touch tick (M1c: a touch chills in ticks, not a stream)
 var _notice_t := 0.0             # > 0: eyes flaring (it just noticed you)
 var _fade_t := 0.0               # > 0: fading in after a hatch or a call (harmless)
 var _fade_max := 0.0
@@ -119,13 +120,14 @@ func _process(delta: float) -> void:
 	if fade_if_held(delta):
 		return
 	_notice_t = maxf(0.0, _notice_t - delta)
+	_chill_cd = maxf(0.0, _chill_cd - delta)
 	if _fade_t > 0.0:
 		_fade_t = maxf(0.0, _fade_t - delta)
 		modulate.a = 1.0 - _fade_t / maxf(_fade_max, 0.001)
 	# A Wickling clinging to a mirror can drink its beam instead of being burned by it.
 	var smothering: bool = state == State.SNUFF and target != null and is_instance_valid(target) and target is Lantern and target.kind == "mirror"
 	if beam_level_at(global_position) > 0.0 and not smothering:
-		hurt(Tuning.wick_beam_burn * delta, false, "beam")
+		hurt(Tuning.wick_beam_burn * delta, false, "mirror")
 		if is_queued_for_deletion():
 			return
 	var player := _player()
@@ -244,8 +246,10 @@ func _on_shell_cracked() -> void:
 	if _art:
 		_art.play_once("crack")
 
-## Touching the keeper: first it reaches (a short wind-up), then its touch drains warmth, and the keeper shows a
-## frost edge. The touch is a drain, not a hit, so it needs no minimum warning (ART_DIRECTION §4.4 rule 1).
+## Touching the keeper: first it reaches (a short wind-up), then its touch chills, and the keeper shows a frost
+## edge. The touch is a drain, not a hit, so it needs no minimum warning (ART_DIRECTION §4.4 rule 1).
+## M1c damage fix (owner, M1b playtest: "the Wicklings fried me"): it chills in ticks of kl_wick_chill_hit every
+## kl_wick_chill_tick (grown by its level), and the whole swarm shares the keeper's cap (Player.swarm_chill).
 func _touch(player: Node2D, delta: float) -> void:
 	if not latched:
 		if _latch == null:
@@ -259,10 +263,16 @@ func _touch(player: Node2D, delta: float) -> void:
 		_latch.finish()
 		_latch = null
 		latched = true
-	var lee := Tuning.kl_lee_mult if Progress.has_combat_upgrade("lee") else 1.0
-	player.chill(Tuning.warmth_drain_per_sec * (Tuning.kl_elite_chill_mult if elite else 1.0) * lee * delta)
+	if _chill_cd <= 0.0:
+		_chill_cd = maxf(0.05, Tuning.kl_wick_chill_tick)
+		player.swarm_chill(touch_chill())
 	if "frost_t" in player and not player.combat.is_dashing():
 		player.frost_t = 0.15
+
+## Warmth one touch tick takes (before the swarm cap): elites harder, "Lee" softer, grown by its level.
+func touch_chill() -> float:
+	var lee := Tuning.kl_lee_mult if Progress.has_combat_upgrade("lee") else 1.0
+	return Tuning.kl_wick_chill_hit * (Tuning.kl_elite_chill_mult if elite else 1.0) * lee * dmg_level_mult()
 
 ## Out of reach (or no longer hunting): the reach and the drain stop.
 func _let_go() -> void:

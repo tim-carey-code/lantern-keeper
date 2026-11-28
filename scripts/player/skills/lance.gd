@@ -23,7 +23,7 @@ func press() -> bool:
 		return false
 	spend()
 	combat.update_aim(Vector2.ZERO, true)
-	var dir: Vector2 = combat.assisted(combat.aim, Tuning.kl_lance_range)
+	var dir: Vector2 = combat.assisted(combat.aim_for(Tuning.kl_lance_speed), Tuning.kl_lance_range)
 	var from := muzzle(dir)
 	FireBolts.inst.fire_lance(from, dir)
 	FireFx.cast_flare(from, dir, true)

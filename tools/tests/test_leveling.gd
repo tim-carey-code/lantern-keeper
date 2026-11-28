@@ -34,6 +34,7 @@ var _offers: Array[int] = []
 var _step := 0
 var _sim_wick := 0              # wick toward the next level at the end of the last simulate()
 var _beeline_rest: Array = []   # what the beeline leaves (the side content)
+var _beeline_path: Array = []   # the beeline's waypoints (the scrap check)
 ## GAME_PLAN §9: the level each route reaches before the Ashbrood, and on its kill (the Hollow's last level).
 const INTO_BOSS := {"beeline": 4, "explorer": 5}
 
@@ -52,6 +53,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	strip_real_input()
 	Story.skip_opening = true
+	# M1c (review): the real rules stay on here (light states, lamp slots); _scrap_check walks the scrap economy.
 	Tuning.wick_enabled = false
 	SaveGame.path = "user://test_leveling.json"
 	SaveGame.delete_save()
@@ -132,6 +134,7 @@ func _build_routes() -> void:
 	on_path.sort_custom(func(a, b): return _along(a.pos, path) < _along(b.pos, path))
 	var rest := packs.filter(func(e): return not on_path.has(e)) + nests.filter(func(e): return not on_path.has(e))
 	routes["beeline"] = on_path + [clinker] + finale   # M1b: a pure beeline; the side content is the explorer's
+	_beeline_path = path + [wl]
 	_beeline_rest = rest
 	# Explorer: always the nearest thing it can fight; nests open up after the Post Lamp find (its guard).
 	var route := []
@@ -147,6 +150,30 @@ func _build_routes() -> void:
 			nests_open = true
 			todo += nests
 	routes["explorer"] = route + finale
+
+## M1c (PLAN_LANTERNS §5; review): the scrap economy with real lamp slots. A Post Lamp costs 5 and a pick-up gives
+## all of it back, so the keeper needs slots x 5 scrap at most, once. The beeline reaches the Ashbrood at L4
+## (3 slots) and the explorer at L5 (3 slots). Scrap comes from one-off piles (and caches) and, at 35%, from kills.
+func _scrap_check() -> void:
+	var hollow := 0
+	var on_route := 0
+	var before_crook := 0
+	var crook: Vector2 = _beeline_path[2]
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.kind != "scrap" or main.fog.region_at(r.global_position) != FogGrid.R_HOLLOW:
+			continue
+		hollow += r.amount
+		if _dist_to_path(r.global_position, _beeline_path) <= 192.0:
+			on_route += r.amount
+			if _along(r.global_position, _beeline_path) <= _along(crook, _beeline_path):
+				before_crook += r.amount
+	var cost := Tuning.post_lamp_cost_scrap
+	var slots_boss := Progress.lamp_slots(INTO_BOSS["beeline"])
+	var slots_max := Progress.lamp_slots(INTO_BOSS["explorer"] + 1)
+	print("    scrap (M1c): %d in the Hollow's piles, %d within 6 tiles of the beeline (%d before the crook; kill drops not counted); slots: 2 at the crook, %d at the Ashbrood (%d scrap)" % [hollow, on_route, before_crook, slots_boss, slots_boss * cost])
+	check(before_crook >= Progress.lamp_slots(2) * cost, "M1c: by the crook (level 2) the route has scrap for both lamp slots (%d, need %d)" % [before_crook, Progress.lamp_slots(2) * cost])
+	check(on_route >= slots_boss * cost, "M1c: the beeline's piles fill every slot at the Ashbrood, with full refunds (%d, need %d)" % [on_route, slots_boss * cost])
+	check(hollow >= slots_max * cost, "M1c: the Hollow's piles fill every slot an explorer has there (%d, need %d)" % [hollow, slots_max * cost])
 
 func _nearest_first(events: Array, from: Vector2) -> Array:
 	var todo := events.duplicate()
@@ -426,6 +453,7 @@ func _process(_delta: float) -> void:
 	_step += 1
 	match _step:
 		1:
+			_scrap_check()
 			var sim: Array = simulate(_run, "new", "units")
 			check(Progress.level == sim[-1], "the real Progress lands on the same level (L%d)" % Progress.level)
 			check(_offers.size() == Progress.level - 1 and _offers.all(func(n): return n == 3), "every level-up offered three cards (%s)" % str(_offers))
@@ -462,6 +490,7 @@ func _process(_delta: float) -> void:
 			elite.level = 3
 			wl.add_child(elite)
 			var w1 := Progress.wick + Progress.wick_frac
+			elite.shell = 0.0   # M1c: in the dark its shell would hold at the floor (the light rule is on here)
 			elite.hurt(99.0, false, "beam")
 			check(absf(Progress.wick + Progress.wick_frac - w1 - Progress.kill_wick(Tuning.kl_elite_wick, 3)) < 0.001, "a shelled Wickling pays %d base wick, grown by its level" % Tuning.kl_elite_wick)
 			# The gap rule itself.

@@ -26,6 +26,15 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	strip_real_input()
 	Story.skip_opening = true
+	# M1c: this test predates the light states and lamp slots (test_light_states, test_combos and test_core's slot
+	# checks cover those). The light rule and the slot limit are off here, so its sums stay as they were.
+	Tuning.kl_dark_dmg_mult = 1.0
+	Tuning.kl_lit_dmg_mult = 1.0
+	Tuning.kl_lit_shell_mult = 1.0
+	Tuning.kl_dark_shell_floor = 0.0
+	Tuning.kl_ashbrood_needs_light = false
+	Tuning.kl_lamp_slots_base = 6
+	Tuning.kl_lamp_replant_cd = 0.0
 	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
 	SaveGame.delete_save()
 	Settings.path = "user://test_ignore_settings.cfg"
@@ -106,6 +115,7 @@ func _run() -> void:
 	await _wickling_checks()
 	_reduce_flash_checks()
 	await _keeper_checks()
+	await _m1c_checks()
 	await _swap_checks()
 	check(_arrow_checks > 100 and _arrow_missing == 0, "no hit winds up off-screen without an edge arrow (%d frames of wind-ups checked, %d without)" % [_arrow_checks, _arrow_missing])
 	print("RESULT fails=%d" % fails)
@@ -244,7 +254,8 @@ func _one_dive(lamp_at: Vector2, keeper_off: Vector2, dashing: bool) -> Dictiona
 	await wait(Tuning.kl_ashbrood_dive_travel * 0.5)
 	out["flying"] = b.is_flying() and b.global_position.distance_to(start) > 5.0 and b.global_position.distance_to(land) > 5.0
 	await wait(Tuning.kl_ashbrood_dive_travel * 0.5 + 0.1)
-	out["landed"] = b.global_position.distance_to(land) < 1.0 and lamp.is_snuffed() and not lamp.is_lit() and b.is_sitting()   # M1b: the dive snuffs the lamp
+	# M1c: it smothers the lamp while it sits (still lit: the punish window); the lamp goes out when the sit ends.
+	out["landed"] = b.global_position.distance_to(land) < 1.0 and lamp.smother_by == b and lamp.is_lit() and b.is_sitting()
 	out["lost"] = Tuning.warmth_max - player.warmth
 	b.queue_free()
 	lamp.queue_free()
@@ -255,7 +266,7 @@ func _dive_checks() -> void:
 	var near: Dictionary = await _one_dive(spot + Vector2(60, 0), Vector2(r - 3.0, 0), false)
 	check(near["radius_ok"], "the dive shows one landing circle at the lamp, the same %.0f px it hits with" % r)
 	check(near["flying"], "the dive is a visible flight, not a jump")
-	check(near["landed"], "it lands on the lamp, empties it and sits")
+	check(near["landed"], "it lands on the lamp and sits on it, smothering it (still lit: hit it now)")
 	check(near["lost"] >= Tuning.kl_ashbrood_dive_warmth - 0.1, "3 px inside the landing circle: it chills you")
 	var edge: Dictionary = await _one_dive(spot + Vector2(60, 0), Vector2(r + 3.0, 0), false)
 	check(edge["lost"] < 0.1, "3 px outside it: nothing")
@@ -531,6 +542,60 @@ func _keeper_checks() -> void:
 	check(player.pose()[0] == player.PUNY_FLINCH, "with reduce flashes there is no white silhouette, only the cold flinch")
 	Settings.reduce_flashes = false
 	player.warmth = Tuning.warmth_max
+
+# --- M1c: the Ashbrood's new tells and the lock marker ---------------------------------------------------------
+
+func _m1c_checks() -> void:
+	clear_foes()
+	await wait(0.05)
+	reset_keeper(spot + Vector2(0, 200))
+	var b: Ashbrood = add_foe(Ashbrood.new(), spot)
+	await wait(0.05)
+	b.end_phase_pause()
+	b._puff_t = 99.0
+	b._wave_t = 99.0
+	b._bolt_t = 0.0
+	await wait(0.05)
+	var bolts: Array = b.bolt_tells()
+	check(bolts.size() == Tuning.kl_ashbrood_bolt_count and bolts.all(func(t): return t.kind == Telegraph.AIM and t.hit and t.duration >= Tuning.kl_tell_min), "its ash bolts: one cold aim marker each, at least %.1f s of warning" % Tuning.kl_tell_min)
+	var lands: Array = bolts.map(func(t): return t.duration)
+	lands.sort()
+	var spaced := true
+	for i in range(1, lands.size()):
+		if lands[i] - lands[i - 1] < Tuning.kl_tell_gap - 0.001:
+			spaced = false
+	check(spaced, "they land one after another, at least %.1f s apart (the gap rule) (%s)" % [Tuning.kl_tell_gap, str(lands)])
+	check(Telegraph.style(bolts[0], false)["color"] == Telegraph.COLD, "in the cold threat colour")
+	await wait(1.6)
+	reset_keeper(spot + Vector2(0, Tuning.kl_ashbrood_sweep_radius - 30.0))
+	b._sweep_cd = 0.0
+	b._bolt_t = 99.0
+	b._idle_t = 0.0
+	await wait(0.05)
+	var sw := b.sweep_tell()
+	check(sw != null and sw.kind == Telegraph.CIRCLE and is_equal_approx(sw.radius, Tuning.kl_ashbrood_sweep_radius) and sw.duration >= Tuning.kl_tell_min, "its wing sweep: a %.0f px cold circle with at least %.1f s of warning" % [Tuning.kl_ashbrood_sweep_radius, Tuning.kl_tell_min])
+	await wait(1.0)
+	b.queue_free()
+	clear_foes()
+	await wait(0.05)
+	# The lock marker: drawn by this node (above fog and foes), warm, never in a foe's colour.
+	var w: Wickling = add_foe(Wickling.new(), spot + Vector2(120, 0))
+	w.set_process(false)
+	reset_keeper(spot)
+	await wait(0.05)
+	var lock: LockOn = player.combat.lock
+	check(lock.acquire(Vector2.RIGHT), "a lock starts")
+	var m := lock.marker()
+	check(not m.is_empty() and m["color"] == LockOn.MARKER, "the lock marker is the keeper's amber #ffd27a")
+	check(m["color"] != Telegraph.COLD and m["color"] != Telegraph.COLD_DEEP and m["color"] != Color.WHITE, "never a foe colour (cold means a foe's attack)")
+	check(Telegraph.inst != null and Telegraph.inst.z_index == 13 and LockOn.current == lock, "it is drawn in the telegraph pass on the fog layer, above fog and foes")
+	Settings.reduce_flashes = true
+	var m2 := lock.marker()
+	check(m2["alpha"] == m["alpha"] and m2["width"] == m["width"], "it never flashes, so reduce flashes changes nothing")
+	Settings.reduce_flashes = false
+	lock.release("test")
+	clear_foes()
+	await wait(0.05)
 
 # --- The placeholder swap hook (§6.4) ------------------------------------------------------------------------
 

@@ -55,6 +55,10 @@ func level_mult() -> float:
 
 var _scaled := false
 
+## Foe damage by level (M1c damage fix): its hits, spit and touch grow kl_foe_dmg_per_level (8%) a level over 1.
+func dmg_level_mult() -> float:
+	return 1.0 + Tuning.kl_foe_dmg_per_level * float(maxi(1, level) - 1)
+
 ## Scales the health and shell its _ready() set from tuning.gd by its level, once. Runs after the kind's own
 ## _ready() (a script's NOTIFICATION_READY comes after _ready), so the level set by its pack, nest or tuning
 ## counts. Guardians that refill their health per phase use level_mult() themselves.
@@ -173,6 +177,116 @@ func step_outside_light(step: Vector2, delta: float) -> Vector2:
 		return Vector2.ZERO
 	return step
 
+# --- Light states (M1c, PLAN_LANTERNS §2.1) ---------------------------------------------
+## DARK: outside every light (takes x kl_dark_dmg_mult; its shell can't break). DIM: only in the keeper's hand-lamp
+## light (as before). LIT (exposed): in a lamp's light (x kl_lit_dmg_mult; shells wear x kl_lit_shell_mult). A foe
+## stays exposed kl_exposed_linger after it leaves light. Nests skip the rule (only cores hurt them).
+enum { DARK, DIM, LIT }
+## Steady lamp damage skips the light rule (core burns stay at 2 hp/s): lamp cores, the brave ones' light burn
+## and mirror beams.
+const LIGHT_EXEMPT := ["core", "light", "mirror"]
+
+var light_state := DIM
+var light_from := Vector2.INF   # where the light that exposes it comes from (its warm rim faces it)
+var _exposed_t := 0.0
+var _was_exposed := false
+var _light_frame := -1          # the frame its light state was last worked out (performance: hits reuse it)
+var _light_epoch := -1
+var _dark_tipped := false      # this foe has asked for the "dark" tip once (Story shows it once anyway)
+var _light_acc := 0.0           # time since its light state was last worked out in tick_foe
+const LIGHT_EVERY := 3          # performance: tick_foe works its light out every 3rd frame (staggered per foe)
+
+## Nests skip the whole rule.
+func light_exempt() -> bool:
+	return false
+
+## The Ashbrood: dim counts as dark (kl_ashbrood_needs_light).
+func needs_light() -> bool:
+	return false
+
+## Works out its light state (once a frame in tick_foe; again on each hit, with no time passing).
+func update_light_state(delta: float) -> int:
+	_light_frame = Engine.get_process_frames()
+	_light_epoch = LightSense._epoch
+	if light_exempt():
+		light_state = DIM
+		return light_state
+	LightSense.refresh(get_tree())
+	var src := extra_light_source()
+	if src == Vector2.INF:
+		src = LightSense.lit_source(global_position)
+	if src != Vector2.INF:
+		_exposed_t = Tuning.kl_exposed_linger
+		light_from = src
+		if not _was_exposed:
+			_was_exposed = true
+			Telegraph.play_slot("foe", "exposed")
+	else:
+		_exposed_t = maxf(0.0, _exposed_t - delta)
+	if _exposed_t > 0.0:
+		light_state = LIT
+		return light_state
+	_was_exposed = false
+	var k := _player()
+	if k and k.has_method("get_light_radius") and k.global_position.distance_to(global_position) <= k.get_light_radius():
+		light_state = DIM
+	else:
+		light_state = DARK
+	return light_state
+
+## Its light state now: the one tick_foe worked out this frame, else worked out again (performance, M1c review:
+## burning ground and steady sources hit every foe every frame). A lamp lit, snuffed or flaring (LightSense.bump)
+## makes it work it out again.
+func light_now() -> int:
+	if Engine.get_process_frames() - _light_frame >= LIGHT_EVERY or _light_epoch != LightSense._epoch:
+		update_light_state(0.0)
+	return light_state
+
+## Light that exposes this foe besides lamps (the Ashbrood's stirred ember), or Vector2.INF.
+func extra_light_source() -> Vector2:
+	return Vector2.INF
+
+func is_exposed() -> bool:
+	return light_state == LIT
+
+## The state that sets its numbers: for the Ashbrood, dim is dark.
+func effective_light() -> int:
+	if light_exempt():
+		return DIM
+	if light_state == DIM and needs_light() and Tuning.kl_ashbrood_needs_light:
+		return DARK
+	return light_state
+
+## What a hit from `source` does to its health in its light now.
+func light_dmg_mult(source: String, st: int = -1) -> float:
+	if light_exempt() or source in LIGHT_EXEMPT:
+		return 1.0
+	match effective_light() if st < 0 else st:
+		DARK:
+			return Tuning.kl_dark_dmg_mult
+		LIT:
+			return Tuning.kl_lit_dmg_mult
+	return 1.0
+
+## How fast its shell wears in its light now.
+func light_shell_mult(source: String, st: int = -1) -> float:
+	if light_exempt() or source in LIGHT_EXEMPT:
+		return 1.0
+	return Tuning.kl_lit_shell_mult if (effective_light() if st < 0 else st) == LIT else 1.0
+
+## The lowest its shell can wear to now: kl_dark_shell_floor in the dark (it can't break), else 0.
+func shell_floor(source: String, st: int = -1) -> float:
+	if light_exempt() or source in LIGHT_EXEMPT or shell_max <= 0.0:
+		return 0.0
+	return minf(Tuning.kl_dark_shell_floor, shell_max) if (effective_light() if st < 0 else st) == DARK else 0.0
+
+## The body tint for its light (copied onto owner art): dark is cold and dim, eyes and rim only; lit and dim are
+## full colour (lit adds a warm rim, drawn by FoeBars).
+func light_tint() -> Color:
+	if effective_light() == DARK and not light_exempt():
+		return Color(0.36, 0.42, 0.58)
+	return Color.WHITE
+
 # --- Damage --------------------------------------------------------------------
 
 func body_radius() -> float:
@@ -194,21 +308,31 @@ func ignite(dps: float, seconds: float) -> void:
 ## Half: Lampfire's hit. None (it glances off): Fireglobe, Hearth ring, splash, burning ground, lamp cores.
 static func shell_factor(source: String) -> float:
 	match source:
-		"beam", "lance":
+		"beam", "lance", "mirror", "chain":
 			return 1.0
 		"lampfire":
 			return 0.5
 	return 0.0
 
 ## Sources that come in a steady stream: their damage numbers are summed and shown a few times a second.
-const STEADY := ["beam", "burn", "ground", "core", "light", "linger"]
+const STEADY := ["beam", "burn", "ground", "core", "light", "linger", "mirror", "chain_burn"]
 
 ## Damage from a source: "lampfire", "lance", "splash", "fireglobe", "ground" (burning ground), "ring" (Hearth
 ## ring), "burn", "beam" (the keeper's beam or a mirror beam), "burst", "core", "light", "ward" or "".
 ## A shell takes what shell_factor allows first and turns the rest aside.
+## M1c: its light state sets the numbers (light_dmg_mult, light_shell_mult, shell_floor), applied last, once.
 func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	if _dead:
 		return
+	# The light rule, worked out once a hit (performance: no helper calls on the hot path).
+	var ruled := not (source in LIGHT_EXEMPT) and not light_exempt()
+	var st := DIM
+	if ruled:
+		if Engine.get_process_frames() - _light_frame >= LIGHT_EVERY or _light_epoch != LightSense._epoch:
+			update_light_state(0.0)
+		st = light_state
+		if st == DIM and Tuning.kl_ashbrood_needs_light and needs_light():
+			st = DARK
 	since_hurt = 0.0
 	var flash := 0.1
 	if source in STEADY:
@@ -225,26 +349,43 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	var wear := shell_factor(source)
 	if wear > 0.0:
 		_since_beam = 0.0
+	if st == DARK and ruled and not _dark_tipped:
+		_dark_tipped = true
+		Story.tip("dark")   # "In the dark they shrug off your fire. Bring light to them." (DRAFT)
 	if shell > 0.0:
 		if wear > 0.0:
 			Story.tip("shell")   # the first fire that wears a shell (onboarding: the Post Lamp's guard)
 		else:
-			_clink = 0.2
-			if _impact_t <= 0.0:
-				Sfx.play("ui_tick", -18.0, 0.1)
-				_impact_t = 0.3
+			_glance()
 			return
-		var worn := amount * wear
+		var floor := minf(Tuning.kl_dark_shell_floor, shell_max) if st == DARK and ruled else 0.0
+		if floor > 0.0 and shell <= floor + 0.0001:
+			_glance()   # in the dark a worn shell holds: it clinks
+			return
+		var smult := Tuning.kl_lit_shell_mult if st == LIT and ruled else 1.0
+		var worn := amount * wear * smult
+		if floor > 0.0 and shell - worn < floor:
+			worn = shell - floor
+			_number(worn, source, true)
+			shell = floor
+			_burning = 0.3
+			_glance()
+			return
 		_number(minf(worn, shell), source, true)
 		shell -= worn
 		_burning = 0.3
 		if shell > 0.0:
 			return
-		amount = -shell / wear   # what got through the shell goes on to its health
+		amount = -shell / (wear * smult)   # what got through the shell goes on to its health
 		shell = 0.0
 		_on_shell_cracked()
 		if amount <= 0.0:
 			return
+	if ruled:
+		if st == DARK:
+			amount *= Tuning.kl_dark_dmg_mult
+		elif st == LIT:
+			amount *= Tuning.kl_lit_dmg_mult
 	_burning = 0.3
 	_number(amount, source, false)
 	_on_hurt(scare, source)
@@ -252,6 +393,13 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 		Sfx.play("ui_tick", -20.0, 0.12)
 		_impact_t = 0.3
 	_lose_hp(amount)
+
+## Something glanced off: the clink (built).
+func _glance() -> void:
+	_clink = 0.2
+	if _impact_t <= 0.0:
+		Sfx.play("ui_tick", -18.0, 0.1)
+		_impact_t = 0.3
 
 ## Every loss of health goes through here (hits, burns, lingering burn), so a boss's oil step can't be skipped.
 func _lose_hp(amount: float) -> void:
@@ -303,8 +451,12 @@ func tick_foe(delta: float) -> void:
 	_flash = maxf(0.0, _flash - delta)
 	_beam_flash_cd = maxf(0.0, _beam_flash_cd - delta)
 	_hitstop_t = maxf(0.0, _hitstop_t - delta)
-	# The white hit flash (built), held through a hit-stop; dimmer with "reduce flashes".
-	self_modulate = Color.WHITE.lerp(Color(2.6, 2.4, 2.0), Settings.flash_mult()) if (_flash > 0.0 or _hitstop_t > 0.0) else Color.WHITE
+	_light_acc += delta
+	if (Engine.get_process_frames() + get_instance_id()) % LIGHT_EVERY == 0 or _light_epoch != LightSense._epoch:
+		update_light_state(_light_acc)
+		_light_acc = 0.0
+	# The white hit flash (built), held through a hit-stop; dimmer with "reduce flashes". Else its light's tint (M1c).
+	self_modulate = Color.WHITE.lerp(Color(2.6, 2.4, 2.0), Settings.flash_mult()) if (_flash > 0.0 or _hitstop_t > 0.0) else light_tint()
 	_burning = maxf(0.0, _burning - delta)
 	_impact_t = maxf(0.0, _impact_t - delta)
 	_clink = maxf(0.0, _clink - delta)
@@ -351,7 +503,7 @@ func tick_foe(delta: float) -> void:
 				continue
 			var beam_strength: float = mirror.beam_level_at(global_position)
 			if beam_strength > 0.0:
-				hurt(Tuning.wick_beam_burn * beam_strength * delta, false, "beam")
+				hurt(Tuning.wick_beam_burn * beam_strength * delta, false, "mirror")
 				break
 
 ## A held region is no place for the dark: it fades away, leaving nothing. True while it is fading.

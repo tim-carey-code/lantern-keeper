@@ -3,6 +3,8 @@ extends CanvasLayer
 ## Works with a controller (D-pad + A) and with the mouse. Pauses the world while open.
 ## M1a options (GAME_PLAN §14, brief §4): a screen-shake slider, "reduce flashes", and the optional Lampfire
 ## auto-fire on the right stick. They are saved for this PC in user://settings.cfg (Settings), not in a slot.
+## M1c (PLAN_LANTERNS §6.8): "Target lock options" swaps the controls list for the lock's options (mode, moving on
+## after a kill, the lock button, the marker size, the aim assist), each a button that cycles its value.
 
 var root: Control
 var buttons: Array[Button] = []
@@ -12,6 +14,8 @@ var shake_slider: HSlider
 var shake_label: Label
 var flashes_check: CheckButton
 var autofire_check: CheckButton
+var lock_box: VBoxContainer
+var lock_buttons := {}          # option -> Button
 var _confirm_new := false
 
 const SHAKE_TEXT := "Screen shake: %d%%"
@@ -46,6 +50,15 @@ func _ready() -> void:
 	right.add_child(ctitle)
 	controls = UiStyle.label(20, UiStyle.PALE)
 	right.add_child(controls)
+	lock_box = VBoxContainer.new()
+	lock_box.add_theme_constant_override("separation", 6)
+	lock_box.visible = false
+	right.add_child(lock_box)
+	for opt in ["mode", "chain", "button", "marker", "sticky", "assist"]:
+		var lb := Button.new()
+		lb.pressed.connect(_cycle_lock.bind(opt))
+		lock_box.add_child(lb)
+		lock_buttons[opt] = lb
 	var otitle := UiStyle.label(30, UiStyle.GOLD)
 	otitle.text = "Options"
 	right.add_child(otitle)
@@ -74,7 +87,7 @@ func _ready() -> void:
 	title.text = "Paused"
 	title.add_theme_font_size_override("font_size", 40)
 	box.add_child(title)
-	for item in [["Resume", _resume], ["Save", _save], ["New game", _new_game], ["Save and quit", _quit], ["Goal pointer", _cycle_pointer], ["Show tips again", _reset_tips], ["Save slots", _to_slots]]:
+	for item in [["Resume", _resume], ["Save", _save], ["New game", _new_game], ["Save and quit", _quit], ["Goal pointer", _cycle_pointer], ["Target lock options", _toggle_lock_options], ["Show tips again", _reset_tips], ["Save slots", _to_slots]]:
 		var b := Button.new()
 		b.text = item[0]
 		b.pressed.connect(item[1])
@@ -102,6 +115,9 @@ func open() -> void:
 	flashes_check.set_pressed_no_signal(Settings.reduce_flashes)
 	autofire_check.set_pressed_no_signal(Settings.autofire)
 	_pointer_label()
+	controls.visible = true
+	lock_box.visible = false
+	_lock_labels()
 	buttons[0].grab_focus()
 	Sfx.play("ui_open", -14.0)
 
@@ -183,6 +199,49 @@ func _cycle_pointer() -> void:
 	var order := ["auto", "on", "off"]
 	Story.pointer_mode = order[(order.find(Story.pointer_mode) + 1) % order.size()]
 	_pointer_label()
+
+# --- Target lock options (M1c; DRAFT names, STORY §16) ---------------------------------------------------------
+
+const LOCK_MODE_NAMES := {"toggle": "Target lock: press to lock", "auto": "Target lock: auto", "off": "Target lock: off"}
+const LOCK_CHAIN_NAMES := {true: "Next foe after a kill: on", false: "Next foe after a kill: off"}
+const LOCK_MARKER_NAMES := {false: "Lock marker: normal", true: "Lock marker: large"}
+const STICKY_NAMES := {true: "Mouse: a click on a foe follows it: on", false: "Mouse: a click on a foe follows it: off"}
+const LOCK_BUTTON_TEXT := "Lock button: %s"
+const AIM_ASSIST_TEXT := "Aim assist: %s"
+
+func _lock_labels() -> void:
+	lock_buttons["mode"].text = LOCK_MODE_NAMES.get(Settings.lock_mode, "Target lock")
+	lock_buttons["chain"].text = LOCK_CHAIN_NAMES.get(Settings.lock_chain, "Next foe after a kill")
+	lock_buttons["button"].text = LOCK_BUTTON_TEXT % Settings.lock_button_label()
+	lock_buttons["marker"].text = LOCK_MARKER_NAMES.get(Settings.lock_large, "Lock marker")
+	lock_buttons["sticky"].text = STICKY_NAMES.get(Settings.sticky_click, "Sticky click")
+	lock_buttons["assist"].text = AIM_ASSIST_TEXT % ("off" if Settings.aim_assist <= 0.0 else "%d degrees" % roundi(Settings.aim_assist))
+
+## Shows the lock options in place of the controls list (and back).
+func _toggle_lock_options() -> void:
+	lock_box.visible = not lock_box.visible
+	controls.visible = not lock_box.visible
+	_lock_labels()
+	if lock_box.visible:
+		lock_buttons["mode"].grab_focus()
+
+func _cycle_lock(opt: String) -> void:
+	match opt:
+		"mode":
+			Settings.lock_mode = Settings.next_in(Settings.LOCK_MODES, Settings.lock_mode)
+		"chain":
+			Settings.lock_chain = not Settings.lock_chain
+		"button":
+			Settings.lock_button = Settings.next_in(Settings.LOCK_BUTTONS, Settings.lock_button)
+		"marker":
+			Settings.lock_large = not Settings.lock_large
+		"sticky":
+			Settings.sticky_click = not Settings.sticky_click
+		"assist":
+			Settings.aim_assist = Settings.next_in(Settings.AIM_ASSISTS, Settings.aim_assist)
+	Settings.apply_controls()
+	Settings.save()
+	_lock_labels()
 
 func _reset_tips() -> void:
 	Story.tips_seen = {}

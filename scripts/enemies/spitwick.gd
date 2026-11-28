@@ -84,6 +84,7 @@ func _fire_spit(from: Vector2, target: Vector2) -> void:
 	var shot := SpitProjectile.new()
 	shot.position = from
 	shot.direction = (target - from).normalized()
+	shot.dmg_mult = dmg_level_mult()
 	get_parent().add_child(shot)
 
 func body_radius() -> float:

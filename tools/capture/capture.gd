@@ -20,6 +20,10 @@ extends Node
 ## same, lit by touch), m1b_faint (the faint note), m1b_wake (awake by a lamp, the wick waiting where you fell),
 ## m1b_lures (a pack's eyes, an elite's ring and a nest's glow through the fog), m1b_ember (the Ashbrood over the
 ## WayLamp's last ember), m1b_kindle (the kill: the ember rises into the lamp as it lights; look at frames 45-75).
+## M1c views (lamps in the fight): m1c_dark_lit (a dark foe and a lit one side by side: the dim cold body, the dimmed
+## bar and the shell's floor notch; the warm rim and shell cracks), m1c_lock (the warm lock brackets on a foe, with
+## its warm bar ticks), m1c_ash_bolts (the Ashbrood's phase-1 ash bolts winding up: three cold aim markers, the rim
+## lamp lit), m1c_pips (the HUD's lamp-slot pips: two lamps planted of three slots, one replant wait).
 ## Sprites view: sprites (every owner-art subject side by side, frozen: the three Wicklings, an elite whose shell
 ## broke, the Spitwick, a nest, the Ashbrood in its bowl and out of it, and Amos with his cart, who isn't in the
 ## game until M4).
@@ -145,6 +149,8 @@ func _process(_delta: float) -> void:
 				_m1a_setup()
 			"m1b_opening", "m1b_opening_lit", "m1b_faint", "m1b_wake", "m1b_lures", "m1b_ember", "m1b_kindle":
 				_m1b_setup()
+			"m1c_dark_lit", "m1c_lock", "m1c_ash_bolts", "m1c_pips":
+				_m1c_setup()
 			"tell_puff", "tell_puff_reduce", "tell_adds", "tell_dive", "tell_dive_arrow", "tell_spit", "tell_lane", "tell_reach", "tell_hatch", \
 					"keeper_dash", "keeper_cast", "keeper_drink", "keeper_hurt", "sprites":
 				_tell_setup()
@@ -256,6 +262,8 @@ func _process(_delta: float) -> void:
 		_tell_frame()
 	if view.begins_with("m1b_"):
 		_m1b_frame()
+	if view.begins_with("m1c_"):
+		_m1c_frame()
 	if frame >= end_frame:
 		get_tree().quit()
 
@@ -522,6 +530,86 @@ func _m1b_frame() -> void:
 				b.end_phase_pause()
 				b.shell = 0.0
 				b.hurt(b.hp + 1.0, false, "lance")
+
+# --- M1c views (lamps in the fight) -------------------------------------------------------------------------------
+
+var _m1c_foes: Array = []
+var _m1c_brood: Ashbrood
+
+func _m1c_setup() -> void:
+	var s: Vector2 = main.start
+	for f in get_tree().get_nodes_in_group("foe"):
+		f.queue_free()
+	for p in get_tree().get_nodes_in_group("enemy_pack"):
+		p.queue_free()
+	for k in Story.TIPS:
+		Story.tips_seen[k] = true
+	Story.pointer_mode = "off"
+	var sp = main.get_node("FogLayer/Wicklings")
+	match view:
+		"m1c_dark_lit", "m1c_lock":
+			var spot := s + Vector2(-360, 140)
+			main.player.position = spot + Vector2(0, 90)
+			main.player.lamp_charge = 0.15   # a small hand lamp: the dark foe stays dark
+			var lamp := _lantern(spot + Vector2(150, -20))
+			for i in 2:
+				var w := Wickling.new()
+				w.elite = true
+				w.position = spot + Vector2(-120, -30) if i == 0 else lamp.position + Vector2(-100, 40)
+				sp.add_child(w)
+				w.set_process(false)
+				w.hp_max = w.hp
+				w.hp *= 0.7
+				w.since_hurt = 0.0
+				_m1c_foes.append(w)
+		"m1c_ash_bolts":
+			var wl: WayLamp = null
+			for w in get_tree().get_nodes_in_group("waylamp"):
+				if w.id == "hollow":
+					wl = w
+			Progress.notes_read["waylamp_hollow"] = true
+			for l in get_tree().get_nodes_in_group("lantern"):
+				if l.global_position.distance_to(main.rim_lamp_pos) < 8.0:
+					l.light_by_touch()
+			main.player.position = wl.global_position + Vector2(40, 200)
+			wl.touch()
+			_m1c_brood = wl.guardian()
+		"m1c_pips":
+			Progress.unlock("post")
+			Progress.level = 4
+			main.player.position = s + Vector2(-20, 60)
+			_lantern(s + Vector2(-200, 90))
+			_lantern(s + Vector2(80, 170))
+			main.player.replant_t = Tuning.kl_lamp_replant_cd * 0.4
+
+func _m1c_frame() -> void:
+	var hud = main.get_node("HUD")
+	if frame >= 3:
+		hud.banner.visible = false
+		hud.toast.visible = false
+		hud.tip.visible = false
+	match view:
+		"m1c_dark_lit", "m1c_lock":
+			for w in _m1c_foes:
+				if is_instance_valid(w):
+					w.since_hurt = 0.0
+					if frame < 6:
+						w.shell = Tuning.kl_dark_shell_floor if w == _m1c_foes[0] else w.shell_max * 0.6
+					w.update_light_state(1.0 / 30.0)
+					w.self_modulate = w.light_tint()
+					w.queue_redraw()
+			if view == "m1c_lock" and frame == 8:
+				main.player.combat.lock._set_target(_m1c_foes[1])
+		"m1c_ash_bolts":
+			if _m1c_brood:
+				_m1c_brood._puff_t = 99.0
+				_m1c_brood._wave_t = 99.0
+				_m1c_brood._sweep_cd = 99.0
+				if frame == 20:
+					_m1c_brood._bolt_t = 0.0
+					_m1c_brood._idle_t = 99.0
+		"m1c_pips":
+			main.player.replant_t = Tuning.kl_lamp_replant_cd * 0.4
 
 # --- Readability views (telegraphs, the keeper's feedback) -------------------------------------------------------
 
