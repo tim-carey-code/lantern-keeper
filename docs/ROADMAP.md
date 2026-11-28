@@ -6,7 +6,7 @@
 
 ---
 
-## Status (2026-11-27)
+## Status (2026-11-28)
 
 | Milestone | State |
 |---|---|
@@ -15,8 +15,9 @@
 | **Readability step** (telegraphs and the keeper's feedback) | **built, awaiting the owner's playtest.** On `proto/kl-readability` (based on the play branch with M1a merged), not merged. DESIGN marks it BUILT (readability); the playtest is in PLAYTEST.md. The owner's order: readability, then M1b, then M2 (DECISIONS 2026-11-27) |
 | **M1b** No more tending | **built, awaiting the owner's playtest.** On `proto/kl-m1b` (based on b3f5cd9), not merged. Started before the readability playtest (owner: "start m1b please"). **Scope change during the build** (owner, DECISIONS 2026-11-27): the lamp limit, full refund and replant delay are on hold while lanterns are redesigned. DESIGN marks it BUILT (M1b); the playtest is in PLAYTEST.md. **Merge to `main` once M1b passes,** with the README rewrite. |
 | **M1b** playtest | **done** (owner, 2026-11-28; results in PLAYTEST.md): tending gone felt fine, light by touch stays one press, the level pace is right, the faint rule worked; the ember didn't read (fixed in M1c) |
-| **M1c** Lamps in the fight | **built, awaiting the owner's playtest.** On `proto/kl-m1c` (based on a98d41a: the play branch with M1b, the sprites and the approved lanterns addendum), not merged. From `docs/replan/PLAN_LANTERNS.md` §8, plus the owner's M1b playtest fixes (the damage fix, the Ashbrood fighting back, the ember) and the lamp slots (owner 2026-11-28). DESIGN marks it BUILT (M1c), §20; the playtest is in PLAYTEST.md |
-| **M2** Builds | planned |
+| **M1c** Lamps in the fight | **built and played** (merged into the play branch `proto/kl-hollow`, d80fc54). On `proto/kl-m1c` (based on a98d41a: the play branch with M1b, the sprites and the approved lanterns addendum), not merged. From `docs/replan/PLAN_LANTERNS.md` §8, plus the owner's M1b playtest fixes (the damage fix, the Ashbrood fighting back, the ember) and the lamp slots (owner 2026-11-28). DESIGN marks it BUILT (M1c), §20; the playtest is in PLAYTEST.md |
+| **M1c** playtest | **done** (owner, 2026-11-28; results in PLAYTEST.md): the Ashbrood fights back now, but phase 2 was still a bit boring and needed more moves; the lock-on is great; standing at your own lamp was too strong; everything else looked good. A crash when a boss hit made the keeper faint was hotfixed (d13d5b6) and the owner checked it. The Clinker sprite was approved and merged into the play branch |
+| **M2** Builds | **built, awaiting the owner's playtest.** On `proto/kl-m2` (based on d13d5b6, with the play branch merged in before the push), not merged. Skill points and 42 branch picks (tiers 1-3, all six skills), respec at rest, the pack screen (Skills, Journal, Map), elite affixes, the picks that touch lamps; with the owner's M1c fixes: the Ashbrood's phase 2 moves and phase 3, and the catch distance. DESIGN marks it BUILT (M2), §21; the playtest is in PLAYTEST.md |
 | **M3** Loot | planned |
 | **M4** People, part 1 | planned. Needs the owner's pronoun call for Amos (and the others before their milestones) |
 | **M5** The Reedmarsh | planned |
@@ -157,6 +158,10 @@ From `docs/replan/PLAN_LANTERNS.md` §8 (approved 2026-11-27, "1-6 yes to all"),
 **Tests:** `test_skills` covers gating, respec and saving.
 
 **Risks:** 12-18 picks to build and tune. Start with tier 1 if time is short.
+
+**Status:** built on `proto/kl-m2`, awaiting the owner's playtest. Nothing in the scope was cut: all three tiers for Lampfire, Fireglobe, Lance and the dash, and trees for the Beam and Hearth ring too (both still kept). **Added from the M1c playtest:** the Ashbrood's phase 2 moves (ash wave, low pass with cold embers, calls from the dark) and phase 3 ("last of the brood", combos, the ember window), re-tuned to about 3.3 minutes; Lampfire catches only after 72 px of flight. Save version 8 (a version 7 save migrates: its level becomes points, its cards become picks). **Not in M2:** gear (the pack's Gear tab), so Kindled kills, Hot core and Lee wait for M3 (a v7 save keeps them as carried lines).
+
+**Tests:** `test_skills` (points, tiers, respec, saving, the owner's note), new `test_builds` (every pick) and `test_affixes`; `test_save` (v7 to v8), `test_ashbrood_kill` (three phases, real kills), `test_fights` (the new moves, phase 3, idle checks, a faint during every boss attack), `test_combos` (the catch distance), `test_input` (the pack on a pad).
 
 ---
 

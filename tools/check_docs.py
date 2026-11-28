@@ -140,8 +140,10 @@ def extra_texts() -> tuple[list, list]:
     if src is not None:
         cards = re.findall(r'"title":\s*' + STRING + r',\s*"body":\s*' + STRING, src)
         lines = [gd_unescape(t) for t in re.findall(r'\.text = ' + STRING, src) if plain(gd_unescape(t))]
-        if not cards:
-            warns.append("check_docs: no level-up cards found in scripts/ui/level_up.gd (did its format change?)")
+        # M2: the card screen is gone; level_up.gd now holds the level-up lines (const ..._LINE), checked below.
+        lines += [gd_unescape(t) for t in re.findall(r'(?m)^const [A-Z0-9_]+_LINE := ' + STRING, src) if plain(gd_unescape(t))]
+        if not cards and not lines:
+            warns.append("check_docs: no level-up cards or lines found in scripts/ui/level_up.gd (did its format change?)")
         for title, body in cards:
             checks.append(("card", f"level-up card {gd_unescape(title)!r}", [gd_unescape(title), gd_unescape(body)]))
         for line in lines:

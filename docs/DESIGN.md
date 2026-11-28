@@ -36,7 +36,7 @@ Synced to M1c ("lamps in the fight") on `proto/kl-m1c` (2026-11-28, based on a98
 
 ## 2. The core loop
 
-**Today (built).** You fight with fire on lamp charge (BUILT, M1a): stream Lampfire, spend charge on Fireglobe and Lance, dash through tells, drink lamp oil when low, rest at a lit WayLamp. Since M1b there is no tending: you light the hut's old lamp and the north path's by touch, take scrap from one-off piles, and plant lamps that never burn. In the Hollow you clear fixed packs and nests, take the Post Lamp from Oswin's crook, beat the Clinker, and touch the Hollow's WayLamp to wake the Ashbrood, which broods over the lamp's last ember. Each level-up offers three cards. Lit WayLamps are fast travel. The Reedmarsh and the Ridge are open, with landmarks and WayLamps but no action-RPG foes yet.
+**Today (built).** You fight with fire on lamp charge (BUILT, M1a): stream Lampfire, spend charge on Fireglobe and Lance, dash through tells, drink lamp oil when low, rest at a lit WayLamp. Since M1b there is no tending: you light the hut's old lamp and the north path's by touch, take scrap from one-off piles, and plant lamps that never burn. In the Hollow you clear fixed packs and nests, take the Post Lamp from Oswin's crook, beat the Clinker, and touch the Hollow's WayLamp to wake the Ashbrood, which broods over the lamp's last ember. Each level-up gives a skill point for the branch picks in the pack's Skills tab (BUILT, M2, §21). Lit WayLamps are fast travel. The Reedmarsh and the Ridge are open, with landmarks and WayLamps but no action-RPG foes yet.
 
 **The plan** (GAME_PLAN §2):
 
@@ -76,7 +76,7 @@ Twin-stick aim: the left thumb moves, the right thumb aims. RT, RB, LB and LT wo
 | Hold by a planted lamp, with no scrap pile in reach: pick it up (0.8 s, `kl_pickup_hold`; a ring fills). M1b: no gathering | A | E |
 | Plant the selected lamp; next to a mirror, turn it left | X | C |
 | Next lamp kind (tap); the lamp list (hold); previous lamp kind | D-pad right; D-pad right; D-pad left | Tab; Tab; keys 1-4 pick directly |
-| Map / Skills list / Journal / Pause | D-pad up / D-pad down / View / Start | M / K / J / Esc |
+| The pack (M2): Skills, Journal, Map tabs / its Skills tab / its Map tab / Journal / Pause | View / D-pad down / D-pad up / View then RB / Start | I / K / M / J / Esc |
 | Close a menu | B | Esc (and each menu's own key) |
 | Fullscreen; tuning panel (dev) | —; L3 | F11; F1 |
 
@@ -87,7 +87,7 @@ Twin-stick aim: the left thumb moves, the right thumb aims. RT, RB, LB and LT wo
 - **The right stick** aims once pushed past 0.3 (`kl_stick_aim_min`); its tilt from there to 0.9 (`kl_stick_tilt_full`) sets how far a Fireglobe lands.
 - **Auto-fire option** (pause menu, off by default): on a pad, Lampfire fires while the right stick is pushed past 0.8 (`kl_autofire_stick`). Saved for this PC in `user://settings.cfg`.
 - **The action bar** shows the button for the device used last. Cooldowns show as a dark radial sweep, with seconds when more than 3 are left. A slot greys out when you're short of charge. The flask shows pips (§14).
-- **Binding:** the plain Skills list (K / D-pad down). Left and right pick slot 2, 3 or 4; up and down pick a skill; A / E / a click puts it there (pressing the skill already there takes it off). It opens on slot 3 with the first skill that's off the bar, so after level 2 one press puts the Beam back on LB. It is greyed while you're hunted, with the reason shown. The world pauses while it is open.
+- **Binding** (M2: the pack's Skills tab, §21.3, replaces this list): the plain Skills list (K / D-pad down). Left and right pick slot 2, 3 or 4; up and down pick a skill; A / E / a click puts it there (pressing the skill already there takes it off). It opens on slot 3 with the first skill that's off the bar, so after level 2 one press puts the Beam back on LB. It is greyed while you're hunted, with the reason shown. The world pauses while it is open.
 - **Deviations from the plan:** the keyboard has no "previous lamp kind" (the plan said Shift+Tab); keys 1-4 still pick a lamp directly. The pack screen (I) is M2. The L3 tuning panel is still on L3, not behind a dev-build flag (PLANNED, not placed).
 - The hold-to-ward glow is still in the code (`player.gd` `update_ward()`), but nothing calls it in play. **To be cut (M1b).**
 
@@ -95,7 +95,7 @@ Twin-stick aim: the left thumb moves, the right thumb aims. RT, RB, LB and LT wo
 
 ### 3.2 Still planned
 
-- **The keeper's pack** (Gear, Skills, Journal, Map tabs; I on keyboard, View on a pad) replaces the plain Skills list. PLANNED (M2).
+- **The keeper's pack** (Skills, Journal, Map tabs; I on keyboard, View on a pad) replaces the plain Skills list. BUILT (M2, §21.3); the Gear tab comes with gear (M3).
 - **The L3 tuning panel** goes behind a dev-build flag. PLANNED (not placed).
 
 ---
@@ -119,7 +119,7 @@ BUILT (M1a). Each skill is a script in `scripts/player/skills/`; `scripts/player
 
 **Lance and the Beam are equal per charge:** 5 / 0.2 = 25 damage per charge, and 7.5 / 0.3 = 25. Lance hits harder in bursts and pierces 3; its cooldown caps it at 10 dps. The Beam has no travel time and hits everything on its line, but slows you and stops light regen.
 
-**The old cards stay until M2.** The code applies the beam cards (Deep tank and the rest) to the Beam, and Heavy flare and Spill to Hearth ring. Their texts are unchanged (STORY §12), so some still say "beam" or "burst".
+**BUILT (M2): the cards became picks** (§21.1). Before M2: **the old cards stay until M2.** The code applies the beam cards (Deep tank and the rest) to the Beam, and Heavy flare and Spill to Hearth ring. Their texts are unchanged (STORY §12), so some still say "beam" or "burst".
 
 **Feel** (BUILT, M1a; GAME_PLAN §15):
 - **Hit-stop per target:** a big hit (5 damage or more, `kl_hitstop_big`: Lance, Fireglobe) freezes the foe it hits for 0.06 s (`kl_hitstop`); a Fireglobe that hits something, or a big kill, freezes the keeper for the same time. The old whole-game freeze (`Engine.time_scale`) is gone.
@@ -142,7 +142,7 @@ BUILT (M1a). Each skill is a script in `scripts/player/skills/`; `scripts/player
 | **Moth-lights** | level 7 (the marsh) | Y | Three motes circle you, then seek foes. | 3 dmg each, seek 240 px, 4 s, 0.25 charge, 5 s cooldown (`kl_moth_*`, new) | half |
 | **Wheeling flame** | level 9 (the Ridge) | RB / LB | A disc of fire that flies out 280 px and comes back, hitting both ways. | 4 dmg a pass, 0.25 charge, 3 s cooldown (`kl_wheel_*`, new) | half |
 
-### 4.3 Branches instead of cards — PLANNED (M2)
+### 4.3 Branches instead of cards — BUILT (M2, §21.1)
 
 Three tiers per skill, one pick each. One point per level-up, 11 by level 12. Tier 1 opens once you have the skill (your first point comes at level 2), tier 2 at level 4, and tier 3 at level 6, the Ashbrood kill. **Every pick changes how the skill behaves**; only the Beam's tree keeps the old number cards the owner approved. Respec is free when you rest at a lit WayLamp. No per-skill XP. The Beam and Hearth ring get trees only if the owner keeps them after M1a.
 
@@ -331,7 +331,7 @@ All action-RPG foes are in the Hollow. The Reedmarsh and the Ridge have none yet
 | **Spitwick** | `spitwick.gd`, `spit_projectile.gd` | 4 hp | Keeps 190-250 px off. A slow spit after a 0.7 s wind-up whose aim locks for its last 0.2 s (BUILT, readability; was 0.6 s, following you to the end): 12 warmth and 0.1 charge. Never starts a wind-up off-screen. |
 | **Nest** | `wick_nest.gd` | 12 hp | Only a lantern's core hurts it (2 hp/s). Hatches 3 Wicklings every 10 s while you are within 320 px. |
 | **Clinker** (mid-boss) | `clinker.gd` | 48 hp (was 24; BUILT, M1a) + 12 shell (regrows), Lv 4: with scaling (M1b) 65 hp + 16.3 shell | Sleeps at its post (wake 224 px, leash 480 px); uncurls for 0.6 s when it wakes. Rolls after a 0.9 s lane tell (was 0.8) for 30 warmth (M1c, was 25; x1.24 at Lv 4 = 37, the Hollow's hardest single hit) and throws the keeper 120 px out of its lane (M1c), then is dizzy for 0.6 s (BUILT, readability). Ignores lanterns. Drops 1 oil at half health (M1a). At (70,119), 9.4 tiles before the WayLamp. |
-| **The Ashbrood** (guardian) | `ashbrood.gd`, `waylamp.gd`, `waylamp_ember.gd` | **M1c: reworked, see §20.3** (340 hp a phase, hurt only when lit, ash bolts, a wing sweep, the rim lamp, the ember flare, the smother). Before M1c: 220 hp (was 40; BUILT, M1a) + 12 shell a phase, two phases, Lv 5 (was 7; M1b): with scaling 326 hp + 17.8 shell a phase | Wakes when you light the Hollow's WayLamp by touch (M1b). It broods over the WayLamp's **last ember**, a small amber glow low in the lamp's cold cage (the lamp's light, not the creature's; DECISIONS 2026-11-27; code-drawn, BUILT M1b). Phase 1: in the bowl; an ash puff every 7 s (1.0 s wind-up, was 0.8) drops your lamp to 0.1 charge; a pack of 3 adds (Lv 4, was 5) every 8 s, after 0.8 s of spawn glows. Between phases it rises out of the bowl for 1.5 s (no attacks, no damage). Phase 2: it dives at the nearest lit lantern (1.0 s wind-up, was 0.7; then a 0.3 s flight, was a jump), **snuffs it for 8 s** (M1b; it relights itself) and sits for 4 s. BUILT (readability): §8.4. Drops 1 oil at half health in each phase (M1a). Its kill holds the Hollow: the WayLamp **takes its ember back**, the ember rising into the lamp and swelling into its flame as the lamp lights (1.4 s; the level-up cards wait for it). No phase 3. |
+| **The Ashbrood** (guardian) | `ashbrood.gd`, `waylamp.gd`, `waylamp_ember.gd` | **M1c: reworked, see §20.3** (340 hp a phase, hurt only when lit, ash bolts, a wing sweep, the rim lamp, the ember flare, the smother). Before M1c: 220 hp (was 40; BUILT, M1a) + 12 shell a phase, two phases, Lv 5 (was 7; M1b): with scaling 326 hp + 17.8 shell a phase | Wakes when you light the Hollow's WayLamp by touch (M1b). It broods over the WayLamp's **last ember**, a small amber glow low in the lamp's cold cage (the lamp's light, not the creature's; DECISIONS 2026-11-27; code-drawn, BUILT M1b). Phase 1: in the bowl; an ash puff every 7 s (1.0 s wind-up, was 0.8) drops your lamp to 0.1 charge; a pack of 3 adds (Lv 4, was 5) every 8 s, after 0.8 s of spawn glows. Between phases it rises out of the bowl for 1.5 s (no attacks, no damage). Phase 2: it dives at the nearest lit lantern (1.0 s wind-up, was 0.7; then a 0.3 s flight, was a jump), **snuffs it for 8 s** (M1b; it relights itself) and sits for 4 s. BUILT (readability): §8.4. Drops 1 oil at half health in each phase (M1a). Its kill holds the Hollow: the WayLamp **takes its ember back**, the ember rising into the lamp and swelling into its flame as the lamp lights (1.4 s). **M2: phase 2's new moves and phase 3, see §21.5.** |
 
 - **Packs:** 24 fixed packs plus the crook's guard (88 foes: 7 Spitwicks, 6 shelled), and 12 nests (tables in `main.gd`). A pack sleeps until you come within 320 px (`kl_pack_wake_radius`); the first two route packs wake at 5-6 tiles and the guard at 4. Fixed foes stay dead (`Progress.cleared`), **even after a faint** (the faint rule, BUILT M1b, §12.3).
 - **Foe levels** (BUILT, M1b; GAME_PLAN §8.2): the Hollow's foes are **Lv 1-4**: 1 on the hut row and south, 2-3 through the middle, 4 in the north (the old 3/4/5/6 became 2/3/4/4). The guard is Lv 2, the Clinker Lv 4, the Ashbrood Lv 5 (was 7) and its adds Lv 4 (was 5). Hatchlings take their nest's level; the swarm at a guardian-less WayLamp is Lv 6 (the marsh's foes will be 5-7). A foe's level sets its wick (§9.1) and, since M1b, its health and shell (+12% a level over 1, §4.6).
@@ -428,7 +428,7 @@ BUILT on `proto/kl-readability` (2026-11-27), from `docs/ART_DIRECTION.md` §4 (
 - **A level** also gives +10% damage (§4.6, BUILT M1b). The +8 warmth a level (§5.2) is not built.
 - **Level-gap wick** (`Progress.kill_wick`, `Progress.wick_gap_mult`): wick = base x (1 + 0.25 x (foe level - 1)) x gap factor, where gap = keeper level - foe level. The factor is 1 up to 1 level over the foe (`kl_xp_band`), then x0.25 per level past that (`kl_xp_falloff`: 1/4, 1/16, 1/64), and 0 at 5 or more (`kl_xp_zero_gap`). A foe above you pays +10% a level, at most +30% (`kl_xp_bonus`, `kl_xp_bonus_max`). Fractions carry over and are saved. Hatched, called and re-fought foes pay like any other foe of their level; the gap is what stops farming.
 - **Measured** (`tools/tests/test_leveling.tscn`, M1b): a **pure beeline** (the main route only: the north path, the crook, nest A, what wakes on the road to the Clinker, then the Ashbrood) reaches level 2 at the crook's guard, level 3 at pack 2, level 4 on the Clinker, goes into the Ashbrood at **L4**, and its kill gives **L5**. An **explorer** who clears the whole Hollow nearest-first reaches level 2 at pack 23 (the third fight, by the crook), L4 on the Clinker (its 5th stop), L5 at pack 3, goes into the Ashbrood at **L5**, and its kill gives **L6**. On both routes the Ashbrood's adds alone don't cross the line; the kill does; kindling afterwards adds wick but no level. Farming the hut row and the south stalls at L4 (L4 at 9 minutes, still L4 after 30; about 1.5 wick a minute in the last 10).
-- **Level-up cards** (`scripts/ui/level_up.gd`): a level-up pauses the world and offers 3 of 12 cards ("Trim the wick"). All 12 change real numbers. Texts: STORY.md §12.
+- **Level-ups** (`scripts/ui/level_up.gd`; BUILT M2): a skill point, a chime, a line on the tip strip and "+N" on the HUD's level and the pack's Skills tab; nothing pauses (§21.1). Before M2 a level-up paused the world and offered 3 of 12 cards ("Trim the wick"; STORY §12).
 - **What you see:** "Lv 3", a wick bar and "12/24" on the HUD; name bars "Wickling Lv 2", dimmed when the foe pays less than full; a kill floats "+2 wick", grey when the gap cut it. A chime on level-up.
 
 ### 9.2 The plan — the curve BUILT (M1b); skill points M2
@@ -617,13 +617,13 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 | **Action bar** | Bottom centre, laid out like the pad: LT and LB left, Y middle, RB and RT right, the flask at the right end with pips that flash when one comes back. 32 px icons, button labels at 20. Cooldown sweep and seconds; greyed when short of charge. | BUILT (M1a) |
 | **Warmth and charge** | Two bars just above the bar, with skill-cost ticks on charge. | BUILT (M1a) |
 | **Top of the screen** | Left: level, the wick bar and the scrap count. Centre: the goal banner (built). Right: chips only for "hunted" and "cold". The "hunted" chip is BUILT (M1a); the fuel, lamp and wind chips are gone (BUILT, M1b). | BUILT (M1a, M1b) |
-| **Foe bars, boss bar** | As built, plus the elite affix line (20 px) and "phase N / 3". | M2 |
+| **Foe bars, boss bar** | As built, plus the elite affix line (20 px) and "phase N / 3". | BUILT (M2, §21.4, §21.5) |
 | **Damage numbers** | Pop, then drift (§4.1). | BUILT (M1a). The "+wick" popup was already grey when the gap cut the wick |
 | **Map** | As built, plus WayLamp icons, lures you've seen, and the share explored. | not placed |
-| **Level-up** | A toast and a Skills-tab mark. The card screen goes. | M2 |
-| **The keeper's pack** | Gear, Skills, Journal and Map tabs (LB / RB). The Skills tab is greyed while you are hunted. The journal and map stay separate until then. | M2 |
+| **Level-up** | A line on the tip strip and a Skills-tab mark. The card screen is gone. | BUILT (M2) |
+| **The keeper's pack** | Skills, Journal and Map tabs (LB / RB); Gear with M3. The Skills tab is greyed while you are hunted. | BUILT (M2, §21.3) |
 | **Options** | In the pause menu: a screen-shake slider (0-100%, steps of 10), "Reduce flashes" and the Lampfire auto-fire option. Saved for this PC in `user://settings.cfg`, not in a save slot. | BUILT (M1a) |
-| **Skills list** | A plain list (K / D-pad down), §3.1. | BUILT (M1a); the pack's Skills tab M2 |
+| **Skills list** | The pack's Skills tab (K / D-pad down), §21.3. | BUILT (M1a as a list; M2 as the tab) |
 | **Pad name entry** | A letter grid for the keeper's name. Until then a pad player is "Keeper". | M9 |
 
 ---
@@ -631,7 +631,7 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 ## 15. Save, load and pause (built)
 
 - Three save slots, chosen on a screen at start (keeper, region and play time on each), plus autosave every 60 s *(code)*, on closing the window and from the pause menu. Save version **7** (BUILT, M1c: the rim lamp on the Ashbrood's bowl is one of the saved lanterns; a version 6 save has no rim lamp, so loading puts every missing old lamp back cold; nothing else in the file changed). Version 6 came with M1b, version 5 with M1a (`systems/save/save_game.gd`). **A version 5 save migrates** (the owner's current save is v5): fuel and glass leave the inventory; what WayLamps were fed is dropped; lanterns lose their tanks, and only the valley's old lamps can stay cold (a v5 old lamp with an empty tank comes back cold, to be lit by touch; a planted lamp that had burned out comes back lit); fuel spots, peat, glass shards, the woodpile, dropped fuel and empty piles go; untaken fuel and glass caches become scrap caches of the same size; scrap piles keep what is left (one-off now). Level, wick, the bar, flasks, upgrades, notes, cleared fights and the story are kept. Charge is capped at the new max. `test_save` migrates a test-only v5 file. The prototype line saves to its own files (`user://keepers_light_slot_*`), so it never touches a `main` save. A version 4 save is migrated on load: it gets the default bar (with Lance on slot 3 if the keeper is level 2 or more) and full flasks. Anything older starts fresh and shows "(old save)". A loaded action bar is checked slot by slot against the binding rules; a slot holding something it may not (an unknown or unlearned skill, a self-cast skill on slots 2-3, a skill already on an earlier slot; M1c: slot 4 takes any skill) takes the default bar's skill for that slot, or stays empty if that is not allowed either.
-- **Saved:** the keeper, scrap, unlocks, every lantern (kind, place, mirror direction, whether an old lamp is still cold), the scrap piles left, the fog and what has been seen, story progress, wick and level, cards, cleared foes, wick drops, lit WayLamps and the stones; since version 5, the action bar, whether Lance was given, and the flasks. **Not saved:** live foes, embers and oil on the ground, a snuffed lamp's timer, a half-fought pack's dead (a reload brings the whole pack back, asleep), wind. The M1a options (shake, flashes, auto-fire) and the M1c lock options (§20.5) are saved per PC in `user://settings.cfg`, not in a slot. Tests, captures and the bench (scenes under `res://tools/`) never read or write that file; they use the defaults.
+- **Saved:** the keeper, scrap, unlocks, every lantern (kind, place, mirror direction, whether an old lamp is still cold), the scrap piles left, the fog and what has been seen, story progress, wick and level, picks (M2, version 8: picks, carried old-card lines, the respec spot; cards before), cleared foes, wick drops, lit WayLamps and the stones; since version 5, the action bar, whether Lance was given, and the flasks. **Not saved:** live foes, embers and oil on the ground, a snuffed lamp's timer, a half-fought pack's dead (a reload brings the whole pack back, asleep), wind. The M1a options (shake, flashes, auto-fire) and the M1c lock options (§20.5) are saved per PC in `user://settings.cfg`, not in a slot. Tests, captures and the bench (scenes under `res://tools/`) never read or write that file; they use the defaults.
 - **Pause menu** (Esc / Start): Resume, Save, Save slots, New game (press twice), Save and quit, Goal pointer, Target lock options (BUILT, M1c: they show in place of the controls list), Show tips again, the controls, and Options (BUILT, M1a: screen shake, reduce flashes, Lampfire auto-fire).
 - Later milestones add sections to the save.
 
@@ -700,10 +700,10 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 | One map, five regions on one loop | 3 built (Hollow, Reedmarsh, Ridge); Lakeshore M7; Still Lake M8 |
 | The fire kit, the action bar, flasks | BUILT (M1a), awaiting the owner's playtest; Moth-lights M5, Wheeling flame M6 |
 | No lamp tending; one material (scrap) | PLANNED (M1b) |
-| Skill branches | PLANNED (M2); 12 cards built |
+| Skill branches | BUILT (M2): 42 picks over six skills, tiers 1-3 |
 | Diablo-style loot, 4 slots, salvage | PLANNED (M3) |
 | Five people with short lines and errands | PLANNED (M4-M7) |
-| Foes, mid-bosses and guardians per region | Hollow built (Ashbrood two phases); the rest M2, M5-M8 |
+| Foes, mid-bosses and guardians per region | Hollow built (Ashbrood three phases, elite affixes: M2); the rest M5-M8 |
 | The finale fight, the portal, the sandbox after | PLANNED (M8) |
 | Levels 1-12 with level-gap wick | built (curve to be retuned in M1b) |
 | WayLamps, fast travel and Rest | built (Rest BUILT M1a; lit by touch M1b) |
@@ -779,6 +779,42 @@ A combo happens at a lamp's **flame** (`Lantern.has_flame()`: a lit lamp that is
 - The Clinker's roll: **30** (`kl_clinker_hit_warmth`, was 25), x1.24 at Lv 4 = 37, the hardest single hit in the Hollow (the Ashbrood's dive is 33), and it throws the keeper 120 px out of its lane (`kl_clinker_knock`).
 - **Foe damage grows 8% a level** over 1 (`kl_foe_dmg_per_level`; `Foe.dmg_level_mult()`): touch ticks, spit, the Clinker, every Ashbrood attack.
 - A chill of 10 or more is a hit: shake and the cold flash (`kl_hurt_shake_min`; was 5), so touch ticks don't shake the screen.
+
+## 21. Builds — BUILT (M2)
+
+From GAME_PLAN §4.2-§4.3, §9, §14, §18 "M2: Builds", PLAN_LANTERNS §8 ("Where parts 3 and 4 slot in"), and the owner's M1c playtest (the Ashbrood's phase 2, standing at your own lamp). On `proto/kl-m2`. Every number is a `kl_` value in the tuning panel (L3); every text is DRAFT in STORY §17.
+
+### 21.1 Skill points, tiers and respec (`systems/progress.gd`, `systems/skill_tree.gd`)
+- A level-up gives **one skill point** (`kl_points_per_level`): 11 by level 12. The card screen is gone; a level-up is a chime, a line on the tip strip and "+N" on the HUD's level ("Lv 3 +1") and on the pack's Skills tab. Nothing pauses.
+- **Six trees** (the Beam and Hearth ring too, since both are still kept; DECISIONS), three tiers each, one pick a tier: **42 picks** (STORY §17.1). Tier 1 opens with the skill (Lance at level 2), tier 2 at level 4 (`kl_tier2_level`), tier 3 when the Ashbrood falls (`Progress.tier3_open`).
+- **Respec:** resting at a lit WayLamp (`player.rest()`) opens respec while you stay within `kl_respec_radius` (220 px) and aren't hunted. Then another pick in a taken tier swaps in for free, A on a taken pick gives it back, and a row resets every pick. Walking away closes it.
+- **The old cards** (GAME_PLAN §4.3): each card is now its pick (`SkillTree.CARD_TO_PICK`; Heavy flare is Heavy ring). Kindled kills, Hot core and Lee wait for gear (M3); a version 7 save that had them keeps them as carried **lines** (`Progress.lines`). A new game can't get them until M3.
+
+### 21.2 What each pick does (`fire_bolts.gd`, the skill scripts, `combat.gd`, `foe.gd`; `test_builds`)
+- **Lampfire.** T1 *Lingering burn* (a hit foe burns 2 s at 2) / *Scatter* (3 sparks of 1 fly off the burst, not back into the foe). T2 *Twin* (two bolts at ±8°, x0.65 each) / *Skip* (a hit jumps to the nearest other foe within 140 px at x0.75). T3 *Catching* (a kill sets the nearest foe within 60 px alight) / *Needle* (passes the first foe, hitting it, and bursts on the second) / *Comet* (every 4th bolt: x2 damage and splash).
+- **Fireglobe.** T1 *Skipping globe* (hops 100 px on and bursts again at x0.7) / *Slick* (its burning ground slows foes 40%; not the Clinker or the Ashbrood). T2 *Second globe* (a x0.6 globe 0.3 s behind) / *Fire line* (3 x0.6 bursts across the aim, 64 px apart). T3 *Cluster* (4 small globes of 3 out 70 px) / *Beacon* (a 110 px light for 6 s that **counts as lit**; `KeeperLight`) / *Undertow* (pulls foes within 1.7x its radius 50 px in before the blast).
+- **Lance.** T1 *Burning line* (2 s of fire on its path, 2 a second) / *Brand* (the next hit on the foe it struck: x1.5, once). T2 *Returning* (at its reach it flies back toward you, through foes again) / *Forked* (two x0.6 lances at ±25° from the first hit). T3 *Breaking* (3 Lampfire bolts at its end) / *Held lance* (Lance becomes held: hold 0.6 s and let go for x2 damage through everything; a short press is a normal Lance; a ring fills at the hand lamp) / *Shatter* (a shell it breaks bursts for 4 in 60 px).
+- **Dash.** T1 *Second step* (two dashes a cooldown) / *Cinder trail* (small burning patches along the dash). T2 *Phase* (foes on the path stunned 0.4 s) / *Flame step* (a 70 px fire ring of 2 where it ends). T3 *Ember rest* (a 90 px ember for 3 s where it ends that **counts as lit**) / *Blink* (an instant 150 px step, short of rock, with the dash's guard) / *Recoil* (a dash against your aim throws 3 Lampfire bolts along it).
+- **The Beam** (the approved cards). T1 *Steady hand* / *Long throw*. T2 *Deep tank* / *Tight focus*. T3 *Prism* (three thin beams at ±12°, x0.5 each) / *Searing* (on one foe, up to +50% over 1.5 s) / *Stoking* (each second on a foe takes 1 s off Fireglobe's cooldown).
+- **Hearth ring.** T1 *Heavy ring* (push 140 px, stun 0.6 s: the old Heavy flare) / *Lasting ring* (its ground burns 3 s). T2 *Spill* (approved) / *Warm ring* (+2 warmth per foe hit). T3 *Sunburst* (8 Lampfire bolts all around) / *Crackle* (strips 2 shell from each foe hit, not past the dark's floor) / *Rising ring* (a second ring rolls out to 220 px over 1 s).
+- **Lamps** (PLAN_LANTERNS §8): Beacon and Ember rest are lights for the light rule only: they expose foes, clear fog, have no flame (no catch, flare or chain off your own fire), don't keep small dark out and have no core. A Lightless elite ignores them.
+
+### 21.3 The pack (`scripts/ui/pack_screen.gd`, `skills_list.gd`, `journal.gd`, `map_screen.gd`)
+- **View** (pad) or **I** opens it on Skills; K / D-pad down opens Skills, J opens the Journal, M / D-pad up opens the Map (from the world). Inside: **LB / RB** (Q / Tab) change tabs; on a keyboard K, J and M jump to a tab; B / Esc / Start / View closes. The D-pad never changes tabs. The world stays paused across tab changes.
+- **Skills tab:** the bar's slots on top, the six skills on the left (the Beam and Hearth ring marked optional, last), the focused skill's tree on the right. D-pad up / down in a column, right into the tree, left back; **A on a skill**: choose its slot (left / right), A puts it there (A on its own slot takes it off), B backs out; **A on a pick** takes it. Greyed while hunted. With points to spend it opens on the first open tier of a skill **on the bar** (owner, 2026-11-28: nothing points at a skill that is off the bar).
+
+### 21.4 Elite affixes (`scripts/enemies/wickling.gd`, `foe.gd`, `burst_hatch.gd`, `main.gd` `HOLLOW_AFFIXES`)
+- One affix on each level-4 pack's elite in the Hollow (`kl_affix_min_level`; 2 from the marsh on, GAME_PLAN §8.1): *Swift* (x1.3 speed), *Thick shell* (x2), *Bursting* (as it dies, two 0.6 s spawn glows, then 2 summoned Wicklings; a faint clears them) and *Lightless* (lamps never light it, only dim; a lit lamp it comes within 40 px of flickers cold 0.5 s, then is snuffed 4 s). *Biting cold* (x1.5 chill) is built and tested; no Hollow elite has it (it waits for the marsh's two-affix elites).
+- The affix line shows in the cold tell colour above the elite's name on its bar.
+
+### 21.5 The Ashbrood: phase 2's new moves and phase 3 (`scripts/enemies/ashbrood.gd`, `cold_ember.gd`)
+- **Health:** 300 / 300 / 220 a phase (`kl_ashbrood_hp`, `_hp2`, `_hp3`), x1.48 at Lv 5. `test_skills`' sum: about 3.3 minutes at L4 with a dodging keeper's windows; `test_ashbrood_kill`, constant fire with no dodging (shorter than a real fight): **108 s** with the rim lamp only (24 / 49 / 34 s), 124 s with Fireglobes in phase 1, and phase 3 in 42 s with no lamp at all.
+- **Phase 2** alternates its dive (as M1c) with a new move, never the same new move twice running: the **ash wave** (a 60 px lane from it through you, 1.1 s, 14 warmth and a shove, then a wall of ash runs the lane), the **low pass** (a 56 px lane past you, 1.0 s, 16 warmth; it flies the lane in 0.45 s and leaves 4 **cold embers**, 26 px, which glow 0.5 s harmlessly, then chill 4 a tick for 4 s), and every 16 s it **calls 2 Wicklings from the dark** (spawn glows on your side; not while 3 of its brood are about). It recovers 0.6 s after a wave or pass.
+- **Phase 3, "last of the brood":** after a 1.5 s rise (toast, STORY §17.5), wings cracked (pale cracks, warm over the bowl), every wind-up x0.8 (never under 0.5 s), and it fights in combos: it **returns to the bowl** (a landing circle on the WayLamp) and settles 2.5 s over the last ember, which shows through its cracked wings and **lights it** (the window that needs no lamp: no soft-lock), then **puffs**; it **dives** at a lit lamp (a 2.4 s sit) and sends **a wave** from where it lands; it **makes a pass** and throws **ash bolts** from the far end. Each cycle has the return, then the two combos in a random order.
+- Every hit is a cold Telegraph marker equal to its hitbox; a dash avoids each; a faint during any of them (each phase, each move) resets the phase with no error (`test_fights`). It never waits more than about 2 s in any phase.
+
+### 21.6 The catch distance (owner, M1c playtest)
+- Standing at your own lamp made every Lampfire bolt catch. Now a bolt catches only once it has flown **72 px** (`kl_catch_min_travel`), past the keeper's own reach: a lamp at your feet never catches your bolts, one out ahead does (`test_combos`).
 
 ## 19. Measured numbers (built)
 

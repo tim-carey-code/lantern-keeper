@@ -2,6 +2,24 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-28 (M1c playtest; M2 built)
+- **M1c playtest results** (owner, on a pad; PLAYTEST.md): the Ashbrood fights back now, but "phase 2 is still a bit boring and there definitely needs to be more moves"; the **lock-on is great**; standing at your own lamp is too strong (confirmed); everything else looked good. A crash when a boss hit made the keeper faint was hotfixed (d13d5b6), and the owner then fainted on purpose in the Ashbrood fight with no crash.
+- **The Ashbrood gets more moves and a third phase** (owner, above; phase 3 was planned for M2). Built in M2: phase 2 alternates its dive with an **ash wave** or a **low pass** that leaves cold embers (never the same new move twice running) and **calls Wicklings from the dark**; phase 3, **"last of the brood"**, is faster and fights in combos (return to the ember and puff, dive and wave, pass and bolts). Every move has a cold telegraph equal to its hitbox. Health 300 / 300 / 220 a phase, about 3.3 minutes in `test_skills`' sum.
+- **Own-lamp catch: a bolt catches only after it has flown 72 px** (`kl_catch_min_travel`), the review's suggestion (owner confirmed the problem).
+- **Never push a skill the keeper isn't using** (owner, relayed by the coordinator: "the skills coming up for the Beam after it was already replaced is not great"). The level-up line names no skill; the Skills tab opens on a skill on the bar; the Beam and Hearth ring are marked optional; a test checks it (`test_skills`).
+- **Agent's calls in M2, for the owner to confirm (all DRAFT):**
+  1. **Pick designs:** the plan named every pick; the numbers and one-line texts are mine (DESIGN §21.2, STORY §17.1). Notable: Twin's bolts do x0.65 each; Skip jumps once at x0.75; Needle hits the first foe without a burst; Held lance makes Lance a hold-and-release skill (a short press is a normal Lance); Slick and other slows don't touch the Clinker or the Ashbrood; Crackle can't break a shell past the dark's floor; Recoil counts a dash as "backward" when it points more than about 107 degrees from your aim.
+  2. **The Beam and Hearth ring have full trees,** because both are still kept (keep-or-cut is open). If one is cut, its tree goes with it.
+  3. **Tier 3 opens on the Ashbrood kill only,** not at level 6 (the plan says both are the same moment).
+  4. **Respec:** after resting at a lit WayLamp, picks change freely while you stay within 220 px; walking away closes it. A pick swap or a full reset is free.
+  5. **Beacon and Ember rest** are light only: they light foes for the light rule but have no flame, so your own fire can't combo off them.
+  6. **The pack:** View opens it on Skills (I on a keyboard); inside, LB / RB (Q / Tab) change tabs, and K, J, M jump on a keyboard; J no longer has a pad button of its own (the journal is View, then RB). Choosing a slot is A on a skill, then left / right and A (two presses instead of the M1a list's one).
+  7. **Affixes in the Hollow:** Swift, Thick shell, Bursting and Lightless, one on each of the four level-4 elite packs; Biting cold waits for the marsh. Lightless also snuffs lamps it passes (4 s, after a 0.5 s cold flicker), from GAME_PLAN §8.1.
+  8. **Old cards in a v7 save:** each becomes its pick if its tier is open and free (the first of two in one tier wins; Catching needs the Ashbrood kill); the rest are unspent points. Kindled kills, Hot core and Lee are carried as lines until gear (M3); a new game can't get them before then.
+  9. **The Beam hint stays** ("The Beam is in your pack, on the Skills tab"): it says where a replaced skill went, it doesn't push an upgrade. Cut it if it counts as pushing the Beam.
+  10. **Phase 3's no-lamp window:** its cracked wings let the last ember show through, so over the bowl it is always lit. Phase 2 calls are skipped while 3 of its brood are still about.
+  11. **Save version 8.**
+
 ## 2026-11-28 (M1c review fixes)
 - From the independent review (`REVIEW_M1C.md`, relayed by the coordinator), fixed before the owner's playtest: phase 2 never sits in the dark (a dive that finds no lit lamp recovers in 1 s and throws ash bolts); the M1c cost on the bench is mostly gone (3.1 → about 2.3 ms; the base was 2.0); the quest arrow hides only near the fight; real Ashbrood kills and the scrap economy with real slots are tested.
 - **Agent's calls, to confirm:** the lock-button option drops "Back paddle" (a standard Xbox pad has none); with the lock on Y, slot 4 moves to R3. The mouse's sticky click gets its own option and is off when the lock is Off. A version 6 save with a lamp planted where the rim lamp now stands gets that lamp's scrap back, and the rim lamp takes the tile.
