@@ -70,12 +70,12 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 
 | Status | Item | File | Size | Anchor | Hookup | Notes / your notes |
 |---|---|---|---|---|---|---|
-| 🟨 | Dead tree (resin = fuel) | `assets/art/placeholders/dead_tree.png` | 16×32 | bottom-centre | drop-in | Bare, twisted, a few amber resin drips. Fuel goes in M1b; the tree may stay as scenery. |
-| 🟨 | Peat (marsh fuel) | `assets/art/placeholders/peat.png` | 16×16 | centre | drop-in | Dark brown mound, a few warm flecks. Fuel goes in M1b; scenery or cut. |
+| 🟨 | Dead tree (resin = fuel) | `assets/art/placeholders/dead_tree.png` | 16×32 | bottom-centre | drop-in | Bare, twisted, a few amber resin drips. **Unused since M1b** (fuel is cut; the file stays, nothing draws it). May come back as scenery. |
+| 🟨 | Peat (marsh fuel) | `assets/art/placeholders/peat.png` | 16×16 | centre | drop-in | Dark brown mound, a few warm flecks. **Unused since M1b** (fuel is cut; the file stays). |
 | 🟨 | Scrap pile | `assets/art/placeholders/scrap_pile.png` | 16×16 | centre | drop-in | Blue-grey metal bits. Scrap is the one material from M1b: piles are taken once. |
-| 🟨 | Glass shards (Ridge resource) | `assets/art/placeholders/glass.png` | 16×16 | centre | drop-in | Pale blue-white glints. Glass stops being a resource in M1b; the racks stay as Ridge story. |
+| 🟨 | Glass shards (Ridge resource) | `assets/art/placeholders/glass.png` | 16×16 | centre | drop-in | Pale blue-white glints. **Unused since M1b** (glass is cut; the file stays). |
 | 🟨 | Keeper's satchel (carry upgrade) | `assets/art/placeholders/satchel.png` | 16×16 | bottom-centre | drop-in | Patched leather satchel, brass buckle. Shown dull once taken. From M3 it adds bag slots. |
-| 🟨 | Lamp glass (hand-lamp upgrade) | `assets/art/placeholders/lamp_glass.png` | 16×16 | bottom-centre | drop-in | A clear glass lamp chimney. Shown dull once taken. From M1b it adds lamp charge. |
+| 🟨 | Lamp glass (hand-lamp upgrade) | `assets/art/placeholders/lamp_glass.png` | 16×16 | bottom-centre | drop-in | A clear glass lamp chimney. Shown dull once taken. Since M1b it adds 0.1 lamp charge (and 12 px of light). |
 | 🟨 | Ember drop (from Wicklings) | `assets/art/fx/ember.png` | 16×16, 4 frames → 64×16 strip | centre | needs hookup | Flickering flame. Drawn by code today. From M1b its glow becomes the pickup for scrap, oil and items, so it is no longer "fuel". |
 | 🟨 | Scrap drop (from Wicklings) | `assets/art/fx/scrap_drop.png` | 16×16 | centre | needs hookup | Small heap with a glint. Drawn by code today. |
 | ⬜ | Lamp-oil drop (a flask charge) | `assets/art/fx/oil_drop.png` | 16×16 | centre | needs hookup (M1a) | A small stoppered flask or a drop of amber oil. Packs, elites and the Ashbrood drop it. |
@@ -147,12 +147,12 @@ These look fine already. Draw your own only if you want a fully original look.
 
 | Status | Item | File | Size | Hookup | Notes / your notes |
 |---|---|---|---|---|---|
-| 🟨 | Fuel icon | `assets/art/ui/icon_fuel.png` | 16×16 | drop-in | Flame. Shown at 2× in the HUD panel. Goes in M1b (no fuel). |
+| 🟨 | Fuel icon | `assets/art/ui/icon_fuel.png` | 16×16 | drop-in | Flame. **Unused since M1b** (no fuel; the HUD shows only scrap). |
 | 🟨 | Scrap icon | `assets/art/ui/icon_scrap.png` | 16×16 | drop-in | Metal heap (or a gear/bolt) |
-| 🟨 | Glass icon | `assets/art/ui/icon_glass.png` | 16×16 | drop-in | Shards. Goes in M1b (no glass). |
+| 🟨 | Glass icon | `assets/art/ui/icon_glass.png` | 16×16 | drop-in | Shards. **Unused since M1b** (no glass). |
 | 🟨 | Warmth icon | `assets/art/ui/icon_warmth.png` | 16×16 | drop-in | Heart with a small flame |
 | 🟨 | Hand lamp icon | `assets/art/ui/icon_lamp.png` | 16×16 | drop-in | |
-| 🟨 | Wind icon | `assets/art/ui/icon_wind.png` | 16×16 | drop-in | Status chip. The wind chip goes (M1a/M1b). |
+| 🟨 | Wind icon | `assets/art/ui/icon_wind.png` | 16×16 | drop-in | Status chip. **Unused since M1b** (the wind chip is gone; wind is inert until M6). |
 | 🟨 | Cold lantern icon | `assets/art/ui/icon_cold.png` | 16×16 | drop-in | Status chip. From M1a the right-hand chips are only "hunted" and "cold" (the keeper getting cold). |
 | ⬜ | Hunted icon | `assets/art/ui/icon_hunted.png` | 16×16 | needs hookup (M1a) | Status chip: something hunts you. Fast travel, rest and the Skills tab are blocked. |
 | 🟨 | Goal marker | `assets/art/ui/icon_goal.png` | 16×16 | drop-in | Diamond in the goal banner |
