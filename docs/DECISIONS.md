@@ -37,6 +37,16 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 
 ---
 
+## 2026-11-27 (lanterns at the centre; target lock)
+- **Without tending, lanterns felt useless** (owner: "with this new system i feel like the lanterns are useless and therefore making the game useless lol"). M1b keeps lamps as they are (no 3-lamp limit, no new lamp rules) while their role is redesigned.
+- **Lanterns become the centre of combat and of the build** (owner: "yes that direction feels right"):
+  1. light against dark sets the fight's rules (foes tougher in darkness, exposed in light);
+  2. the keeper's fire combos with lamps;
+  3. lantern types are build pieces, upgraded by loot;
+  4. lit lamps claim the valley, and later the dark fights back.
+  Plan addendum to write: docs/replan/PLAN_LANTERNS.md.
+- **Target lock on the right stick is to be explored** (owner: "what about target lock on with the right stick? I feel like the shooting might be better with the classic ARPG target lock on?"). Goes into the same addendum.
+
 ## 2026-11-27 (the Ashbrood's ember; M1b starts)
 - **The Ashbrood broods over the WayLamp's last ember** (owner: "yes to ashbrood ember"). A small amber ember sits in the WayLamp's cold bowl under it: the lamp's light, not the creature's, so "amber is only the keeper's fire" still holds. Kindling the WayLamp after the fight means taking that ember back. From the owner's Gemini concept sheet. Texts that mention it are DRAFT.
 - **M1b starts now** (owner: "start m1b please"), before the owner's readability playtest.
