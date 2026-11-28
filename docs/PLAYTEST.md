@@ -1,5 +1,63 @@
 # Playtests
 
+## M1c: what to try (owner, pad)
+
+**Build:** branch `proto/kl-m1c` (lamps in the fight). Open its worktree in Godot and press F5. **Your save:** a version 6 save loads and becomes version 7; nothing in it changes except that the new old lamp on the rim of the Ashbrood's bowl appears, cold. Once saved as version 7, the M1b build can't load it, so **copy your save slot files first** if you want to go back. Keep a save from **before the Ashbrood** for steps 7-9. What was built is DESIGN §20; the new texts are STORY §16 (DRAFT). Sound: only Kenney stand-ins for the new slots (`foe_exposed`, `lock_on`, the Ashbrood's bolts and sweep).
+
+**Play on a gamepad.** Every new number is in the tuning panel (L3): the damage fix, light states, combos, lamp slots, the Ashbrood and the lock. The lock's options are in the pause menu under "Target lock options".
+
+**What to try**
+1. **The dark.** Before you have a lamp, shoot a shelled Wickling from far off: its shell wears to a sliver and holds (a dark notch on its bar, a clink). Step close (your hand lamp: dim) and it breaks. **The crook's guard can be beaten with no lamp** by closing in.
+2. **Dark or lit at a glance.** A foe in the dark is drawn dim and cold with a dimmed bar; in a lamp's light it has full colour, a thin warm rim on the side facing the lamp and cracks on its shell. Can you tell without reading numbers?
+3. **Combos.** Lampfire through a lamp's flame **catches** (a bigger bolt and two side bolts). A Fireglobe near a lamp **snaps** onto it and **flares** it (a big burst and a wider light for 3 s; once per 6 s). A Lance down two lamps **chains** (an arc between them that burns foes on the line). With the Beam on a lamp, it **feeds** it.
+4. **Do the lamps feel useful now?** Mark each combo keep, rework or cut below.
+5. **Lamp slots.** At level 3 you can plant 2 lamps; a 3rd is refused with "All your lamps are lit." At level 4 it plants. The pips by the lamp kind (top left) show slots and lamps out. A pick-up gives all the scrap back; planting then waits 8 s.
+6. **The damage fix.** Let 3 Wicklings reach you: they should take a full keeper down in about 4 s if you do nothing (was about 1 s). Stand in the Clinker's lane once: it should be the hardest hit in the Hollow (37 warmth) and throw you out of the lane.
+7. **The Ashbrood glances in the dark.** Light the WayLamp with no lamp near: your hits clink and the boss bar says "It shrugs off fire in the dark. Bring a lamp." There is **no quest arrow** during the fight, and **one** ember, at its feet.
+8. **Does the Ashbrood fight back now?** Phase 1: ash bolts at you (cold aim lines), a wing sweep if you stand close, the puff (it now puts out any lamp inside its circle for 4 s) and adds. It should never sit still for more than about 2 s. Phase 2: it dives about every 7 s at a lit lamp, sits on it smothering it (the lamp stays lit: hit it now), then the lamp goes out for 8 s.
+9. **Two ways to beat it with no scrap:** light the **rim lamp** (an old lamp west of the bowl, one touch) and fight in its light; or throw a **Fireglobe into the bowl** to stir the ember (it lights the Ashbrood for 4 s, once per 8 s). Does hitting it while it smothers a lamp feel like the right window?
+10. **The lock.** R3 locks the foe you meant (warm corner brackets). A quick flick of the right stick switches. Holding the stick steers (the brackets go half strength) and letting go returns to the lock. After a kill it moves on to the next foe nearby.
+11. **With a lock:** put Lance on Y (Skills list) and press Y: it hits the locked foe. B drinks without losing the target. A Fireglobe lands on the target.
+12. **The lock breaks** behind rock, far away and in deep fog, and never leaks out of a menu.
+13. **Lock or free aim, which do you use?** And the marker colour: warm amber (recommended) or cold?
+
+**Questions**
+
+| Question | Your answer |
+|---|---|
+| Does the Ashbrood fight back now? Too much, too little? | |
+| Does the Clinker's hit feel scary? Are Wickling swarms fair? | |
+| Do the lamps feel useful now? | |
+| Catch: keep, rework or cut? | |
+| Flare: keep, rework or cut? | |
+| Chain: keep, rework or cut? | |
+| Feed (with the Beam): keep, rework or cut? | |
+| Can you tell a dark foe from a lit one at a glance? | |
+| The dark: fair, or a chore (Spitwicks shoot from the dark)? | |
+| Lamp slots: 2 at the start, 3 at level 4: right? Is 8 s to replant too long or too short? | |
+| Lock or free aim, which do you use? Any accidental R3 clicks? | |
+| The lock marker: warm amber, or cold? | |
+| The ember now: one clear ember? | |
+| The DRAFT texts in STORY §16: keep, change or cut? | |
+
+**Your answers to steps 1-13** (pass, or what went wrong)
+
+| Step | Result |
+|---|---|
+| 1. The dark | |
+| 2. Dark or lit at a glance | |
+| 3. Combos | |
+| 4. Lamps useful | |
+| 5. Lamp slots | |
+| 6. The damage fix | |
+| 7. The Ashbrood in the dark | |
+| 8. The Ashbrood fights back | |
+| 9. The rim lamp and the ember | |
+| 10. The lock | |
+| 11. With a lock | |
+| 12. Lock breaks | |
+| 13. Lock or free aim | |
+
 ## Sprites: what to look at (owner, pad)
 
 **Build:** branch `proto/kl-sprites` (M1b plus your six approved sprite samples). Nothing about play changed: same foes, same timings, same save. **Before you pull it into your play folder:** delete your untracked pilot strip `assets/art/creatures/wickling/wickling_timid_idle.png` and its `.import` file there (the branch has the approved one at that path, and git won't overwrite an untracked file).
@@ -45,26 +103,28 @@
 
 **Questions**
 
-| Question | Your answer |
+| Question | Your answer (owner, 2026-11-28) |
 |---|---|
-| Does anything still feel like tending, or point at fuel? | |
-| Lit by touch: right, or should lighting a WayLamp take more than one press? | |
-| The ember: does it read as the lamp's light? Is the rise into the lamp worth keeping, too small, too slow? | |
-| After a faint, did the world come back the way you expected? | |
-| Pack, elite and nest lures: clear enough? | |
-| Levels: level 2 at the crook, 5 or 6 at the Ashbrood kill: right pace? | |
-| The DRAFT texts in STORY §15, especially the five approved texts the build had to change (§15.1): keep, change or cut? | |
+| Does anything still feel like tending, or point at fuel? | No: nothing felt like tending. |
+| Lit by touch: right, or should lighting a WayLamp take more than one press? | Keep one press. |
+| The ember: does it read as the lamp's light? Is the rise into the lamp worth keeping, too small, too slow? | It didn't read: "it was right above the yellow quest arrow, I didn't know what was going on". Fixed in M1c (one ember at the Ashbrood's feet; no quest arrow during the fight). |
+| After a faint, did the world come back the way you expected? | Yes: the faint rule worked; cleared packs stayed cleared. |
+| Pack, elite and nest lures: clear enough? | Passed. |
+| Levels: level 2 at the crook, 5 or 6 at the Ashbrood kill: right pace? | Right. |
+| The DRAFT texts in STORY §15, especially the five approved texts the build had to change (§15.1): keep, change or cut? | No changes asked (everything else passed). |
 
-**Your answers to steps 1-6** (pass, or what went wrong)
+**Your answers to steps 1-6** (owner, 2026-11-28)
 
 | Step | Result |
 |---|---|
-| 1. No fuel anywhere | |
-| 2. Light by touch | |
-| 3. The Ashbrood's ember | |
-| 4. The faint rule | |
-| 5. Lures | |
-| 6. Levels | |
+| 1. No fuel anywhere | Pass |
+| 2. Light by touch | Pass (keep one press) |
+| 3. The Ashbrood's ember | **Didn't read** (it sat on the quest arrow). Fixed in M1c |
+| 4. The faint rule | Pass |
+| 5. Lures | Pass |
+| 6. Levels | Pass: the pace is right |
+
+**Also from this playtest** (owner, 2026-11-28; they became M1c work): "the Ashbrood fight is boring as fuck, it doesn't do anything, it just sits there"; "the Clinker did less damage to me than a couple of Wicklings, they fried me; I was tanking hit after hit from the Clinker"; wants art and sound (art and sound stay the owner's job; the approved sprites are in).
 
 ## Readability: what to try (owner, pad)
 

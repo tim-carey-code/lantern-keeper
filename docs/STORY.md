@@ -852,3 +852,49 @@ No words: the ember is code-drawn (`scripts/world/waylamp_ember.gd`). The texts 
 - The letter's "...with an old lantern by the door. Light that first.": fits.
 - The pumphouse's "Light has to be fed from somewhere." and "The ridge has glass." (APPROVED): suggestions only, already in §13.
 
+
+## 16. M1c texts (DRAFT, M1c, not yet owner-approved)
+
+Every player-facing text M1c ("lamps in the fight", `docs/replan/PLAN_LANTERNS.md` §8 item 6) added, copied **from the code** on `proto/kl-m1c`, word for word. **All of it is DRAFT (M1c).** In these texts `%s` and `%d` are filled in by the game, and `[lock]` and `[aim]` become the button and stick for the device in use.
+
+### 16.1 Tips (`systems/story/story.gd`)
+
+| Tip | When | Text (DRAFT) |
+|---|---|---|
+| `dark` | The first hit on a foe in the dark (light states, PLAN_LANTERNS §2.1) | In the dark they shrug off your fire. Bring light to them. |
+| `lock` | The first time a lock starts | [lock] locks onto a foe. Flick [aim] to switch. |
+
+### 16.2 The Ashbrood's boss bar (`scripts/ui/boss_bar.gd`, `DARK_HINT`)
+
+| When | Text (DRAFT) |
+|---|---|
+| It is not lit (phase 1), or a hit just glanced off in the dark | It shrugs off fire in the dark. Bring a lamp. |
+
+The other boss-bar hints (§12) are unchanged. There is no new toast. The rim lamp shows the same "Light it" prompt as the other old lamps (§15.3).
+
+### 16.3 Planting refused (`scripts/player/player.gd`; shown as "Can't build: ..." by the keeper)
+
+| When | Text (DRAFT) |
+|---|---|
+| Every lamp slot is in use (lamp slots, PLAN_LANTERNS §5) | All your lamps are lit. |
+| A lamp was just picked up (the 8 s replant wait) | Your hands are full for %d s. |
+
+### 16.4 The target lock options (`scripts/ui/pause_menu.gd`, behind the button "Target lock options")
+
+| Option | Texts (DRAFT) |
+|---|---|
+| Target lock | Target lock: press to lock · Target lock: auto · Target lock: off |
+| Moving on after a kill | Next foe after a kill: on · Next foe after a kill: off |
+| The lock button | Lock button: %s (R3, Y, L3 or Back paddle) |
+| The marker | Lock marker: normal · Lock marker: large |
+| Aim assist | Aim assist: %s ("12 degrees", "20 degrees" or "off") |
+
+### 16.5 The controls list (`systems/input/input_hint.gd` `controls_text()`)
+
+| Row (DRAFT) | Button |
+|---|---|
+| Lock onto a foe (again: let go) | R3 (or the option's button) / Middle mouse |
+
+### 16.6 No words
+
+The light states, combos, lamp pips, the lock marker, the ash bolts and wing sweep, the smother and the ember's new place are code-drawn and have no text. The ember still has no words of its own (§15.4).
