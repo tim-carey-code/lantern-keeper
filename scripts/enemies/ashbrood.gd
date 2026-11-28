@@ -94,6 +94,7 @@ var _call: Telegraph.Tell        # phase 2: Wicklings called from the dark (spaw
 var _call_t := 6.0
 var history: Array = []          # [phase, move] for every wind-up started (tests: variety, every move seen)
 var embers_dropped := 0          # cold embers left by passes (tests)
+var landed := {}                 # move -> hits that landed on the keeper (tests)
 const ART_FOOT := 28.0           # the 48 x 48 strip's foot (foot anchor), a little under the code body's bottom
 
 func _ready() -> void:
@@ -343,6 +344,7 @@ func _tick_puff(delta: float, player: Node2D) -> void:
 		_puff_t = Tuning.kl_ashbrood_puff_period
 		if hit:
 			player.lamp_charge = minf(player.lamp_charge, Tuning.kl_ashbrood_puff_charge)
+			landed["puff"] = int(landed.get("puff", 0)) + 1
 			player.chill(Tuning.kl_ashbrood_puff_warmth * dmg_level_mult())   # last: a faint comes after this frame
 		if phase >= 2:
 			_after("puff")
@@ -423,6 +425,7 @@ func _tick_sweep(delta: float, player: Node2D) -> void:
 	_ash_t = 0.3
 	if hit:
 		player.knockback(player.global_position - global_position, Tuning.kl_ashbrood_sweep_knock)
+		landed["sweep"] = int(landed.get("sweep", 0)) + 1
 		player.chill(Tuning.kl_ashbrood_sweep_warmth * dmg_level_mult())
 
 ## A fan of ash bolts at the keeper: each bolt has its own aim marker (the marker is the hitbox), and the
@@ -633,6 +636,7 @@ func _land(player: Node2D) -> void:
 		_sit_t = Tuning.kl_ashbrood_dark_sit * _m() if _dark_sit else lit_sit
 	_dive_t = Tuning.kl_ashbrood_dive_period
 	if hit:
+		landed["dive"] = int(landed.get("dive", 0)) + 1
 		player.chill(Tuning.kl_ashbrood_dive_warmth * dmg_level_mult())   # last: the faint runs after this frame
 
 ## The ash wave: a lane from it through the keeper, kl_ashbrood_ash_wave_len long and 2 x kl_ashbrood_ash_wave_half
@@ -681,6 +685,7 @@ func _tick_wave(delta: float, player: Node2D) -> void:
 	_after("wave")
 	if hit:
 		player.knockback((_front_to - _front_from), Tuning.kl_ashbrood_ash_wave_knock)
+		landed["wave"] = int(landed.get("wave", 0)) + 1
 		player.chill(Tuning.kl_ashbrood_ash_wave_warmth * dmg_level_mult())
 
 ## The low pass: a lane past the keeper; at the commit it flies it in kl_ashbrood_strafe_travel, hitting whoever is
@@ -710,6 +715,7 @@ func _tick_strafe_tell(delta: float, player: Node2D) -> void:
 	_strafe = null
 	if hit:
 		player.knockback((_strafe_to - _strafe_from).orthogonal() * (1.0 if (player.global_position - _strafe_from).cross(_strafe_to - _strafe_from) < 0.0 else -1.0), 60.0)
+		landed["strafe"] = int(landed.get("strafe", 0)) + 1
 		player.chill(Tuning.kl_ashbrood_strafe_warmth * dmg_level_mult())
 
 func _fly_strafe(delta: float) -> void:
@@ -758,6 +764,7 @@ func _tick_call(delta: float, player: Node2D) -> void:
 		if f.summoned and not f._dead:
 			about += 1
 	if about >= 3:
+		_call_t = 4.0   # its brood is still about: it calls again a little later
 		return
 	var home := waylamp.global_position if waylamp else global_position
 	var side := (player.global_position - home).angle()

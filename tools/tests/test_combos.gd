@@ -108,6 +108,7 @@ func _run() -> void:
 	Progress.level = 1
 	await wait(0.1)
 	await _catch_checks()
+	await _catch_distance_checks()
 	await _flare_checks()
 	await _chain_checks()
 	await _feed_checks()
@@ -115,6 +116,41 @@ func _run() -> void:
 	print("RESULT fails=%d" % fails)
 	Art._ph.clear()
 	get_tree().quit(1 if fails else 0)
+
+## M2 (owner, M1c playtest: standing at your own lamp made every bolt catch): a bolt catches only once it has flown
+## kl_catch_min_travel, past the keeper's own reach. A lamp at your feet never catches your bolts; one out ahead does.
+func _catch_distance_checks() -> void:
+	clear()
+	await wait(0.05)
+	check(Tuning.kl_catch_min_travel >= Tuning.kl_catch_reach * 2.0 and Tuning.kl_catch_min_travel == 72.0, "a bolt must fly %.0f px before it can catch (the reach is %.0f px)" % [Tuning.kl_catch_min_travel, Tuning.kl_catch_reach])
+	var lamp := lamp_at(spot)
+	var fp := lamp.flame_pos()
+	await wait(0.05)
+	# Standing at your own lamp: bolts from beside the flame, every way, never catch.
+	var c0 := bolts.catches
+	var missed := 0
+	for i in 8:
+		var dir := Vector2.from_angle(TAU * i / 8.0)
+		for off in [Vector2(0, 0), Vector2(-20, 6), Vector2(24, -4), Vector2(0, 30)]:
+			bolts.fire_lampfire(fp + off, dir)
+			missed += 1
+	await wait(0.8)
+	check(bolts.catches == c0, "standing at your own lamp, none of %d bolts catch (every way, up to 30 px from the flame)" % missed)
+	# The edge: a bolt passing the flame just before kl_catch_min_travel doesn't catch; just after, it does.
+	c0 = bolts.catches
+	bolts.fire_lampfire(fp - Vector2(Tuning.kl_catch_min_travel - Tuning.kl_catch_reach - 12.0, 0), Vector2.RIGHT)
+	await wait(0.6)
+	check(bolts.catches == c0, "a bolt that reaches the flame inside %.0f px of flight doesn't catch" % Tuning.kl_catch_min_travel)
+	c0 = bolts.catches
+	var b := bolts.fire_lampfire(fp - Vector2(Tuning.kl_catch_min_travel + 20.0, 0), Vector2.RIGHT)
+	var at_catch := -1.0
+	for i in 40:
+		await get_tree().physics_frame
+		if b.caught and at_catch < 0.0:
+			at_catch = b.travelled
+	check(bolts.catches == c0 + 1 and at_catch >= Tuning.kl_catch_min_travel - 12.0, "one fired from %.0f px back catches, after %.0f px of flight" % [Tuning.kl_catch_min_travel + 20.0, at_catch])
+	clear()
+	await wait(0.5)
 
 func _catch_checks() -> void:
 	var lamp := lamp_at(spot)

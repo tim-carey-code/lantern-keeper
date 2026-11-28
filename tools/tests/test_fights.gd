@@ -1,5 +1,8 @@
 extends Node
-## M1c fights (owner, M1b playtest; docs/replan/PLAN_LANTERNS.md §2.1, §8 item 3):
+## M1c fights (owner, M1b playtest; docs/replan/PLAN_LANTERNS.md §2.1, §8 item 3), and M2's Ashbrood (owner, M1c
+## playtest: "phase 2 is still a bit boring and there definitely needs to be more moves"): phase 2's ash wave, low pass
+## (cold embers) and calls, phase 3's combos and its ember window, and a faint during every boss attack in every
+## phase (and the Clinker's roll) without an error (owner crash, hotfix d13d5b6):
 ##   - the damage fix: Wicklings chill in ticks with a cap on the whole swarm (3 Wicklings and no dodging: about
 ##     3-4 s to a faint), the Clinker's roll is the Hollow's hardest single hit and knocks back, foe damage grows by
 ##     level;
@@ -96,6 +99,8 @@ func _run() -> void:
 	_level_checks()
 	await _faint_timing_checks()
 	await _ashbrood_checks()
+	await _m2_moves()
+	await _faint_every_attack()
 	print("RESULT fails=%d" % fails)
 	Art._ph.clear()
 	get_tree().quit(1 if fails else 0)
@@ -427,4 +432,283 @@ func _ashbrood_checks() -> void:
 	check(longest <= Tuning.kl_ashbrood_idle_max + 0.6, "phase 2 never waits more than about 2 s, counting a dark sit as waiting (%.1f s; was 5.5 s)" % longest)
 	check(main.get_node("FogLayer/GoalPointer").target_pos() == null, "still no quest arrow")
 	b.queue_free()
+	await wait(0.1)
+
+# --- M2: the Ashbrood's new moves and phase 3 -----------------------------------------------------------------
+
+## A fresh Ashbrood at the Hollow's WayLamp (the rim lamp lit), in `ph`, its rise over.
+func _fresh_brood(ph: int) -> Ashbrood:
+	var w := _hollow()
+	for f in get_tree().get_nodes_in_group("foe"):
+		if f is Ashbrood:
+			f.queue_free()
+	await wait(0.05)
+	w.kindling = false
+	Progress.notes_read["waylamp_hollow"] = true
+	w.start_kindling()
+	await wait(0.05)
+	var b := w.guardian()
+	var rim := _rim()
+	rim.cold = false
+	rim.snuff_t = 0.0
+	LightSense.bump()
+	b.phase = ph
+	b.restart_phase()
+	b._dive_t = 99.0          # nothing starts on its own until a check asks
+	b._puff_t = 99.0
+	b._bolt_t = 99.0
+	b._wave_t = 99.0
+	b._call_t = 99.0
+	b._sweep_cd = 99.0
+	b._idle_t = -999.0
+	return b
+
+func _m2_moves() -> void:
+	var w := _hollow()
+	var at := w.global_position + Vector2(0, 230)
+	reset_keeper(at)
+	var b: Ashbrood = await _fresh_brood(2)
+	# The ash wave: a 60 px cold lane from it through you, the marker is the hitbox, a dash avoids it.
+	b._start_move("wave", player)
+	var wt := b.wave_tell()
+	check(wt != null and wt.kind == Telegraph.LANE and wt.boss and wt.hit and is_equal_approx(wt.radius, Tuning.kl_ashbrood_ash_wave_half) and wt.radius * 2.0 <= 64.0 and wt.duration >= Tuning.kl_tell_min, "phase 2's ash wave: a %.0f px cold lane (no wider than 64), at least %.1f s of warning" % [wt.radius * 2.0 if wt else 0.0, Tuning.kl_tell_min])
+	check(wt != null and wt.contains(player.global_position), "it runs through you")
+	var w0: float = player.warmth
+	while b.wave_tell() != null:
+		await get_tree().physics_frame
+		player.global_position = at
+	check(w0 - player.warmth >= Tuning.kl_ashbrood_ash_wave_warmth - 0.1 and b.landed.get("wave", 0) == 1, "standing in its lane chills you (%.1f)" % (w0 - player.warmth))
+	reset_keeper(at)
+	b = await _fresh_brood(2)
+	b._start_move("wave", player)
+	w0 = player.warmth
+	while b.wave_tell() != null:
+		await get_tree().physics_frame
+		player.global_position = at
+		if b.wave_tell() and b.wave_tell().left() < 0.1:
+			player.combat.dash_t = 0.3
+	check(not b.landed.has("wave"), "a dash through it takes nothing (%s)" % str(b.landed))
+	player.combat.dash_t = 0.0
+	# The low pass: a lane past you, flown, leaving cold embers that chill only after their glow.
+	reset_keeper(at)
+	b = await _fresh_brood(2)
+	var from: Vector2 = b.global_position
+	b._start_move("strafe", player)
+	var st := b.strafe_tell()
+	check(st != null and st.kind == Telegraph.LANE and st.radius * 2.0 <= 64.0 and st.duration >= Tuning.kl_tell_min, "the low pass: a %.0f px cold lane with at least %.1f s of warning" % [st.radius * 2.0 if st else 0.0, Tuning.kl_tell_min])
+	var lane_end := Vector2.ZERO
+	var flew := 0
+	while b.strafe_tell() != null or b.is_strafing():
+		await get_tree().physics_frame
+		player.global_position = at
+		if b.strafe_tell() and b.strafe_tell().locked():
+			lane_end = b.strafe_tell().to
+		if b.is_strafing():
+			flew += 1
+	var embers := get_tree().get_nodes_in_group("cold_ember")
+	check(flew >= int(Tuning.kl_ashbrood_strafe_travel * 60.0) - 2 and b.global_position.distance_to(lane_end) < 2.0 and b.global_position.distance_to(from) > 100.0, "it flies the locked lane over %.2f s (a visible pass, not a jump; %d frames)" % [Tuning.kl_ashbrood_strafe_travel, flew])
+	check(embers.size() == Tuning.kl_ashbrood_strafe_embers, "and leaves %d cold embers on its path (%d)" % [Tuning.kl_ashbrood_strafe_embers, embers.size()])
+	var e: ColdEmber = ColdEmber.new()
+	e.position = at + Vector2(60, 0)
+	spawner.add_child(e)
+	reset_keeper(at + Vector2(60, 0))
+	await get_tree().physics_frame
+	w0 = player.warmth
+	await wait(Tuning.kl_cold_ember_warm * 0.6)
+	check(is_equal_approx(player.warmth, w0) and not e.armed(), "a new cold ember only glows at first (it can't hurt you yet)")
+	await wait(Tuning.kl_cold_ember_warm + 0.6)
+	check(player.warmth < w0 and e.chilled > 0.0, "then standing in it chills you (%.1f)" % (w0 - player.warmth))
+	for n in get_tree().get_nodes_in_group("cold_ember"):
+		n.queue_free()
+	# Calls from the dark (spawn glows, then bold Wicklings).
+	reset_keeper(at)
+	for f in get_tree().get_nodes_in_group("wickling"):
+		f.queue_free()
+	await wait(0.05)
+	b._call_t = 0.0
+	await wait(0.05)
+	var ct := b.call_tell()
+	check(ct != null and ct.kind == Telegraph.SPAWN and ct.points.size() == Tuning.kl_ashbrood_call_count, "phase 2 calls Wicklings from the dark: %d cold spawn glows first" % Tuning.kl_ashbrood_call_count)
+	await wait(Tuning.kl_ashbrood_add_tell + 0.2)
+	check(get_tree().get_nodes_in_group("wickling").filter(func(x): return x.summoned).size() == Tuning.kl_ashbrood_call_count, "then they rise")
+	for f in get_tree().get_nodes_in_group("wickling"):
+		f.queue_free()
+	# Variety: in phase 2 a dive, then a new move, then a dive; the new move after a dive differs from the last one.
+	b = await _fresh_brood(2)
+	b._dive_t = 0.0
+	b._idle_t = 0.0
+	b._call_t = 99.0
+	var seq: Array = []
+	var t := 0.0
+	while t < 40.0:
+		await get_tree().physics_frame
+		t += 1.0 / 60.0
+		player.global_position = at
+		player.warmth = Tuning.warmth_max
+		if seq.size() < b.history.size():
+			for h in b.history.slice(seq.size()):
+				seq.append(h[1])
+	var main_moves := seq.filter(func(m): return m in ["dive", "wave", "strafe"])
+	var alternating := true
+	for i in range(1, main_moves.size()):
+		if main_moves[i] != "dive" and main_moves[i - 1] != "dive":
+			alternating = false
+		if main_moves[i] != "dive" and i >= 2 and main_moves[i - 2] == main_moves[i]:
+			alternating = false
+	print("    phase 2, 40 s: %s" % str(seq))
+	check(main_moves.count("wave") >= 1 and main_moves.count("strafe") >= 1 and main_moves.count("dive") >= 3 and alternating, "phase 2 mixes dives with the wave and the pass, never the same new move twice running")
+	# Phase 3: it returns to the bowl, where the ember lights it through its cracked wings (no lamp needed).
+	var rim := _rim()
+	b = await _fresh_brood(3)
+	rim.cold = true
+	LightSense.bump()
+	b.global_position = w.global_position + Vector2(220, 0)
+	b.update_light_state(0.0)
+	check(not b.is_exposed(), "phase 3, away from the bowl with no lamp lit: it is dark")
+	b._dive_t = 0.0
+	b._idle_t = 0.0
+	var first := ""
+	var lit_in_bowl := false
+	t = 0.0
+	while t < 6.0:
+		await get_tree().physics_frame
+		t += 1.0 / 60.0
+		player.global_position = at
+		player.warmth = Tuning.warmth_max
+		if first == "" and not b.history.is_empty():
+			first = b.history[0][1]
+		if b.is_sitting() and b.current_move() == "return" and b.is_exposed():
+			lit_in_bowl = true
+	check(first == "return" and lit_in_bowl, "phase 3 opens by settling over the last ember, which lights it: the window that needs no lamp (%s)" % first)
+	var p3: Array = []
+	t = 0.0
+	b._idle_t = 0.0
+	while t < 45.0 and is_instance_valid(b):
+		await get_tree().physics_frame
+		t += 1.0 / 60.0
+		player.global_position = at
+		player.warmth = Tuning.warmth_max
+	for h in b.history:
+		p3.append(h[1])
+	print("    phase 3, about 50 s: %s" % str(p3))
+	var combo_dw := false
+	var combo_sb := false
+	var combo_rp := false
+	for i in range(1, p3.size()):
+		if p3[i - 1] == "dive" and (p3[i] == "wave" or (p3[i] == "bolts" and i + 1 < p3.size() and p3[i + 1] == "wave")):
+			combo_dw = true   # (a dive that lands with no lit lamp shakes off ash bolts first)
+		if p3[i - 1] == "strafe" and p3[i] == "bolts":
+			combo_sb = true
+		if p3[i - 1] == "return" and p3[i] == "puff":
+			combo_rp = true
+	check(combo_dw and combo_sb and combo_rp, "phase 3 fights in combos: dive then wave, pass then bolts, the return then a puff")
+	check(Tuning.kl_ashbrood_p3_mult < 1.0, "and faster: every wind-up x%.1f (never under the %.1f s minimum)" % [Tuning.kl_ashbrood_p3_mult, Tuning.kl_tell_min])
+	rim.cold = false
+	LightSense.bump()
+	for f in get_tree().get_nodes_in_group("foe"):
+		if f is Ashbrood or f is Wickling:
+			f.queue_free()
+	await wait(0.1)
+
+## Owner crash (hotfix d13d5b6): a faint mid-fight resets the fight. Every attack of every phase (and the Clinker's
+## roll) is made to land on a keeper with 1 warmth: the keeper faints once, right after, and nothing errors (the runner
+## fails on any SCRIPT ERROR).
+func _faint_every_attack() -> void:
+	var w := _hollow()
+	var at := w.global_position + Vector2(0, 230)
+	var cases := [[1, "puff"], [1, "sweep"], [1, "bolts"], [1, "adds"], [2, "dive"], [2, "wave"], [2, "strafe"], [2, "ember"],
+		[2, "call"], [2, "bolts"], [3, "return"], [3, "dive"], [3, "wave"], [3, "strafe"], [3, "bolts"], [3, "puff"]]
+	var ok := 0
+	for cs in cases:
+		var ph: int = cs[0]
+		var what: String = cs[1]
+		reset_keeper(at)
+		var b: Ashbrood = await _fresh_brood(ph)
+		var f0: int = player.faints
+		match what:
+			"puff":
+				if ph == 1:
+					b._start_puff()
+				else:
+					b._start_move("puff", player)
+			"sweep":
+				b._start_sweep()
+			"bolts":
+				b._start_bolts(player)
+			"adds":
+				b._wave_t = 0.0
+			"call":
+				b._call_t = 0.0
+			"ember":
+				var e := ColdEmber.new()
+				e.position = at
+				e.age = Tuning.kl_cold_ember_warm
+				spawner.add_child(e)
+			_:
+				b._start_move(what, player)
+		var t := 0.0
+		while player.faints == f0 and t < 8.0 and is_instance_valid(b):
+			await get_tree().physics_frame
+			t += 1.0 / 60.0
+			# Stand where it will land.
+			var spot_now := at
+			if b.dive_tell():
+				spot_now = b.dive_tell().center
+			elif b.puff_tell() or b.sweep_tell():
+				spot_now = b.global_position + Vector2(0, 30)
+			elif what in ["adds", "call"]:
+				var ws := get_tree().get_nodes_in_group("wickling").filter(func(x): return x.summoned and not x.is_fading_in())
+				if not ws.is_empty():
+					spot_now = ws[0].global_position
+			if not player.is_knocked():
+				player.global_position = spot_now
+			player.warmth = minf(player.warmth, 1.0)
+			player.swarm_budget = Tuning.kl_swarm_chill_cap * Tuning.kl_swarm_chill_burst
+		await get_tree().process_frame
+		var reader = main.get_node("NoteReader")
+		if reader.is_open():
+			reader.close()
+		get_tree().paused = false
+		Tuning.ui_open = false
+		Progress._input_block_until = 0
+		var fainted: bool = player.faints == f0 + 1
+		var reset_ok: bool = is_instance_valid(b) and b.phase == ph and is_equal_approx(b.hp, b.phase_hp()) and not b.is_flying() and not b.is_strafing()
+		if fainted and reset_ok:
+			ok += 1
+		else:
+			print("    faint case phase %d %s: fainted %s, reset %s" % [ph, what, str(fainted), str(reset_ok)])
+		for e in get_tree().get_nodes_in_group("cold_ember"):
+			e.queue_free()
+		for f in get_tree().get_nodes_in_group("wickling"):
+			f.queue_free()
+		await wait(0.05)
+	check(ok == cases.size(), "a faint during every Ashbrood attack in every phase faints once and resets the phase, with no error (%d of %d)" % [ok, cases.size()])
+	for f in get_tree().get_nodes_in_group("foe"):
+		if f is Ashbrood:
+			f.queue_free()
+	await wait(0.1)
+	# The Clinker's roll.
+	reset_keeper(spot)
+	var c := Clinker.new()
+	c.position = spot + Vector2(120, 0)
+	spawner.add_child(c)
+	await wait(0.05)
+	c.home = c.global_position
+	c.awake = true
+	c._wake_t = 0.0
+	c._cooldown = 0.0
+	var f1: int = player.faints
+	for i in 240:
+		await get_tree().physics_frame
+		player.warmth = minf(player.warmth, 1.0)
+		if player.faints > f1:
+			break
+	await get_tree().process_frame
+	var reader2 = main.get_node("NoteReader")
+	if reader2.is_open():
+		reader2.close()
+	get_tree().paused = false
+	Tuning.ui_open = false
+	check(player.faints == f1 + 1 and is_instance_valid(c), "a faint from the Clinker's roll: once, no error, the Clinker reset")
+	c.queue_free()
 	await wait(0.1)
