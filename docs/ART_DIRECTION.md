@@ -118,9 +118,9 @@ Built: `scripts/enemies/wickling.gd`. 3 hp, 65 px/s, chill by touch (30 warmth/s
 **Shape language.** A soft, upside-down teardrop of smoke. It is wide at the bottom, with a wisp trailing below. Two small square eyes. Round = melee, close range.
 - **Timid:** hunched and low. Eyes set low, wisp tucked under. It sways side to side at the light's edge.
 - **Brave:** taller, leaning forward. Eyes higher and wider apart. Two wisps rise from its back like moth wings made of smoke. This lets the player see which ones will walk into light (DESIGN §8.1).
-- **Elite (Shelled Wickling):** the same body at 24x24 inside pale cracked plates, like shards of cold lamp glass grown onto it. Heavier, slower bob. It ignores light (built, `foe.gd:230`).
+- **Elite (Shelled Wickling):** the same body at 24x24, wearing a dead, cold lantern as its shell: a grimy glass cage with a hanging ring on top. The two eyes always glow through the glass, so it never reads as a real lamp or loot. When the shell breaks, the glass cracks, then the cage falls away in pieces. Heavier, slower bob. It ignores light (built, `foe.gd:230`). *Concept reference: owner's Gemini sheet v2, 2026-11-27, kept outside the repo.*
 
-**Palette.** Body `#0b0e1a` and `#141a2e`; rim `#36507a`; eyes `#a3bcd4`; elite plates `#6d8fb3` with `#a3bcd4` cracks.
+**Palette.** Body `#0b0e1a` and `#141a2e`; rim `#36507a`; eyes `#a3bcd4`; elite lantern shell: dark, grimy glass `#4a6a94` and `#6d8fb3` with `#36507a` frame and `#a3bcd4` cracks; no white or pale fill, so it is never the brightest thing on screen.
 
 **Personality and movement.** Hungry, not cruel. They bob on a slow sine (built wobble, `wickling.gd:200`). Wandering is aimless; hunting is a straight, eager drift. When hit, small ones flinch and flee (`_on_hurt`, `wickling.gd:75-78`).
 
