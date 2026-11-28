@@ -874,6 +874,13 @@ func _build_variant(variant: String, cells: Array, file_base: String) -> Array:
 		var list: Array = keys[pose]
 		var anim := str(_popt(variant, pose, "anim", pose))
 		var rule := _rule_for(variant, pose, list.size())
+		# sequence = ["0", "1", "sleep 1", "2 r180"]: a hand-keyed strip in any order, frames reused, borrowed from
+		# another pose of the variant, or turned half round (a rolling ball). Implies rule "keys" unless one is set.
+		var seq: Variant = _popt(variant, pose, "sequence", null)
+		if seq is Array and not (seq as Array).is_empty():
+			list = _sequence(seq, keys, pose, variant)
+			if not manifest.has_section_key("pose.%s.%s" % [variant if variant != "" else "base", pose], "rule"):
+				rule = "keys"
 		var frames := _apply_rule(rule, list, variant, pose, size, facing, outline)
 		if frames.is_empty():
 			continue
@@ -899,6 +906,51 @@ func _build_variant(variant: String, cells: Array, file_base: String) -> Array:
 				"size": size, "thumb": key["thumb"], "rule": drule + " (from " + pose + ")"})
 			made[dname] = true
 	return out
+
+## The frames a `sequence` names. Each item: "<index>" (into this pose's key frames, in cell order), optionally
+## another pose's name before it ("sleep 1"), and "r180" (turned half round, then set back on the same foot line
+## and centre: a rolling ball) or "flip" (mirrored) after it. A bad item is reported and skipped.
+func _sequence(seq: Array, keys: Dictionary, pose: String, variant: String) -> Array:
+	var out: Array = []
+	for item in seq:
+		var from := pose
+		var idx := -1
+		var turn := ""
+		for tok in str(item).split(" ", false):
+			if tok.is_valid_int():
+				idx = int(tok)
+			elif tok == "r180" or tok == "flip":
+				turn = tok
+			else:
+				from = tok
+		if not keys.has(from) or idx < 0 or idx >= (keys[from] as Array).size():
+			report["warnings"].append("%s/%s: sequence item '%s' names no key frame: skipped" % [variant, pose, str(item)])
+			continue
+		var k: Dictionary = keys[from][idx]
+		if turn == "":
+			out.append(k)
+			continue
+		var img: Image = (k["img"] as Image).duplicate() as Image
+		var before := img.get_used_rect()
+		if turn == "r180":
+			img.flip_x()
+			img.flip_y()
+		else:
+			img.flip_x()
+		var after := img.get_used_rect()
+		var dx := (before.position.x + before.size.x / 2) - (after.position.x + after.size.x / 2)
+		var dy := before.end.y - after.end.y
+		var moved := _shift(img, dx, dy)
+		var w := img.get_width()
+		var h := img.get_height()
+		var eyes: Array = []
+		for e in k["eyes"]:
+			var q: Vector2i = e
+			q = Vector2i(w - 1 - q.x, (h - 1 - q.y) if turn == "r180" else q.y) + Vector2i(dx, dy)
+			eyes.append(q)
+		out.append({"img": moved, "eyes": eyes, "thumb": k["thumb"]})
+	return out
+
 
 func _rule_for(variant: String, pose: String, key_count: int) -> String:
 	var sec := "pose.%s.%s" % [variant if variant != "" else "base", pose]
