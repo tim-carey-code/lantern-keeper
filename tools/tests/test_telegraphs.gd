@@ -568,6 +568,38 @@ func _swap_checks() -> void:
 	check(sf != null and sf.has_animation("idle") and sf.get_frame_count("idle") == 4, "a test-only PNG strip loads as a 4-frame idle (no frames file: defaults)")
 	var ef := Art.frames("wickling", "elite")
 	check(ef != null and ef.get_frame_count("idle") == 2, "a variant strip (wickling_elite_idle) wins over the plain one")
+	# Per-variant frame sizes: the shelled Wickling is 24x24 while timid and brave are 16x16 (ART_DIRECTION §1.2).
+	_strip(root + "wickling/wickling_elite_idle.png", 3, 24)
+	_strip(root + "wickling/wickling_move.png", 4)
+	var wcfg := ConfigFile.new()
+	wcfg.set_value("sheet", "frame_size", Vector2i(16, 16))
+	wcfg.set_value("sheet", "anchor", "foot")
+	wcfg.set_value("variant.elite", "frame_size", Vector2i(24, 24))
+	wcfg.save(root + "wickling/wickling.frames.cfg")
+	Art.clear_frames()
+	ef = Art.frames("wickling", "elite")
+	var e0 := ef.get_frame_texture("idle", 0) as AtlasTexture if ef else null
+	check(ef != null and ef.get_frame_count("idle") == 3 and e0 != null and e0.region.size == Vector2(24, 24) and ef.get_meta("frame_size_idle") == Vector2i(24, 24),
+		"[variant.elite] frame_size = 24x24: the elite's 72x24 strip slices into 3 frames of 24x24 under a 16x16 sheet")
+	check(ef != null and ef.get_frame_count("move") == 4 and ef.get_meta("frame_size_move") == Vector2i(16, 16),
+		"the elite's missing move falls back to the plain 16x16 strip, sliced at the sheet's 16x16")
+	var tf := Art.frames("wickling", "timid")
+	check(tf != null and tf.get_meta("frame_size_idle") == Vector2i(16, 16) and tf.get_frame_count("idle") == 4, "timid and brave keep the sheet's 16x16")
+	check(Art.strip_frame_size(wcfg, "elite", "idle", 32) == Vector2i(32, 32) and Art.strip_frame_size(null, "", "idle", 24) == Vector2i(24, 24),
+		"a configured size that doesn't match the strip's height gives way to a square of that height; no frames file: the strip's height")
+	var eholder := Node2D.new()
+	add_child(eholder)
+	var es := FoeSprite.attach(eholder, "wickling", "elite")
+	var off_idle := es.offset if es else Vector2.ONE
+	if es:
+		es.play_anim("move")
+	check(es != null and off_idle == Vector2(0, -12) and es.offset == Vector2(0, -8),
+		"FoeSprite keeps the foot on the origin for each frame size (24x24 idle: offset -12; 16x16 move: -8)")
+	eholder.queue_free()
+	DirAccess.remove_absolute(root + "wickling/wickling.frames.cfg")
+	DirAccess.remove_absolute(root + "wickling/wickling_move.png")
+	_strip(root + "wickling/wickling_elite_idle.png", 2)
+	Art.clear_frames()
 	var w2: Wickling = spawner.spawn_at(spot + Vector2(300, 0))
 	var s2: Spitwick = add_foe(Spitwick.new(), spot + Vector2(-200, 0))
 	await wait(0.05)
@@ -596,8 +628,8 @@ func _swap_checks() -> void:
 	for p in ["keeper/keeper_idle.png", "creatures/wickling/wickling_idle.png", "creatures/wickling/wickling_elite_idle.png", "creatures/spitwick/spitwick_idle.png", "creatures/spitwick/spitwick_windup.png", "creatures/spitwick/spitwick.frames.cfg"]:
 		DirAccess.remove_absolute("user://test_art/" + p)
 
-func _strip(path: String, frames: int) -> void:
-	var img := Image.create(16 * frames, 16, false, Image.FORMAT_RGBA8)
+func _strip(path: String, frames: int, size: int = 16) -> void:
+	var img := Image.create(size * frames, size, false, Image.FORMAT_RGBA8)
 	for i in frames:
-		img.fill_rect(Rect2i(i * 16 + 4, 4, 8, 8), Color(0.2, 0.3, 0.4 + 0.1 * i))
+		img.fill_rect(Rect2i(i * size + 4, 4, 8, 8), Color(0.2, 0.3, 0.4 + 0.1 * i))
 	img.save_png(path)
