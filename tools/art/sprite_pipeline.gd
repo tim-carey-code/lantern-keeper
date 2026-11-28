@@ -4,7 +4,7 @@ extends RefCounted
 ## Run from the command line with tools/art/sprite_from_sheet.gd; tools/tests/test_sprite_tool.gd drives it directly.
 ##
 ## Per cell: key out the magenta (JPEG-tolerant), crop to the content, scale it into the frame (every pose of a
-## variant shares one scale and one baseline), snap each pixel to the 14-colour palette, threshold the alpha.
+## variant shares one scale and one baseline), snap each pixel to the colours its palette role allows, threshold the alpha.
 ## Repairs (each a manifest option): paint the eyes back, add the 1 px rim (creatures) or outline (people, keeper,
 ## props). Then the auto frames (idle bob, move bob, hurt flash, notice flare, death dissolve, spawn, wind-up hold,
 ## attack lean). A strip the owner has drawn or touched up is never overwritten unless `force` is set.

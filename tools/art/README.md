@@ -67,7 +67,7 @@ and stone bowl, never its ashen body). All three can be set per cell, variant or
 ## 3. What the tool does
 
 Per cell: keys out the magenta, crops to the subject, scales it into the frame (every pose of a variant shares one
-scale and one baseline), snaps every pixel to the 14 colours and makes every pixel fully solid or fully clear.
+scale and one baseline), snaps every pixel to the colours its role allows (below) and makes every pixel fully solid or fully clear.
 Repairs: the eyes are found in the big image and painted back in `#a3bcd4` (at least 1 px each, the pair kept
 apart), then the rim (creatures) or outline (the keeper, people, props).
 
