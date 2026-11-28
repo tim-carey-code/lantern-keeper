@@ -105,20 +105,7 @@ func _healthy_lights() -> Array:
 ## How deep a point sits in healthy light (0 outside). Optionally ignoring one light.
 func healthy_level_at(p: Vector2, ignore: Node = null) -> float:
 	LightSense.refresh(get_tree())
-	var best := 0.0
-	for i in LightSense.nodes.size():
-		if LightSense.healthy[i] == 0 or LightSense.nodes[i] == ignore:
-			continue
-		var r := LightSense.radius[i]
-		if r > 0.0:
-			best = maxf(best, 1.0 - LightSense.pos[i].distance_to(p) / r)
-	for w in get_tree().get_nodes_in_group("waylamp"):
-		if w == ignore or not w.is_lit():
-			continue
-		var r: float = w.get_light_radius()
-		if r > 0.0:
-			best = maxf(best, 1.0 - w.global_position.distance_to(p) / r)
-	return best
+	return LightSense.healthy_at(p, ignore)
 
 ## The way out of healthy light from a point (zero when outside it).
 func repel_at(p: Vector2) -> Vector2:
@@ -128,8 +115,8 @@ func repel_at(p: Vector2) -> Vector2:
 		if LightSense.healthy[i] == 0:
 			continue
 		push += _repel_one(p, LightSense.pos[i], LightSense.radius[i])
-	for w in get_tree().get_nodes_in_group("waylamp"):
-		if w.is_lit():
+	for w in LightSense.waylamps:
+		if is_instance_valid(w) and w.is_lit():
 			push += _repel_one(p, w.global_position, w.get_light_radius())
 	return push
 
@@ -144,9 +131,11 @@ func _repel_one(p: Vector2, c: Vector2, r: float) -> Vector2:
 
 ## How deep a point sits in any mirror beam (0 outside). The dark can't sense beams coming.
 func beam_level_at(p: Vector2) -> float:
+	LightSense.refresh(get_tree())
 	var best := 0.0
-	for m in get_tree().get_nodes_in_group("mirror"):
-		best = maxf(best, m.beam_level_at(p))
+	for m in LightSense.mirrors:
+		if is_instance_valid(m) and m.is_inside_tree():
+			best = maxf(best, m.beam_level_at(p))
 	return best
 
 ## Overall light at a point: lantern light, or a beam (which counts as harsh as a core).
@@ -340,7 +329,10 @@ func tick_foe(delta: float) -> void:
 	if _dead or is_queued_for_deletion():
 		return
 	if not (self is Wickling):
-		for mirror in get_tree().get_nodes_in_group("mirror"):
+		LightSense.refresh(get_tree())
+		for mirror in LightSense.mirrors:
+			if not is_instance_valid(mirror) or not mirror.is_inside_tree():
+				continue
 			var beam_strength: float = mirror.beam_level_at(global_position)
 			if beam_strength > 0.0:
 				hurt(Tuning.wick_beam_burn * beam_strength * delta, false, "beam")

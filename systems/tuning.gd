@@ -147,7 +147,7 @@ var kl_spit_keep_speed := 55.0
 var kl_spit_retreat_speed := 70.0
 var kl_spit_max_range := 500.0
 var kl_spit_period := 2.5
-var kl_spit_tell := 0.6
+var kl_spit_tell := 0.7                 # was 0.6 (readability: ART_DIRECTION §4.3 row 4)
 var kl_spit_speed := 150.0
 var kl_spit_warmth := 12.0
 var kl_spit_charge := 0.1
@@ -158,7 +158,7 @@ var kl_clinker_shell := 12.0
 var kl_clinker_speed := 40.0
 var kl_clinker_roll_speed := 280.0
 var kl_clinker_roll_dist := 260.0
-var kl_clinker_roll_tell := 0.8
+var kl_clinker_roll_tell := 0.9         # was 0.8 (readability: §4.3 row 8)
 var kl_clinker_hit_warmth := 25.0
 var kl_clinker_hit_range := 22.0
 var kl_clinker_target_range := 330.0
@@ -177,20 +177,19 @@ var kl_nest_core_radius := 16.0
 var kl_ashbrood_hp := 220.0             # per phase; 2 phases in M1a, hand-set to the 2-minute target (GAME_PLAN §4.6)
 var kl_ashbrood_shell := 12.0
 var kl_ashbrood_puff_period := 7.0
-var kl_ashbrood_puff_tell := 0.8
+var kl_ashbrood_puff_tell := 1.0        # was 0.8 (readability: §4.3 row 9)
 var kl_ashbrood_puff_radius := 140.0
 var kl_ashbrood_puff_warmth := 15.0
 var kl_ashbrood_wave_period := 8.0
 var kl_ashbrood_dive_period := 6.0
-var kl_ashbrood_dive_tell := 0.7
+var kl_ashbrood_dive_tell := 1.0        # was 0.7 (readability: §4.3 row 11)
 var kl_ashbrood_dive_warmth := 25.0
 var kl_ashbrood_sit_sec := 4.0
 var kl_ashbrood_wick := 32              # base (Lv 7: x2.5 = 80); was 50 flat, 40 before the balance pass. Its kill is the Hollow's last level
 var kl_ashbrood_puff_charge := 0.1
 var kl_ashbrood_wave_count := 3
 var kl_ashbrood_dive_dist := 200.0
-var kl_ashbrood_roll_radius := 36.0
-var kl_ashbrood_hit_radius := 48.0
+var kl_ashbrood_hit_radius := 48.0       # the dive's landing circle, lamp or no lamp (was 36 at a lamp: one value per hit, §4.4 rule 3)
 var kl_focus_shell_mult := 1.3
 var kl_long_throw_len := 310.0          # "Long throw": beam length (was hard-coded)
 var kl_deep_tank_mult := 0.8            # "Deep tank": beam cost x (was hard-coded)
@@ -308,6 +307,33 @@ var kl_kindled_kill_charge := 0.1        # "Kindled kills": lamp charge back per
 var kl_timid_share := 0.5                # share of Wicklings that won't enter healthy light
 var kl_light_tolerance := 2.5            # s a brave Wickling can stand in light before it burns
 var kl_light_burn_dps := 1.5             # hp/s it then takes (and it runs)
+
+# Readability step (ART_DIRECTION §4, DRAFT): the shared telegraph system (systems/telegraph/telegraph.gd).
+# Every foe attack goes notice -> wind-up -> commit -> strike -> recover. Markers are cold (#a3bcd4), above the fog.
+var kl_tell_min := 0.5                   # s: the shortest warning any discrete hit gets (fairness rule 1)
+var kl_tell_commit := 0.15               # s: the last part of a wind-up flashes (solid with "reduce flashes"); aim is locked
+var kl_tell_commit_boss := 0.2           # s: the same for the Clinker and the Ashbrood
+var kl_notice_time := 0.3                # s: eyes flare when a foe starts hunting you
+var kl_tell_gap := 0.3                   # s: two warnings near the keeper never land closer together than this (rule 9)
+var kl_tell_budget_radius := 240.0       # px: "near the keeper" for that rule
+var kl_tell_arrow_range := 900.0         # px: an off-screen wind-up this close to the keeper gets an edge arrow
+var kl_wick_latch_tell := 0.25           # s: a Wickling reaches for you before its touch starts to drain
+var kl_elite_latch_tell := 0.35          # s: the same for a Shelled Wickling
+var kl_spit_aim_lock := 0.2              # s: the Spitwick's aim locks for the end of its wind-up
+var kl_spit_onscreen_margin := 16.0      # px: a Spitwick starts a wind-up only this far inside the screen
+var kl_nest_hatch_tell := 1.0            # s: a nest's ring fills, and glows show where the hatchlings come (was a code constant)
+var kl_hatch_fade := 0.3                 # s: hatched and called Wicklings fade in, harmless, for this long
+var kl_clinker_wake_time := 0.6          # s: the Clinker uncurls when it wakes, and can't roll until it is done
+var kl_clinker_recover := 0.6            # s: dizzy after a roll (it can't move or roll: hit it now)
+var kl_ashbrood_add_tell := 0.8          # s: cold glows where its adds will rise, before they come
+var kl_ashbrood_dive_travel := 0.3       # s: its dive is a visible flight, not a jump
+var kl_ashbrood_phase_pause := 1.5       # s: it rises out of the bowl; it can't attack or be hurt meanwhile
+# The keeper's own feedback (code-drawn until the owner draws poses).
+var kl_fx_dash_ghosts := 3               # afterimages a dash leaves
+var kl_fx_ghost_life := 0.22             # s: how long an afterimage lasts
+var kl_fx_cast_time := 0.14              # s: the lamp-thrust cue on a cast (Lampfire, Fireglobe, Lance)
+var kl_fx_drink_time := 0.6              # s: the warm glow rising up the keeper after a flask
+var kl_fx_hurt_time := 0.25              # s: the cold flash when something chills the keeper
 
 var kl_ambient_spawns := false           # the old endless trickle of Wicklings out of the fog (off: ARPG packs instead)
 

@@ -10,6 +10,10 @@ extends Node
 ##     --path . res://tools/bench/bench.tscn
 ## Optional user args after "--": lanterns foes frames bolts burning, e.g. "-- 30 20 600" or, for the world with no
 ## fight, "-- 30 20 400 0 0".
+## A sixth argument "profile" also times each kind of node on its own (the bench runs their _process and
+## _physics_process itself, in the same frame), e.g. "-- 30 20 400 40 4 profile".
+## "tells=N" (readability step) adds a telegraph-heavy fight at the keeper: N Spitwicks on screen winding up
+## without a pause, the Ashbrood (puffs and adds) and the Clinker (rolls), e.g. "-- 30 20 400 40 4 tells=8".
 ## Budget (DECISIONS.md): game logic (process + physics) well under 4 ms a frame at 30 lanterns and 20 foes.
 
 const WARMUP := 30
@@ -44,6 +48,16 @@ var _range := Vector2.ZERO
 var _targets: Array = []   # untyped: has() is asked about Spitwicks too
 var _hits0 := 0
 var _paused_frames := 0
+var _tells0 := 0
+var _tells_live := 0       # foe wind-ups alive, summed over the measured frames
+var profile := false
+var tells := 0             # Spitwicks kept winding up at the keeper ("tells=N")
+var _tellers: Array = []
+var _prof := {}            # kind -> PackedFloat32Array: ms a frame spent in that kind's process + physics
+var _prof_now := {}        # kind -> ms so far this frame
+
+## Kinds of node the profile mode times on its own (everything else is in "the rest").
+const PROFILE_KINDS := ["foes", "fire_bolts", "fire_fx", "damage_numbers", "burning_ground", "lanterns", "player", "telegraphs"]
 
 ## Runs after every other node (high priority number) so the bench can time the whole process
 ## and physics passes itself (Performance.TIME_PROCESS is not reliable headless).
@@ -71,6 +85,14 @@ func _ready() -> void:
 		bolts = int(args[3])
 	if args.size() > 4:
 		burning = int(args[4])
+	for a in args.slice(5):
+		if a == "profile":
+			profile = true
+			for k in PROFILE_KINDS:
+				_prof[k] = PackedFloat32Array()
+				_prof_now[k] = 0.0
+		elif a.begins_with("tells="):
+			tells = int(a.substr(6))
 	seed(7)
 	_rng.seed = 7
 	Story.skip_opening = true
@@ -89,6 +111,52 @@ func _ready() -> void:
 
 func _physics_process(_delta: float) -> void:
 	_phys_start = Time.get_ticks_usec()
+	if profile and frame > 2:
+		for k in PROFILE_KINDS:
+			_prof_run(k, _delta, true)
+
+## Profile mode: the nodes of one kind.
+func _prof_nodes(kind: String) -> Array:
+	match kind:
+		"foes":
+			return get_tree().get_nodes_in_group("foe")
+		"fire_bolts":
+			return [FireBolts.inst] if FireBolts.inst else []
+		"fire_fx":
+			return [FireFx.inst] if FireFx.inst else []
+		"damage_numbers":
+			return [DamageNumbers.inst] if DamageNumbers.inst else []
+		"burning_ground":
+			return get_tree().get_nodes_in_group("burning_ground")
+		"lanterns":
+			return get_tree().get_nodes_in_group("lantern")
+		"player":
+			return [main.player]
+		"telegraphs":
+			return get_tree().get_nodes_in_group("telegraph_layer")
+	return []
+
+## Profile mode: runs one kind's _process (or _physics_process) here, timed, instead of in the tree.
+func _prof_run(kind: String, delta: float, physics: bool) -> void:
+	var t0 := Time.get_ticks_usec()
+	for n in _prof_nodes(kind):
+		if not is_instance_valid(n) or n.is_queued_for_deletion():
+			continue
+		if physics:
+			if n.has_method("_physics_process"):
+				n.set_physics_process(false)
+				n._physics_process(delta)
+		else:
+			# FireFx and DamageNumbers switch their own processing on when they have work: honour that.
+			var own := true
+			if n is FireFx:
+				own = n.count() > 0 or not n._scorch.is_empty()
+			elif n is DamageNumbers:
+				own = n.count() > 0
+			if n.has_method("_process") and own:
+				n.set_process(false)
+				n._process(delta)
+	_prof_now[kind] += (Time.get_ticks_usec() - t0) / 1000.0
 
 func _process(_delta: float) -> void:
 	_proc_start = Time.get_ticks_usec()
@@ -115,8 +183,18 @@ func _process(_delta: float) -> void:
 		fog.queue_redraw()
 	_keep_foes()
 	_keep_bolts()
+	if tells > 0:
+		_keep_tells()
+	if profile:
+		for k in PROFILE_KINDS:
+			_prof_run(k, _delta, false)
+			if frame > WARMUP:
+				_prof[k].append(_prof_now[k])
+			_prof_now[k] = 0.0
 	if get_tree().paused:
 		_paused_frames += 1
+	if frame > WARMUP:
+		_tells_live += Telegraph.active.size()
 	if frame > WARMUP:
 		# Last frame's passes (the fog tick runs inside the process pass, as in the game).
 		_proc.append(_proc_now)
@@ -173,6 +251,38 @@ func _setup() -> void:
 		Progress.level_up.disconnect(cards._on_level_up)
 	_setup_range()
 	_keep_foes()
+	if tells > 0:
+		_setup_tells()
+
+## The telegraph-heavy fight: Spitwicks in a ring on screen, the Ashbrood and the Clinker near the keeper.
+func _setup_tells() -> void:
+	var p: Vector2 = main.player.global_position
+	for i in tells:
+		var sw := Spitwick.new()
+		sw.position = p + Vector2.from_angle(TAU * i / tells) * 220.0
+		spawner.add_child(sw)
+		_tellers.append(sw)
+	var boss := Ashbrood.new()
+	boss.position = p + Vector2(-90, 60)
+	boss._puff_t = 0.5
+	boss._wave_t = 1.0
+	spawner.add_child(boss)
+	_tellers.append(boss)
+	Progress.cleared.erase("clinker_hollow_post")
+	var c := Clinker.new()
+	c.position = p + Vector2(160, -40)
+	spawner.add_child(c)
+	_tellers.append(c)
+
+func _keep_tells() -> void:
+	main.player.warmth = Tuning.warmth_max   # the keeper never faints out of the fight
+	main.player.lamp_charge = 1.0
+	for f in _tellers:
+		if is_instance_valid(f) and f is Spitwick and f.tell() == null:
+			f._shot_t = 0.0
+			f.hp = 1000.0
+		elif is_instance_valid(f):
+			f.hp = maxf(f.hp, 100.0)
 
 ## The firing range: open ground well away from the keeper (so its bolts never reach the foes around the keeper),
 ## with TARGETS foes that can't die in a ring the splash reaches, and `burning` burning areas under them.
@@ -212,6 +322,7 @@ func _setup_range() -> void:
 		g.position = _range + Vector2.from_angle(TAU * i / maxi(1, burning) + 0.4) * 30.0
 		spawner.add_child(g)
 	_hits0 = FireBolts.inst.hits
+	_tells0 = Telegraph.started
 
 ## Keeps `bolts` Lampfire bolts in the air at the range, each fired from the ring around it at one of the targets.
 func _keep_bolts() -> void:
@@ -271,6 +382,7 @@ func _report() -> void:
 	print("FIGHT %d Lampfire bolts in the air, %d burning areas; %d hits in %.1f s (%.0f a second), %d effects and %d damage numbers alive at the end; %d paused frames" % [
 		FireBolts.inst.in_flight(FireBolts.LAMPFIRE), get_tree().get_nodes_in_group("burning_ground").size(), FireBolts.inst.hits - _hits0, secs,
 		(FireBolts.inst.hits - _hits0) / maxf(0.01, secs), FireFx.inst.count() if FireFx.inst else -1, DamageNumbers.inst.count() if DamageNumbers.inst else -1, _paused_frames])
+	print("TELLS %d foe wind-ups started (Spitwick aims, Wickling reaches...), %.1f alive a frame on average" % [Telegraph.started - _tells0, _tells_live / maxf(1.0, float(_proc.size()))])
 	print("%-26s %9s %9s" % ["", "avg", "worst"])
 	_row("process (all _process)", _proc)
 	_row("physics (all _physics)", _phys)
@@ -280,6 +392,9 @@ func _report() -> void:
 	_row("fog texture update", _tex_ms)
 	if DisplayServer.get_name() != "headless":
 		_row("draw calls", _draw_calls, "")
+	if profile:
+		for k in PROFILE_KINDS:
+			_row("  " + k, _prof[k])
 	print("%-26s %9d" % ["nodes", int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))])
 	print("%-26s %9d" % ["canvas items drawn (2D)", int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME))])
 	var st := _stats(logic)

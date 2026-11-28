@@ -45,4 +45,5 @@ func fire() -> void:
 	bolts.fire_lampfire(from, dir)
 	fired += 1
 	FireFx.cast_flare(from, dir)
+	combat.cast_cue("throw", dir)
 	Sfx.play("ui_tick", -24.0, 0.3)

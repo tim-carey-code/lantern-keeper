@@ -100,6 +100,14 @@ func _ready() -> void:
 	var numbers := DamageNumbers.new()
 	numbers.name = "DamageNumbers"
 	$FogLayer.add_child(numbers)
+	# Readability step: every foe's wind-up marker and edge arrow (over the fog and the foes), and the keeper's
+	# own feedback (dash afterimages, cast cue, drink glow, the cold flash), also over the fog.
+	var tells := Telegraph.new()
+	tells.name = "Telegraphs"
+	$FogLayer.add_child(tells)
+	var keeper_fx := KeeperFx.new()
+	keeper_fx.name = "KeeperFx"
+	$FogLayer.add_child(keeper_fx)
 	var skills_list := CanvasLayer.new()
 	skills_list.set_script(load("res://scripts/ui/skills_list.gd"))
 	skills_list.name = "SkillsList"

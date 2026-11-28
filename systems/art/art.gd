@@ -32,6 +32,87 @@ const KEEPER_FRAME := 32
 
 static var _ph := {}
 
+# --- Placeholder swap hook (readability step; ART_DIRECTION §6.2-§6.4, DRAFT) ------------------------------------
+# Owner art goes in per-subject folders: one PNG strip per animation (frames side by side, equal size, no padding)
+# and a small frames file:
+#   assets/art/creatures/<subject>/<subject>[_<variant>]_<anim>.png   + <subject>.frames.cfg
+#   assets/art/keeper/keeper_<anim>.png                               + keeper.frames.cfg
+# frames(subject) builds a SpriteFrames from whatever strips exist (cached). With no strips it returns null, and
+# the foe keeps drawing its code shape (FoeSprite). Strips Godot hasn't imported yet are read straight from the
+# file, so a PNG dropped in shows the next time the game starts.
+
+## Where frames() looks, in order: each root holds <subject>/ folders. Tests point this at a scratch folder.
+static var sprite_roots: PackedStringArray = ["res://assets/art/creatures/", "res://assets/art/", "res://assets/art/people/"]
+static var _frames := {}
+## Animation names (ART_DIRECTION §6.2), plus the keeper's poses. Others can be listed in the frames file.
+const ANIMS := ["idle", "move", "notice", "windup", "attack", "recover", "hurt", "death", "spawn",
+	"cast", "lob", "thrust", "dash", "drink"]
+const LOOPING := ["idle", "move"]
+
+## The SpriteFrames for a subject (and variant: "brave", "elite" ...), or null when it has no strips.
+## Each animation's metadata: "anchor" ("foot" or "center"), "frame_size", "timed_by" (a Tuning name).
+static func frames(subject: String, variant: String = "") -> SpriteFrames:
+	var key := subject + "/" + variant
+	if _frames.has(key):
+		return _frames[key]
+	var sf: SpriteFrames = null
+	for root in sprite_roots:
+		var dir := root + subject + "/"
+		if not DirAccess.dir_exists_absolute(dir):
+			continue
+		var cfg := ConfigFile.new()
+		var has_cfg := cfg.load(dir + subject + ".frames.cfg") == OK
+		var size: Vector2i = cfg.get_value("sheet", "frame_size", Vector2i(16, 16)) if has_cfg else Vector2i(16, 16)
+		var names: Array = ANIMS.duplicate()
+		if has_cfg:
+			for sec in cfg.get_sections():
+				if sec != "sheet" and not names.has(sec):
+					names.append(sec)
+		for anim in names:
+			var tex: Texture2D = null
+			if variant != "":
+				tex = _strip(dir + "%s_%s_%s.png" % [subject, variant, anim])
+			if tex == null:
+				tex = _strip(dir + "%s_%s.png" % [subject, anim])
+			if tex == null:
+				continue
+			if sf == null:
+				sf = SpriteFrames.new()
+				if sf.has_animation("default"):
+					sf.remove_animation("default")
+				sf.set_meta("anchor", str(cfg.get_value("sheet", "anchor", "foot")) if has_cfg else "foot")
+				sf.set_meta("frame_size", size)
+			sf.add_animation(anim)
+			sf.set_animation_speed(anim, float(cfg.get_value(anim, "fps", 8.0)) if has_cfg else 8.0)
+			sf.set_animation_loop(anim, bool(cfg.get_value(anim, "loop", LOOPING.has(anim))) if has_cfg else LOOPING.has(anim))
+			if has_cfg and cfg.has_section_key(anim, "timed_by"):
+				sf.set_meta("timed_by_" + anim, str(cfg.get_value(anim, "timed_by")))
+			var count := maxi(1, int(tex.get_width() / maxi(1, size.x)))
+			for i in count:
+				var at := AtlasTexture.new()
+				at.atlas = tex
+				at.region = Rect2(i * size.x, 0, size.x, mini(size.y, tex.get_height()))
+				sf.add_frame(anim, at)
+		if sf != null:
+			break
+	_frames[key] = sf
+	return sf
+
+## Forget cached frames (tests, or after the owner adds a strip while the game runs).
+static func clear_frames() -> void:
+	_frames.clear()
+
+## A strip: imported by Godot if it can, else read from the file (a PNG the editor hasn't imported yet).
+static func _strip(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	if not FileAccess.file_exists(path):
+		return null
+	var img := Image.load_from_file(ProjectSettings.globalize_path(path) if path.begins_with("res://") or path.begins_with("user://") else path)
+	if img == null or img.is_empty():
+		return null
+	return ImageTexture.create_from_image(img)
+
 static func placeholder(file: String) -> Texture2D:
 	if not _ph.has(file):
 		_ph[file] = load("res://assets/art/placeholders/" + file)

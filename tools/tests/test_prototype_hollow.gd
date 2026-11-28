@@ -82,6 +82,9 @@ func _process(_delta: float) -> void:
 				boss.hurt(Tuning.kl_ashbrood_hp + Tuning.kl_ashbrood_shell + 1.0, false, "beam")
 				check(boss.phase == 2 and boss.hp == Tuning.kl_ashbrood_hp, "breaking phase one opens the diving phase")
 				boss.hurt(Tuning.kl_ashbrood_hp + Tuning.kl_ashbrood_shell + 1.0, false, "beam")
+				check(boss.in_phase_pause() and boss.hp == Tuning.kl_ashbrood_hp, "it rises out of the bowl first, and can't be hurt meanwhile")
+				boss.end_phase_pause()
+				boss.hurt(Tuning.kl_ashbrood_hp + Tuning.kl_ashbrood_shell + 1.0, false, "beam")
 				check(Progress.is_settled(FogGrid.R_HOLLOW), "beating phase two holds the Hollow")
 		7:
 			# A second level-up: the controller must land on the new cards (owner: the pad stopped working).

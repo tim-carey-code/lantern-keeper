@@ -29,5 +29,6 @@ func press() -> bool:
 	var from: Vector2 = k.global_position + Vector2(0, -10)
 	FireBolts.inst.throw_globe(from, to)
 	FireFx.cast_flare(from, (to - from).normalized(), true)
+	combat.cast_cue("lob", (to - from).normalized())
 	Sfx.play("pickup_lantern", -10.0, 0.15)
 	return true

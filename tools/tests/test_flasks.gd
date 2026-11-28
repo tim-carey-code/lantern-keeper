@@ -86,6 +86,7 @@ func _boss_oil_every_way(p: Node, spawner: Node) -> void:
 	boss.hurt(Tuning.kl_ashbrood_hp * 2.0, false, "lance")
 	await get_tree().process_frame
 	check(boss.phase == 2 and _oil_count() == oils + 1, "one hit through a whole Ashbrood phase still drops that phase's oil")
+	boss.end_phase_pause()   # it rises out of the bowl first (readability step); its process is off here
 	boss.shell = 0.0
 	boss.hurt(Tuning.kl_ashbrood_hp * 0.6, false, "lance")
 	await get_tree().process_frame
@@ -171,6 +172,7 @@ func _run_checks() -> void:
 	check(_oil_count() == oils + 3, "Ashbrood phase 1 drops oil below half health")
 	boss.hurt(Tuning.kl_ashbrood_hp, false, "lance")
 	check(boss.phase == 2, "Ashbrood reaches its second phase")
+	boss.end_phase_pause()
 	boss.shell = 0.0
 	boss.hurt(Tuning.kl_ashbrood_hp * 0.51, false, "lance")
 	await get_tree().process_frame

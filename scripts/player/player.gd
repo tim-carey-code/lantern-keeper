@@ -35,6 +35,11 @@ var drinks := 0                # flasks drunk (tests)
 var hunted := false            # something hunts the keeper (Hunt), worked out once a physics frame
 var _hitstop_t := 0.0          # > 0: a big hit freezes the keeper for a moment
 var _pick_t := 0.0             # how long interact has been held by a lantern (picks it up at Tuning.kl_pickup_hold)
+# The keeper's own feedback (readability step; drawn here and by KeeperFx on the fog layer).
+var drink_t := 0.0             # > 0: the warm glow of a flask rising up the coat
+var hurt_t := 0.0              # > 0: a hit chilled the keeper (cold flash, flinch frames)
+var frost_t := 0.0             # > 0: a Wickling's touch is draining the keeper (frost edge)
+var _art: FoeSprite             # owner-drawn keeper poses (assets/art/keeper/), when they exist
 
 func _ready() -> void:
 	flasks = Tuning.kl_flask_max
@@ -53,6 +58,9 @@ func _ready() -> void:
 	lamp.color = Color(1.0, 0.86, 0.62)
 	lamp.position = Vector2(10, -14)   # held in the keeper's hand
 	add_child(lamp)
+	_art = FoeSprite.attach(self, "keeper")   # the placeholder swap hook: owner poses replace the Puny frames
+	if _art:
+		_art.position = Vector2(0, -10)
 
 
 # --- Hand lamp -------------------------------------------------------------
@@ -69,6 +77,17 @@ func in_lantern_light() -> bool:
 		if l.is_lit() and l.global_position.distance_to(global_position) < l.get_light_radius() * 0.85:
 			return true
 	return false
+
+## in_lantern_light() for the foes (performance): every Wickling asks it every frame. Worked out once per
+## frame and place (and again when a lantern is placed, picked up or refuelled: LightSense.bump()).
+var _lit_key := []
+var _lit_val := false
+func in_light_cached() -> bool:
+	var key := [Engine.get_process_frames(), Engine.get_physics_frames(), global_position, LightSense._epoch]
+	if key != _lit_key:
+		_lit_key = key
+		_lit_val = in_lantern_light()
+	return _lit_val
 
 ## Lamp charge (GAME_PLAN §5): +kl_charge_regen everywhere; in light +hand_lamp_recharge_per_sec out of a fight
 ## or +kl_light_charge_hunted while hunted; no charge from light while the Beam is on. (M1a cut the passive
@@ -109,6 +128,7 @@ func drink() -> bool:
 		return false
 	flasks -= 1
 	drinks += 1
+	drink_t = Tuning.kl_fx_drink_time
 	flask_lock = Tuning.kl_flask_lockout
 	warmth = minf(Tuning.warmth_max, warmth + Tuning.warmth_max * Tuning.kl_flask_heal)
 	lamp_charge = minf(1.0, lamp_charge + Tuning.kl_flask_charge)
@@ -138,11 +158,16 @@ func hit_stop(seconds: float) -> void:
 func _physics_process(delta: float) -> void:
 	hunted = Hunt.is_hunted(get_tree(), global_position)
 	flask_lock = maxf(0.0, flask_lock - delta)
+	drink_t = maxf(0.0, drink_t - delta)
+	hurt_t = maxf(0.0, hurt_t - delta)
+	frost_t = maxf(0.0, frost_t - delta)
 	update_hand_lamp(delta)
 	_update_warmth(delta)
 	lamp.texture_scale = LightTex.scale_for(get_light_radius())
 	lamp.energy = lerpf(0.35, 0.6, lamp_charge)
 	queue_redraw()
+	if _art:
+		_update_art()
 	if Tuning.ui_open:
 		velocity = Vector2.ZERO
 		_gather_target = null
@@ -304,6 +329,7 @@ func chill(amount: float) -> void:
 		return   # nothing can chill you mid-dash
 	if amount >= 5.0:
 		shake(0.45)   # a real hit (a spit, a roll), not the steady touch of a Wickling
+		hurt_t = Tuning.kl_fx_hurt_time
 	warmth = maxf(0.0, warmth - amount)
 	if warmth <= 0.0:
 		faint()
@@ -527,11 +553,63 @@ func pick_up_nearest() -> void:
 
 # --- Drawing ---------------------------------------------------------------
 
-func _draw() -> void:
-	# Puny Characters: columns 0-1 idle, 2-3 walk.
+## Puny Characters sheet columns the keeper uses: 0-1 idle, 2-3 walk; since the readability step also 12-14
+## (an arm raised, then thrust forward: the casts), 19 (the white hit silhouette, tinted cold) and 20 (a flinch).
+const PUNY_CAST_RAISE := 12
+const PUNY_CAST_UP := 13
+const PUNY_CAST_THRUST := 14
+const PUNY_HIT := 19
+const PUNY_FLINCH := 20
+
+## The Puny frame (column, row, tint) the keeper shows now: a flinch, a cast, a dash, a walk or idle.
+func pose() -> Array:
 	var frame := 2 + int(_walk_t / 0.16) % 2 if _walk_t > 0.0 else int(_idle_t / 0.6) % 2
-	var f := Art.KEEPER_FRAME
-	draw_texture_rect_region(Art.KEEPER_SHEET, Rect2(-f, -f - 10, f * 2, f * 2), Rect2(frame * f, _dir_row * f, f, f))
+	var row := _dir_row
+	var tint := Color.WHITE
+	var cast_t: float = combat.cast_t if combat else 0.0
+	if hurt_t > 0.0:
+		var k := hurt_t / maxf(Tuning.kl_fx_hurt_time, 0.01)
+		frame = PUNY_HIT if (k > 0.6 and not Settings.reduce_flashes) else PUNY_FLINCH
+		# The cream hit silhouette times this reads as the cold #a3bcd4 (a plain #a3bcd4 tint turns it grey-green).
+		tint = Color(0.64, 0.78, 1.0) if frame == PUNY_HIT else Color.WHITE.lerp(Telegraph.COLD, 0.6 * k)
+	elif cast_t > 0.0:
+		var k := 1.0 - cast_t / maxf(Tuning.kl_fx_cast_time, 0.01)
+		match combat.cast_kind:
+			"lob":
+				frame = PUNY_CAST_RAISE if k < 0.5 else PUNY_CAST_UP
+			_:
+				frame = PUNY_CAST_UP if k < 0.35 else PUNY_CAST_THRUST
+		row = dir_row_of(combat.cast_dir)
+	elif combat and combat.is_dashing():
+		frame = 3   # mid-stride, the smear and afterimages do the rest
+	if frost_t > 0.0 and hurt_t <= 0.0:
+		tint = Color.WHITE.lerp(Telegraph.COLD, 0.45)
+	return [frame, row, tint]
+
+## The Puny sheet row facing along a direction: 0 S, 1 SE, 2 E, 3 NE, 4 N, 5 NW, 6 W, 7 SW.
+static func dir_row_of(dir: Vector2) -> int:
+	var oct := posmod(int(round(dir.angle() / (PI / 4.0))), 8)   # 0 E, 1 SE, 2 S ...
+	return posmod(2 - oct, 8)
+
+## Owner poses (when assets/art/keeper/ has strips): the same choice as pose(), by animation name.
+func _update_art() -> void:
+	var anim := "move" if _walk_t > 0.0 else "idle"
+	if hurt_t > 0.0:
+		anim = "hurt"
+	elif combat and combat.cast_t > 0.0:
+		anim = {"throw": "cast", "lob": "lob", "thrust": "thrust"}.get(combat.cast_kind, "cast")
+	elif combat and combat.is_dashing():
+		anim = "dash"
+	elif drink_t > 0.0:
+		anim = "drink"
+	_art.play_anim(anim)
+	_art.flip_h = _facing_left
+
+func _draw() -> void:
+	if not (_art and _art.showing()):
+		var ps := pose()
+		var f := Art.KEEPER_FRAME
+		draw_texture_rect_region(Art.KEEPER_SHEET, Rect2(-f, -f - 10, f * 2, f * 2), Rect2(int(ps[0]) * f, int(ps[1]) * f, f, f), ps[2])
 	var fog := _fog()
 	if fog == null:
 		return

@@ -289,8 +289,11 @@ func refuel(amount: float) -> float:
 	LightSense.bump()
 	return fuel - before
 
+var threatened := 0.0            # > 0: the Ashbrood is winding up a dive at this lamp (it flickers)
+
 func _process(delta: float) -> void:
 	smother_t = maxf(0.0, smother_t - delta)
+	threatened = maxf(0.0, threatened - delta)
 	if fuel > 0.0 and needs_fuel():
 		fuel = maxf(0.0, fuel - burn_rate() * delta)
 	if kind == "reservoir" and fuel > 0.0:
@@ -302,6 +305,8 @@ func _process(delta: float) -> void:
 		var flicker := 0.15 if (in_gust() or in_ridge_wind()) else 0.06
 		if is_dying():
 			flicker = 0.35   # a dying lantern sputters
+		if threatened > 0.0:
+			flicker = 0.45   # a dive is coming for it
 		var base := 0.6 if kind == "reservoir" else 0.85
 		light.energy = base + sin(Time.get_ticks_msec() * 0.011 + get_instance_id() % 97) * flicker
 	if beam_light:

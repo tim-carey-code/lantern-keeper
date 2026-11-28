@@ -34,6 +34,18 @@ var _burst_fx := 0.0              # > 0 while the Hearth ring is showing
 var _face := Vector2.RIGHT
 var _stick_aim := false           # the aim came from the right stick (the aim hold keeps it)
 var _stick_len := 0.0
+# The keeper's own feedback (readability step): KeeperFx and the keeper's pose read these.
+var cast_t := 0.0                 # > 0: the lamp-thrust cue after a cast
+var cast_kind := ""               # "throw" (Lampfire), "lob" (Fireglobe), "thrust" (Lance)
+var cast_dir := Vector2.RIGHT
+var dashes := 0                   # dashes started (KeeperFx starts a smear on each)
+var dash_from := Vector2.ZERO
+
+## A cast: the keeper thrusts the lamp along `dir` for kl_fx_cast_time (Puny frames and a lamp flare).
+func cast_cue(kind: String, dir: Vector2) -> void:
+	cast_t = Tuning.kl_fx_cast_time
+	cast_kind = kind
+	cast_dir = dir.normalized() if dir.length() > 0.001 else aim
 
 ## The old burst's cooldown, kept for tools and tests that set it (it is Hearth ring's).
 var burst_cd: float:
@@ -144,6 +156,7 @@ func tick(delta: float, move_dir: Vector2, held: Dictionary = {}, pressed: Dicti
 	if Progress.has_combat_upgrade("second_step") and dash_cd <= 0.0 and dash_charges == 0:
 		dash_charges = 2
 	dash_t = maxf(0.0, dash_t - delta)
+	cast_t = maxf(0.0, cast_t - delta)
 	_burst_fx = maxf(0.0, _burst_fx - delta)
 	var beam_on_bar := false
 	for slot in Progress.SLOTS:
@@ -215,6 +228,8 @@ func dash(move_dir: Vector2) -> bool:
 		dash_cd = Tuning.kl_dash_cd
 	dash_t = Tuning.kl_dash_time
 	dash_dir = move_dir.normalized() if move_dir.length() > 0.1 else aim
+	dashes += 1
+	dash_from = k.global_position
 	return true
 
 ## How fast the keeper moves while dashing (distance spread over the dash time).

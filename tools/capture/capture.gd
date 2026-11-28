@@ -12,6 +12,10 @@ extends Node
 ## loop_ridge_entry, loop_travel (the loop and WayLamp fast travel). The last frame is the one to look at.
 ## README views (staged, pop-ups hidden; rendered by tools/capture/readme_shots.sh): readme_hollow, readme_ward,
 ## readme_marsh, readme_ridge, readme_map, readme_lanterns, readme_relight (an animation: use every frame).
+## Readability views (telegraphs and the keeper's feedback; the last frame shows the wind-up part-way): tell_puff,
+## tell_puff_reduce (at commit, "reduce flashes" on), tell_adds (the call, with the bold swarm's cold rim), tell_dive,
+## tell_dive_arrow (a dive at an off-screen lamp: the edge arrow), tell_spit, tell_lane, tell_reach (a Wickling
+## reaching, another draining: the frost edge), tell_hatch, keeper_dash, keeper_cast, keeper_drink, keeper_hurt.
 
 var main: Node
 var frame := 0
@@ -128,6 +132,9 @@ func _process(_delta: float) -> void:
 				_loop_setup()
 			"m1a_bar", "m1a_lampfire", "m1a_fireglobe_marker", "m1a_fireglobe_ground", "m1a_skills":
 				_m1a_setup()
+			"tell_puff", "tell_puff_reduce", "tell_adds", "tell_dive", "tell_dive_arrow", "tell_spit", "tell_lane", "tell_reach", "tell_hatch", \
+					"keeper_dash", "keeper_cast", "keeper_drink", "keeper_hurt":
+				_tell_setup()
 			"kl_combat":
 				_lantern(s + Vector2(-260, 60))
 				main.player.position = s + Vector2(-420, 120)
@@ -232,6 +239,14 @@ func _process(_delta: float) -> void:
 		main.get_node("MapScreen").toggle()
 	if view == "readme_relight" and frame == 30:
 		main.player.refuel(main.get_node("Lanterns").get_child(0))
+	if (view.begins_with("tell_") or view.begins_with("keeper_")) and frame >= 3:
+		var hud = main.get_node("HUD")
+		hud.banner.visible = false
+		hud.toast.visible = false
+		hud.tip.visible = false
+		main.get_node("FogLayer/WorldPrompt").visible = false
+		main.player.warmth = Tuning.warmth_max if view != "keeper_drink" else 45.0
+		_tell_frame()
 	if frame >= end_frame:
 		get_tree().quit()
 
@@ -425,3 +440,131 @@ func _m1a_setup() -> void:
 		if view == "m1a_fireglobe_ground":
 			var w = main.get_node("FogLayer/Wicklings").spawn_at(target + Vector2(24, 0))
 			w.stun(8.0)
+
+
+# --- Readability views (telegraphs, the keeper's feedback) -------------------------------------------------------
+
+var _tell_foe: Node2D
+var _tell_spot := Vector2.ZERO
+
+func _tell_setup() -> void:
+	var s: Vector2 = main.start
+	for f in get_tree().get_nodes_in_group("foe"):
+		f.queue_free()
+	for p in get_tree().get_nodes_in_group("enemy_pack"):
+		p.queue_free()
+	for k in Story.TIPS:
+		Story.tips_seen[k] = true
+	Story.pointer_mode = "off"
+	_tell_spot = s + Vector2(-20, 60)
+	main.player.position = _tell_spot
+	main.player.lamp_charge = 1.0
+	if not view.begins_with("tell_dive"):
+		_lantern(s + Vector2(-260, -40))   # some light for context (a dive would go for it)
+	var sp = main.get_node("FogLayer/Wicklings")
+	match view:
+		"tell_puff", "tell_puff_reduce", "tell_adds":
+			var b := Ashbrood.new()
+			b._puff_t = 99.0
+			b._wave_t = 99.0
+			b.position = _tell_spot + Vector2(90, -30)
+			sp.add_child(b)
+			_tell_foe = b
+			if view == "tell_puff_reduce":
+				Settings.reduce_flashes = true
+			if view == "tell_adds":
+				for a in [0.4, 2.6]:
+					var w = sp.spawn_at(b.position + Vector2.from_angle(a) * 120.0)
+					w.bold = true
+		"tell_dive", "tell_dive_arrow":
+			var b := Ashbrood.new()
+			b.phase = 2
+			b._dive_t = 99.0
+			b.position = _tell_spot + Vector2(-190, -120)
+			sp.add_child(b)
+			_tell_foe = b
+			var lamp_at := _tell_spot + (Vector2(150, 60) if view == "tell_dive" else Vector2(760, 120))
+			_lantern(lamp_at)
+		"tell_spit":
+			var w := Spitwick.new()
+			w.position = _tell_spot + Vector2(210, -110)
+			w._shot_t = 99.0
+			sp.add_child(w)
+			_tell_foe = w
+		"tell_lane":
+			var c := Clinker.new()
+			c.position = _tell_spot + Vector2(200, -60)
+			c._cooldown = 99.0
+			sp.add_child(c)
+			_tell_foe = c
+		"tell_reach":
+			var a = sp.spawn_at(_tell_spot + Vector2(70, 10))
+			a.state = Wickling.State.CHASE
+			var e = sp.spawn_at(_tell_spot + Vector2(-60, 10), true)
+			e.state = Wickling.State.CHASE
+			_tell_foe = a
+		"tell_hatch":
+			var n := WickNest.new()
+			n.foe_id = "capture_nest"
+			n.position = _tell_spot + Vector2(110, -20)
+			sp.add_child(n)
+			_tell_foe = n
+		"keeper_hurt":
+			var w := Spitwick.new()
+			w.position = _tell_spot + Vector2(-180, 0)
+			w._shot_t = 99.0
+			sp.add_child(w)
+	for i in 30:
+		main.fog.step(0.1)
+
+## Per frame: start each attack so the last frame (45, at 30 fps) shows it part-way.
+func _tell_frame() -> void:
+	var c = main.player.combat
+	match view:
+		"tell_puff":
+			if frame == 30:
+				_tell_foe._puff_t = 0.0
+		"tell_puff_reduce":
+			if frame == 15:
+				_tell_foe._puff_t = 0.0   # 1.0 s later, at frame 45, it is at its commit
+		"tell_adds":
+			if frame == 25:
+				_tell_foe._wave_t = 0.0
+		"tell_dive", "tell_dive_arrow":
+			if frame == 28:
+				_tell_foe._dive_t = 0.0
+		"tell_spit":
+			if frame == 25:
+				_tell_foe._shot_t = 0.0   # at frame 45 its aim has just locked
+		"tell_lane":
+			if frame == 8:
+				_tell_foe._wake_t = 0.0
+			if frame == 30:
+				_tell_foe._cooldown = 0.0
+		"tell_reach":
+			for w in get_tree().get_nodes_in_group("wickling"):
+				if w.elite:
+					w.global_position = main.player.global_position + Vector2(-26, 8)
+				elif frame >= 40:
+					w.global_position = main.player.global_position + Vector2(20, -4)
+		"tell_hatch":
+			if frame == 20:
+				_tell_foe.set_time_to_hatch(Tuning.kl_nest_hatch_tell + 0.15)
+		"keeper_dash":
+			if frame == 42:
+				c.dash_cd = 0.0
+				c.dash(Vector2(1, -0.25))
+		"keeper_cast":
+			c.aim_override = Vector2(1, -0.3)
+			if frame == 40:
+				c.skill("lampfire").fire()
+			if frame == 43:
+				c.skill("lance").cd = 0.0
+				c.skill("lance").press()
+		"keeper_drink":
+			if frame == 36:
+				main.player.flask_lock = 0.0
+				main.player.drink()
+		"keeper_hurt":
+			if frame == 43:
+				main.player.chill(12.0)

@@ -27,6 +27,7 @@ func press() -> bool:
 	var from := muzzle(dir)
 	FireBolts.inst.fire_lance(from, dir)
 	FireFx.cast_flare(from, dir, true)
+	combat.cast_cue("thrust", dir)
 	Sfx.play("ui_tick", -12.0, 0.2)
 	var k := keeper()
 	if k and k.has_method("shake"):
