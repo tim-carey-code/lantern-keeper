@@ -37,6 +37,14 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 
 ---
 
+## 2026-11-27 (M1a playtest; art; order of work)
+- **The fire skills are fun** (owner, M1a playtest: "Yeah they are fun"). The Beam wasn't found: the owner's save migrated at level 7, so Lance took LB and the Beam stayed in the Skills list. A one-time hint is being added; keep-or-cut for the Beam and Hearth ring is still open.
+- **Art direction for every monster and NPC, and better telegraphs and animations** (owner: "we need to plan out a whole art design concept and everything for all the monsters and NPC's and all of that, and telegraph/animate some of their attacks better as with my abilities"). Draft in docs/ART_DIRECTION.md.
+- **Concept images come first, before anything goes in the game** (owner: "concept images first before anything in the game for sure"). AI-generated images are concept references unless the owner says otherwise.
+- **AI sprite drawing is to be explored** (owner: "Can we get GPT or a space on hugging face that can draw our NPC sprites and monster sprites?"). Options and licences are being researched.
+- **Sprite workflow: OpenAI drafts, the owner remakes them in Pixelorama** (owner: "Lets try the OpenAI then i remake in pixelorama? that will be best bet"). AI output is reference only; what goes in the game is the owner's redraw. Brief: docs/research/AI_SPRITES.md.
+- **Order of work: a readability step, then M1b, then M2** (owner: "lets do readability first followed by m1b and then M2").
+
 ## 2026-11-27 (the game plan approved)
 - **The new game plan is approved as recommended** (owner tapped "Approve all 9 as recommended"): `docs/replan/GAME_PLAN.md` v2 (90ac820) is the plan of record. Its nine owner questions are all answered yes:
   1. the kit: Lampfire (RT) and Fireglobe (RB) from level 1, Lance (LB) from level 2, the Beam optional (LB at level 1 only), the old burst as the optional Hearth ring, Y empty;
