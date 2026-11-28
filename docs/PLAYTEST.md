@@ -1,5 +1,44 @@
 # Playtests
 
+## Readability: what to try (owner, pad)
+
+**Build:** branch `proto/kl-readability` (the readability step, before M1b). Open its worktree in Godot and press F5. Your M1a save loads as before. Every foe's wind-up now has a marker drawn over the fog in the pale cold blue, and your keeper shows its own dash, casts, drinks and hits. Nothing else changed: lamps still burn, and the WayLamp still takes fuel. No new sounds; old ones, pitched down, mark each wind-up. What was built, with every timing, is DESIGN §8.4.
+
+**Play on a gamepad.** All the timings are in the tuning panel (L3), under "Tell", "Spitwick", "Clinker", "Ashbrood", "Nest" and "Wickling reach", if one feels too short or too long.
+
+**What to try**
+1. **Watch each foe's wind-up** before you fight it:
+   - a **Wickling**: its eyes flare when it notices you; when it reaches you, two thin tendrils stretch out for a moment before it starts to drain, and the keeper gets a frosty edge while it drains;
+   - a **Spitwick**: its throat swells and a pale band shows the spit's path at its full width; the band follows you, then locks (goes solid) just before it spits;
+   - the **Clinker**: it uncurls when it wakes; before a roll a full-width lane shows where it will go, filling from the Clinker; after a roll it is dizzy (pale stars) for a moment;
+   - a **nest**: its ring fills, its pods swell and three small glows show where the hatchlings will rise; they fade in.
+2. **Dodge each attack with the dash (LT):** a spit, a roll, the Ashbrood's ash puff, the dive's landing circle. Each should miss you if you dash through it as it lands. Dash out of a Wickling's drain too.
+3. **The Ashbrood fight:** the puff's circle is full size from the start and fills in; glows show where its adds will rise; between the phases it rises out of the bowl for a moment (you can't hurt it then); in phase 2 each dive shows a circle where it will land, a dotted path, and the lamp flickers. Plant a lamp off-screen and stand away from it: an arrow at the screen edge should point at the dive. The dive is a short flight now, not a jump.
+4. **"Reduce flashes" (pause, Options):** turn it on and fight a Spitwick and the Clinker again. Every warning should still show. At the end of each wind-up it turns solid instead of flashing.
+5. **Your own keeper:** a dash leaves a warm smear and afterimages; Lampfire and Lance show the keeper thrusting the lamp, the Fireglobe a raised arm; a flask sends warm motes up the coat; a hit flashes the keeper cold.
+6. **Feel:** is anything still unfair? Does any warning feel too long, so the fights drag?
+
+**Questions**
+
+| Question | Your answer |
+|---|---|
+| Can you see every attack coming? Which one still surprises you? | |
+| Too long, too short or right: Spitwick 0.7 s, Clinker 0.9 s, ash puff 1.0 s, dive 1.0 s, Wickling reach 0.25 s | |
+| Do the markers read as "get out" next to your own warm Fireglobe ring? | |
+| Is the dash's look (smear and afterimages) right? The cast, drink and hit cues? | |
+| With "reduce flashes" on, is every warning still clear? | |
+
+**Your answers to steps 1-6** (pass, or what went wrong)
+
+| Step | Result |
+|---|---|
+| 1. Each foe's wind-up | |
+| 2. Dash through each attack | |
+| 3. The Ashbrood fight | |
+| 4. Reduce flashes keeps the warnings | |
+| 5. The keeper's own cues | |
+| 6. Anything unfair or slow | |
+
 ## M1a: what to try (owner, pad)
 
 **Build:** branch `proto/kl-m1a` (fire in the Hollow; build commits 6663292 and 10099a8). Open its worktree in Godot and press F5. It uses the prototype save files, so a `main` save is never touched. A version 4 prototype save loads with the default bar and full flasks, but **start a new game** for step 1. Sound is on as usual; nothing new was added, old sounds stand in.

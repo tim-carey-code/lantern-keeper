@@ -1,6 +1,6 @@
 # Lantern Keeper — Design Document
 
-Synced to commit f97b531 on `proto/kl-m1a` (2026-11-27): the M1a build (commits 6663292 and 10099a8) is folded in and marked **BUILT (M1a)**. The review fixes on `proto/kl-m1a-fix` (2026-11-27) are folded in too. Before that, synced to c6d3ee0 on `proto/kl-replan`. Rewritten from the approved game plan, `docs/replan/GAME_PLAN.md` v2 (DECISIONS 2026-11-27, "the game plan approved"). **DRAFT for owner approval** (GAME_PLAN §17). The version before the rewrite is `docs/archive/DESIGN_PRE_REPLAN.md`.
+Synced to the readability step on `proto/kl-readability` (2026-11-27, based on cb5b615, the play branch with M1a merged): the telegraph pass, the keeper's own feedback, the placeholder swap hook and the performance pass are marked **BUILT (readability)** (§4.1, §8.4, §16, §17). Before that, synced to commit f97b531 on `proto/kl-m1a` (2026-11-27): the M1a build (commits 6663292 and 10099a8) is folded in and marked **BUILT (M1a)**. The review fixes on `proto/kl-m1a-fix` (2026-11-27) are folded in too. Before that, synced to c6d3ee0 on `proto/kl-replan`. Rewritten from the approved game plan, `docs/replan/GAME_PLAN.md` v2 (DECISIONS 2026-11-27, "the game plan approved"). **DRAFT for owner approval** (GAME_PLAN §17). The version before the rewrite is `docs/archive/DESIGN_PRE_REPLAN.md`.
 
 > **How to read this doc**
 > - **Built** means it is in the code at f97b531. **BUILT (M1a)** marks what the M1a build added; it awaits the owner's playtest (`docs/PLAYTEST.md`). For what is built, the code wins over this doc.
@@ -127,6 +127,12 @@ BUILT (M1a). Each skill is a script in `scripts/player/skills/`; `scripts/player
 - **Flash, sparks, scorch** on impact; a kill burst; persistent burning-ground visuals. Projectiles and impacts are additive sprites. "Reduce flashes" dims hit, impact and screen flashes.
 - Foes flash when hit. Hurt foes and big ones show a name, a level and a health bar, with the shell as a pale bar above. The Ashbrood has a boss bar with its phase and a one-line hint, now above the action bar.
 - No new sounds: existing Kenney cues are reused (sound is the owner's job).
+- **The keeper's own feedback** — BUILT (readability), code-drawn until the owner draws poses (`scripts/fx/keeper_fx.gd`, on the fog layer; the poses in `player.gd` `pose()`):
+  - **Dash:** a warm smear from where it started, afterimages (`kl_fx_dash_ghosts` 3, each fading over `kl_fx_ghost_life` 0.22 s), a small ember puff at the start, and a warm shimmer ring while nothing can hurt you.
+  - **Cast** (Lampfire, Fireglobe, Lance): the lamp thrust out along the aim with a flare at its tip, for `kl_fx_cast_time` 0.14 s. The keeper's sprite uses the Puny sheet's spare frames: columns 13 then 14 (arm up, then thrust forward) for Lampfire and Lance, 12 then 13 (arm raised) for the Fireglobe's lob, in the row facing the aim.
+  - **Drink:** a warm glow and motes rising up the coat for `kl_fx_drink_time` 0.6 s.
+  - **Hurt:** a hit (a chill of 5 or more) shows the Puny hit silhouette (column 19) tinted cold, then the flinch frame (column 20), with a cold ring, for `kl_fx_hurt_time` 0.25 s. With "reduce flashes" there is no silhouette, only the cold flinch. While a Wickling drains you, the keeper is tinted cold and shows a **frost edge** (small ice spikes).
+  - The Puny sheet has no drink or dash frames; those stay code-drawn.
 
 ### 4.2 The rest of the kit — PLANNED (Moth-lights M5; Wheeling flame M6)
 
@@ -320,10 +326,10 @@ All action-RPG foes are in the Hollow. The Reedmarsh and the Ridge have none yet
 |---|---|---|---|
 | **Wickling** | `wickling.gd` | 3 hp, 65 px/s | About half are timid and stay out of healthy light; brave ones walk in, burn after 2.5 s at 1.5 hp/s and run (`kl_timid_share`, `kl_light_tolerance`, `kl_light_burn_dps`). Touch chills 30 warmth/s. Drains a dying lantern no healthy light covers; smothers mirrors in the dark. |
 | **Shelled Wickling** (elite) | `wickling.gd` | 9 hp + 4 shell, 48 px/s, chill x1.6 | Only in packs, and on Oswin's crook. Ignores lanterns. |
-| **Spitwick** | `spitwick.gd`, `spit_projectile.gd` | 4 hp | Keeps 190-250 px off. A slow spit after a 0.6 s tell: 12 warmth and 0.1 charge. |
+| **Spitwick** | `spitwick.gd`, `spit_projectile.gd` | 4 hp | Keeps 190-250 px off. A slow spit after a 0.7 s wind-up whose aim locks for its last 0.2 s (BUILT, readability; was 0.6 s, following you to the end): 12 warmth and 0.1 charge. Never starts a wind-up off-screen. |
 | **Nest** | `wick_nest.gd` | 12 hp | Only a lantern's core hurts it (2 hp/s). Hatches 3 Wicklings every 10 s while you are within 320 px. |
-| **Clinker** (mid-boss) | `clinker.gd` | 48 hp (was 24; BUILT, M1a) + 12 shell (regrows), Lv 4 | Sleeps at its post (wake 224 px, leash 480 px). Rolls after a 0.8 s tell for 25 warmth. Ignores lanterns. Drops 1 oil at half health (M1a). At (70,119), 9.4 tiles before the WayLamp. |
-| **The Ashbrood** (guardian) | `ashbrood.gd`, `waylamp.gd` | 220 hp (was 40; BUILT, M1a) + 12 shell a phase, two phases, Lv 7 | Wakes when you kindle the Hollow's WayLamp. Phase 1: in the bowl; an ash puff every 7 s drops your lamp to 0.1 charge; a pack of 3 adds (Lv 5) every 8 s. Phase 2: it dives at the nearest lit lantern, empties it and sits for 4 s. Drops 1 oil at half health in each phase (M1a). Its kill holds the Hollow. No phase 3. |
+| **Clinker** (mid-boss) | `clinker.gd` | 48 hp (was 24; BUILT, M1a) + 12 shell (regrows), Lv 4 | Sleeps at its post (wake 224 px, leash 480 px); uncurls for 0.6 s when it wakes. Rolls after a 0.9 s lane tell (was 0.8) for 25 warmth, then is dizzy for 0.6 s (BUILT, readability). Ignores lanterns. Drops 1 oil at half health (M1a). At (70,119), 9.4 tiles before the WayLamp. |
+| **The Ashbrood** (guardian) | `ashbrood.gd`, `waylamp.gd` | 220 hp (was 40; BUILT, M1a) + 12 shell a phase, two phases, Lv 7 | Wakes when you kindle the Hollow's WayLamp. Phase 1: in the bowl; an ash puff every 7 s (1.0 s wind-up, was 0.8) drops your lamp to 0.1 charge; a pack of 3 adds (Lv 5) every 8 s, after 0.8 s of spawn glows. Between phases it rises out of the bowl for 1.5 s (no attacks, no damage). Phase 2: it dives at the nearest lit lantern (1.0 s wind-up, was 0.7; then a 0.3 s flight, was a jump), empties it and sits for 4 s. BUILT (readability): §8.4. Drops 1 oil at half health in each phase (M1a). Its kill holds the Hollow. No phase 3. |
 
 - **Packs:** 24 fixed packs plus the crook's guard (88 foes: 7 Spitwicks, 6 shelled), and 12 nests (tables in `main.gd`). A pack sleeps until you come within 320 px (`kl_pack_wake_radius`); the first two route packs wake at 5-6 tiles and the guard at 4. Fixed foes stay dead (`Progress.cleared`), but **a faint resets every cleared pack** (`player.gd:211-213`).
 - **Foe levels:** Lv 1 on the hut row and south, 2-4 through the middle, 5-6 by the WayLamp. The guard is Lv 2, the Clinker Lv 4, the Ashbrood Lv 7 and its adds Lv 5. Hatchlings take their nest's level; the swarm at a guardian-less WayLamp is Lv 6. Levels change only the wick a foe pays (§9.1).
@@ -362,6 +368,52 @@ DECIDED (2026-11-27): a real fight. The Soul is not killed; it retreats through 
 | 3. The eyes | It snuffs your hand lamp, so light no longer refills charge. Only Lampfire hits and flasks do. | Fire on its eyes until they close, three times. |
 
 It pulls back into the water and a dark portal opens where it went down. The great lamp catches and the fog lifts. A faint returns you to the start of the phase. **Recommended for v1** (DRAFT for story markup): the keeper steps into the portal and the credits roll. You then wake at the great lamp in the open valley, with the portal sealed, as the hook.
+
+### 8.4 Telegraphs — BUILT (readability)
+
+BUILT on `proto/kl-readability` (2026-11-27), from `docs/ART_DIRECTION.md` §4 (DRAFT). One shared system, `systems/telegraph/telegraph.gd`: every foe attack goes **notice → wind-up → commit → strike → recover**. A foe starts a wind-up with `Telegraph.begin()`, ticks it, and strikes when it is done; its hit test is the marker's own shape (`Tell.contains()`). One node on the fog layer (z 13) draws every marker and edge arrow, over the fog, the foes and the fire. Markers are the cold `#a3bcd4`, never amber; the keeper's own Fireglobe ring stays warm.
+
+**How a marker looks.** Full size from the first frame; a cold fill grows inside it as the wind-up runs. For the last `kl_tell_commit` (0.15 s; `kl_tell_commit_boss` 0.2 s for the Clinker and the Ashbrood) it flashes white (0.075 s on, 0.075 s off: one or two flashes), and once it strikes it stays solid; with **"reduce flashes"** it turns solid pale instead, never fainter. Shapes: a **circle** (the hit radius), a **lane** (a band as wide as the hit, to the end of the move, with chevrons), an **aim** (the spit's path at its full width, fainter past the target), **spawn glows** (where something will rise), and a **reach** (two tendrils, the Wickling's latch). An off-screen wind-up within `kl_tell_arrow_range` (900 px) shows an **edge arrow** at the screen border with the attack's icon (circle, lane or line), pulsing twice over the wind-up.
+
+**Fairness rules** (ART_DIRECTION §4.4), each checked by `tools/tests/test_telegraphs.tscn`:
+1. A discrete hit (a spit, a roll, a puff, a dive) always gets at least `kl_tell_min` 0.5 s of warning; `Telegraph.begin()` enforces it.
+2. Full size from frame 1; 3. the marker is the hitbox: the test stands the keeper 3 px inside and 3 px outside each marker's edge and checks hit and miss.
+4. Aim locks at commit (the Spitwick locks for its last `kl_spit_aim_lock` 0.2 s).
+5. No hit from off-screen without an edge arrow; a Spitwick never starts a wind-up off-screen (`kl_spit_onscreen_margin` 16 px): it creeps closer first.
+6. Markers draw above the fog.
+7. **The dash always works:** a dash avoids every hit and its side effects, now including the puff's charge drain (it used to drain a dashing keeper).
+9. **No two warnings land together on the keeper:** a hit whose wind-up would end within `kl_tell_gap` (0.3 s) of another's near the keeper (`kl_tell_budget_radius` 240 px) waits: its wind-up gets longer. Stricter than ART_DIRECTION's "at most two"; it only counts hits, not reaches or spawn glows.
+11. "Reduce flashes" never hides a telegraph (§1.6 rule 7).
+
+**Every attack as built** (all values in `systems/tuning.gd`, each with an F1 row):
+
+| # | Attack | Marker | Wind-up | Commit / lock | Recover | Sound slot (stand-in) |
+|---|---|---|---|---|---|---|
+| 1 | A Wickling notices you; the Clinker wakes | eyes flare | `kl_notice_time` 0.3 s | — | — | `wickling_notice`, `clinker_notice` |
+| 2 | Wickling touch | reach (tendrils), then a frost edge on the keeper while it drains | `kl_wick_latch_tell` 0.25 s (new; the drain used to start on contact) | — | — | `wickling_windup` |
+| 3 | Shelled Wickling touch | the same; its plates glint within 48 px of you | `kl_elite_latch_tell` 0.35 s | — | — | `wickling_windup` |
+| 4 | Spitwick spit | aim: 20 px half-width (`kl_spit_hit_radius` 12 + the keeper's 8), to you, then fainter to its 525 px reach; its throat sac swells | `kl_spit_tell` 0.7 s (was 0.6) | locks for `kl_spit_aim_lock` 0.2 s; flash 0.15 s | sac empty, 0.3 s | `spitwick_windup`, `spitwick_release` |
+| 5 | Spit from off-screen | none: no wind-up unless on screen | — | — | — | — |
+| 6 | Nest hatch | the ring round the nest fills, the pods swell, a spawn glow at each hatch point | `kl_nest_hatch_tell` 1.0 s (was a code constant) | — | hatchlings fade in, harmless, `kl_hatch_fade` 0.3 s | `nest_windup` |
+| 7 | Clinker wakes | its eyes open as it uncurls; it can't move or roll | `kl_clinker_wake_time` 0.6 s | — | — | `clinker_notice` |
+| 8 | Clinker roll | lane: 44 px wide (2 x `kl_clinker_hit_range` 22), 260 px long (`kl_clinker_roll_dist`), filling from the Clinker; it curls | `kl_clinker_roll_tell` 0.9 s (was 0.8) | 0.2 s; direction set at the start | dizzy `kl_clinker_recover` 0.6 s: no move, no roll | `clinker_windup`, `clinker_release` |
+| 9 | Ashbrood ash puff | circle: 140 px (`kl_ashbrood_puff_radius`); it inhales | `kl_ashbrood_puff_tell` 1.0 s (was 0.8) | 0.2 s | an ash ring | `ashbrood_puff_windup`, `ashbrood_puff_release` |
+| 10 | Ashbrood adds | spawn glows at the 3 points 52 px out; head up | `kl_ashbrood_add_tell` 0.8 s (new; they used to pop in) | — | adds fade in 0.3 s | `ashbrood_adds_windup` |
+| 11 | Ashbrood dive at a lamp | circle at the landing point, 48 px (`kl_ashbrood_hit_radius`; was 36 at a lamp); a dotted path; the lamp flickers; an edge arrow if it is off-screen | `kl_ashbrood_dive_tell` 1.0 s (was 0.7), then a flight of `kl_ashbrood_dive_travel` 0.3 s (was a one-frame jump) | 0.2 s | sits `kl_ashbrood_sit_sec` 4 s | `ashbrood_dive_windup`, `ashbrood_dive_impact` |
+| 12 | Ashbrood dive, no lamp lit | circle at the end of its 200 px dive (`kl_ashbrood_dive_dist`; the old line ran 240) | as 11 | as 11 | as 11 | as 11 |
+| 13 | Ashbrood sits | slumped, eyes dim, its shell glow lower | `kl_ashbrood_sit_sec` 4 s | — | — | — |
+| 14 | Ashbrood phase change | it rises out of the bowl; the boss bar shows phase 2 at once | `kl_ashbrood_phase_pause` 1.5 s: no attacks, no damage | — | — | `ashbrood_phase_windup` |
+
+**Sound slots.** `Telegraph.play_slot(subject, cue)` plays `assets/audio/sfx/foe/<subject>_<cue>.ogg` when the owner adds one, otherwise a reused Kenney cue at a lower pitch (`Telegraph.SOUND_SLOTS`). No new audio. The wind-up sound starts with the wind-up.
+
+**Choices made where §4 left room** (recorded here; ART_DIRECTION is a draft):
+- **The dive's path is a dotted line, not a filled lane.** The flight doesn't hurt; only the landing circle does. A filled lane would claim a hitbox that isn't there (rule 3).
+- **The spit's marker is a band as wide as the spit's reach, not a thin line.** The spit hits anything within 20 px of its path for its whole flight, so a thin line would be smaller than the hit.
+- **The Clinker's lane is the roll's swept path.** The roll hits where its body passes within 22 px of you; for a keeper who stands still that is exactly the lane.
+- **A Spitwick ready to spit, but off-screen or out of range, creeps closer each frame** instead of waiting a whole `kl_spit_period` again.
+- **The Ashbrood can be hurt during its 0.3 s flight.** §4.3 didn't say; nothing else changes.
+- The notice cue is per Wickling (eyes); its sound plays once a frame, so a pack that wakes together is heard once.
+- Not built: the elite's optional lunge (§4.3 row 3, "M2, affixes"); shell-shatter shards (§5, P3).
 
 ---
 
@@ -584,9 +636,14 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 ## 16. Performance (built)
 
 - **Budget:** game logic (process + physics) averages well under 4 ms a frame with 30 lanterns and 20 foes, measured by `tools/bench/bench.tscn` (see AGENTS.md). After the loop it measured 3.03-3.10 ms over three runs (worst frame about 6.0-6.4 ms).
-- **M1a** (BUILT): the bench also runs a fight at a firing range away from the keeper: 40 Lampfire bolts always in the air, flying at 8 target foes and hitting them (about 160 hits a second, with splash, impact effects and damage numbers), and 4 burning areas under them. **It is over budget:** game logic averaged 4.7-5.6 ms (worst frame 8.0-11.7 ms) over seven headless runs on 2026-11-27, against 3.0-3.5 ms for the same world with no fight (`-- 30 20 400 0 0`). The bolts' hits add about 1.2 ms of physics and the effects about 0.4 ms of process; the burning areas about 0.4 ms. The machine was also running the game at the time, so treat these as rough. (The M1a build's own figure, 3.158 ms, came from a bench whose 40 bolts stood still and hit nothing, and whose world was paused by the level-up cards from about frame 100. The bench now keeps the cards closed and reports paused frames.)
+- **M1a** (BUILT): the bench also runs a fight at a firing range away from the keeper: 40 Lampfire bolts always in the air, flying at 8 target foes and hitting them (about 160 hits a second, with splash, impact effects and damage numbers), and 4 burning areas under them. **It was over budget** (fixed by the readability step, below): game logic averaged 4.7-5.6 ms (worst frame 8.0-11.7 ms) over seven headless runs on 2026-11-27, against 3.0-3.5 ms for the same world with no fight (`-- 30 20 400 0 0`). The bolts' hits add about 1.2 ms of physics and the effects about 0.4 ms of process; the burning areas about 0.4 ms. The machine was also running the game at the time, so treat these as rough. (The M1a build's own figure, 3.158 ms, came from a bench whose 40 bolts stood still and hit nothing, and whose world was paused by the level-up cards from about frame 100. The bench now keeps the cards closed and reports paused frames.)
 - The fog steps only tiles that can change. Foes read lantern light from one shared snapshot a frame (`systems/light/light_sense.gd`). The map is drawn once, in 16 x 16 tile chunks *(code)*. Lanterns redraw only when their look changes.
-- **Open:** bring the M1a fight back under 4 ms (the bolts' physics and the hit effects are the first places to look).
+- **The readability step's performance pass** (BUILT, readability). Profiled with the bench's new `profile` mode (it runs each kind of node's `_process` and `_physics_process` itself and times them). Before, on this machine: game logic 4.70 / 4.63 / 4.59 ms (worst 8.95 / 7.54 / 8.20 ms). The profile put 2.37 ms in the foes and 1.05 ms in the bolts' physics, and **0.71 ms of the bolts' 1.05 ms was `Sfx.play`**: every Lampfire hit started an Ogg on its own player, and setting up its decoder cost about 0.25 ms on the main thread. Fixes, none of which change how the game plays:
+  - `Sfx` mixes every effect through one `AudioStreamPolyphonic` player (about 0.04 ms a play), and a cue asked for twice in the same frame plays once.
+  - Foes read WayLamps and mirrors from the `LightSense` snapshot instead of asking the scene tree every call; "is this dying lamp covered by healthy light?" is worked out once a frame for all Wicklings (`LightSense.prey_flags`), not once per Wickling per lamp; Wicklings ask the keeper's light once a frame (`player.in_light_cached()`); a Wickling's own light level is read only when it needs it.
+  - After: **2.60 / 2.55 / 2.61 ms** (worst 4.30 / 4.29 / 4.77 ms), 160 hits a second as before. The world with no fight (`-- 30 20 400 0 0`): 1.95 ms (was 3.0-3.5). The worst frames are the frames the fog ticks (1.3 ms a tick, every 0.1 s).
+  - **With the telegraphs busy** (`-- 30 20 400 40 4 tells=8`: 8 Spitwicks winding up without a pause, the Ashbrood and the Clinker, about 9.5 wind-ups alive every frame): **2.51 / 2.55 / 2.54 ms** (worst 4.53 / 4.53 / 4.77 ms). The telegraph layer's own process costs under 0.01 ms.
+  - Rendered on a virtual display (software rendering, so frame times are high): logic 3.36 ms, frame 15.9 ms, 441 draw calls on average; with `tells=8`, logic 3.40 ms, frame 16.8 ms, 516 draw calls. All numbers 2026-11-27, no other Godot process running.
 
 ---
 
@@ -613,6 +670,8 @@ All text is in `docs/STORY.md`, mirrored in `systems/story/story.gd`, `scripts/m
 - **Additive sprites** for every fireball, trail and blast; `PointLight2D` only for the hand lamp, lamps and WayLamps (built).
 - **Hit-stop** replaced the global `Engine.time_scale` freeze in `foe.gd` `_die()`; **shake** uses a trauma recipe (built; §4.1).
 - **Collision:** the keeper's fire finds foes by shape queries against a small hurtbox on every foe (`foe.gd`, physics layer 5). Projectiles are pooled entries in `fire_bolts.gd` (built). **Deviation:** the plan wants one projectile system for keeper and foes; the Spitwick's spit still uses its own `spit_projectile.gd`.
+- **The placeholder swap hook** — BUILT (readability; ART_DIRECTION §6.2-§6.4, DRAFT). `Art.frames(subject, variant)` builds a `SpriteFrames` from PNG strips (frames side by side, equal size) and a small `<subject>.frames.cfg` (frame size, anchor, and per animation fps, loop and `timed_by`, a tuning value the animation is stretched to). It looks in `assets/art/creatures/<subject>/<subject>[_<variant>]_<anim>.png` and, for the keeper, `assets/art/keeper/keeper_<anim>.png`; a strip Godot hasn't imported yet is read straight from the file. `FoeSprite.attach()` adds a sprite only when strips exist; otherwise the foe keeps its code shape. Wired up for the Wickling family (variants `timid`, `brave`, `elite`), the Spitwick and the keeper's poses (`idle`, `move`, `cast`, `lob`, `thrust`, `dash`, `drink`, `hurt`). Missing animations fall back (a wind-up to idle, a dash to move, then idle). Overlays (telegraphs, shell rings, burning edges, health arcs) stay code-drawn, and the hit flash carries over to the sprite. **No PNGs are included**; `test_telegraphs` checks the fallback and loads a test-only strip.
+- **The bold swarm's rim** (BUILT, readability) is the cold `#a3bcd4`, brighter and wobbling faster; it was an off-palette red that read as warm (ART_DIRECTION §1.4 rule 3).
 - **New art:** skill, flask and item icons; rarity glints; keeper cast and dash frames; sprites for the Spitwick, Clinker, nest, elite ring and Ashbrood; each region's creature and guardian; people; climb stones that read as a fallen pile.
 - **Audio needed** (owner; Kenney stand-ins until then): cast, hit and burst for each skill; flask; dash; rest; loot drops by rarity; boss phases; the portal.
 

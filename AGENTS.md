@@ -39,6 +39,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_waylamps.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_upgrades.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_leveling.tscn   # wick in a full Hollow clear vs the level targets
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_telegraphs.tscn # foe wind-ups, the fairness rules, the keeper's feedback, the art swap hook
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_hollow.tscn # prototype branch only
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_onboarding.tscn # prototype: the first 10 minutes' main route
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_loop.tscn # prototype: the loop route, one-way Ridge, WayLamp fast travel
@@ -57,7 +58,9 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800 
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/bench/bench.tscn            # game logic only
 xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60 --disable-vsync \
   --path . res://tools/bench/bench.tscn                                                              # adds frame time and draw calls
-# optional: -- <lanterns> <foes> <frames> <bolts> <burning>   (default 30 20 400 40 4; "-- 30 20 400 0 0" = no fight)
+# optional: -- <lanterns> <foes> <frames> <bolts> <burning> [profile] [tells=N]   (default 30 20 400 40 4; "-- 30 20 400 0 0" = no fight)
+#   profile: also times each kind of node (foes, bolts, effects, lanterns, the keeper, telegraphs) on its own
+#   tells=N: adds N Spitwicks winding up at the keeper without a pause, the Ashbrood and the Clinker
 ```
 - It places 30 lanterns around the start, keeps 20 foes in play, runs a fight at a firing range away from the keeper (40 Lampfire bolts always in
   the air hitting 8 targets that can't die, with splash, effects and damage numbers, over 4 burning areas), keeps the level-up cards from pausing
@@ -65,8 +68,9 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
   process / physics time, fog step, fog texture update, node count; draw calls when rendering).
 - **Budget:** game logic (process + physics) averages well under 4 ms a frame at 30 lanterns and 20 foes
   (DECISIONS.md). Run it after changing the fog, foes, lanterns, the map or anything that redraws every frame.
-- Hot paths to keep cheap: foes read lantern light from `LightSense` (one snapshot a frame, `bump()` it when
-  lanterns appear, go or get refuelled); the fog only steps tiles below full fog or in light (call
+- Hot paths to keep cheap: foes read lantern light, WayLamps and mirrors from `LightSense` (one snapshot a frame,
+  `bump()` it when lanterns appear, go or get refuelled; what a Wickling may drain is worked out once a frame);
+  never start an `AudioStreamPlayer` per hit (`Sfx` mixes through one polyphonic player); the fog only steps tiles below full fog or in light (call
   `FogGrid.mark_all_dirty()` after replacing `density` or `remembered` wholesale); the map is drawn once in
   `MapChunk`s; lanterns redraw only when their look changes.
 
@@ -77,7 +81,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
 - Tests strip joypad events first: a real controller on this PC would otherwise move the test keeper (this caused flaky runs).
 - Automated runs are silent (`--audio-driver Dummy`). Don't play sound through the owner's speakers.
 - Visual check without the owner's screen: render frames on a virtual display with `tools/capture/capture.tscn`
-  (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map; the loop: loop_waylamp, loop_marsh_climb, loop_ridge_entry, loop_travel). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
+  (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map; the loop: loop_waylamp, loop_marsh_climb, loop_ridge_entry, loop_travel; readability: tell_puff, tell_puff_reduce, tell_adds, tell_dive, tell_dive_arrow, tell_spit, tell_lane, tell_reach, tell_hatch, keeper_dash, keeper_cast, keeper_drink, keeper_hurt). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
 - README images: `tools/capture/readme_shots.sh` renders the staged `readme_*` views into `docs/screenshots/` (look at each one before committing).
 - Art: 16x16 sprites drawn at 2x, palette in `source/palette/`. Kenney sheets are recoloured from `source/vendor/`; placeholders come from `tools/art/make_placeholders.py`.
 

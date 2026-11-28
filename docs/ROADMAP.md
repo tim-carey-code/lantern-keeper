@@ -12,7 +12,8 @@
 |---|---|
 | History: M0-M5b, the prototypes and the loop | done; see "History" at the end |
 | **M1a** Fire in the Hollow | **built, awaiting the owner's playtest.** On `proto/kl-m1a` (commits 6663292, 10099a8), not merged. DESIGN marks it BUILT (M1a); the playtest is in PLAYTEST.md |
-| **M1b** No more tending | planned, after M1a passes. **Merge to `main` once M1b passes.** |
+| **Readability step** (telegraphs and the keeper's feedback) | **built, awaiting the owner's playtest.** On `proto/kl-readability` (based on the play branch with M1a merged), not merged. DESIGN marks it BUILT (readability); the playtest is in PLAYTEST.md. The owner's order: readability, then M1b, then M2 (DECISIONS 2026-11-27) |
+| **M1b** No more tending | planned, after M1a and the readability step pass. **Merge to `main` once M1b passes.** |
 | **M2** Builds | planned |
 | **M3** Loot | planned |
 | **M4** People, part 1 | planned. Needs the owner's pronoun call for Amos (and the others before their milestones) |
@@ -71,6 +72,24 @@
 - Feel is most of the work. If the fire doesn't feel good, do one more feel pass before M1b.
 - RT and RB on one finger; the auto-fire option is the fallback.
 - Fog lights may cost more than the budget allows.
+
+---
+
+## The readability step (before M1b)
+
+**Status (2026-11-27): built, awaiting the owner's playtest** on a pad (`docs/PLAYTEST.md`, "Readability: what to try"). Branch `proto/kl-readability`. The owner asked foes to "telegraph/animate some of their attacks better as with my abilities", and put this step first (DECISIONS 2026-11-27).
+
+**Scope** (from `docs/ART_DIRECTION.md` §4, §5, §6.4, DRAFT)
+- One shared telegraph system: every built foe attack (§4.3 rows 1-14) gets a cold marker over the fog, full size from its first frame, the marker as its hitbox, edge arrows for off-screen wind-ups, a wind-up sound slot (old sounds reused), and the fairness rules (§4.4). Every timing is a `kl_*` tuning value with an F1 row.
+- The keeper's own feedback, code-drawn: dash smear and afterimages, a cast cue (Puny spare frames), a drink glow, a cold hit flash and a frost edge.
+- The bold swarm's rim becomes cold `#a3bcd4`.
+- The placeholder swap hook (§6.4) for the Wickling family, the Spitwick and the keeper's poses; no PNGs included.
+- A performance pass: the bench's fight under the 4 ms budget again.
+- **Not in scope:** M1b (tending removal, fuel, the faint rule) and M2.
+
+**Owner checks** (PLAYTEST.md steps 1-6): each foe's wind-up reads; the dash avoids each attack; the Ashbrood fight (phase rise, dive circle, edge arrow); "reduce flashes" keeps every warning; the keeper's own cues; nothing unfair or slow.
+
+**Tests:** new `test_telegraphs` (in AGENTS.md): the table and F1 rows, hit and miss 3 px either side of each marker's edge, the dash against each attack, edge arrows, the Spitwick's lock and its off-screen rule, the gap between warnings, hatch and add fade-ins, reduce flashes, the keeper's cues and the swap hook. The bench: 4.59-4.70 ms before, 2.55-2.61 ms after, 2.51-2.55 ms with the telegraphs busy (DESIGN §16).
 
 ---
 
@@ -235,3 +254,4 @@ What was built before the re-plan, in short. The full old roadmap is in `docs/ar
 - **The loop and WayLamp fast travel** (`proto/kl-loop`): built and merged into `proto/kl-hollow`. Loop texts approved; three loop calls under review.
 - **The fuel-and-abilities playtest** led to the re-plan (PLAYTEST.md). The game plan v2 was approved on 2026-11-27.
 - **M1a, fire in the Hollow** (`proto/kl-m1a`): built 2026-11-27; awaiting the owner's playtest.
+- **The readability step** (`proto/kl-readability`): telegraphs, the keeper's feedback, the art swap hook and the performance pass; built 2026-11-27, awaiting the owner's playtest.

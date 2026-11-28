@@ -405,7 +405,7 @@ From PLAN_NPCS_ENEMIES: "cheerful and practical. Scared of the dark, and pretend
 
 ### 4.3 Every built foe attack: now and proposed
 
-Timings are tuning values. "Now" is read from the code on this branch. Nothing in this table is built yet except the "Now" column.
+Timings are tuning values. "Now" is read from the code on this branch. Nothing in this table is built yet except the "Now" column. **Update (readability step, `proto/kl-readability`):** built; what was built, with the choices made where this table left room, is in DESIGN §8.4.
 
 | # | Attack | Code | Damage now | Telegraph now | Proposed telegraph | Timings | Dodge |
 |---|---|---|---|---|---|---|---|
@@ -548,6 +548,8 @@ timed_by = "kl_spit_tell"  ; the loader stretches the animation to this tuning v
 - The keeper moves to the same system: the Puny sheet becomes a frames file with 8 direction rows.
 
 ### 6.4 Swapping placeholders without code changes
+
+**Update (readability step):** built for the Wickling family, the Spitwick and the keeper's poses (`Art.frames`, `FoeSprite`; DESIGN §17).
 
 1. Every foe keeps its code-drawn `_draw()` shape as the placeholder.
 2. If `Art.frames(subject)` finds no PNG for the current animation, the `FoeSprite` hides and the `_draw()` shape shows. If it finds one, the sprite shows and `_draw()` draws only the overlays.

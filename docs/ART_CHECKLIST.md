@@ -83,6 +83,8 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 
 ## 3. Creatures
 
+**Where the game looks now** (the swap hook, BUILT in the readability step; layout from ART_DIRECTION §6.2, DRAFT): one PNG strip per animation in a folder per creature, `assets/art/creatures/<subject>/<subject>[_<variant>]_<anim>.png`, plus a small `<subject>.frames.cfg` (frame size; per animation fps and loop). Hooked up so far: the Wickling (`wickling`, variants `timid`, `brave`, `elite`), the Spitwick (`spitwick`) and the keeper's poses (`assets/art/keeper/keeper_<anim>.png`). Animation names: `idle`, `move`, `notice`, `windup`, `attack`, `recover`, `hurt`, `death`, `spawn`; the keeper adds `cast`, `lob`, `thrust`, `dash`, `drink`. Missing ones fall back to `idle`, and with no strips at all the code shape stays. The flat paths in the table below are the older suggestion; the rows change when you approve the folder layout.
+
 | Status | Item | File | Size | Anchor | Hookup | Notes / your notes |
 |---|---|---|---|---|---|---|
 | 🟨 | Wickling, float | `assets/art/creatures/wickling.png` | 16×16, 4 frames → 64×16 strip | centre | needs hookup | Smoky shadow blob with 2 pale eyes. Drawn by code today. Use `#0b0e1a`/`#141a2e` body, `#a3bcd4` eyes. |
@@ -102,7 +104,7 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 | ⬜ | The Galekite (Ridge guardian) | `assets/art/creatures/galekite.png` | 48×48 | centre | needs hookup (M6) | Out of reach until it snags on a Hooded Lamp. |
 | ⬜ | Fogstilt (Lakeshore) | `assets/art/creatures/fogstilt.png` | 16×32 | bottom-centre | needs hookup (M7) | Tall, thickens fog. |
 | ⬜ | The Tallest (Lakeshore guardian) | `assets/art/creatures/tallest.png` | 32×64 | bottom-centre | needs hookup (M7) | The first cut if time runs short. |
-| ✅ | Keeper (player) | `assets/art/puny/keeper.png` | 32×32 frames, 24×8 sheet | — | already in | Puny Characters mage (CC0), recoloured. **Optional:** draw your own keeper with the same sheet layout. |
+| ✅ | Keeper (player) | `assets/art/puny/keeper.png` | 32×32 frames, 24×8 sheet | — | already in | Puny Characters mage (CC0), recoloured. Uses columns 0-3 (idle, walk) and, since the readability step, 12-14 (the cast raise and thrust), 19 (the hit silhouette) and 20 (the flinch). **Optional:** draw your own keeper with the same sheet layout, or as pose strips in `assets/art/keeper/` (above). |
 | ⬜ | Keeper, cast and dash frames | same sheet, new rows | 32×32 frames | — | needs hookup (M1a) | A throw pose for fireballs and a dash smear. Spare frames in the Puny sheet may do until then. |
 
 ## 4. Ground and terrain (Kenney tiles cover these today)
