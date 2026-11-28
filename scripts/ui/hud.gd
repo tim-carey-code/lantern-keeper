@@ -9,7 +9,7 @@ extends CanvasLayer
 
 const KEY_HINT_SECS := 60.0
 # M1a texts (DRAFT, docs/replan/M1A_BUILD_NOTES.md).
-const LANCE_TOAST := "Lance takes %s. %s is in your Skills (%s)."
+const LANCE_TOAST := "Lance takes %s. %s is in your Skills list (%s)."
 const LANCE_TOAST_PLAIN := "Lance takes %s."
 const REST_TOAST := "You rest by the WayLamp. Your flasks and warmth are full."
 const HUNTED_CHIP := "Something hunts you: light won't warm you"
@@ -208,6 +208,10 @@ func _on_skill_learned(id: String) -> void:
 	if id != "lance":
 		return
 	var gone := Progress.last_displaced
+	if gone == "" and Progress.slot_of("beam") == "":
+		gone = "beam"   # slot 3 was empty, but the Beam is off the bar too: still say where it is
+	if gone == "beam":
+		Story.tips_seen["beam_off_bar"] = true   # this toast says it; the one-time hint needn't repeat it
 	var player = get_tree().get_first_node_in_group("player")
 	var gone_title := ""
 	if gone != "" and player:

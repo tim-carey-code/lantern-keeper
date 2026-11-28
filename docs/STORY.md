@@ -311,7 +311,7 @@ DEFAULT: first person.
 
 ## 8. First-time tips
 
-Shown once each, in a panel near the bottom of the screen, for 6 s, one at a time. Built: these 12, the 6 onboarding tips below and the 3 WayLamp tips (§11), 21 in all, as in `Story.TIPS`. A token such as [beam] becomes the button for the device in use (`Story.tip_text`).
+Shown once each, in a panel near the bottom of the screen, for 6 s, one at a time. Built: these 12, the 6 onboarding tips below, the 3 WayLamp tips (§11) and the M1a Beam hint (§14.3), 22 in all, as in `Story.TIPS`. A token such as [beam] becomes the button for the device in use (`Story.tip_text`).
 
 **Since M1a** the tip texts are unchanged, but some tokens name other buttons, so what the player reads changed (§14.10). The legend below is the M1a one.
 
@@ -669,9 +669,15 @@ Every player-facing text the M1a build added or changed, copied **from the code*
 ### 14.3 Level 2: Lance (`scripts/ui/hud.gd`)
 
 A toast when Lance takes slot 3:
-> Lance takes %s. %s is in your Skills (%s).
+> Lance takes %s. %s is in your Skills list (%s).
 
-("Lance takes LB. The Beam is in your Skills (D-pad down).") If nothing was on slot 3: "Lance takes %s." The level-up card screen (§12) is unchanged; it goes in M2.
+("Lance takes LB. The Beam is in your Skills list (D-pad down).") If nothing was on slot 3 but the Beam is off the bar, the toast names the Beam anyway; if the Beam is still on the bar: "Lance takes %s." The level-up card screen (§12) is unchanged; it goes in M2.
+Was: "Lance takes %s. %s is in your Skills (%s)." (changed in the M1a fixes, DRAFT, so it matches the hint below).
+
+**The Beam hint** (`systems/story/story.gd`, tip `beam_off_bar`; DRAFT, M1a fixes, from the owner's playtest 2026-11-27: a version 4 save migrated at level 7 put Lance straight on LB, and nothing said where the Beam went). Shown once, on the tip line, the first time the keeper has Lance and the Beam is on no slot, including right after a version 4 save is migrated. [skills] is the Skills list's button for the device in use (K / D-pad down):
+> The Beam is in your Skills list ([skills]).
+
+("The Beam is in your Skills list (D-pad down).") When the level-2 toast has already said it, the hint is marked seen and doesn't show. The requested draft had no final full stop; one was added to match the other tips.
 
 ### 14.4 Rest at a lit WayLamp (`scripts/ui/travel_menu.gd`, `scripts/ui/world_prompt.gd`, `scripts/ui/hud.gd`, `scripts/player/player.gd`)
 

@@ -84,6 +84,7 @@ func _old_and_bad_files() -> void:
 	check(_load_file(V4_PATH, v4), "a level 1 version 4 save file loads")
 	check(Progress.level == 1 and Progress.bar == Progress.default_bar() and not Progress.lance_given and not Progress.knows("lance"), "level 1: the default bar with the Beam on LB, and no Lance (%s)" % str(Progress.bar))
 	check(main.player.flasks == Tuning.kl_flask_max, "and full flasks")
+	_beam_hint_after_migration(v4)
 	# A v5 file whose bar holds what it may not.
 	var bad: Dictionary = v5.duplicate(true)
 	bad["progress"]["level"] = 1
@@ -104,6 +105,37 @@ func _old_and_bad_files() -> void:
 	# Put the round-trip state back for the pause-menu checks that follow.
 	Progress.reset()
 	SaveGame.load_into(main)
+
+## The owner's case (playtest 2026-11-27): a version 4 save at level 7 migrates with Lance on LB, and nothing said
+## where the Beam went. The first check of the world afterwards shows a one-time hint, with the Skills button.
+func _beam_hint_after_migration(v4_base: Dictionary) -> void:
+	var v4: Dictionary = v4_base.duplicate(true)
+	v4["progress"]["level"] = 7
+	v4["progress"]["wick"] = 0
+	v4["story"]["tips"] = []   # a v4 save never saw this hint
+	check(_load_file(V4_PATH, v4), "a level 7 version 4 save file loads")
+	check(Progress.bar["skill_3"] == "lance" and Progress.slot_of("beam") == "" and not Story.tips_seen.has("beam_off_bar"), "Lance is on LB and the Beam is off the bar (%s)" % str(Progress.bar))
+	var shown: Array[String] = []
+	var catch := func(t: String) -> void: shown.append(t)
+	Story.tip_shown.connect(catch)
+	for pad in [true, false]:
+		InputHint.pad = pad
+		var want := "The Beam is in your Skills list (%s)." % InputHint.key("skills")
+		check(Story.tip_text("beam_off_bar") == want, "the hint names the Skills button for the device in use (%s)" % Story.tip_text("beam_off_bar"))
+	InputHint.pad = true
+	Story.update(main)
+	var hint := "The Beam is in your Skills list (D-pad down)."
+	check(shown.count(hint) == 1, "after the migration, the first check shows the Beam hint once (%s)" % str(shown))
+	Story.update(main)
+	check(shown.count(hint) == 1 and Story.to_dict()["tips"].has("beam_off_bar"), "never again, and it is saved as seen")
+	InputHint.pad = false
+	# Level 1: the Beam is on the bar, so no hint.
+	v4["progress"]["level"] = 1
+	check(_load_file(V4_PATH, v4), "a level 1 version 4 save file loads again")
+	shown.clear()
+	Story.update(main)
+	check(not shown.any(func(t): return t.begins_with("The Beam is in")), "at level 1, with the Beam on LB, there is no hint")
+	Story.tip_shown.disconnect(catch)
 
 ## The controller's A, as our "interact" action.
 func _press_a() -> void:

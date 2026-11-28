@@ -44,6 +44,8 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_loop.tscn # prototype: the loop route, one-way Ridge, WayLamp fast travel
 python3 tools/check_docs.py                                                                    # docs match the code
 # A test that fails to parse never quits: wrap runs in `timeout 120`.
+# test_save sometimes hangs at exit after printing "RESULT fails=0" (exit 124 from the timeout): an engine thread spins after quit().
+# It happens on the M1a base commit too (5 of 12 runs there). Re-run it; a real failure prints FAIL or fails>0.
 # In a fresh checkout the first --import can crash (Godot 4.7.2) and leave the font unimported, and then every
 # test fails with "Could not preload resource file ...kenney_pixel.ttf". Run --import again until it exits 0.
 # After merging a branch that adds a new `class_name` script, run --import before the tests, or they fail with

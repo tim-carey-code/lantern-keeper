@@ -79,6 +79,9 @@ const TIPS := {
 	"waylamp_seen": "A WayLamp. Feed it fuel, then hold it until it takes.",
 	"dying_lantern": "A lantern below a quarter is dying. Wicklings can drain it, so keep it fed.",
 	"kindle_attack": "Wicklings have come for the WayLamp. Ward them off until it takes.",
+	# M1a (DRAFT, STORY.md §14.3): once Lance is learned and the Beam is off the bar (a level-2 keeper, or a version 4
+	# save migrated past level 2), say where the Beam went. The level-2 Lance toast says it too, and marks this seen.
+	"beam_off_bar": "The Beam is in your Skills list ([skills]).",
 }
 
 var player_name := ""
@@ -136,14 +139,14 @@ func tip(id: String) -> void:
 	tips_seen[id] = true
 	tip_shown.emit(tip_text(id))
 
-## A tip with its button names filled in for the device in use: [beam], [burst], [dash], [aim], [build].
+## A tip with its button names filled in for the device in use: [beam], [burst], [dash], [aim], [build], [skills].
 ## M1a: [beam] is the basic attack's button (slot 1, Lampfire: "Hold RT to shine on it"), and [burst] is the
 ## button of the slot Hearth ring (the old burst) is on. The tip texts themselves are unchanged (STORY.md).
 func tip_text(id: String) -> String:
 	var t: String = TIPS.get(id, "")
 	var ring_slot := Progress.slot_of("hearth_ring")
 	t = t.replace("[beam]", InputHint.key("skill_1")).replace("[burst]", InputHint.key(ring_slot if ring_slot != "" else "skill_4"))
-	t = t.replace("[dash]", InputHint.key("dash")).replace("[build]", InputHint.key("place_lantern"))
+	t = t.replace("[dash]", InputHint.key("dash")).replace("[build]", InputHint.key("place_lantern")).replace("[skills]", InputHint.key("skills"))
 	return t.replace("[aim]", "the right stick" if InputHint.pad else "the mouse")
 
 func add_entry(n: int) -> void:
@@ -292,6 +295,8 @@ func _check_tips(main: Node) -> void:
 		tip("faint")
 	if Inventory.get_count("glass") > 0:
 		tip("glass")
+	if Progress.knows("lance") and Progress.slot_of("beam") == "":
+		tip("beam_off_bar")
 
 # --- Save ------------------------------------------------------------------------
 

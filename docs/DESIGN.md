@@ -114,7 +114,7 @@ BUILT (M1a). Each skill is a script in `scripts/player/skills/`; `scripts/player
 | **Hearth ring** (optional) | level 1 | none (Skills list; Y only) | The old burst, reworked: a ring of flame that sets foes alight, with a small push. | 2 dmg, then 1 dps for 2 s; 120 px; push 60 px (was 140); 4 s cooldown (was 3); 0.2 charge (`kl_burst_*`) | none |
 | **Dash** | level 1 | LT | As before; nothing can chill you mid-dash. | 110 px in 0.16 s, 0.9 s cooldown, 0.08 charge (`kl_dash_*`) | — |
 
-**The default bar.** Level 1: RT Lampfire, RB Fireglobe, LB the Beam, Y empty. At level 2 Lance takes LB, and the toast says the Beam is in your Skills; one press in the Skills list puts it back. Hearth ring is in the Skills list from level 1 and never on the default bar. **The M1a playtest decides** whether the Beam and Hearth ring stay (ROADMAP M1a, checks 8 and 9).
+**The default bar.** Level 1: RT Lampfire, RB Fireglobe, LB the Beam, Y empty. At level 2 Lance takes LB, and the toast says the Beam is in your Skills list; one press in the Skills list puts it back. Whenever the keeper has Lance and the Beam is on no slot without that toast having said so (for example a version 4 save migrated at level 2 or more), a one-time tip says the same (`beam_off_bar`, STORY §14.3). Hearth ring is in the Skills list from level 1 and never on the default bar. **The M1a playtest decides** whether the Beam and Hearth ring stay (ROADMAP M1a, checks 8 and 9).
 
 **Lance and the Beam are equal per charge:** 5 / 0.2 = 25 damage per charge, and 7.5 / 0.3 = 25. Lance hits harder in bursts and pierces 3; its cooldown caps it at 10 dps. The Beam has no travel time and hits everything on its line, but slows you and stops light regen.
 
