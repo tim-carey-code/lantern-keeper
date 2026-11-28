@@ -1,0 +1,27 @@
+GIMP Palette
+Name: Lantern Keeper 23
+Columns: 8
+#
+ 11  14  26	#0b0e1a
+ 20  26  46	#141a2e
+ 29  39  69	#1d2745
+ 40  56  94	#28385e
+ 54  80 122	#36507a
+ 74 106 148	#4a6a94
+109 143 179	#6d8fb3
+163 188 212	#a3bcd4
+255 241 193	#fff1c1
+255 210 122	#ffd27a
+245 167  66	#f5a742
+217 119  43	#d9772b
+156  74  34	#9c4a22
+ 90  42  28	#5a2a1c
+242 198 160	#f2c6a0 skin light (people only)
+212 154 114	#d49a72 skin mid (people only)
+168 106  74	#a86a4a skin shadow (people only)
+216 210 196	#d8d2c4 bone (skulls, grey hair)
+154 149 140	#9a958c grey stone (bowls, ruins, rubble)
+ 47  74  58	#2f4a3a marsh green dark (world only, never foes)
+ 79 110  74	#4f6e4a marsh green mid (world only)
+125 154  94	#7d9a5e marsh green light (world only)
+106  58  74	#6a3a4a muted plum (cloth accent)

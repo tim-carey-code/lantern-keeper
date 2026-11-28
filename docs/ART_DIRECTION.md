@@ -69,7 +69,7 @@ Sizes are source px (double them for screen px). "Today" is the code shape's rou
 
 ### 1.4 Palette roles
 
-The 14 colours stay (`source/palette/lantern-keeper-14.gpl`, ART_CHECKLIST "The palette"). This doc only assigns roles.
+The palette is **23 colours** (`source/palette/lantern-keeper-23.gpl`; owner, 2026-11-27). The first 14 are the original set (`lantern-keeper-14.gpl`, kept for reference); 9 were added for people, bone, stone, the marsh and cloth. This doc assigns each colour a role.
 
 | Role | Colours | Used for |
 |---|---|---|
@@ -78,6 +78,10 @@ The 14 colours stay (`source/palette/lantern-keeper-14.gpl`, ART_CHECKLIST "The 
 | **Cold threat** | `#a3bcd4` (plus white in additive glows) | Foe eyes, every foe telegraph, foe projectiles, the keeper's "chilled" flash |
 | **The keeper's fire** | `#fff1c1`, `#ffd27a`, `#f5a742`, `#d9772b` | Lamps, the hand lamp, every skill, burning foes, the keeper's ground markers |
 | **Wood and leather** | `#9c4a22`, `#5a2a1c` | Lamp posts, coats, straps, carts, boats |
+| **Skin** (people only) | `#f2c6a0`, `#d49a72`, `#a86a4a` | Faces and hands of the keeper and people. Never on foes |
+| **Bone and stone** | `#d8d2c4`, `#9a958c` | Skulls (the Ashbrood), grey hair, lamp bowls, ruins, rubble |
+| **Marsh greens** (world only) | `#2f4a3a`, `#4f6e4a`, `#7d9a5e` | Reeds, moss, marsh plants. Never on foes or telegraphs |
+| **Cloth accent** | `#6a3a4a` | Muted plum for variety in people's clothing |
 
 **Rules.**
 1. **Warm is safe and yours; cold is theirs.** A foe never glows amber. A keeper skill never glows blue.

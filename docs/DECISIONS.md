@@ -2,6 +2,9 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-27 (palette: 14 to 23 colours)
+- **The palette grows from 14 to 23 colours** (owner: "yes i want it as proposed do it up!"). Added: skin `#f2c6a0` `#d49a72` `#a86a4a` (people only); bone `#d8d2c4` and grey stone `#9a958c`; marsh greens `#2f4a3a` `#4f6e4a` `#7d9a5e` (world only, never foes); cloth accent `#6a3a4a`. Files: source/palette/lantern-keeper-23.gpl and .png (the 14-colour files stay for reference). The rules hold: foes and their warnings stay cold blue; amber is only the keeper's fire, lamps and the ember. Roles in ART_DIRECTION §1.4.
+
 ## Standing decisions (index)
 
 Added 2026-11-27, after the game plan was approved. This index only points to entries; it changes none of them. The log below stays append-only. Where an older entry and the approved game plan disagree, the plan wins for the rows in its supersede table (`docs/replan/GAME_PLAN.md`, "Decisions this plan would supersede"). Built from AUDIT §3 and the plan.
