@@ -325,6 +325,8 @@ func knockback(dir: Vector2, dist: float, secs: float = 0.18) -> void:
 func is_knocked() -> bool:
 	return _knock_t > 0.0
 
+var _faint_pending := false
+
 func chill(amount: float) -> void:
 	if combat and combat.is_dashing():
 		return   # nothing can chill you mid-dash
@@ -332,6 +334,14 @@ func chill(amount: float) -> void:
 		shake(0.45)   # a real hit (a spit, a roll), not the steady touch of a Wickling
 		hurt_t = Tuning.kl_fx_hurt_time
 	warmth = maxf(0.0, warmth - amount)
+	if warmth <= 0.0 and not _faint_pending:
+		# Deferred (hotfix 2026-11-28): the faint resets every fight (FaintRule), so it must not run inside the
+		# attacker's own code. A faint from the Ashbrood's dive used to clear its dive mid-landing and crash.
+		_faint_pending = true
+		call_deferred("_faint_now")
+
+func _faint_now() -> void:
+	_faint_pending = false
 	if warmth <= 0.0:
 		faint()
 

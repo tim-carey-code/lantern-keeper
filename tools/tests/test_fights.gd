@@ -94,6 +94,7 @@ func _run() -> void:
 	await _swarm_checks()
 	await _clinker_checks()
 	_level_checks()
+	await _faint_timing_checks()
 	await _ashbrood_checks()
 	print("RESULT fails=%d" % fails)
 	Art._ph.clear()
@@ -256,6 +257,22 @@ func _watch(b: Ashbrood, secs: float, at: Vector2) -> Array:
 			last = b.attacks
 			starts.append([t, b.last_attack])
 	return starts
+
+## Hotfix 2026-11-28 (owner crash in the Ashbrood fight): a faint resets every fight, so it must not run inside the
+## attacker's own code (the dive's landing faulted when the faint cleared its dive mid-landing).
+func _faint_timing_checks() -> void:
+	reset_keeper(spot)
+	await wait(0.05)
+	var f0: int = player.faints
+	player.warmth = 1.0
+	player.chill(50.0)
+	check(player.faints == f0, "a killing chill doesn't faint inside the attacker's code")
+	player.chill(50.0)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	check(player.faints == f0 + 1, "it faints right after, once (%d)" % (player.faints - f0))
+	reset_keeper(spot)
+	await wait(0.05)
 
 func _ashbrood_checks() -> void:
 	var w := _hollow()
