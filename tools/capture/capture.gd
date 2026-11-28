@@ -27,7 +27,8 @@ extends Node
 ## M2 views (builds): m2_skills (the pack's Skills tab on a pad: a level-6 keeper past the Ashbrood with points left, the
 ## cursor on Fireglobe's tree), m2_wave (phase 2's ash wave winding up: the cold lane through the keeper), m2_strafe (the
 ## low pass winding up, with cold embers from the pass before), m2_phase3 (phase 3: cracked wings, settled over the
-## ember, a puff winding up).
+## ember, a puff winding up), m2_skills_rest (review: a level-3 keeper resting at the WayLamp, before the Ashbrood: tier
+## 2 and 3 shut with their reasons, the reset row and a message all inside the frame).
 ## Sprites view: sprites (every owner-art subject side by side, frozen: the three Wicklings, an elite whose shell
 ## broke, the Spitwick, a nest, the Ashbrood in its bowl and out of it, and Amos with his cart, who isn't in the
 ## game until M4).
@@ -157,7 +158,7 @@ func _process(_delta: float) -> void:
 				_m1b_setup()
 			"m1c_dark_lit", "m1c_lock", "m1c_ash_bolts", "m1c_pips":
 				_m1c_setup()
-			"m2_skills", "m2_wave", "m2_strafe", "m2_phase3":
+			"m2_skills", "m2_skills_rest", "m2_wave", "m2_strafe", "m2_phase3":
 				_m2_setup()
 			"tell_puff", "tell_puff_reduce", "tell_adds", "tell_dive", "tell_dive_arrow", "tell_spit", "tell_lane", "tell_reach", "tell_hatch", \
 					"keeper_dash", "keeper_cast", "keeper_drink", "keeper_hurt", "sprites", "clinker_sleep", "clinker_roll", "clinker_dizzy":
@@ -633,6 +634,15 @@ func _m2_setup() -> void:
 	for k in Story.TIPS:
 		Story.tips_seen[k] = true
 	Story.pointer_mode = "off"
+	if view == "m2_skills_rest":
+		InputHint.pad = true
+		Progress.level = 3
+		Progress.lance_given = true
+		Progress.bar = {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "lance", "skill_4": ""}
+		Progress.set_picks(["lingering_burn"])
+		main.player.position = main.start + Vector2(-20, 60)
+		Progress.respec_at = main.player.position
+		return
 	if view == "m2_skills":
 		InputHint.pad = true
 		Progress.level = 6
@@ -660,6 +670,18 @@ func _m2_frame() -> void:
 		hud.banner.visible = false
 		hud.toast.visible = false
 		hud.tip.visible = false
+	if view == "m2_skills_rest":
+		Progress.respec_at = main.player.global_position
+		if frame == 10:
+			main.get_node("Pack").open("skills")
+			var tab2 = main.get_node("SkillsList")
+			tab2.area = "tree"
+			tab2.list_i = 0
+			tab2.tier_i = 0
+			tab2.col_i = 1
+			tab2._rebuild()
+			tab2.choose_pick("scatter")
+		return
 	if view == "m2_skills":
 		if frame == 10:
 			main.get_node("Pack").open("skills")

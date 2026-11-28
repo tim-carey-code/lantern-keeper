@@ -122,6 +122,22 @@ func _run() -> void:
 	check(lamp.is_lit() and lamp.threatened > 0.0, "a lamp it comes near flickers cold first (%.1f s), still lit" % Tuning.kl_lightless_tell)
 	await wait(Tuning.kl_lightless_tell)
 	check(lamp.is_snuffed() and dark.doused == 1, "then it is snuffed for %.0f s" % Tuning.kl_lightless_snuff)
+	# Review fix: a lamp that goes out during the flicker (a puff, a pick-up) loses its countdown; when it relights
+	# later, with the Lightless elite far off, it stays lit.
+	lamp.snuff_t = 0.0
+	LightSense.bump()
+	await wait(0.05)
+	check(lamp.is_lit(), "the lamp relights")
+	await wait(Tuning.kl_lightless_tell * 0.5)
+	check(dark._dousing.has(lamp.get_instance_id()), "a new flicker starts")
+	lamp.snuff(1.0)   # out mid-flicker (as a puff would)
+	dark.global_position = lamp.global_position + Vector2(400, 0)
+	await wait(0.1)
+	check(not dark._dousing.has(lamp.get_instance_id()), "its countdown is dropped when the lamp goes out")
+	lamp.snuff_t = 0.0
+	LightSense.bump()
+	await wait(Tuning.kl_lightless_tell + 0.3)
+	check(lamp.is_lit() and dark.doused == 1, "relit far from the elite, it stays lit")
 	for f in get_tree().get_nodes_in_group("foe"):
 		f.queue_free()
 	lamp.queue_free()

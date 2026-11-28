@@ -29,7 +29,17 @@ func held() -> bool:
 func charged() -> bool:
 	return charge_t >= Tuning.kl_held_lance_time
 
+var _last_frame := -1
+
 func hold(delta: float, down: bool) -> void:
+	# Review fix (M2): a charge doesn't survive a menu. If the world paused (a frame was skipped) or a menu just closed
+	# (the input guard), the hold is dropped without firing, so a release inside the pack never throws a Lance.
+	var f := Engine.get_physics_frames()
+	var gap := _last_frame >= 0 and f - _last_frame > 2
+	_last_frame = f
+	if gap or Progress.input_blocked() or Tuning.ui_open:
+		cancel_hold()
+		return
 	if down:
 		if not _was_down:
 			charge_t = 0.0
@@ -42,6 +52,11 @@ func hold(delta: float, down: bool) -> void:
 		_fire(full)
 		return
 	_was_down = down
+
+## Drops a charge without firing (a menu, a faint).
+func cancel_hold() -> void:
+	charge_t = 0.0
+	_was_down = false
 
 func press() -> bool:
 	return _fire(false)

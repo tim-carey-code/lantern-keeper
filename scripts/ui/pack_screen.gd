@@ -139,8 +139,27 @@ func _refresh() -> void:
 			mark = "  +%d" % Progress.skill_points()
 		l.text = TITLES[t] + mark
 		chip.add_child(l)
+		# Review fix (M2): the tabs can be clicked with the mouse too.
+		chip.mouse_filter = Control.MOUSE_FILTER_STOP
+		chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		chip.gui_input.connect(_chip_input.bind(t))
 		_strip.add_child(chip)
 	_hint.text = "LB / RB: tab" if InputHint.pad else "Q / Tab: tab"
+
+func _chip_input(event: InputEvent, t: String) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		get_viewport().set_input_as_handled()
+		switch_to.call_deferred(t)
+
+## The tab chips (tests): tab id -> its chip.
+func chips() -> Dictionary:
+	var out := {}
+	var i := 0
+	for c in _strip.get_children():
+		if not c.is_queued_for_deletion() and i < TABS.size():
+			out[TABS[i]] = c
+			i += 1
+	return out
 
 ## Handled first (layer 11, _input) so the D-pad and the tab keys never reach the tabs underneath.
 func _input(event: InputEvent) -> void:

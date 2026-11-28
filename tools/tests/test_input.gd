@@ -242,6 +242,16 @@ func _pack_checks(p: Node) -> void:
 	await _send("pack_prev")
 	await _send("pack_prev")
 	check(pack.tab == "skills" and tab.is_open(), "LB twice: back to Skills")
+	# Review fix: the tabs can be clicked with the mouse too.
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	pack.chips()["journal"].gui_input.emit(click)
+	await _frames(2)
+	check(pack.tab == "journal" and journal.is_open(), "a click on the Journal tab opens it")
+	pack.chips()["skills"].gui_input.emit(click)
+	await _frames(2)
+	check(pack.tab == "skills" and tab.is_open(), "and a click on Skills goes back")
 	await _close_and_drink(p, tab, "The pack")
 	check(not pack.is_open() and pack.tab == "", "B closed the whole pack")
 	Progress.bind("skill_3", "lance")

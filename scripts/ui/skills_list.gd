@@ -44,6 +44,7 @@ var points_label: Label
 var respec_label: Label
 var info: Label
 var hint: Label
+var detail: Label                # the focused pick's title, text and why it can't be taken (under the tree)
 var slot := "skill_3"            # the slot a skill goes on (place mode; tests set it with choose_slot)
 var buttons := {}                # skill id -> Button
 var pick_buttons := {}           # pick id -> Button
@@ -99,13 +100,20 @@ func _ready() -> void:
 	tree_title.custom_minimum_size = Vector2(720, 0)
 	root.add_child(tree_title)
 	tree_box = VBoxContainer.new()
-	tree_box.position = Vector2(500, 236)
+	tree_box.position = Vector2(500, 262)   # under the skill's name and its two-line blurb
 	tree_box.add_theme_constant_override("separation", 8)
 	root.add_child(tree_box)
+	# Review fix (M2): the pick buttons show only their titles; the focused pick's text is here, under the tree, so the
+	# tree, its shut-tier reasons and the reset row fit inside the frame at every level.
+	detail = UiStyle.label(20, UiStyle.CREAM)
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.custom_minimum_size = Vector2(720, 0)
+	detail.position = Vector2(500, 552)
+	root.add_child(detail)
 	info = UiStyle.label(20, UiStyle.CREAM)
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info.custom_minimum_size = Vector2(1160, 0)
-	info.position = Vector2(56, 628)
+	info.custom_minimum_size = Vector2(720, 0)
+	info.position = Vector2(500, 636)   # review fix: in the tree column, under the pick's text (it overlapped the list)
 	root.add_child(info)
 	hint = UiStyle.label(20, Color(0.43, 0.56, 0.7))
 	hint.position = Vector2(56, 668)
@@ -386,10 +394,10 @@ func _rebuild(_fresh: bool = false, _keep_focus: String = "") -> void:
 			var inf := SkillTree.info(pid)
 			var pb := Button.new()
 			pb.add_theme_font_size_override("font_size", 20)
-			pb.custom_minimum_size = Vector2(212, 104)
-			pb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			pb.custom_minimum_size = Vector2(212, 46)
 			pb.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			pb.text = "%s\n%s" % [inf.title, inf.body]
+			pb.text = inf.title
+			pb.tooltip_text = inf.body
 			pb.disabled = why != "" or (taken != "" and taken != pid and not Progress.respec_open())
 			_style_button(pb, area == "tree" and t == tier_i and ci == col_i, taken == pid)
 			pb.pressed.connect(_click_pick.bind(t, ci))
@@ -413,12 +421,19 @@ func _rebuild(_fresh: bool = false, _keep_focus: String = "") -> void:
 		hint.text = HINT_SLOTS_PAD if InputHint.pad else HINT_SLOTS_KEYS
 	else:
 		hint.text = HINT_PAD if InputHint.pad else HINT_KEYS
-	if area == "tree" and focused_pick() != "" and info.text == "":
+	detail.text = ""
+	if area == "tree" and focused_pick() != "":
 		var fi := SkillTree.info(focused_pick())
 		var w2 := Progress.pick_reason(focused_pick())
-		if w2 != "" and not Progress.has_pick(focused_pick()):
-			info.text = w2
-			info.add_theme_color_override("font_color", Color(0.43, 0.56, 0.7))
+		detail.text = "%s: %s" % [fi.title, fi.body]
+		if Progress.has_pick(focused_pick()):
+			detail.text += "\n(taken: A gives it back)" if Progress.respec_open() else "\n(taken)"
+		elif w2 != "":
+			detail.text += "\n" + w2
+	elif area == "tree" and tier_i == 3:
+		detail.text = RESET_ROW + "."
+	elif area == "list":
+		detail.text = "Right: its picks." if InputHint.pad else "Right / D: its picks."
 
 # --- Moving the cursor --------------------------------------------------------------------------------
 

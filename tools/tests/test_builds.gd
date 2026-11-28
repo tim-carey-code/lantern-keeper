@@ -144,6 +144,10 @@ func _run() -> void:
 	await _dash()
 	await _beam()
 	await _ring()
+	await _blink_walls()
+	await _scatter_group()
+	await _held_lance_menu()
+	await _pick_pairs()
 	_table()
 	give([])
 	print("RESULT fails=%d" % fails)
@@ -310,6 +314,7 @@ func _lance() -> void:
 		brk = maxi(brk, lampfire_bolts(1).size())
 	check(brk == Tuning.kl_breaking_count, "Breaking: at its end it bursts into %d Lampfire bolts (%d)" % [Tuning.kl_breaking_count, brk])
 	clear(); reset_keeper(); give(["held_lance"])
+	ln.hold(1.0 / 60.0, false)   # its frame clock is fresh (a stale one counts as "the world was paused")
 	check(ln.held(), "Held lance: Lance becomes a held skill")
 	for i in int(Tuning.kl_held_lance_time * 60.0) + 4:
 		ln.hold(1.0 / 60.0, true)
@@ -318,6 +323,7 @@ func _lance() -> void:
 	lb = _lance_bolts()
 	check(lb.size() == 1 and lb[0].charged and lb[0].pierce > 100 and is_equal_approx(lb[0].mult, Tuning.kl_held_lance_mult), "let go: double damage, through everything")
 	clear(); reset_keeper()
+	ln.hold(1.0 / 60.0, false)
 	ln.hold(1.0 / 60.0, true)
 	ln.hold(1.0 / 60.0, false)
 	lb = _lance_bolts()
@@ -486,3 +492,239 @@ func _table() -> void:
 		if not SkillTree.exists(SkillTree.CARD_TO_PICK[card]):
 			cards_ok = false
 	check(cards_ok and SkillTree.info("catching").skill == "lampfire" and SkillTree.info("spill").skill == "hearth_ring" and SkillTree.info("steady_hand").skill == "beam", "every old card has a home (GAME_PLAN §4.3)")
+
+# --- Review fixes (M2) ---------------------------------------------------------------------------------
+
+## Blink never crosses rock or the closed climb stones (the one-way Ridge route): it stops before the first blocking
+## tile on its path.
+func _blink_walls() -> void:
+	clear(); reset_keeper(); give(["blink"])
+	var stones: ClimbStones = main.climb_stones
+	Progress.cleared.erase(ClimbStones.ID)
+	var from: Vector2 = fog.tile_center(Vector2i(47, 86))
+	check(stones != null and not stones.is_open and fog.is_solid_at(fog.tile_center(Vector2i(47, 85))), "the climb stones are closed above tile (47, 86)")
+	player.global_position = from
+	player.reset_physics_interpolation()
+	c.aim_override = Vector2.UP
+	c.dash(Vector2.UP)
+	await frames(3)
+	var end_tile: Vector2i = fog.tile_of(player.global_position)
+	check(end_tile.y >= 86 and not stones.is_open and not Progress.cleared.has(ClimbStones.ID), "Blink north at the closed climb stones stops below them (tile %s); they stay closed" % str(end_tile))
+	# Plain rock: an open tile with a 1-3 tile wall next to it (any of 4 ways) and open ground beyond, inside a Blink.
+	var found := false
+	var crossed := 0
+	var tested := 0
+	for ty in range(90, 196):
+		for tx in range(2, 110):
+			var t := Vector2i(tx, ty)
+			if not fog.in_bounds(t) or fog.solid[fog.idx(t)] == 1:
+				continue
+			for dv in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0)]:
+				var w1: Vector2i = t + dv
+				if not fog.in_bounds(w1) or fog.solid[fog.idx(w1)] == 0:
+					continue
+				var beyond := -1
+				for k in range(2, 5):
+					var q: Vector2i = t + dv * k
+					if fog.in_bounds(q) and fog.solid[fog.idx(q)] == 0:
+						beyond = k
+						break
+				if beyond < 0:
+					continue
+				var p0: Vector2 = fog.tile_center(t)
+				var e: Vector2 = c.blink_end(p0, Vector2(dv), Tuning.kl_blink_dist)
+				tested += 1
+				if fog.tile_of(e) != t:
+					crossed += 1
+				if not found and dv == Vector2i(0, -1):
+					found = true
+					player.global_position = p0
+					player.reset_physics_interpolation()
+					c.dash_cd = 0.0
+					c.dash(Vector2.UP)
+					await frames(2)
+					check(fog.tile_of(player.global_position) == t, "Blink north into a %d-tile rock wall with open ground beyond stops at the wall (tile %s)" % [beyond - 1, str(fog.tile_of(player.global_position))])
+	check(found and tested >= 10 and crossed == 0, "at %d thin walls (1-3 tiles) with ground beyond, no Blink crosses the rock (%d did)" % [tested, crossed])
+	# A sweep: from open tiles in every direction, no Blink path touches a solid tile.
+	var bad := 0
+	var n := 0
+	for ty in range(96, 190, 7):
+		for tx in range(6, 100, 7):
+			var t := Vector2i(tx, ty)
+			if fog.solid[fog.idx(t)] == 1:
+				continue
+			var p0: Vector2 = fog.tile_center(t)
+			for i in 8:
+				var d := Vector2.from_angle(TAU * i / 8.0)
+				var e: Vector2 = c.blink_end(p0, d, Tuning.kl_blink_dist)
+				n += 1
+				var steps := int(p0.distance_to(e) / 4.0)
+				for k in steps + 1:
+					if fog.is_solid_at(p0.lerp(e, float(k) / maxf(1.0, float(steps)))):
+						bad += 1
+						break
+	check(n > 500 and bad == 0, "a sweep of %d Blinks across the Hollow: none passes through rock (%d)" % [n, bad])
+	c.aim_override = Vector2.RIGHT
+	clear()
+	await frames(2)
+
+## Scatter adds damage to a group: its sparks fly on through the pack behind the foe hit, not back at the keeper.
+func _scatter_group() -> void:
+	var lf: LampfireSkill = c.skill("lampfire")
+	var totals := []
+	var backs := []
+	for picks in [[], ["scatter"]]:
+		clear(); reset_keeper(); give(picks)
+		var front := dummy(spot + Vector2(80, -10), 100.0)
+		var pack := [front]
+		for i in 5:
+			pack.append(dummy(spot + Vector2(80, -10) + Vector2.from_angle(deg_to_rad(-30.0 + 15.0 * i)) * 80.0, 100.0))
+		await frames(2)
+		var t0 := FireBolts.inst.hits
+		lf.fire()
+		var back := 0
+		for k in 50:
+			await frames(1)
+			for b in lampfire_bolts(1):
+				if b.dir.x < -0.1:
+					back += 1
+		var sum := 0.0
+		for w in pack:
+			sum += 100.0 - w.hp
+		totals.append(sum)
+		backs.append(back)
+	var spark := Tuning.kl_scatter_dmg * Progress.dmg_mult()
+	print("    one bolt into a pack of 6: %.1f damage, %.1f with Scatter" % [totals[0], totals[1]])
+	check(totals[1] >= totals[0] + 2.0 * spark - 0.01, "Scatter adds damage to a group: at least two sparks land on the pack behind (%.1f -> %.1f)" % [totals[0], totals[1]])
+	check(backs[1] == 0, "and none flies back toward the keeper")
+	clear()
+	await frames(2)
+
+## A Held lance released while the pack is open (the world paused) doesn't fire when play resumes.
+func _held_lance_menu() -> void:
+	var ln: LanceSkill = c.skill("lance")
+	clear(); reset_keeper(); give(["held_lance"])
+	ln.hold(1.0 / 60.0, false)
+	for i in 10:
+		ln.hold(1.0 / 60.0, true)
+	check(ln.charge_t > 0.0, "a Held lance is charging")
+	Tuning.ui_open = true   # the pack opens: the keeper's frame passes false while it is up
+	ln.hold(1.0 / 60.0, false)
+	Tuning.ui_open = false
+	await frames(5)
+	ln.hold(1.0 / 60.0, false)
+	await frames(2)
+	check(_lance_bolts().is_empty() and ln.charge_t == 0.0, "released inside a menu, it is dropped: no Lance on resume")
+	ln.hold(1.0 / 60.0, true)
+	await frames(1)
+	for i in 3:
+		ln.hold(1.0 / 60.0, true)
+	await frames(10)   # the world paused for a moment (no hold calls)
+	ln.hold(1.0 / 60.0, false)
+	check(_lance_bolts().is_empty(), "nor after a pause in the middle of a hold")
+	clear()
+	await frames(2)
+
+# --- Every pick still works next to the others (review: Fire line cancelled Undertow) ---------------------
+
+## One scenario per skill that gives every pick of that skill a chance to act; SkillTree.fired counts each pick's
+## own effect. For each tier-2 x tier-3 pair (with a tier-1 pick too), all three must act.
+func _scenario(skill: String) -> void:
+	match skill:
+		"lampfire":
+			var lf: LampfireSkill = c.skill("lampfire")
+			lf.fired = 0
+			dummy(spot + Vector2(80, -10), 1.0)          # dies to the first hit (Catching), Needle passes it
+			dummy(spot + Vector2(120, -6), 100.0)        # Catching's neighbour, the bolt's second foe
+			dummy(spot + Vector2(150, 40), 100.0)        # Skip's next foe
+			dummy(spot + Vector2(200, -10), 100.0)
+			dummy(spot + Vector2(200, 50), 100.0)
+			await frames(2)
+			for i in Tuning.kl_comet_every:
+				lf.fire()
+				await frames(8)
+			await frames(30)
+		"fireglobe":
+			var to := spot + Vector2(180, 0)
+			dummy(to + Vector2(10, 0), 100.0)
+			dummy(to + Vector2(Tuning.kl_fireglobe_radius + 30.0, 0), 100.0)
+			dummy(to + Vector2(0, 40), 100.0)
+			await frames(2)
+			bolts.throw_globe(spot + Vector2(0, -10), to)
+			await frames(int((Tuning.kl_fireglobe_flight + Tuning.kl_second_globe_delay + 0.6) * 60.0))
+		"lance":
+			var ln: LanceSkill = c.skill("lance")
+			dummy(spot + Vector2(80, -10), 100.0, 2.0)
+			dummy(spot + Vector2(140, -10), 100.0)
+			await frames(2)
+			if Progress.has_pick("held_lance"):
+				ln.hold(1.0 / 60.0, false)
+				for i in int(Tuning.kl_held_lance_time * 60.0) + 4:
+					ln.hold(1.0 / 60.0, true)
+				ln.hold(1.0 / 60.0, false)
+			else:
+				ln.press()
+			await frames(int(Tuning.kl_lance_range / Tuning.kl_lance_speed * 60.0) * 2 + 30)
+		"dash":
+			c.aim_override = Vector2.RIGHT
+			c.update_aim(Vector2.ZERO)
+			c.dash_charges = 2
+			dummy(spot + Vector2(-50, 0), 100.0)
+			dummy(spot + Vector2(-Tuning.kl_dash_dist - 20.0, 0), 100.0)
+			dummy(spot + Vector2(-Tuning.kl_blink_dist - 20.0, 0), 100.0)
+			await frames(2)
+			await _dash_once(Vector2.LEFT)
+			await frames(2)
+		"beam":
+			dummy(spot + Vector2(80, -10), 1000.0, 50.0)
+			c.aim = Vector2.RIGHT
+			c.beaming = true
+			c.skill("fireglobe").cd = 4.0
+			c.skill("beam").cost()
+			c.beam_walk_mult()
+			for i in 90:
+				c.burn_along_beam(1.0 / 60.0)
+			c.beaming = false
+		"hearth_ring":
+			var hr: HearthRingSkill = c.skill("hearth_ring")
+			player.warmth = 50.0
+			dummy(spot + Vector2(60, 0), 100.0, 5.0)
+			dummy(spot + Vector2(-60, 0), 100.0)
+			dummy(spot + Vector2(180, 0), 100.0)
+			await frames(1)
+			hr.ring()
+			for i in int(Tuning.kl_rising_ring_time * 60.0) + 2:
+				hr.tick(1.0 / 60.0)
+			await frames(5)
+
+func _pick_pairs() -> void:
+	var runs := 0
+	var missing := []
+	for skill in SkillTree.ORDER:
+		var t1: Array = SkillTree.tier_picks(skill, 0)
+		var k := 0
+		for a in SkillTree.tier_picks(skill, 1):
+			for b in SkillTree.tier_picks(skill, 2):
+				var one: String = t1[k % t1.size()]
+				k += 1
+				clear(); reset_keeper()
+				var ids := [one, a, b]
+				if skill == "lance":
+					Progress.lance_given = true
+				give(ids)
+				SkillTree.fired.clear()
+				await _scenario(skill)
+				runs += 1
+				for id in ids:
+					if int(SkillTree.fired.get(id, 0)) <= 0:
+						missing.append("%s (with %s)" % [id, str(ids)])
+	print("    pick sets tried: %d; a pick that didn't act: %s" % [runs, str(missing)])
+	check(runs == 36 and missing.is_empty(), "every tier-2 x tier-3 pair of every skill (with a tier-1 pick): each pick still does its own thing (%d sets; failed: %s)" % [runs, str(missing)])
+	clear(); reset_keeper()
+	# The pair the review found: Fire line with Undertow pulls.
+	give(["fire_line", "undertow"])
+	var w := dummy(spot + Vector2(180, 0) + Vector2(Tuning.kl_fireglobe_radius + 30.0, 0))
+	await _land_one(spot + Vector2(180, 0))
+	check(w._knock_t > 0.0 and w._knock_v.x < 0.0, "Fire line + Undertow: the blast still pulls foes in")
+	clear()
+	await frames(2)

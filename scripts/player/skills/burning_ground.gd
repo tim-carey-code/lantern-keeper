@@ -49,6 +49,7 @@ func _physics_process(delta: float) -> void:
 			f.hurt(dps * Progress.dmg_mult() * delta, false, "ground")
 			if slick and is_instance_valid(f) and not f._dead:
 				f.slow(Tuning.kl_slick_slow, 0.25)
+				SkillTree.mark("slick")
 
 ## Foes it is burning now (for tests).
 func burning() -> Array:

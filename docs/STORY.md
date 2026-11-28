@@ -909,7 +909,7 @@ Every player-facing text M2 added or changed, copied **from the code** on `proto
 | Skill | Tier | Pick | Text (DRAFT) |
 |---|---|---|---|
 | Lampfire | 1 | Lingering burn | A foe your bolt hits burns for 2 s. |
-| Lampfire | 1 | Scatter | Each burst throws 3 sparks around it. |
+| Lampfire | 1 | Scatter | Each burst throws 3 sparks on through the pack. (Was "...3 sparks around it.": the M2 review fix makes them fly on.) |
 | Lampfire | 2 | Twin | Two bolts in a V, each a little weaker. |
 | Lampfire | 2 | Skip | A bolt that hits jumps on to one more foe nearby. |
 | Lampfire | 3 | Catching | A kill sets the nearest foe within 60 px alight. |
@@ -992,6 +992,9 @@ The lines never name a skill (owner, 2026-11-28: "the skills coming up for the B
 | A pick given back / all reset | %s: given back. · Every pick is back as points. |
 | The Beam and Hearth ring | (optional) after the name; on the tree: (optional: it has a tree only while it is kept) |
 | The dash's tree, under its name | A quick step. Nothing can chill you mid-dash. |
+| Under the tree: the focused pick (review fix: the buttons show titles only) | %s: %s (its title and text), then "(taken)", "(taken: A gives it back)" at rest, or why it can't be taken |
+| Under the tree, on a skill | Right: its picks. (keyboard: Right / D: its picks.) |
+| Under the tree, on the reset row | Give back every pick (free while you rest here). |
 | Hints (pad) | D-pad: move    A: choose    B: back / close · Left / Right: slot    A: put it there    B: back |
 | Hints (keyboard) | Arrows / WASD: move    E or click: choose    K / Esc: close · Left / Right: slot    E: put it there    Esc: back |
 | Why a pick can't be taken (`systems/progress.gd`) | Learn %s first (level %d). · Opens at level %d. · Opens when the Ashbrood falls. · One pick a tier. Rest at a lit WayLamp to change it. · No skill points. You get one each level. · You have it. · Rest at a lit WayLamp to change your picks. · No picks to reset. |
@@ -1015,4 +1018,5 @@ Swift · Biting cold · Bursting · Thick shell · Lightless (two on one line: "
 | Level 2 toast (§14.3) | Lance takes %s. %s is in your pack, on the Skills tab (%s). | ...is in your Skills list (%s). |
 | The Beam hint (§14.3) | The Beam is in your pack, on the Skills tab ([skills]). | The Beam is in your Skills list ([skills]). |
 | Rest toast (§14.4) | ...and your picks can be changed here (%s). | (ended at "are full.") |
+| HUD key reminder (`scripts/ui/hud.gd`) | View pack · I pack (keys) | View journal |
 | Controls list (`controls_text()`) | The pack: Skills, Journal, Map · Skills tab · Journal: J (pad: View, then RB) | Skills · Journal: View |

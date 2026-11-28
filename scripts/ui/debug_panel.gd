@@ -263,6 +263,7 @@ const ROWS := [
 	["kl_scatter_count", "Scatter count", 0.0, 9.0, 1.0],
 	["kl_scatter_dmg", "Scatter dmg", 0.0, 3.0, 0.05],
 	["kl_scatter_range", "Scatter range", 0.0, 210.0, 5.0],
+	["kl_scatter_spread_deg", "Scatter fan (deg each side)", 0.0, 90.0, 5.0],
 	["kl_twin_spread_deg", "Twin spread deg", 0.0, 24.0, 0.5],
 	["kl_twin_mult", "Twin mult", 0.0, 1.9500000000000002, 0.05],
 	["kl_skip_range", "Skip range", 0.0, 420.0, 5.0],

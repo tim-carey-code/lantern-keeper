@@ -288,6 +288,12 @@ var doused := 0                  # lamps it has snuffed (tests)
 func _tick_lightless(delta: float) -> void:
 	if not lightless:
 		return
+	# Review fix (M2): a lamp that went out (or was picked up) during its flicker loses its countdown, so it isn't
+	# snuffed the moment it relights later.
+	for id in _dousing.keys():
+		var lamp = instance_from_id(id)
+		if lamp == null or not is_instance_valid(lamp) or not lamp.is_inside_tree() or not lamp.is_lit():
+			_dousing.erase(id)
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if l.kind == "mirror" or not l.is_lit():
 			continue

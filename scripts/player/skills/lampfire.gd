@@ -45,7 +45,10 @@ func fire() -> void:
 	var from := muzzle(dir)
 	fired += 1
 	var big := Progress.has_pick("comet") and Tuning.kl_comet_every > 0 and fired % Tuning.kl_comet_every == 0
+	if big:
+		SkillTree.mark("comet")
 	if Progress.has_pick("twin"):
+		SkillTree.mark("twin")
 		for side in [-1.0, 1.0]:
 			var b: FireBolts.Bolt = bolts.fire_lampfire(from, dir.rotated(deg_to_rad(Tuning.kl_twin_spread_deg) * side))
 			b.mult = Tuning.kl_twin_mult

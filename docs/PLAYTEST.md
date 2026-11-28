@@ -20,10 +20,13 @@
 11. **An elite shows its affix** (owner check): the four level-4 elite packs in the north each have one, on a line above the name: Swift, Thick shell, Bursting (two Wicklings rise where it dies, after cold glows) and Lightless (lamps don't light it, and a lamp it passes flickers cold and goes out for 4 s).
 12. **Beacon and Ember rest** (Fireglobe and dash tier 3): their light counts as lit, so foes in it take full lit damage.
 
+**Watch this** (from the M2 review): **Twin** throws two bolts at x0.65 each, but each still makes a full splash and gives full charge. Into a pack that is about **1.7x** a plain bolt's damage, and about **2.7x with Scatter**; on one foe it is x1.3. Does Twin feel too strong against packs? If so, the fix is to scale its splash too (`kl_twin_mult` and the splash, in the tuning panel).
+
 **Questions**
 
 | Question | Your answer |
 |---|---|
+| Twin against packs: too strong? | |
 | The picks: which feel good, which are dull, which are broken? | |
 | Are the pick numbers right (Twin x0.65, Comet every 4th, Held lance 0.6 s)? | |
 | Respec at rest: free and unlimited, right? | |
@@ -33,7 +36,6 @@
 | Is the ember window in phase 3 (hit it over the bowl) easy to find? | |
 | The catch distance: does catching still feel worth doing? | |
 | Affixes: readable? Lightless snuffing lamps: fun or annoying? | |
-| Keep the Beam and Hearth ring (they now have trees)? | |
 | The DRAFT texts in STORY §17: keep, change or cut? | |
 
 **Your answers to steps 1-12** (pass, or what went wrong)

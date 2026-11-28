@@ -155,6 +155,7 @@ func fire_side_bolt(from: Vector2, dir: Vector2) -> Bolt:
 func fire_lance(from: Vector2, dir: Vector2, charged: bool = false) -> Bolt:
 	var b := _launch(LANCE, from, dir, Tuning.kl_lance_speed, Tuning.kl_lance_range, Tuning.kl_lance_hit_radius, Tuning.kl_lance_pierce)
 	if charged:
+		SkillTree.mark("held_lance")
 		b.charged = true
 		b.mult = Tuning.kl_held_lance_mult
 		b.pierce = 999
@@ -164,6 +165,7 @@ func fire_lance(from: Vector2, dir: Vector2, charged: bool = false) -> Bolt:
 func throw_globe(from: Vector2, to: Vector2) -> Bolt:
 	var b := _globe(from, to, Tuning.kl_fireglobe_flight)
 	if Progress.has_pick("second_globe"):
+		SkillTree.mark("second_globe")
 		var s := _globe(from, to + (to - from).normalized().orthogonal() * 18.0, Tuning.kl_fireglobe_flight)
 		s.small = true
 		s.delay = Tuning.kl_second_globe_delay
@@ -352,6 +354,7 @@ func _lampfire_hit(f: Foe, at: Vector2, dir: Vector2, dmg: float = -1.0, b: Bolt
 			k.lamp_charge = minf(Progress.charge_max(), k.lamp_charge + Tuning.kl_lampfire_charge)
 		if Progress.has_pick("lingering_burn") and is_instance_valid(f) and not f._dead:
 			f.ignite(Tuning.kl_pick_burn_dps * Progress.dmg_mult(), Tuning.kl_pick_burn_time)
+			SkillTree.mark("lingering_burn")
 	for o in area(at, splash):
 		if o != f:
 			o.hurt(Tuning.kl_lampfire_splash_dmg * (Tuning.kl_comet_mult if b and b.big else 1.0) * Progress.dmg_mult(), false, "splash")
@@ -360,13 +363,18 @@ func _lampfire_hit(f: Foe, at: Vector2, dir: Vector2, dmg: float = -1.0, b: Bolt
 	if b == null or b.spark:
 		return
 	if Progress.has_pick("scatter"):
-		for i in Tuning.kl_scatter_count:
-			var a := dir.angle() + PI + (float(i) - float(Tuning.kl_scatter_count - 1) * 0.5) * 1.1
+		# Review fix (M2): the sparks fly on, in a fan through and around the pack behind the hit (they used to fly
+		# back toward the keeper). They skip the foe the bolt hit.
+		var n_sp := Tuning.kl_scatter_count
+		for i in n_sp:
+			var a := dir.angle() + (float(i) - float(n_sp - 1) * 0.5) * deg_to_rad(Tuning.kl_scatter_spread_deg)
 			var sp := _side_bolt(at, Vector2.from_angle(a), Tuning.kl_scatter_range, Tuning.kl_scatter_dmg)
-			sp.hit_ids = b.hit_ids.duplicate()   # the sparks fly off the foe the bolt hit, not back into it
+			sp.hit_ids = b.hit_ids.duplicate()
+		SkillTree.mark("scatter")
 	if b.skips > 0 and f:
 		var next := _nearest_foe(at, Tuning.kl_skip_range, b.hit_ids, f)
 		if next:
+			SkillTree.mark("skip")
 			var sb := _side_bolt(at, (next.global_position - at).normalized(), Tuning.kl_skip_range + 20.0, Tuning.kl_lampfire_dmg * Tuning.kl_skip_mult)
 			sb.hit_ids = b.hit_ids.duplicate()
 			sb.mult = m / (Tuning.kl_comet_mult if b.big else 1.0)
@@ -380,6 +388,8 @@ func _needle_pass(f: Foe, at: Vector2, b: Bolt) -> void:
 		k.lamp_charge = minf(Progress.charge_max(), k.lamp_charge + Tuning.kl_lampfire_charge)
 	if Progress.has_pick("lingering_burn") and is_instance_valid(f) and not f._dead:
 		f.ignite(Tuning.kl_pick_burn_dps * Progress.dmg_mult(), Tuning.kl_pick_burn_time)
+		SkillTree.mark("lingering_burn")
+	SkillTree.mark("needle")
 	FireFx.impact(at, b.dir, 8.0, false)
 
 ## The nearest living foe within `radius` of a point, skipping ones in `skip` (instance ids) and `not_this`.
@@ -403,7 +413,9 @@ func _lance_hit(f: Foe, at: Vector2, dir: Vector2, b: Bolt = null) -> void:
 	f.hurt(Tuning.kl_lance_dmg * m * Progress.dmg_mult(), false, "lance")
 	if Progress.has_pick("brand") and is_instance_valid(f) and not f._dead:
 		Foe.branded = f
+		SkillTree.mark("brand")
 	if b and not b.child and Progress.has_pick("forked") and b.hit_ids.size() == 1:
+		SkillTree.mark("forked")
 		for side in [-1.0, 1.0]:
 			var fb := _launch(LANCE, at, dir.rotated(deg_to_rad(Tuning.kl_fork_spread_deg) * side), Tuning.kl_lance_speed, Tuning.kl_fork_range, Tuning.kl_lance_hit_radius, 1)
 			fb.child = true
@@ -429,6 +441,7 @@ func _lance_turn(b: Bolt) -> void:
 	b.hit_ids.clear()
 	b.pierce = maxi(b.pierce, Tuning.kl_lance_pierce)
 	b.flames = []
+	SkillTree.mark("returning")
 	FireFx.impact(b.pos, -b.dir, 8.0, false)
 
 ## The Lance's flight ends (its reach, its last pierce, or rock): Burning line and Breaking.
@@ -445,7 +458,9 @@ func _lance_end(b: Bolt, at: Vector2) -> void:
 		seam.dps = Tuning.kl_burning_line_dps
 		seam.arc = false
 		get_parent().add_child(seam)
+		SkillTree.mark("burning_line")
 	if Progress.has_pick("breaking"):
+		SkillTree.mark("breaking")
 		for i in Tuning.kl_breaking_count:
 			var off := (float(i) - float(Tuning.kl_breaking_count - 1) * 0.5) * deg_to_rad(Tuning.kl_breaking_spread_deg)
 			var sb := _side_bolt(at, b.dir.rotated(off), Tuning.kl_lampfire_range * 0.6, Tuning.kl_lampfire_dmg)
@@ -453,6 +468,7 @@ func _lance_end(b: Bolt, at: Vector2) -> void:
 
 ## Shatter (Foe.hurt calls it): a shell a Lance broke bursts for kl_shatter_dmg around the foe (not the foe itself).
 func shatter(at: Vector2, from: Foe) -> void:
+	SkillTree.mark("shatter")
 	for o in area(at, Tuning.kl_shatter_radius):
 		if o != from:
 			o.hurt(Tuning.kl_shatter_dmg * Progress.dmg_mult(), false, "splash")
@@ -608,7 +624,19 @@ func _globe_burst(at: Vector2, dir: Vector2 = Vector2.RIGHT) -> int:
 			var g = w.guardian()
 			if g and g.stir_ember():
 				embers += 1
+	if Progress.has_pick("undertow"):
+		# Undertow: foes near the blast are pulled in before it bursts. Review fix (M2): before Fire line's bursts too
+		# (Fire line used to return first, so the pair lost the pull).
+		var pulled := false
+		for f in area(at, Tuning.kl_fireglobe_radius * Tuning.kl_undertow_reach):
+			var v: Vector2 = at - f.global_position
+			if v.length() > 4.0:
+				f.knock(v.normalized() * minf(Tuning.kl_undertow_pull, v.length()))
+				pulled = true
+		if pulled:
+			SkillTree.mark("undertow")
 	if Progress.has_pick("fire_line"):
+		SkillTree.mark("fire_line")
 		# Fire line: the globe lands as a line of small bursts across the aim, instead of one big one.
 		var side := dir.orthogonal()
 		var c := Tuning.kl_fire_line_count
@@ -620,12 +648,6 @@ func _globe_burst(at: Vector2, dir: Vector2 = Vector2.RIGHT) -> int:
 		if kk and kk.has_method("shake"):
 			kk.shake(Tuning.kl_shake_globe)
 		return n_line
-	if Progress.has_pick("undertow"):
-		# Undertow: foes near the blast are pulled in before it bursts.
-		for f in area(at, Tuning.kl_fireglobe_radius * Tuning.kl_undertow_reach):
-			var v: Vector2 = at - f.global_position
-			if v.length() > 4.0:
-				f.knock(v.normalized() * minf(Tuning.kl_undertow_pull, v.length()))
 	var n := 0
 	for f in area(at, Tuning.kl_fireglobe_radius):
 		f.hurt(Tuning.kl_fireglobe_dmg * Progress.dmg_mult(), false, "fireglobe")
@@ -657,11 +679,13 @@ func _ground(at: Vector2, radius: float, life: float, dps: float = -1.0) -> Burn
 ## Picks that add to a full globe's landing: Skipping globe (a hop on), Cluster (4 small globes), Beacon (light).
 func _globe_picks(at: Vector2, dir: Vector2) -> void:
 	if Progress.has_pick("skipping_globe"):
+		SkillTree.mark("skipping_globe")
 		var s := _globe(at, at + dir * Tuning.kl_skip_globe_dist, Tuning.kl_skip_globe_flight)
 		s.small = true
 		s.g_mult = Tuning.kl_skip_globe_mult
 		s.g_radius = Tuning.kl_fireglobe_radius * Tuning.kl_skip_globe_mult
 	if Progress.has_pick("cluster"):
+		SkillTree.mark("cluster")
 		for i in Tuning.kl_cluster_count:
 			var a := dir.angle() + TAU * float(i) / float(maxi(1, Tuning.kl_cluster_count)) + PI / 4.0
 			var c := _globe(at, at + Vector2.from_angle(a) * Tuning.kl_cluster_dist, 0.3)
@@ -669,6 +693,7 @@ func _globe_picks(at: Vector2, dir: Vector2) -> void:
 			c.g_mult = Tuning.kl_cluster_dmg / maxf(Tuning.kl_fireglobe_dmg, 0.01)
 			c.g_radius = Tuning.kl_cluster_radius
 	if Progress.has_pick("beacon"):
+		SkillTree.mark("beacon")
 		var l := KeeperLight.new()
 		l.kind = "beacon"
 		l.radius = Tuning.kl_beacon_radius

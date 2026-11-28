@@ -15,7 +15,7 @@ const ORDER := ["lampfire", "fireglobe", "lance", "dash", "beam", "hearth_ring"]
 const TREES := {
 	"lampfire": [
 		[["lingering_burn", "Lingering burn", "A foe your bolt hits burns for 2 s."],
-		 ["scatter", "Scatter", "Each burst throws 3 sparks around it."]],
+		 ["scatter", "Scatter", "Each burst throws 3 sparks on through the pack."]],
 		[["twin", "Twin", "Two bolts in a V, each a little weaker."],
 		 ["skip", "Skip", "A bolt that hits jumps on to one more foe nearby."]],
 		[["catching", "Catching", "A kill sets the nearest foe within 60 px alight."],
@@ -79,6 +79,12 @@ const CARD_TO_PICK := {
 const CARD_LINES := ["kindled_kills", "hot_core", "lee"]
 
 static var _index := {}
+## How often each pick's own effect has happened (tests: every pick still works next to the others). Each effect
+## site calls mark(); it is a dictionary bump, only on a pick's own path.
+static var fired := {}
+
+static func mark(id: String) -> void:
+	fired[id] = int(fired.get(id, 0)) + 1
 
 static func _build_index() -> void:
 	if not _index.is_empty():

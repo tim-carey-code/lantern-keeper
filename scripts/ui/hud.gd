@@ -317,9 +317,9 @@ func _process(delta: float) -> void:
 	# Key reminder: fades after the first minute (and briefly returns when you switch device).
 	_keys_t = maxf(0.0, _keys_t - delta)
 	if InputHint.pad:
-		keys.text = "View journal    Start pause\nD-pad up map    down skills\nD-pad left / right lamps"
+		keys.text = "View pack    Start pause\nD-pad up map    down skills\nD-pad left / right lamps"
 	else:
-		keys.text = "%s journal    %s map\n%s lamps    %s skills\n%s pause" % [InputHint.key("journal"), InputHint.key("map"), InputHint.key("build_menu"), InputHint.key("skills"), InputHint.key("pause")]
+		keys.text = "%s pack    %s journal    %s map\n%s lamps    %s skills\n%s pause" % [InputHint.key("pack"), InputHint.key("journal"), InputHint.key("map"), InputHint.key("build_menu"), InputHint.key("skills"), InputHint.key("pause")]
 	keys.modulate.a = clampf(_keys_t / 3.0, 0.0, 0.8)
 
 ## What the lamp pips show (M1c): [slots, used, replant 0..1 still to wait]. Public for tests and captures.

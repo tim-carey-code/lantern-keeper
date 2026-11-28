@@ -245,11 +245,12 @@ func _setup() -> void:
 				main.get_node("Lanterns").add_child(l)
 				placed += 1
 	lanterns = placed
-	# Foes burned by the lanterns give wick, and the level-up cards would pause the world for the rest of the run
-	# (the bench measured a paused world from about frame 100 before this): no cards in the bench.
-	var cards = main.get_node("HUD").level_up_screen
-	if Progress.level_up.is_connected(cards._on_level_up):
-		Progress.level_up.disconnect(cards._on_level_up)
+	# Foes burned by the lanterns give wick. Since M2 a level-up pauses nothing (no card screen; it only adds a line
+	# to the tip strip), so this just keeps those lines and their chime out of the run. The bench still reports any
+	# paused frames.
+	var lines = main.get_node("HUD").level_up_screen
+	if Progress.level_up.is_connected(lines._on_level_up):
+		Progress.level_up.disconnect(lines._on_level_up)
 	_setup_range()
 	_keep_foes()
 	if tells > 0:

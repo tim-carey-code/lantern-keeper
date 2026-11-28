@@ -781,6 +781,13 @@ func _m2_rules() -> void:
 	player.global_position = hollow.global_position + Vector2(0, 40)
 	player.reset_physics_interpolation()
 	await _frames(2)
+	var away: Vector2 = player.global_position
+	player.global_position = hollow.global_position + Vector2(Tuning.kl_respec_radius + 300.0, 40)
+	player.reset_physics_interpolation()
+	check(player.rest() == "" and Progress.respec_at == Vector2.INF and not Progress.respec_open(), "resting with no lit WayLamp near opens no respec (review fix: no fallback to the keeper's spot)")
+	player.global_position = away
+	player.reset_physics_interpolation()
+	await _frames(2)
 	check(player.rest() == "" and Progress.respec_open(), "resting at the lit WayLamp opens respec")
 	check(Progress.take_pick("scatter") == "" and Progress.has_pick("scatter") and not Progress.has_pick("lingering_burn"), "at rest, another pick in a taken tier swaps in for free")
 	var spent := Progress.points_spent()

@@ -355,6 +355,7 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	if source == "beam":
 		if Progress.has_pick("tight_focus") and shell > 0.0:
 			amount *= Tuning.kl_focus_shell_mult
+			SkillTree.mark("tight_focus")
 	# Lance "Brand" (M2): the next hit (not steady fire, not splash) on the branded foe does more, once.
 	if branded == self and not (source in STEADY) and source in BRANDABLE:
 		amount *= Tuning.kl_brand_mult
@@ -606,6 +607,7 @@ func _die() -> void:
 				closest = other
 		if closest:
 			closest.ignite(Tuning.kl_pick_burn_dps * Progress.dmg_mult(), Tuning.kl_pick_burn_time)
+			SkillTree.mark("catching")
 	_on_death()
 	_drop()
 	queue_free()

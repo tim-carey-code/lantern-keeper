@@ -303,7 +303,17 @@ func beam_segment() -> Array:
 	return [from, from + aim * beam_len()]
 
 func beam_len() -> float:
-	return Tuning.kl_long_throw_len if Progress.has_pick("long_throw") else Tuning.kl_beam_len
+	if Progress.has_pick("long_throw"):
+		SkillTree.mark("long_throw")
+		return Tuning.kl_long_throw_len
+	return Tuning.kl_beam_len
+
+## Walk speed while beaming (player.gd): Steady hand, else kl_beam_walk.
+func beam_walk_mult() -> float:
+	if Progress.has_pick("steady_hand"):
+		SkillTree.mark("steady_hand")
+		return Tuning.kl_steady_hand_walk
+	return Tuning.kl_beam_walk
 
 ## The beams in world space: one, or three with Prism (M2): [[from, to], ...].
 func beam_segments() -> Array:
@@ -312,6 +322,7 @@ func beam_segments() -> Array:
 		return []
 	if not Progress.has_pick("prism"):
 		return [seg]
+	SkillTree.mark("prism")
 	var out := [seg]
 	for side in [-1.0, 1.0]:
 		out.append([seg[0], seg[0] + aim.rotated(deg_to_rad(Tuning.kl_prism_spread_deg) * side) * beam_len()])
@@ -354,6 +365,8 @@ func burn_along_beam(delta: float) -> int:
 		var sear := 1.0
 		if Progress.has_pick("searing") and w == _sear_target:
 			sear += Tuning.kl_searing_max * clampf(_sear_t / maxf(Tuning.kl_searing_ramp, 0.01), 0.0, 1.0)
+			if _sear_t > 0.0:
+				SkillTree.mark("searing")
 		w.hurt(Tuning.kl_beam_dps * each * on * sear * Progress.dmg_mult() * delta, false, "beam")
 		hit += 1
 	if nearest != _sear_target:
@@ -362,6 +375,7 @@ func burn_along_beam(delta: float) -> int:
 	elif nearest != null:
 		_sear_t += delta
 	if hit > 0 and Progress.has_pick("stoking"):
+		SkillTree.mark("stoking")
 		var g: Skill = skills.get("fireglobe")
 		if g:
 			g.cd = maxf(0.0, g.cd - Tuning.kl_stoking_cut * delta)
@@ -390,6 +404,7 @@ func dash(move_dir: Vector2) -> bool:
 		return false
 	k.lamp_charge -= Tuning.kl_dash_cost
 	if double_step:
+		SkillTree.mark("second_step")
 		dash_charges -= 1
 		dash_cd = Tuning.kl_dash_cd if dash_charges == 0 else 0.0
 	else:
@@ -406,15 +421,13 @@ func dash(move_dir: Vector2) -> bool:
 			var off := (float(i) - float(Tuning.kl_recoil_count - 1) * 0.5) * deg_to_rad(Tuning.kl_recoil_spread_deg)
 			FireBolts.inst.fire_side_bolt(from + aim * 12.0, aim.rotated(off))
 		recoils += 1
+		SkillTree.mark("recoil")
 	if Progress.has_pick("blink"):
-		# Blink: the whole step at once, kl_blink_dist, stopping short of rock.
-		var fog := get_tree().get_first_node_in_group("fog_grid") as FogGrid
-		var dist := Tuning.kl_blink_dist
-		var to: Vector2 = k.global_position + dash_dir * dist
-		if fog:
-			while dist > 8.0 and fog.is_solid_at(to):
-				dist -= 8.0
-				to = k.global_position + dash_dir * dist
+		SkillTree.mark("blink")
+		# Blink: the whole step at once, up to kl_blink_dist. Review fix (M2): it never crosses anything a walk couldn't:
+		# it walks the path and stops before the first solid tile (rock, the closed climb stones, any gate drawn as rock),
+		# and a test move against the keeper's collision stops it at any body in the way (the stones' own body, walls).
+		var to: Vector2 = blink_end(k.global_position, dash_dir, Tuning.kl_blink_dist)
 		_dash_path(k.global_position, to)
 		k.global_position = to
 		if k.has_method("reset_physics_interpolation"):
@@ -423,6 +436,29 @@ func dash(move_dir: Vector2) -> bool:
 		blink_dir = dash_dir
 		dash_dir = Vector2.ZERO   # the step is done; the dash's short guard (nothing chills you) still runs
 	return true
+
+## Where a Blink from `from` along `dir` ends: the last open point before the first blocking tile or body.
+func blink_end(from: Vector2, dir: Vector2, dist: float) -> Vector2:
+	var k := keeper()
+	var fog := get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	var d := dir.normalized()
+	var ok := 0.0
+	var step := 4.0
+	var t := step
+	var blocked := false
+	while t <= dist + 0.01:
+		if fog and fog.is_solid_at(from + d * t):
+			blocked = true
+			break
+		ok = t
+		t += step
+	if not blocked and not (fog and fog.is_solid_at(from + d * dist)):
+		ok = dist
+	if k is CharacterBody2D and ok > 0.0:
+		var col: KinematicCollision2D = (k as CharacterBody2D).move_and_collide(d * ok, true, 0.08, true)
+		if col:
+			ok = maxf(0.0, col.get_travel().length() - 1.0)
+	return from + d * ok
 
 var _dash_stunned := {}
 var _dash_ended := true
@@ -440,7 +476,9 @@ func _dash_path(a: Vector2, b: Vector2) -> void:
 			if q.distance_to(f.global_position) <= Tuning.kl_phase_width + f.body_radius():
 				_dash_stunned[f.get_instance_id()] = true
 				f.stun(Tuning.kl_phase_stun)
+				SkillTree.mark("phase")
 	if Progress.has_pick("cinder_trail") and FireBolts.inst:
+		SkillTree.mark("cinder_trail")
 		var p := a
 		if _cinder_at == Vector2.INF or _cinder_at.distance_to(a) > Tuning.kl_cinder_radius * 4.0:
 			_cinder_at = a
@@ -455,6 +493,7 @@ func _dash_end(at: Vector2) -> void:
 	_dash_ended = true
 	_cinder_at = Vector2.INF
 	if Progress.has_pick("flame_step") and FireBolts.inst:
+		SkillTree.mark("flame_step")
 		for f in FireBolts.inst.area(at, Tuning.kl_flame_step_radius):
 			f.hurt(Tuning.kl_flame_step_dmg * Progress.dmg_mult(), false, "ring")
 			if is_instance_valid(f) and not f._dead:
@@ -462,6 +501,7 @@ func _dash_end(at: Vector2) -> void:
 		FireFx.blast(at + Vector2(0, -6), Tuning.kl_flame_step_radius, 0.2)
 		_step_fx = 0.25
 	if Progress.has_pick("ember_rest"):
+		SkillTree.mark("ember_rest")
 		var l := KeeperLight.new()
 		l.kind = "ember_rest"
 		l.radius = Tuning.kl_ember_rest_radius
