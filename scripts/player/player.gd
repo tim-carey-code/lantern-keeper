@@ -34,6 +34,7 @@ var drink_t := 0.0             # > 0: the warm glow of a flask rising up the coa
 var hurt_t := 0.0              # > 0: a hit chilled the keeper (cold flash, flinch frames)
 var frost_t := 0.0             # > 0: a Wickling's touch is draining the keeper (frost edge)
 var _art: FoeSprite             # owner-drawn keeper poses (assets/art/keeper/), when they exist
+const ART_FOOT := 18.0          # where the owner strips' feet go (32 x 32, foot anchor): the Puny keeper's feet
 
 func _ready() -> void:
 	flasks = Tuning.kl_flask_max
@@ -54,7 +55,7 @@ func _ready() -> void:
 	add_child(lamp)
 	_art = FoeSprite.attach(self, "keeper")   # the placeholder swap hook: owner poses replace the Puny frames
 	if _art:
-		_art.position = Vector2(0, -10)
+		_art.position = Vector2(0, ART_FOOT)
 
 
 # --- Hand lamp -------------------------------------------------------------
@@ -522,13 +523,16 @@ func _update_art() -> void:
 	if hurt_t > 0.0:
 		anim = "hurt"
 	elif combat and combat.cast_t > 0.0:
-		anim = {"throw": "cast", "lob": "lob", "thrust": "thrust"}.get(combat.cast_kind, "cast")
+		anim = {"throw": "thrust", "lob": "lob", "thrust": "thrust"}.get(combat.cast_kind, "thrust")
 	elif combat and combat.is_dashing():
 		anim = "dash"
 	elif drink_t > 0.0:
 		anim = "drink"
 	_art.play_anim(anim)
+	# The strips are drawn facing right, so every direction shows a side view (left mirrored); see DECISIONS.
 	_art.flip_h = _facing_left
+	# The same tints as the Puny frames: the cold hit flash and flinch, the frost edge of a Wickling's drain.
+	_art.self_modulate = pose()[2]
 
 func _draw() -> void:
 	if not (_art and _art.showing()):

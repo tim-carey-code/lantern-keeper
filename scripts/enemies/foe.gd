@@ -385,6 +385,7 @@ func _die() -> void:
 		keeper.lamp_charge = minf(Progress.charge_max(), keeper.lamp_charge + Tuning.kl_kindled_kill_charge)
 	if is_inside_tree():
 		FireFx.kill_burst(global_position, body_radius(), big)
+		FoeSprite.leave_remnant(self)   # owner art: its death strip plays where it fell
 	if foe_id != "":
 		if Progress.cleared.has(foe_id):
 			queue_free()

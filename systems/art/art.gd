@@ -50,7 +50,12 @@ const ANIMS := ["idle", "move", "notice", "windup", "attack", "recover", "hurt",
 const LOOPING := ["idle", "move"]
 
 ## The SpriteFrames for a subject (and variant: "brave", "elite" ...), or null when it has no strips.
-## Each animation's metadata: "anchor" ("foot" or "center"), "frame_size", "timed_by" (a Tuning name).
+## Metadata: "anchor" ("foot" or "center"), "frame_size" (the first strip's), "frame_size_<anim>" (each strip's),
+## "timed_by_<anim>" (a Tuning name).
+## Frame size, per strip: a variant's strip uses [variant.<v>] frame_size, a plain strip [<anim>] frame_size, then
+## [sheet] frame_size. A strip is one row, so its height is the frame height: a size that doesn't match the strip's
+## height gives way to a square of that height (so a 24x24 elite strip still slices right under a 16x16 sheet).
+## [variant.<v>] anchor overrides [sheet] anchor. Sections with a dot (variant.*) are not animations.
 static func frames(subject: String, variant: String = "") -> SpriteFrames:
 	var key := subject + "/" + variant
 	if _frames.has(key):
@@ -61,27 +66,36 @@ static func frames(subject: String, variant: String = "") -> SpriteFrames:
 		if not DirAccess.dir_exists_absolute(dir):
 			continue
 		var cfg := ConfigFile.new()
-		var has_cfg := cfg.load(dir + subject + ".frames.cfg") == OK
-		var size: Vector2i = cfg.get_value("sheet", "frame_size", Vector2i(16, 16)) if has_cfg else Vector2i(16, 16)
+		var has_cfg := FileAccess.file_exists(dir + subject + ".frames.cfg") and cfg.load(dir + subject + ".frames.cfg") == OK
+		var vsec := "variant." + variant
+		var anchor := "foot"
+		if has_cfg:
+			anchor = str(cfg.get_value("sheet", "anchor", "foot"))
+			if variant != "" and cfg.has_section_key(vsec, "anchor"):
+				anchor = str(cfg.get_value(vsec, "anchor"))
 		var names: Array = ANIMS.duplicate()
 		if has_cfg:
 			for sec in cfg.get_sections():
-				if sec != "sheet" and not names.has(sec):
+				if sec != "sheet" and not sec.contains(".") and not names.has(sec):
 					names.append(sec)
 		for anim in names:
 			var tex: Texture2D = null
+			var from_variant := false
 			if variant != "":
 				tex = _strip(dir + "%s_%s_%s.png" % [subject, variant, anim])
+				from_variant = tex != null
 			if tex == null:
 				tex = _strip(dir + "%s_%s.png" % [subject, anim])
 			if tex == null:
 				continue
+			var size := strip_frame_size(cfg if has_cfg else null, variant if from_variant else "", anim, tex.get_height())
 			if sf == null:
 				sf = SpriteFrames.new()
 				if sf.has_animation("default"):
 					sf.remove_animation("default")
-				sf.set_meta("anchor", str(cfg.get_value("sheet", "anchor", "foot")) if has_cfg else "foot")
+				sf.set_meta("anchor", anchor)
 				sf.set_meta("frame_size", size)
+			sf.set_meta("frame_size_" + anim, size)
 			sf.add_animation(anim)
 			sf.set_animation_speed(anim, float(cfg.get_value(anim, "fps", 8.0)) if has_cfg else 8.0)
 			sf.set_animation_loop(anim, bool(cfg.get_value(anim, "loop", LOOPING.has(anim))) if has_cfg else LOOPING.has(anim))
@@ -98,9 +112,40 @@ static func frames(subject: String, variant: String = "") -> SpriteFrames:
 	_frames[key] = sf
 	return sf
 
+## One strip's frame size (see frames()): the variant's, the animation's or the sheet's configured size, else a
+## square of the strip's height; a configured size whose height isn't the strip's height gives way to the square.
+static func strip_frame_size(cfg: ConfigFile, variant: String, anim: String, strip_height: int) -> Vector2i:
+	var want: Variant = null
+	if cfg != null:
+		if variant != "" and cfg.has_section_key("variant." + variant, "frame_size"):
+			want = cfg.get_value("variant." + variant, "frame_size")
+		elif cfg.has_section_key(anim, "frame_size"):
+			want = cfg.get_value(anim, "frame_size")
+		elif cfg.has_section_key("sheet", "frame_size"):
+			want = cfg.get_value("sheet", "frame_size")
+	var size := Vector2i(strip_height, strip_height)
+	if want is Vector2i:
+		size = want
+	elif want is Vector2:
+		size = Vector2i(want)
+	elif want is int or want is float:
+		size = Vector2i(int(want), int(want))
+	if size.y != strip_height or size.x <= 0:
+		size = Vector2i(strip_height, strip_height)
+	return size
+
 ## Forget cached frames (tests, or after the owner adds a strip while the game runs).
 static func clear_frames() -> void:
 	_frames.clear()
+
+## A still prop the sprite tool writes beside a subject's strips (Amos's cart: amos/amos_cart.png), from the same
+## roots as frames(); null if it isn't there. Props are not animations, so frames() leaves them out.
+static func prop(subject: String, file: String) -> Texture2D:
+	for root in sprite_roots:
+		var tex := _strip(root + subject + "/" + file + ".png")
+		if tex:
+			return tex
+	return null
 
 ## A strip: imported by Godot if it can, else read from the file (a PNG the editor hasn't imported yet).
 static func _strip(path: String) -> Texture2D:

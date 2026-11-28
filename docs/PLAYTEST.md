@@ -1,5 +1,27 @@
 # Playtests
 
+## Sprites: what to look at (owner, pad)
+
+**Build:** branch `proto/kl-sprites` (M1b plus your six approved sprite samples). Nothing about play changed: same foes, same timings, same save. **Before you pull it into your play folder:** delete your untracked pilot strip `assets/art/creatures/wickling/wickling_timid_idle.png` and its `.import` file there (the branch has the approved one at that path, and git won't overwrite an untracked file).
+
+**What to look at**
+1. **Wicklings:** timid and brave ones look different and turn to face where they drift; eyes widen when one notices you (the pale arc still shows); a timid one stretches out when it flees; a brave one reaches before it drains. A shelled one shows its cracked glass when the shell breaks, then the shell-less body. Kills leave a short dissolve.
+2. **Spitwick:** a tall thin drip that faces you; its wind-up pose shows under the pale aim band.
+3. **Nests:** the nest sprite under its slow blue glow; before a hatch it swells under the filling ring.
+4. **Your keeper:** the new keeper in every direction (a side view, mirrored for left; up and down look sideways too). Thrust for Lampfire and Lance, a raised lamp for the Fireglobe, dash, drink, and the cold flash on a hit.
+5. **The Ashbrood:** in its bowl under the WayLamp (puff wind-up, the release), rising between phases, then its risen pose, the crouch before a dive, the flight and the slump after it lands. Can you still read every circle and path over it?
+6. **The ember:** not changed yet (M1c). It still sits in the cage above the Ashbrood; the sprite's bowl has its own small ember. Tell us if two embers is confusing.
+7. **Amos and his cart** aren't in the world until M4. To see them, ask for the `sprites` capture view (every subject side by side).
+
+**Questions**
+
+| Question | Your answer |
+|---|---|
+| Do the foes still read against the dark and the fog? Any one you lose? | |
+| The keeper as a side view going up and down: fine, or do you want up and down strips? | |
+| Sizes: Wicklings at 16x16 feel small next to the old blobs. Right, or bigger? | |
+| Anything you want to touch up first in Pixelorama? | |
+
 ## M1b: what to try (owner, pad)
 
 **Build:** branch `proto/kl-m1b` (no more tending). Open its worktree in Godot and press F5. **Your save:** a version 5 save (yours is) loads and becomes version 6: you keep your level, wick, action bar, flasks, notes, upgrades and cleared fights; fuel and glass are gone, and old fuel and glass caches you never opened now hold scrap. Once it is saved as version 6, the M1a and readability builds can't load it (they start fresh), so **copy your save slot files first** if you want to go back. For steps 1 and 2, start a **new game** in another slot. Sound as before; nothing new was added. What was built is DESIGN §5, §6, §7.1, §8.1, §9, §12.3; every changed text is STORY §15 (DRAFT).

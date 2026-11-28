@@ -62,6 +62,7 @@ func _process(_delta: float) -> void:
 			w_rim.timid = true
 			w_brave = spawner.spawn_at(lamp.global_position + Vector2(r * 0.7, 0))
 			w_brave.timid = false
+			w_brave._wander_to = lamp.global_position   # it wanders into the light (a random wander could take it out first: a flaky check)
 			w_core = spawner.spawn_at(lamp.global_position + Vector2(10, 0))
 			w_core.timid = false   # (a timid one is pushed straight back out of a healthy lamp's light)
 			player.position = main.start + Vector2(-500, 0)   # far away, in the dark

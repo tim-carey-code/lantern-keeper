@@ -18,7 +18,7 @@ Your list of everything to draw. Update the **Status** column as you go.
 | Rule | Value |
 |---|---|
 | Base grid | **16×16 px** per tile. Tall things are **16×32**. The game shows everything at **2×**. |
-| Palette | **14 colours only**: import `source/palette/lantern-keeper-14.gpl` in Pixelorama's Palettes panel |
+| Palette | **23 colours only** (since 2026-11-27): import `source/palette/lantern-keeper-23.gpl` in Pixelorama's Palettes panel |
 | Background | **Transparent** (no filled background) |
 | Anti-aliasing | None. Hard pixel edges only. |
 | Anchor | Things that stand (lamps, trees) sit on the **bottom-centre** of the canvas. Flat things (piles, tiles) are centred. |
@@ -83,20 +83,22 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 
 ## 3. Creatures
 
-**Where the game looks now** (the swap hook, BUILT in the readability step; layout from ART_DIRECTION §6.2, DRAFT): one PNG strip per animation in a folder per creature, `assets/art/creatures/<subject>/<subject>[_<variant>]_<anim>.png`, plus a small `<subject>.frames.cfg` (frame size; per animation fps and loop). Hooked up so far: the Wickling (`wickling`, variants `timid`, `brave`, `elite`), the Spitwick (`spitwick`) and the keeper's poses (`assets/art/keeper/keeper_<anim>.png`). Animation names: `idle`, `move`, `notice`, `windup`, `attack`, `recover`, `hurt`, `death`, `spawn`; the keeper adds `cast`, `lob`, `thrust`, `dash`, `drink`. Missing ones fall back to `idle`, and with no strips at all the code shape stays. The flat paths in the table below are the older suggestion; the rows change when you approve the folder layout.
+**Where the game looks now** (the swap hook, BUILT in the readability step; layout from ART_DIRECTION §6.2, DRAFT): one PNG strip per animation in a folder per creature, `assets/art/creatures/<subject>/<subject>[_<variant>]_<anim>.png`, plus a small `<subject>.frames.cfg` (frame size; per animation fps and loop). Hooked up: the Wickling (`wickling`, variants `timid`, `brave`, `elite`, `elite_broken`), the Spitwick (`spitwick`), the nest (`nest`), the Ashbrood (`ashbrood`), the keeper's poses (`assets/art/keeper/keeper_<anim>.png`) and Amos (`assets/art/people/amos/`, placed in M4). Animation names: `idle`, `move`, `notice`, `windup`, `attack`, `recover`, `hurt`, `death`, `spawn`; the Wickling adds `flee` and `crack`, the Ashbrood `windup_puff`, `attack_puff`, `windup_dive`, `attack_dive`, `phase_rise`; the keeper `cast`, `lob`, `thrust`, `dash`, `drink`, `kindle`. Missing ones fall back to `idle`, and with no strips at all the code shape stays.
+
+**Sprites step (2026-11-27):** the six approved samples are in (DECISIONS, "the sprites approved"). Rebuild them with `tools/art/make_sprites.sh`; touch up any strip in Pixelorama and save it under the same name: the tool keeps your version. Rows not yet in the new layout keep their older flat paths.
 
 | Status | Item | File | Size | Anchor | Hookup | Notes / your notes |
 |---|---|---|---|---|---|---|
-| 🟨 | Wickling, float | `assets/art/creatures/wickling.png` | 16×16, 4 frames → 64×16 strip | centre | needs hookup | Smoky shadow blob with 2 pale eyes. Drawn by code today. Use `#0b0e1a`/`#141a2e` body, `#a3bcd4` eyes. |
-| ⬜ | Wickling, hurt / burning | same file, row 2 | 16×16, 2 frames | centre | needs hookup | Amber edge. |
+| ✅ | Wickling, timid and brave | `assets/art/creatures/wickling/wickling_{timid,brave}_<anim>.png` | 16×16 strips (idle and move 4 frames) | centre | in (sprites step) | Approved as made by the sprite tool. Timid: idle, move, notice, flee. Brave: idle, move, notice, windup, attack (the reach). Both: hurt, death, spawn. |
+| ✅ | Wickling, hurt / burning | `wickling_<variant>_hurt.png` | 16×16, 2 frames | centre | in (sprites step) | The burning edge stays code-drawn (an amber ring over the sprite). |
 | ⬜ | Soul of the Wick (boss) | `assets/art/creatures/soul_of_the_wick.png` | 48×48, 4–6 frames | centre | needs hookup (M8) | Living darkness coiled around the great lamp. Big pale eyes. Three phases: the coil, every flame, the eyes; then it sinks and a portal opens. |
-| 🟨 | Shelled Wickling (elite) | `assets/art/creatures/wickling_elite.png` | 16×16, 4 frames | centre | needs hookup | Bigger and slower, with a pale shell. Drawn by code today. Its affix shows as text from M2. |
+| ✅ | Shelled Wickling (elite) | `assets/art/creatures/wickling/wickling_elite_<anim>.png`, `wickling_elite_broken_idle.png` | 24×24 strips | centre | in (sprites step) | The shelled body (idle, notice, crack, hurt, death, spawn), then the shell-less body once the shell breaks. The shell ring is still code-drawn over it. |
 | ⬜ | Elite ring (lure above the fog) | `assets/art/fx/elite_ring.png` | 16×16 | centre | needs hookup (M1b) | "One larger pair of eyes with a pale ring" through the fog. |
-| 🟨 | Spitwick | `assets/art/creatures/spitwick.png` | 16×16, 4 frames | centre | needs hookup | The first ranged foe. Keeps its distance and spits after a short tell. Drawn by code today. |
+| ✅ | Spitwick | `assets/art/creatures/spitwick/spitwick_<anim>.png` | 16×32 strips | bottom-centre | in (sprites step) | Idle, windup, attack, recover, notice, hurt, death, spawn. The aim marker stays code-drawn on top. |
 | 🟨 | Spit (Spitwick's shot) | `assets/art/fx/spit.png` | 8×8 or 16×16 | centre | needs hookup | Slow and easy to read. Drawn by code today. |
-| 🟨 | Nest | `assets/art/creatures/nest.png` | 16×16 or 32×32 | centre | needs hookup | Hatches Wicklings. Only a lamp's core burns it. Through fog: "a slow cold blue glow". Drawn by code today. |
+| ✅ | Nest | `assets/art/creatures/nest/nest_<anim>.png` | 32×24 strips (1 frame each, hurt 2) | bottom-centre | in (sprites step) | Idle, windup, attack (the hatch), death, hurt. Its lure glow and the hatch ring stay code-drawn. A slow 4-frame idle pulse would be a nice touch-up. |
 | 🟨 | The Clinker (mid-boss) | `assets/art/creatures/clinker.png` | 32×32, roll frames | centre | needs hookup | A shelled lump that rolls after a tell. Each region gets a variant (mire, downwind, fog), maybe a recolour. Drawn by code today. |
-| 🟨 | The Ashbrood (Hollow guardian) | `assets/art/creatures/ashbrood.png` | 48×48, frames for puff, dive, sit | centre | needs hookup | Sits in the WayLamp's bowl, puffs ash, then dives at lamps. Phase 3 comes in M2. Drawn by code today. |
+| 🔧 | The Ashbrood (Hollow guardian) | `assets/art/creatures/ashbrood/ashbrood_<anim>.png` | 48×48 strips | bottom-centre | in (sprites step) | Idle in the bowl (with its ember), windup_puff, attack_puff, windup_dive, attack_dive, recover (the sit), phase_rise, death, hurt. Approved as is; known: possible grey wing tips in the bowl band (touch up in Pixelorama if you like). Phase 3 comes in M2. |
 | ⬜ | Slowwater (Reedmarsh) | `assets/art/creatures/slowwater.png` | 16×16 or 32×16 | centre | needs hookup (M5) | Hides in unlit water and grabs your feet. |
 | ⬜ | Fenlight (Reedmarsh) | `assets/art/creatures/fenlight.png` | 16×16 | centre | needs hookup (M5) | A false lure that bursts. |
 | ⬜ | The Sump (Reedmarsh guardian) | `assets/art/creatures/sump.png` | 48×48 | centre | needs hookup (M5) | Under water until Reservoir light forces it up. |
@@ -104,8 +106,8 @@ Rule of thumb: **cool blues for the world, ambers only for light, fire and wood.
 | ⬜ | The Galekite (Ridge guardian) | `assets/art/creatures/galekite.png` | 48×48 | centre | needs hookup (M6) | Out of reach until it snags on a Hooded Lamp. |
 | ⬜ | Fogstilt (Lakeshore) | `assets/art/creatures/fogstilt.png` | 16×32 | bottom-centre | needs hookup (M7) | Tall, thickens fog. |
 | ⬜ | The Tallest (Lakeshore guardian) | `assets/art/creatures/tallest.png` | 32×64 | bottom-centre | needs hookup (M7) | The first cut if time runs short. |
-| ✅ | Keeper (player) | `assets/art/puny/keeper.png` | 32×32 frames, 24×8 sheet | — | already in | Puny Characters mage (CC0), recoloured. Uses columns 0-3 (idle, walk) and, since the readability step, 12-14 (the cast raise and thrust), 19 (the hit silhouette) and 20 (the flinch). **Optional:** draw your own keeper with the same sheet layout, or as pose strips in `assets/art/keeper/` (above). |
-| ⬜ | Keeper, cast and dash frames | same sheet, new rows | 32×32 frames | — | needs hookup (M1a) | A throw pose for fireballs and a dash smear. Spare frames in the Puny sheet may do until then. |
+| ✅ | Keeper (player) | `assets/art/keeper/keeper_<anim>.png` | 32×32 strips | bottom-centre | in (sprites step) | Idle, move, thrust, lob, dash, drink, hurt, kindle (kindle not used yet). Faces right; mirrored for left, and a side view for up and down too. **Optional:** `_n` and `_s` strips for up and down. The Puny sheet (`assets/art/puny/keeper.png`) stays as the fallback. |
+| ✅ | Keeper, cast and dash frames | `keeper_thrust.png`, `keeper_lob.png`, `keeper_dash.png` | 32×32 | bottom-centre | in (sprites step) | One key pose each; more frames are a touch-up. |
 
 ## 4. Ground and terrain (Kenney tiles cover these today)
 
@@ -140,7 +142,7 @@ These look fine already. Draw your own only if you want a fully original look.
 | 🟨 | Oswin's crook (the Post Lamp find) | reuses `post_lamp_cold.png` + code | 16×32 | updates with your lamp | Fallen across the path, with a cold lamp on it. A red pulse marks it through the fog. |
 | 🟨 | Cairn (foot of the marsh climb) | Kenney stone + code | 16×16 | needs hookup | A small cairn with a chalk arrow pointing up. |
 | ⬜ | Survey stones (×3, for Ivo) | `assets/art/landmarks/survey_stone.png` | 16×16 | needs hookup (M5) | Ivo is a cut line. |
-| ⬜ | Amos's cart | `assets/art/landmarks/cart.png` | 32×32 | needs hookup (M4) | Stuck among the quiet south packs, then rolled up to the Hollow WayLamp. |
+| ✅ | Amos's cart | `assets/art/people/amos/amos_cart.png` | 48×32 | needs hookup (M4) | Approved (sprites step); a still prop beside Amos's strips. Stuck among the quiet south packs, then rolled up to the Hollow WayLamp. |
 | ⬜ | 10–20 more small landmarks | `assets/art/landmarks/` | 16×16 or 16×32 | needs hookup (M5-M8) | List grows as we write each region. |
 
 ## 6. UI icons (optional, for a nicer HUD)
@@ -200,7 +202,7 @@ Drawn at the keeper's 32×32 scale, without portraits (DECISIONS 2026-11-27, "ow
 
 | Status | Item | File (suggested) | Size | Hookup | Notes / your notes |
 |---|---|---|---|---|---|
-| ⬜ | Amos, a trader | `assets/art/people/amos.png` | 32×32, 2–4 frames | needs hookup (M4) | With a cart (section 5). |
+| ✅ | Amos, a trader | `assets/art/people/amos/amos_<anim>.png` | 32×32 strips | needs hookup (M4) | Approved (sprites step): idle, move, talk, wave, push, give, laugh. Loads, not placed until M4. Known: the grey hair barely shows. With a cart (section 5). |
 | ⬜ | Maud, the old pump keeper | `assets/art/people/maud.png` | 32×32, 2–4 frames | needs hookup (M5) | At the pumphouse. Knew Oswin. |
 | ⬜ | Kit, the glazier's apprentice | `assets/art/people/kit.png` | 32×32, 2–4 frames | needs hookup (M6) | At the workshop by the marsh climb's top. |
 | ⬜ | Ebba, a rower | `assets/art/people/ebba.png` | 32×32, 2–4 frames | needs hookup (M7) | At the jetty, by her boat. |

@@ -533,6 +533,9 @@ frame_size = Vector2i(16, 16)
 anchor = "foot"            ; "foot" = bottom-centre, "center" for floaters
 offset = Vector2i(0, 0)
 
+[variant.elite]            ; built: a variant's own frame size (the shelled Wickling is 24x24)
+frame_size = Vector2i(24, 24)
+
 [idle]
 fps = 6
 loop = true
@@ -553,7 +556,7 @@ timed_by = "kl_spit_tell"  ; the loader stretches the animation to this tuning v
 
 ### 6.4 Swapping placeholders without code changes
 
-**Update (readability step):** built for the Wickling family, the Spitwick and the keeper's poses (`Art.frames`, `FoeSprite`; DESIGN §17).
+**Update (readability step):** built for the Wickling family, the Spitwick and the keeper's poses (`Art.frames`, `FoeSprite`; DESIGN §17). **Update (sprites step):** the nest and the Ashbrood are wired too, Amos's strips load (placed in M4), and the approved strips are committed (DECISIONS 2026-11-27, "the sprites approved").
 
 1. Every foe keeps its code-drawn `_draw()` shape as the placeholder.
 2. If `Art.frames(subject)` finds no PNG for the current animation, the `FoeSprite` hides and the `_draw()` shape shows. If it finds one, the sprite shows and `_draw()` draws only the overlays.
@@ -563,6 +566,18 @@ timed_by = "kl_spit_tell"  ; the loader stretches the animation to this tuning v
 6. So the owner saves `wickling_move.png` into `assets/art/creatures/wickling/`, runs the game, and it shows. No code edit, no import step beyond Godot's own.
 7. The existing lamp drop-ins in `assets/art/placeholders/` keep working as they do now (same name and size).
 8. The docs checker (`tools/check_docs.py`) already wants an ART_CHECKLIST row for each file in `placeholders/`. *Proposed:* extend it to the new folders when they get their first file.
+9. **Built:** each strip has its own frame size. A variant's strip reads `[variant.<v>] frame_size`, a plain strip `[<anim>]` then `[sheet]`; a strip's height always wins. `FoeSprite` keeps the foot on the origin for each size.
+
+### 6.5 The sprite pipeline (built, a tool)
+
+`tools/art/sprite_from_sheet.gd` turns one key-pose sheet (a grid on flat magenta, e.g. a generated concept sheet) into strips in the layout above, so the owner touches up key frames instead of drawing every frame. How-to and options: `tools/art/README.md`; example manifests in `tools/art/manifests/`; tested by `test_sprite_tool`.
+
+- It keys, crops and scales each pose (one scale and baseline per variant), snaps to the palette, makes alpha hard, and repairs what 16 px loses: the eyes (`#a3bcd4`), the rim (§1.3) or the outline.
+- It makes the cheap frames from a key pose: idle bob and sway, move bob, hurt flash, notice flare, death dissolve (eyes last), spawn, wind-up hold, attack lean. Each rule can be turned off per pose.
+- Foes stay cold. Per cell, `warm = "ember"` keeps fire-coloured pixels amber (the Ashbrood's last ember, owner 2026-11-27); the phase-rise flames snap to the blues.
+- It uses the 23 colours by role (§1.4): creatures only the darks, blues and `#a3bcd4`; people all but the greens; the keeper the darks, blues, amber, wood and skin; props all. A manifest can allow, deny or reserve groups for recolour rules (the Ashbrood's bone skull and stone bowl; Amos's skin and grey hair; green glass to amber).
+- A strip the owner drew or touched up is never overwritten (only with `--force`). Generated strips are not committed until the owner approves them. The six approved samples are committed; `tools/art/make_sprites.sh` rebuilds them (DECISIONS 2026-11-27, "the sprites approved").
+- *Uncertain:* tuned on six generated sample sheets; other sheets may need `eye_threshold`, `gain` or `keep` set per variant. Keeper sheets are drawn facing right only (see the README, "The keeper").
 
 ---
 
