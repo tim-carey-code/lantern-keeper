@@ -2,6 +2,11 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-28 (the Clinker sheet)
+- **The Clinker's sprite comes from the owner's Gemini key-pose sheet** (relayed by the coordinator), made by the sprite tool (`tools/art/manifests/clinker.cfg`, in `tools/art/make_sprites.sh`) and wired into the game on `proto/kl-clinker-art`. **Waiting for the owner's approval of the previews**; the branch is not merged until then. The sheet stays private (`tools/art/samples/`, ignored). Merging the branch means the strips are approved, as for the six samples ([the sprites approved](#2026-11-27-the-sprites-approved)).
+- **Agent's calls, for the owner to confirm:** the frame stays 32x32 (the mid-boss class), with the Clinker filling about 24 px of it so it matches its hit area; the trundle is named `move` (the standard name) rather than `walk`; row 4's first cell (a ball with its face out) is the middle of the curl, so the wind-up has the bible's 5 frames; the roll's full turn uses the sheet's three ball frames, two of them also turned half round (the sheet's third ball repeats its first); the sheet's single flinch makes the hurt strip (a pale flash, then the flinch). No gameplay changed. The sprite tool gained a `sequence` option for this (reorder, reuse, borrow or turn key frames).
+- **Not built:** the art bible's fog lure for the Clinker (one larger eye pair with a pale ring). The code never drew one for the Clinker (only for a pack with an elite), so there was nothing to keep; it is still open.
+
 ## 2026-11-28 (M1c review fixes)
 - From the independent review (`REVIEW_M1C.md`, relayed by the coordinator), fixed before the owner's playtest: phase 2 never sits in the dark (a dive that finds no lit lamp recovers in 1 s and throws ash bolts); the M1c cost on the bench is mostly gone (3.1 → about 2.3 ms; the base was 2.0); the quest arrow hides only near the fight; real Ashbrood kills and the scrap economy with real slots are tested.
 - **Agent's calls, to confirm:** the lock-button option drops "Back paddle" (a standard Xbox pad has none); with the lock on Y, slot 4 moves to R3. The mouse's sticky click gets its own option and is off when the lock is Off. A version 6 save with a lamp planted where the rim lamp now stands gets that lamp's scrap back, and the rim lamp takes the tile.

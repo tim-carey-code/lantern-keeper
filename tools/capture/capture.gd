@@ -27,6 +27,8 @@ extends Node
 ## Sprites view: sprites (every owner-art subject side by side, frozen: the three Wicklings, an elite whose shell
 ## broke, the Spitwick, a nest, the Ashbrood in its bowl and out of it, and Amos with his cart, who isn't in the
 ## game until M4).
+## Clinker sprite views (2026-11-28): clinker_sleep (asleep on its post, the keeper out of its wake radius),
+## clinker_roll (mid-roll, after its curl), clinker_dizzy (dizzy after a roll: the wobble and the code's stars).
 ## (M1b: the old "cold" and "readme_ward" views stage what is gone: a dark lamp stands in for a cold one, and
 ## the ward is not drawn.)
 
@@ -152,7 +154,7 @@ func _process(_delta: float) -> void:
 			"m1c_dark_lit", "m1c_lock", "m1c_ash_bolts", "m1c_pips":
 				_m1c_setup()
 			"tell_puff", "tell_puff_reduce", "tell_adds", "tell_dive", "tell_dive_arrow", "tell_spit", "tell_lane", "tell_reach", "tell_hatch", \
-					"keeper_dash", "keeper_cast", "keeper_drink", "keeper_hurt", "sprites":
+					"keeper_dash", "keeper_cast", "keeper_drink", "keeper_hurt", "sprites", "clinker_sleep", "clinker_roll", "clinker_dizzy":
 				_tell_setup()
 			"kl_combat":
 				_lantern(s + Vector2(-260, 60))
@@ -252,7 +254,7 @@ func _process(_delta: float) -> void:
 		main.get_node("MapScreen").toggle()
 	if view == "readme_relight" and frame == 30:
 		main.get_node("Lanterns").get_child(0).light_by_touch()
-	if (view.begins_with("tell_") or view.begins_with("keeper_") or view == "sprites") and frame >= 3:
+	if (view.begins_with("tell_") or view.begins_with("keeper_") or view.begins_with("clinker_") or view == "sprites") and frame >= 3:
 		var hud = main.get_node("HUD")
 		hud.banner.visible = false
 		hud.toast.visible = false
@@ -685,6 +687,13 @@ func _tell_setup() -> void:
 			sp.add_child(w)
 		"sprites":
 			_sprites_lineup(sp)
+		"clinker_sleep", "clinker_roll", "clinker_dizzy":
+			var c := Clinker.new()
+			c.foe_id = "capture_clinker"
+			c.position = _tell_spot + (Vector2(260, -60) if view == "clinker_sleep" else Vector2(200, -60))
+			c._cooldown = 99.0
+			sp.add_child(c)
+			_tell_foe = c
 	for i in 30:
 		main.fog.step(0.1)
 
@@ -712,6 +721,15 @@ func _tell_frame() -> void:
 				_tell_foe._wake_t = 0.0
 			if frame == 30:
 				_tell_foe._cooldown = 0.0
+		"clinker_roll":
+			if frame == 8:
+				_tell_foe._wake_t = 0.0
+				_tell_foe._cooldown = 0.0   # the curl (0.9 s), then at frame 45 it is mid-roll
+		"clinker_dizzy":
+			if frame == 8:
+				_tell_foe._wake_t = 0.0
+			if frame == 30:
+				_tell_foe._dizzy_t = 5.0
 		"tell_reach":
 			for w in get_tree().get_nodes_in_group("wickling"):
 				if w.elite:

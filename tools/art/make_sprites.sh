@@ -18,6 +18,7 @@ JOBS=(
 	"$S/keeper_keyposes_grid_v2.jpg    $M/keeper_poses.cfg"
 	"$S/ashbrood_keyposes_grid.jpg     $M/ashbrood.cfg"
 	"$S/amos_keyposes_grid.jpg         $M/amos.cfg"
+	"$S/clinker_keyposes_grid.jpg      $M/clinker.cfg"   # 2026-11-28: pending the owner's look at the previews
 )
 # Not here on purpose: wickling_timid_sample.cfg (the one-row pilot). The committed timid strips come from
 # wickling.cfg; the pilot would write the same file names.
