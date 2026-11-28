@@ -9,6 +9,8 @@ extends Foe
 var _hatch_t := 10.0
 var _pulse := 0.0
 var _tell: Telegraph.Tell
+var _art: FoeSprite
+const ART_FOOT := 16.0   # the owner strip's foot (32 x 24, foot anchor) at the bottom of the code shape
 
 func _ready() -> void:
 	foe_name = "Wick nest"
@@ -17,6 +19,9 @@ func _ready() -> void:
 		foe_id = "nest_hollow"
 	wick_value = Tuning.kl_nest_wick
 	z_index = 6
+	_art = FoeSprite.attach(self, "nest")
+	if _art:
+		_art.position = Vector2(0, ART_FOOT)
 
 func _exit_tree() -> void:
 	if _tell:
@@ -82,6 +87,13 @@ func _process(delta: float) -> void:
 				w.position = _hatch_point(i)
 				w.fade_in()
 				get_parent().add_child(w)
+			if _art:
+				_art.play_once("attack", 0.5)   # it hatches
+	if _art:
+		_art.play_anim("windup" if _tell else "idle", _tell.duration if _tell else 0.0)
+		var k := _tell.progress() if _tell else 0.0
+		var swell := 1.0 + 0.12 * k + 0.04 * sin(_pulse * 18.0) * k   # the pods bulge before a hatch
+		_art.scale = Vector2(Art.SCALE, Art.SCALE) * swell
 	queue_redraw()
 
 func _hatch_point(i: int) -> Vector2:
@@ -97,13 +109,17 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 30.0 + slow * 8.0, Color(0.29, 0.48, 0.72, 0.07 + 0.07 * slow))
 	draw_circle(Vector2.ZERO, 20.0 + slow * 4.0, Color(0.43, 0.62, 0.86, 0.08 + 0.08 * slow))
 	var k := _tell.progress() if _tell else 0.0
-	var swell := 1.0 + 0.12 * k + 0.04 * sin(_pulse * 18.0) * k   # pods bulge before a hatch
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2(swell, swell))
-	draw_colored_polygon(PackedVector2Array([Vector2(-18, 10), Vector2(-15, -2), Vector2(-7, -10), Vector2(4, -13), Vector2(15, -5), Vector2(18, 9), Vector2(7, 13), Vector2(-7, 14)]), Color(0.13, 0.22, 0.34, 0.98))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	draw_circle(Vector2(0, 0), 7.0 + p * 2.0 + 3.0 * k, Color(0.48, 0.72, 0.92, 0.4 + 0.3 * k))
-	draw_circle(Vector2(-4, -2), 2.0, Color(0.78, 0.9, 1.0, p))
-	draw_circle(Vector2(4, -2), 2.0, Color(0.78, 0.9, 1.0, p))
+	if not (_art and _art.showing()):
+		var swell := 1.0 + 0.12 * k + 0.04 * sin(_pulse * 18.0) * k   # pods bulge before a hatch
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(swell, swell))
+		draw_colored_polygon(PackedVector2Array([Vector2(-18, 10), Vector2(-15, -2), Vector2(-7, -10), Vector2(4, -13), Vector2(15, -5), Vector2(18, 9), Vector2(7, 13), Vector2(-7, 14)]), Color(0.13, 0.22, 0.34, 0.98))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_circle(Vector2(0, 0), 7.0 + p * 2.0 + 3.0 * k, Color(0.48, 0.72, 0.92, 0.4 + 0.3 * k))
+		draw_circle(Vector2(-4, -2), 2.0, Color(0.78, 0.9, 1.0, p))
+		draw_circle(Vector2(4, -2), 2.0, Color(0.78, 0.9, 1.0, p))
+	elif k > 0.0:
+		# Over owner art: its core brightens as the hatch nears (the art's wind-up pose is one held frame).
+		draw_circle(Vector2(0, 0), 5.0 + 4.0 * k, Color(0.62, 0.82, 1.0, 0.25 + 0.3 * k))
 	if _burning > 0.0:
 		draw_arc(Vector2.ZERO, 20.0, 0.0, TAU, 24, Color(1.0, 0.72, 0.4, 0.9), 2.5)
 	if _tell:

@@ -138,6 +138,15 @@ static func strip_frame_size(cfg: ConfigFile, variant: String, anim: String, str
 static func clear_frames() -> void:
 	_frames.clear()
 
+## A still prop the sprite tool writes beside a subject's strips (Amos's cart: amos/amos_cart.png), from the same
+## roots as frames(); null if it isn't there. Props are not animations, so frames() leaves them out.
+static func prop(subject: String, file: String) -> Texture2D:
+	for root in sprite_roots:
+		var tex := _strip(root + subject + "/" + file + ".png")
+		if tex:
+			return tex
+	return null
+
 ## A strip: imported by Godot if it can, else read from the file (a PNG the editor hasn't imported yet).
 static func _strip(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):

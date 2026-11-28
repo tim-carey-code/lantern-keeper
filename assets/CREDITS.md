@@ -17,4 +17,6 @@ Downloaded but not yet used (not in the repo): Kenney 1-Bit Pack (CC0), https://
 
 Thanks to Kenney (www.kenney.nl). Crediting is not required by CC0, but deserved.
 
+The sprites in `assets/art/creatures/` (wickling, spitwick, nest, ashbrood), `assets/art/keeper/` and `assets/art/people/amos/` are not third-party assets. They were made by our sprite tool (`tools/art/make_sprites.sh`) from the owner's AI-generated concept sheets, which are kept private, and approved by the owner on 2026-11-27 (docs/DECISIONS.md, "the sprites approved"). They are part of Lantern Keeper (all rights reserved, see LICENSE-ASSETS.md).
+
 Original placeholder art in `assets/art/placeholders/` is part of Lantern Keeper (all rights reserved, see LICENSE-ASSETS.md) and is meant to be replaced by the owner's own art.

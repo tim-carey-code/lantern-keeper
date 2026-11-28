@@ -216,8 +216,33 @@ func _process(delta: float) -> void:
 			_in_light = maxf(0.0, _in_light - delta)
 	global_position += step
 	if _art:
-		_art.play_anim("spawn" if _fade_t > 0.0 else ("windup" if _latch else ("attack" if latched else ("move" if step.length() > 0.01 else "idle"))))
+		_update_art(step)
 	queue_redraw()
+
+## Owner art (assets/art/creatures/wickling/): the strip for what it is doing now. An elite whose shell broke
+## shows the shell-less body ("elite_broken") once its crack has played.
+func _update_art(step: Vector2) -> void:
+	if elite and shell <= 0.0 and not _art.holding():
+		_art.set_variant("elite_broken")
+	var anim := "move" if step.length() > 0.01 else "idle"
+	if _fade_t > 0.0:
+		anim = "spawn"
+	elif _latch:
+		anim = "windup"
+	elif latched:
+		anim = "attack"
+	elif _notice_t > 0.0:
+		anim = "notice"
+	elif state == State.FLEE:
+		anim = "flee"
+	_art.play_anim(anim)
+	if absf(step.x) > 0.05:
+		_art.flip_h = step.x < 0.0   # drawn facing right
+
+func _on_shell_cracked() -> void:
+	super._on_shell_cracked()
+	if _art:
+		_art.play_once("crack")
 
 ## Touching the keeper: first it reaches (a short wind-up), then its touch drains warmth, and the keeper shows a
 ## frost edge. The touch is a drain, not a hit, so it needs no minimum warning (ART_DIRECTION §4.4 rule 1).
@@ -260,13 +285,17 @@ func _draw() -> void:
 		draw_circle(Vector2(sin(_t * 3.0) * 3.0, 14), 3.5, Color(body, 0.6))
 	if _burning > 0.0:
 		draw_arc(Vector2(0, wob), 11.0, 0.0, TAU, 20, Color(1.0, 0.65, 0.3, 0.9), 1.5)
+	# A faint rim so they read against dark fog. The bold swarm's is the brighter cold #a3bcd4, wobbling faster
+	# (it was an off-palette red that read as warm: ART_DIRECTION §1.4 rule 3); it stays over owner art too, so
+	# the Ashbrood's adds still read as the bold swarm.
+	if bold:
+		draw_arc(Vector2(0, wob), 11.5, 0.0, TAU, 24, Color(Telegraph.COLD, 0.6 + 0.25 * sin(_t * 11.0)), 1.5)
+	elif not art:
+		draw_arc(Vector2(0, wob), 11.5, 0.0, TAU, 24, Color(Color(0.55, 0.68, 0.85), 0.35 + 0.15 * sin(_t * 4.0)), 1.0)
+	if art and _notice_t > 0.0:
+		# The notice flare over owner art too (its notice strip widens the eyes; this arc is the tell).
+		draw_arc(Vector2(0, wob - 2), 9.0, PI * 1.1, PI * 1.9, 12, Color(Telegraph.COLD, _notice_t / maxf(Tuning.kl_notice_time, 0.01)), 1.5)
 	if not art:
-		# A faint rim so they read against dark fog. The bold swarm's is the brighter cold #a3bcd4, wobbling faster
-		# (it was an off-palette red that read as warm: ART_DIRECTION §1.4 rule 3).
-		if bold:
-			draw_arc(Vector2(0, wob), 11.5, 0.0, TAU, 24, Color(Telegraph.COLD, 0.6 + 0.25 * sin(_t * 11.0)), 1.5)
-		else:
-			draw_arc(Vector2(0, wob), 11.5, 0.0, TAU, 24, Color(Color(0.55, 0.68, 0.85), 0.35 + 0.15 * sin(_t * 4.0)), 1.0)
 		# Pale eyes (brighter when hunting you; they flare for a moment when it notices you).
 		var eye := Color(0.75, 0.84, 0.92) if state != State.CHASE else Color(1.0, 1.0, 1.0)
 		var grow := 2.0 * (_notice_t / maxf(Tuning.kl_notice_time, 0.01))

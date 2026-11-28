@@ -20,6 +20,9 @@ extends Node
 ## same, lit by touch), m1b_faint (the faint note), m1b_wake (awake by a lamp, the wick waiting where you fell),
 ## m1b_lures (a pack's eyes, an elite's ring and a nest's glow through the fog), m1b_ember (the Ashbrood over the
 ## WayLamp's last ember), m1b_kindle (the kill: the ember rises into the lamp as it lights; look at frames 45-75).
+## Sprites view: sprites (every owner-art subject side by side, frozen: the three Wicklings, an elite whose shell
+## broke, the Spitwick, a nest, the Ashbrood in its bowl and out of it, and Amos with his cart, who isn't in the
+## game until M4).
 ## (M1b: the old "cold" and "readme_ward" views stage what is gone: a dark lamp stands in for a cold one, and
 ## the ward is not drawn.)
 
@@ -143,7 +146,7 @@ func _process(_delta: float) -> void:
 			"m1b_opening", "m1b_opening_lit", "m1b_faint", "m1b_wake", "m1b_lures", "m1b_ember", "m1b_kindle":
 				_m1b_setup()
 			"tell_puff", "tell_puff_reduce", "tell_adds", "tell_dive", "tell_dive_arrow", "tell_spit", "tell_lane", "tell_reach", "tell_hatch", \
-					"keeper_dash", "keeper_cast", "keeper_drink", "keeper_hurt":
+					"keeper_dash", "keeper_cast", "keeper_drink", "keeper_hurt", "sprites":
 				_tell_setup()
 			"kl_combat":
 				_lantern(s + Vector2(-260, 60))
@@ -243,7 +246,7 @@ func _process(_delta: float) -> void:
 		main.get_node("MapScreen").toggle()
 	if view == "readme_relight" and frame == 30:
 		main.get_node("Lanterns").get_child(0).light_by_touch()
-	if (view.begins_with("tell_") or view.begins_with("keeper_")) and frame >= 3:
+	if (view.begins_with("tell_") or view.begins_with("keeper_") or view == "sprites") and frame >= 3:
 		var hud = main.get_node("HUD")
 		hud.banner.visible = false
 		hud.toast.visible = false
@@ -537,7 +540,7 @@ func _tell_setup() -> void:
 	_tell_spot = s + Vector2(-20, 60)
 	main.player.position = _tell_spot
 	main.player.lamp_charge = 1.0
-	if not view.begins_with("tell_dive"):
+	if not view.begins_with("tell_dive") and view != "sprites":
 		_lantern(s + Vector2(-260, -40))   # some light for context (a dive would go for it)
 	var sp = main.get_node("FogLayer/Wicklings")
 	match view:
@@ -592,6 +595,8 @@ func _tell_setup() -> void:
 			w.position = _tell_spot + Vector2(-180, 0)
 			w._shot_t = 99.0
 			sp.add_child(w)
+		"sprites":
+			_sprites_lineup(sp)
 	for i in 30:
 		main.fog.step(0.1)
 
@@ -646,3 +651,54 @@ func _tell_frame() -> void:
 		"keeper_hurt":
 			if frame == 43:
 				main.player.chill(12.0)
+
+## The sprites view: each subject frozen in place (stunned, attacks held off) in two rows around the keeper.
+func _sprites_lineup(sp: Node) -> void:
+	var o := _tell_spot + Vector2(-60, 300)   # out of the hut lantern's light (it would burn the Wicklings)
+	main.player.position = o
+	var row1 := o + Vector2(-260, -90)
+	var kinds := [["timid", false], ["brave", false], ["elite", true], ["broken", true]]
+	for i in kinds.size():
+		var w: Wickling = sp.spawn_at(row1 + Vector2(i * 56, 0), kinds[i][1])
+		w.stun(999.0)
+		w.timid = kinds[i][0] == "timid"
+		if w._art:
+			w._art.set_variant("elite" if w.elite else ("timid" if w.timid else "brave"))
+		if kinds[i][0] == "broken":
+			w.shell = 0.0
+	var spit := Spitwick.new()
+	spit._shot_t = 999.0
+	spit.position = row1 + Vector2(240, 0)
+	sp.add_child(spit)
+	spit.stun(999.0)
+	var nest := WickNest.new()
+	nest.foe_id = "capture_nest"
+	nest.position = row1 + Vector2(310, 0)
+	sp.add_child(nest)
+	var b1 := Ashbrood.new()
+	b1._puff_t = 999.0
+	b1._wave_t = 999.0
+	b1.position = o + Vector2(-200, 110)
+	sp.add_child(b1)
+	b1.stun(999.0)
+	var b2 := Ashbrood.new()
+	b2.phase = 2
+	b2._dive_t = 999.0
+	b2.position = o + Vector2(-60, 110)
+	sp.add_child(b2)
+	b2.stun(999.0)
+	var amos := Node2D.new()
+	amos.position = o + Vector2(90, 110)
+	amos.z_index = 8
+	sp.add_child(amos)
+	FoeSprite.attach(amos, "amos")
+	var cart := Art.prop("amos", "amos_cart")
+	if cart:
+		var c := Sprite2D.new()
+		c.texture = cart
+		c.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		c.scale = Vector2(Art.SCALE, Art.SCALE)
+		c.offset = Vector2(0, -cart.get_height() / 2.0)
+		c.position = amos.position + Vector2(80, 0)
+		c.z_index = 8
+		sp.add_child(c)

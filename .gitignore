@@ -10,3 +10,5 @@
 .DS_Store
 *~
 __pycache__/
+# Concept sheets stay private (ART_DIRECTION §7): tools/art/make_sprites.sh reads them from here.
+tools/art/samples/

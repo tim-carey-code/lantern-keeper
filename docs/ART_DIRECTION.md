@@ -556,7 +556,7 @@ timed_by = "kl_spit_tell"  ; the loader stretches the animation to this tuning v
 
 ### 6.4 Swapping placeholders without code changes
 
-**Update (readability step):** built for the Wickling family, the Spitwick and the keeper's poses (`Art.frames`, `FoeSprite`; DESIGN §17).
+**Update (readability step):** built for the Wickling family, the Spitwick and the keeper's poses (`Art.frames`, `FoeSprite`; DESIGN §17). **Update (sprites step):** the nest and the Ashbrood are wired too, Amos's strips load (placed in M4), and the approved strips are committed (DECISIONS 2026-11-27, "the sprites approved").
 
 1. Every foe keeps its code-drawn `_draw()` shape as the placeholder.
 2. If `Art.frames(subject)` finds no PNG for the current animation, the `FoeSprite` hides and the `_draw()` shape shows. If it finds one, the sprite shows and `_draw()` draws only the overlays.
@@ -576,7 +576,7 @@ timed_by = "kl_spit_tell"  ; the loader stretches the animation to this tuning v
 - It makes the cheap frames from a key pose: idle bob and sway, move bob, hurt flash, notice flare, death dissolve (eyes last), spawn, wind-up hold, attack lean. Each rule can be turned off per pose.
 - Foes stay cold. Per cell, `warm = "ember"` keeps fire-coloured pixels amber (the Ashbrood's last ember, owner 2026-11-27); the phase-rise flames snap to the blues.
 - It uses the 23 colours by role (§1.4): creatures only the darks, blues and `#a3bcd4`; people all but the greens; the keeper the darks, blues, amber, wood and skin; props all. A manifest can allow, deny or reserve groups for recolour rules (the Ashbrood's bone skull and stone bowl; Amos's skin and grey hair; green glass to amber).
-- A strip the owner drew or touched up is never overwritten (only with `--force`). Generated strips are not committed until the owner approves them.
+- A strip the owner drew or touched up is never overwritten (only with `--force`). Generated strips are not committed until the owner approves them. The six approved samples are committed; `tools/art/make_sprites.sh` rebuilds them (DECISIONS 2026-11-27, "the sprites approved").
 - *Uncertain:* tuned on six generated sample sheets; other sheets may need `eye_threshold`, `gain` or `keep` set per variant. Keeper sheets are drawn facing right only (see the README, "The keeper").
 
 ---

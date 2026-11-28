@@ -89,7 +89,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
 - Visual check without the owner's screen: render frames on a virtual display with `tools/capture/capture.tscn`
   (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map; the loop: loop_waylamp, loop_marsh_climb, loop_ridge_entry, loop_travel; readability: tell_puff, tell_puff_reduce, tell_adds, tell_dive, tell_dive_arrow, tell_spit, tell_lane, tell_reach, tell_hatch, keeper_dash, keeper_cast, keeper_drink, keeper_hurt; M1b: m1b_opening, m1b_opening_lit, m1b_faint, m1b_wake, m1b_lures, m1b_ember, m1b_kindle). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
 - README images: `tools/capture/readme_shots.sh` renders the staged `readme_*` views into `docs/screenshots/` (look at each one before committing).
-- Art: 16x16 sprites drawn at 2x, palette in `source/palette/`. Kenney sheets are recoloured from `source/vendor/`; placeholders come from `tools/art/make_placeholders.py`.
+- Art: 16x16 sprites drawn at 2x, palette in `source/palette/`. Kenney sheets are recoloured from `source/vendor/`; placeholders come from `tools/art/make_placeholders.py`. The approved creature, keeper and Amos strips come from `tools/art/make_sprites.sh` (private sheets in `tools/art/samples/`, never committed); see `tools/art/README.md`.
   Key-pose sheets become strips with `tools/art/sprite_from_sheet.gd` (`tools/art/README.md`). Its output is the owner's to approve: don't commit generated PNGs to `assets/`, and keep concept images out of the repo.
 
 ## Storage, git, licensing

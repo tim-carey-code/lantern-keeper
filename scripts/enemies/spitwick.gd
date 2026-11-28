@@ -9,6 +9,7 @@ var _shot_t := 1.2
 var _tell: Telegraph.Tell
 var _recover_t := 0.0
 var _art: FoeSprite
+const ART_FOOT := 12.0   # the owner strip's foot (16 x 32, foot anchor) at the bottom of the code shape
 
 func _ready() -> void:
 	foe_name = "Spitwick"
@@ -16,6 +17,8 @@ func _ready() -> void:
 	wick_value = Tuning.kl_spitwick_wick
 	z_index = 8
 	_art = FoeSprite.attach(self, "spitwick")
+	if _art:
+		_art.position = Vector2(0, ART_FOOT)
 
 func _exit_tree() -> void:
 	if _tell:
@@ -65,6 +68,8 @@ func _process(delta: float) -> void:
 			global_position += dir * minf(dist - Tuning.kl_spit_keep_max, Tuning.kl_spit_keep_speed * delta)
 	if _art:
 		_art.play_anim("windup" if _tell else ("recover" if _recover_t > 0.0 else "idle"), _tell.duration if _tell else 0.0)
+		if absf(v.x) > 2.0:
+			_art.flip_h = v.x < 0.0   # drawn facing right: it faces the keeper
 	queue_redraw()
 
 func _begin_tell(p: Node2D) -> void:
@@ -86,6 +91,8 @@ func body_radius() -> float:
 
 func _draw() -> void:
 	if _art and _art.showing():
+		if _burning > 0.0:
+			draw_arc(Vector2(0, -8), 12.0, 0.0, TAU, 24, Color(1.0, 0.72, 0.4, 0.9), 2.0)
 		return
 	var pulse := 0.65 + 0.35 * sin(Time.get_ticks_msec() * 0.008)
 	var k := _tell.progress() if _tell else 0.0

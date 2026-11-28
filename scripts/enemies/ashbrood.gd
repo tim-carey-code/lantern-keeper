@@ -32,6 +32,8 @@ var _fly_t := 0.0                # > 0: in the air, diving
 var _fly_from := Vector2.ZERO
 var _phase_t := 0.0              # > 0: rising out of the bowl between phases (no attacks, no damage)
 var _ash_t := 0.0                # > 0: the ash ring left by a puff
+var _art: FoeSprite              # owner art (assets/art/creatures/ashbrood/), when it exists
+const ART_FOOT := 28.0           # the 48 x 48 strip's foot (foot anchor), a little under the code body's bottom
 
 func _ready() -> void:
 	foe_name = "The Ashbrood"
@@ -45,6 +47,9 @@ func _ready() -> void:
 	knock_weight = 0.15
 	oil_step = true   # 1 lamp oil at the half of each phase (Tuning.kl_boss_oil_step; GAME_PLAN §5)
 	z_index = 9
+	_art = FoeSprite.attach(self, "ashbrood")
+	if _art:
+		_art.position = Vector2(0, ART_FOOT)
 
 func _exit_tree() -> void:
 	for t in [_puff, _adds, _dive]:
@@ -92,17 +97,55 @@ func _process(delta: float) -> void:
 	_ash_t = maxf(0.0, _ash_t - delta)
 	if _phase_t > 0.0:
 		_phase_t = maxf(0.0, _phase_t - delta)
+		_update_art()
 		queue_redraw()
 		return
 	var player := _player()
 	if player == null or is_stunned():
+		_update_art()
 		queue_redraw()
 		return
 	if phase == 1:
 		_process_bowl(delta, player)
 	else:
 		_process_dive(delta, player)
+	_update_art()
 	queue_redraw()
+
+## Owner art: the strip for what it is doing. Phase 1, in the bowl: idle (over the ember), the puff's wind-up
+## and release. Rising between phases: phase_rise. Phase 2, out of the bowl: the dive's wind-up (crouched), the
+## flight, the slump after landing (recover: the open window), and between dives its risen pose (phase_rise),
+## since its idle strip is drawn in the bowl.
+func _update_art() -> void:
+	if _art == null:
+		return
+	var anim := "idle"
+	var secs := 0.0
+	var lift := 0.0
+	if _phase_t > 0.0:
+		anim = "phase_rise"
+		var k := 1.0 - _phase_t / maxf(Tuning.kl_ashbrood_phase_pause, 0.01)
+		lift = -sin(k * PI) * 14.0
+	elif phase == 1:
+		if _puff:
+			anim = "windup_puff"
+			secs = _puff.duration
+		elif _ash_t > 0.0:
+			anim = "attack_puff"
+	else:
+		if _fly_t > 0.0:
+			anim = "attack_dive"
+		elif _sit_t > 0.0:
+			anim = "recover"
+		elif _dive:
+			anim = "windup_dive"
+			secs = _dive.duration
+		else:
+			anim = "phase_rise"
+		if absf(_roll_dir.x) > 0.05:
+			_art.flip_h = _roll_dir.x < 0.0   # drawn facing right: it faces where it dives
+	_art.play_anim(anim, secs)
+	_art.position = Vector2(0, ART_FOOT + lift)
 
 func _process_bowl(delta: float, player: Node2D) -> void:
 	if _puff:
@@ -297,11 +340,12 @@ func _draw() -> void:
 		squash = 1.0 - 0.12 * _dive.progress()   # it crouches, wings back
 	if _adds:
 		eye_y = -11.0   # head up: calling its brood
-	draw_set_transform(Vector2(0, lift), 0.0, Vector2(squash, 2.0 - squash))
-	draw_colored_polygon(PackedVector2Array([Vector2(-29, 15), Vector2(-27, -4), Vector2(-17, -20), Vector2(0, -27), Vector2(19, -20), Vector2(29, -3), Vector2(25, 16), Vector2(9, 25), Vector2(-14, 22)]), color)
-	draw_circle(Vector2(-10, eye_y), 4.0, Color(0.74, 0.86, 0.97, eye_a))
-	draw_circle(Vector2(10, eye_y), 4.0, Color(0.74, 0.86, 0.97, eye_a))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if not (_art and _art.showing()):
+		draw_set_transform(Vector2(0, lift), 0.0, Vector2(squash, 2.0 - squash))
+		draw_colored_polygon(PackedVector2Array([Vector2(-29, 15), Vector2(-27, -4), Vector2(-17, -20), Vector2(0, -27), Vector2(19, -20), Vector2(29, -3), Vector2(25, 16), Vector2(9, 25), Vector2(-14, 22)]), color)
+		draw_circle(Vector2(-10, eye_y), 4.0, Color(0.74, 0.86, 0.97, eye_a))
+		draw_circle(Vector2(10, eye_y), 4.0, Color(0.74, 0.86, 0.97, eye_a))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if _sit_t <= 0.0:
 		draw_shell(Vector2.ZERO, 38.0)
 	elif shell > 0.0:

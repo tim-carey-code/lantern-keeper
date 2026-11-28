@@ -537,14 +537,32 @@ func _keeper_checks() -> void:
 func _swap_checks() -> void:
 	clear_foes()
 	await wait(0.05)
+	await _owner_art_checks()
+	# The fallback, tested explicitly: with no strips anywhere (an empty art root), nothing loads and every foe
+	# draws its code shape. (The committed owner art is checked above.)
+	var real_roots := Art.sprite_roots
+	DirAccess.make_dir_recursive_absolute("user://test_art_empty")
+	Art.sprite_roots = PackedStringArray(["user://test_art_empty/"])
 	Art.clear_frames()
-	check(Art.frames("wickling") == null and Art.frames("spitwick") == null and Art.frames("keeper") == null, "no owner art yet: no frames for the Wickling, the Spitwick or the keeper")
+	check(Art.frames("wickling") == null and Art.frames("spitwick") == null and Art.frames("keeper") == null and Art.frames("nest") == null and Art.frames("ashbrood") == null,
+		"fallback: with no strips there are no frames for any subject")
 	var w: Wickling = spawner.spawn_at(spot + Vector2(300, 0))
 	var s: Spitwick = add_foe(Spitwick.new(), spot + Vector2(300, 60))
+	var n: WickNest = add_foe(WickNest.new(), spot + Vector2(300, -80))
+	n.foe_id = "test_nest_fallback"
+	var b: Ashbrood = add_foe(Ashbrood.new(), spot + Vector2(400, 0))
+	b._puff_t = 99.0
+	b._wave_t = 99.0
 	await wait(0.05)
-	check(w._art == null and s._art == null and w.get_node_or_null("Art") == null, "so they draw their code shapes (the fallback)")
+	check(w._art == null and s._art == null and n._art == null and b._art == null and w.get_node_or_null("Art") == null and b.get_node_or_null("Art") == null,
+		"so they draw their code shapes (the fallback)")
 	w.queue_free()
 	s.queue_free()
+	n.queue_free()
+	b.queue_free()
+	Art.sprite_roots = real_roots
+	Art.clear_frames()
+	DirAccess.remove_absolute("user://test_art_empty")
 	# A test-only strip: 4 frames of 16x16 for "idle", 3 for "windup" (timed by kl_spit_tell), in user://.
 	var root := "user://test_art/creatures/"
 	DirAccess.make_dir_recursive_absolute(root + "wickling")
@@ -628,6 +646,102 @@ func _swap_checks() -> void:
 	Art.clear_frames()
 	for p in ["keeper/keeper_idle.png", "creatures/wickling/wickling_idle.png", "creatures/wickling/wickling_elite_idle.png", "creatures/spitwick/spitwick_idle.png", "creatures/spitwick/spitwick_windup.png", "creatures/spitwick/spitwick.frames.cfg"]:
 		DirAccess.remove_absolute("user://test_art/" + p)
+
+## The committed owner art (assets/art/, approved 2026-11-27): every subject loads its strips, and the game
+## shows them with the overlays still on top.
+func _owner_art_checks() -> void:
+	Art.clear_frames()
+	# subject, variant, [animation, frame count, frame size]...
+	var want := [
+		["wickling", "timid", [["idle", 4, 16], ["move", 4, 16], ["notice", 2, 16], ["flee", 2, 16], ["spawn", 5, 16], ["death", 5, 16]]],
+		["wickling", "brave", [["idle", 4, 16], ["move", 4, 16], ["windup", 1, 16], ["attack", 2, 16], ["death", 5, 16]]],
+		["wickling", "elite", [["idle", 4, 24], ["crack", 2, 24], ["notice", 2, 24], ["death", 5, 24]]],
+		["wickling", "elite_broken", [["idle", 4, 24]]],
+		["spitwick", "", [["idle", 4, 16], ["windup", 1, 16], ["attack", 2, 16], ["recover", 1, 16], ["death", 5, 16]]],
+		["nest", "", [["idle", 1, 32], ["windup", 1, 32], ["attack", 1, 32], ["death", 1, 32]]],
+		["keeper", "", [["idle", 4, 32], ["move", 4, 32], ["thrust", 1, 32], ["lob", 1, 32], ["dash", 1, 32], ["drink", 1, 32], ["hurt", 1, 32], ["kindle", 1, 32]]],
+		["ashbrood", "", [["idle", 4, 48], ["windup_puff", 1, 48], ["attack_puff", 1, 48], ["windup_dive", 1, 48], ["attack_dive", 1, 48], ["recover", 1, 48], ["phase_rise", 1, 48], ["death", 1, 48]]],
+		["amos", "", [["idle", 4, 32], ["move", 4, 32], ["talk", 2, 32], ["wave", 1, 32], ["push", 1, 32], ["give", 1, 32], ["laugh", 1, 32]]],
+	]
+	for row in want:
+		var sf := Art.frames(row[0], row[1])
+		var ok := sf != null
+		var bad := ""
+		for a in row[2]:
+			if not ok:
+				break
+			var at := sf.get_frame_texture(a[0], 0) as AtlasTexture if sf.has_animation(a[0]) else null
+			if at == null or sf.get_frame_count(a[0]) != a[1] or int(at.region.size.x) != a[2]:
+				ok = false
+				bad = a[0]
+		check(ok, "owner art: %s%s loads its strips (%s)%s" % [row[0], (" " + row[1]) if row[1] != "" else "", ", ".join(row[2].map(func(a): return a[0])), (" - bad: " + bad) if bad != "" else ""])
+	var cart := Art.prop("amos", "amos_cart")
+	check(cart != null and cart.get_size() == Vector2(48, 32), "owner art: Amos's cart loads as a 48 x 32 prop (left out of his animations)")
+	check(Art.frames("amos") != null and not Art.frames("amos").has_animation("cart"), "the cart is not one of Amos's animations")
+	check(player._art != null and player._art.showing(), "the keeper shows the owner poses (no Puny frames)")
+	# The foes, in the game: sprite on, code shape off, overlays (drawn by the foe) on top of the sprite.
+	var w: Wickling = spawner.spawn_at(spot + Vector2(300, 0))
+	var e: Wickling = spawner.spawn_at(spot + Vector2(340, 0), true)
+	var s: Spitwick = add_foe(Spitwick.new(), spot + Vector2(300, 60))
+	s._shot_t = 99.0
+	var n: WickNest = add_foe(WickNest.new(), spot + Vector2(300, -80))
+	n.foe_id = "test_nest_art"
+	var b: Ashbrood = add_foe(Ashbrood.new(), spot + Vector2(420, 0))
+	b._puff_t = 99.0
+	b._wave_t = 99.0
+	await wait(0.05)
+	for f in [w, e, s, n, b]:
+		var a: FoeSprite = f._art
+		check(a != null and a.showing() and a.show_behind_parent and a.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
+			"%s shows its owner sprite, drawn behind its own overlays" % f.foe_name)
+	check(w._art.variant in ["timid", "brave"] and e._art.variant == "elite", "a Wickling uses its variant's strips (timid or brave; the elite its shelled one)")
+	var tl := get_tree().get_first_node_in_group("telegraph_layer") as Node2D
+	var top := 0
+	for f in [w, e, s, n, b]:
+		top = maxi(top, f.z_index + (f._art.z_index if f._art.z_as_relative else 0))
+	check(tl != null and tl.z_index > top and tl.get_parent() == b.get_parent().get_parent(), "the telegraph markers draw over every foe sprite (z %d over %d, same layer)" % [tl.z_index if tl else -1, top])
+	# An elite's shell breaks: the crack plays, then the shell-less body.
+	e.shell = 0.01
+	e.hurt(5.0, false, "lance")
+	await wait(0.02)
+	check(e._art.current() == "crack", "an elite's shell breaking plays its crack strip")
+	await wait(0.5)
+	check(e._art.variant == "elite_broken", "then it shows the shell-less body (elite_broken)")
+	# The Ashbrood: the puff's wind-up strip, stretched to the tell.
+	b._puff_t = 0.0
+	await wait(0.05)
+	check(b._art.current() == "windup_puff" and absf(b._art.speed_scale - (1.0 / 8.0) / b.puff_tell().duration) < 0.01,
+		"the Ashbrood's puff wind-up shows its strip for the whole tell")
+	b.phase = 2
+	b._puff_t = 99.0
+	if b.puff_tell():
+		b.puff_tell().finish()
+		b._puff = null
+	b._dive_t = 99.0
+	await wait(0.05)
+	check(b._art.current() == "phase_rise", "out of the bowl (phase 2) it shows its risen pose, not the bowl")
+	# The nest's hatch: its wind-up strip under the hatch ring.
+	reset_keeper(spot + Vector2(300, -40))
+	n.set_time_to_hatch(Tuning.kl_nest_hatch_tell - 0.05)
+	await wait(0.05)
+	check(n._art.current() == "windup" and n.tell() != null, "a nest about to hatch shows its wind-up strip (the hatch ring is drawn over it)")
+	# A kill leaves the death strip where the foe fell; then it fades away.
+	var at := w.global_position
+	w.hurt(999.0, false, "lance")
+	await wait(0.02)
+	var rem: Node = null
+	for c in spawner.get_children():
+		if c.has_meta("remnant") and c is AnimatedSprite2D:
+			rem = c
+	check(rem != null and (rem as AnimatedSprite2D).animation == "death" and (rem as Node2D).global_position.distance_to(at) < 2.0 and not rem.is_in_group("foe"),
+		"a Wickling's kill plays its death strip where it fell (a picture only: not a foe)")
+	await wait(2.0)
+	check(rem == null or not is_instance_valid(rem), "the remnant goes after its death strip")
+	for f in [e, s, n, b]:
+		if is_instance_valid(f):
+			f.queue_free()
+	reset_keeper(spot)
+	await wait(0.05)
 
 func _strip(path: String, frames: int, size: int = 16) -> void:
 	var img := Image.create(size * frames, size, false, Image.FORMAT_RGBA8)

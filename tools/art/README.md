@@ -13,6 +13,11 @@ godot --headless --path . -s tools/art/sprite_from_sheet.gd -- <sheet image> <ma
 
 To try a sheet without touching the game, add `--out ~/.cache/openclaw/project-scratch/sprite-out/`.
 
+**The committed sprites** (the six approved samples, DECISIONS 2026-11-27) are rebuilt by `tools/art/make_sprites.sh`
+(`--force` to replace touched-up strips too). It needs the private sheets in `tools/art/samples/` (ignored by git;
+a `.gdignore` there keeps Godot from importing them), then run `godot --headless --import`. The one-row pilot
+`wickling_timid_sample.cfg` is left out: it would write the same timid file names as `wickling.cfg`.
+
 ## 1. Make the sheet
 
 Ask for one image with every key pose in a grid of equal cells on flat magenta. A prompt pattern that works:
@@ -100,10 +105,10 @@ the source pose beside it: one sheet `<manifest>_preview.png` plus one `<manifes
 
 ## The keeper
 
-The keeper sheets are drawn facing right. The game's keeper still uses the Puny sheet's 8 direction rows
-(`scripts/player/player.gd`), and its art hook takes over as soon as `assets/art/keeper/keeper_idle.png` exists:
-then the owner strips show in every direction, mirrored for left. Up and down would look sideways. Options, to
-decide before dropping keeper strips into `assets/`: use them only for the side views and keep the Puny frames for
-up and down (a small change in `player.gd`), or draw `_n` and `_s` strips too (ART_DIRECTION §6.2 suffixes).
+The keeper sheets are drawn facing right. Since the sprites step `assets/art/keeper/` has the approved strips, so
+the keeper shows them in every direction, mirrored for left; up and down look sideways (DECISIONS 2026-11-27, "the
+sprites approved", for the owner to confirm). The Puny sheet's 8 direction rows (`scripts/player/player.gd`) stay
+as the fallback. Options later: use the strips only for the side views and the Puny frames for up and down (a small
+change in `player.gd`), or draw `_n` and `_s` strips too (ART_DIRECTION §6.2 suffixes).
 
 Tested by `tools/tests/test_sprite_tool.tscn`.
