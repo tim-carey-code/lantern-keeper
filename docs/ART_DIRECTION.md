@@ -215,7 +215,7 @@ Built: `scripts/enemies/clinker.gd`. A fixed mid-boss; sleeps on its post; rolls
 
 Built: `scripts/enemies/ashbrood.gd`. Two phases: in the WayLamp's bowl (ash puff, adds), then dives at lamps. Phase 3, "last of the brood", is PLANNED (M2).
 
-**Shape language.** A hunched brooding mass of ash with two broad, ragged ash wings folded over its brood. A heavy hooded head. Big and rounded on top, ragged at the edges. It is the first thing that looks like it *lives* in a place: it sits in the WayLamp's cold bowl like a nest.
+**Shape language.** A hunched brooding mass of ash with two broad, ragged ash wings folded over its brood. A heavy hooded head. Big and rounded on top, ragged at the edges. It is the first thing that looks like it *lives* in a place: it sits in the WayLamp's cold bowl like a nest. It broods over the WayLamp's **last ember**, a small amber glow in the bowl under its wings (owner, 2026-11-27): the lamp's light, never the creature's. Head: bird-like or beak-skulled, never a hood, so it isn't person-shaped like the keeper.
 
 **Palette.** Lighter than the Wicklings, because it is ash: `#28385e` and `#36507a`, with `#4a6a94` feather edges; shell plates `#6d8fb3`; eyes `#a3bcd4`. Ash motes drift off it at all times.
 

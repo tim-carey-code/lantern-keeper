@@ -37,6 +37,10 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 
 ---
 
+## 2026-11-27 (the Ashbrood's ember; M1b starts)
+- **The Ashbrood broods over the WayLamp's last ember** (owner: "yes to ashbrood ember"). A small amber ember sits in the WayLamp's cold bowl under it: the lamp's light, not the creature's, so "amber is only the keeper's fire" still holds. Kindling the WayLamp after the fight means taking that ember back. From the owner's Gemini concept sheet. Texts that mention it are DRAFT.
+- **M1b starts now** (owner: "start m1b please"), before the owner's readability playtest.
+
 ## 2026-11-27 (M1a playtest; art; order of work)
 - **The fire skills are fun** (owner, M1a playtest: "Yeah they are fun"). The Beam wasn't found: the owner's save migrated at level 7, so Lance took LB and the Beam stayed in the Skills list. A one-time hint is being added; keep-or-cut for the Beam and Hearth ring is still open.
 - **Art direction for every monster and NPC, and better telegraphs and animations** (owner: "we need to plan out a whole art design concept and everything for all the monsters and NPC's and all of that, and telegraph/animate some of their attacks better as with my abilities"). Draft in docs/ART_DIRECTION.md.
