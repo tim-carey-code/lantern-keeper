@@ -17,6 +17,9 @@ var _wake_t := 0.0              # > 0: uncurling after waking
 var _dizzy_t := 0.0             # > 0: dizzy after a roll
 var _spin := 0.0
 var _t := 0.0
+var _art: FoeSprite              # owner art (assets/art/creatures/clinker/), when it exists
+var _art_from := Vector2.ZERO    # where it stood a frame ago: it trundles when this moves
+const ART_FOOT := 18.0           # the 32 x 32 strip's foot (foot anchor), at the bottom of the code body
 
 func _ready() -> void:
 	foe_name = "Clinker"
@@ -30,6 +33,10 @@ func _ready() -> void:
 	knock_weight = 0.35
 	oil_step = true   # a mid-boss: 1 lamp oil at half health (GAME_PLAN §5)
 	z_index = 8
+	_art = FoeSprite.attach(self, "clinker")
+	if _art:
+		_art.position = Vector2(0, ART_FOOT)
+		_art.play_anim("sleep")
 
 func _exit_tree() -> void:
 	if _tell:
@@ -72,6 +79,10 @@ func is_waking() -> bool:
 	return _wake_t > 0.0
 
 func _process(delta: float) -> void:
+	_step(delta)
+	_update_art()
+
+func _step(delta: float) -> void:
 	tick_foe(delta)
 	if is_queued_for_deletion():
 		return
@@ -148,6 +159,49 @@ func _process(delta: float) -> void:
 			global_position += to_player.normalized() * minf(Tuning.kl_clinker_speed * delta, to_player.length() - Tuning.kl_clinker_stop_range)
 	queue_redraw()
 
+## Owner art: the strip for what it is doing (after each step). Asleep on its post: sleep; waking: wake (stretched to
+## kl_clinker_wake_time); the roll's wind-up: windup (the curl, stretched to the tell); rolling: roll (one full turn,
+## looped, mirrored when it rolls left); dizzy after a roll: recover (stretched to kl_clinker_recover); moving:
+## move (the trundle); else idle. The hurt flinch and the shell crack are one-shots (_on_hurt, _on_shell_cracked).
+func _update_art() -> void:
+	if _art == null:
+		return
+	var moved := global_position - _art_from
+	_art_from = global_position
+	var anim := "idle"
+	var secs := 0.0
+	if not awake:
+		anim = "sleep"
+	elif _rolling_t > 0.0:
+		anim = "roll"
+	elif _tell:
+		anim = "windup"
+		secs = _tell.duration
+	elif _wake_t > 0.0:
+		anim = "wake"
+	elif _dizzy_t > 0.0:
+		anim = "recover"
+	elif moved.length() > 0.01:
+		anim = "move"
+	if _rolling_t > 0.0 or _tell:
+		if absf(_roll_dir.x) > 0.05:
+			_art.flip_h = _roll_dir.x < 0.0   # drawn facing right: it faces (and turns) the way it rolls
+	elif anim == "move" and absf(moved.x) > 0.01:
+		_art.flip_h = moved.x < 0.0
+	_art.play_anim(anim, secs)
+	_art.position = Vector2(sin(_t * 9.0) * 3.0 if _dizzy_t > 0.0 else 0.0, ART_FOOT)   # dizzy: it wobbles
+
+## Owner art: a flinch for a real hit (not the beam's or a burn's steady damage), while it isn't curling or
+## rolling (the shell ring and the roll stay the readable thing then).
+func _on_hurt(_scare: bool, source: String) -> void:
+	if _art and awake and not (source in STEADY) and _rolling_t <= 0.0 and _tell == null and not _art.holding():
+		_art.play_once("hurt")
+
+func _on_shell_cracked() -> void:
+	super._on_shell_cracked()
+	if _art and _rolling_t <= 0.0:
+		_art.play_once("crack")
+
 func body_radius() -> float:
 	return 25.0
 
@@ -162,6 +216,9 @@ func _draw() -> void:
 	elif _rolling_t > 0.0:
 		curl = 1.0
 	var wob := sin(_t * 9.0) * 3.0 if _dizzy_t > 0.0 else 0.0
+	if _art and _art.showing():
+		_draw_overlays()
+		return
 	draw_set_transform(Vector2(wob, 0), _spin if _rolling_t > 0.0 else wob * 0.03, Vector2.ONE)
 	var rest := [Vector2(-24, 10), Vector2(-19, -6), Vector2(-10, -16), Vector2(8, -19), Vector2(22, -8), Vector2(24, 9), Vector2(10, 17), Vector2(-12, 16)]
 	var pts := PackedVector2Array()
@@ -185,6 +242,10 @@ func _draw() -> void:
 	for ex in [-6.0, 6.0]:
 		draw_rect(Rect2(ex - 2.5, -9.0 - 2.5 * open, 5.0, maxf(1.0, 5.0 * open)), eye)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	_draw_overlays()
+
+## What stays code-drawn over the sprite too: the shell ring, the burning edge and the dizzy stars.
+func _draw_overlays() -> void:
 	draw_shell(Vector2.ZERO, 30.0)
 	if _burning > 0.0:
 		draw_arc(Vector2.ZERO, 34.0, 0.0, TAU, 32, Color(1.0, 0.72, 0.4, 0.9), 3.0)

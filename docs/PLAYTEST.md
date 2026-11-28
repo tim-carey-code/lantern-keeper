@@ -1,5 +1,25 @@
 # Playtests
 
+## Clinker sprite: what to look at (owner, pad)
+
+**Build:** branch `proto/kl-clinker-art` (the play branch plus the Clinker's sprite from your Gemini sheet). Nothing about play changed: same hit area, timings and damage. Look at the previews first (8x and 4x strips); merge only if you approve them.
+
+**What to look at** (the Clinker by the Hollow's WayLamp)
+1. **Asleep:** a flat lump on its post, eyes shut, breathing slowly. Come close: it uncurls and stands.
+2. **The curl:** before a roll it tucks into a ball while the lane fills; the eyes stay visible until the last frame. Still easy to dash out of?
+3. **The roll:** a ball turning the way it rolls. Does it read as rolling, or as a flicker?
+4. **Dizzy:** after the roll it wobbles under the code's stars. Is the open window still obvious?
+5. **Hits:** a flinch on a hit, and the cracks when its shell breaks. Its kill leaves rubble and a wisp of cold smoke.
+6. **Size:** about the old shape's size. Too small next to the keeper, or right?
+
+**Questions**
+
+| Question | Your answer |
+|---|---|
+| Approve the strips as they are? | |
+| Anything to touch up first (the dizzy eyes, the cracks, a claw speck on the roll)? | |
+| In the dark it is a dark shape inside its shell ring. Readable enough? | |
+
 ## M1c: what to try (owner, pad)
 
 **Build:** branch `proto/kl-m1c` (lamps in the fight). Open its worktree in Godot and press F5. **Your save:** a version 6 save loads and becomes version 7; nothing in it changes except that the new old lamp on the rim of the Ashbrood's bowl appears, cold. Once saved as version 7, the M1b build can't load it, so **copy your save slot files first** if you want to go back. Keep a save from **before the Ashbrood** for steps 7-9. What was built is DESIGN §20; the new texts are STORY §16 (DRAFT). Sound: only Kenney stand-ins for the new slots (`foe_exposed`, `lock_on`, the Ashbrood's bolts and sweep).

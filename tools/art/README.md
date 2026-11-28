@@ -13,7 +13,7 @@ godot --headless --path . -s tools/art/sprite_from_sheet.gd -- <sheet image> <ma
 
 To try a sheet without touching the game, add `--out ~/.cache/openclaw/project-scratch/sprite-out/`.
 
-**The committed sprites** (the six approved samples, DECISIONS 2026-11-27) are rebuilt by `tools/art/make_sprites.sh`
+**The committed sprites** (the six approved samples, DECISIONS 2026-11-27; the Clinker on `proto/kl-clinker-art`, waiting for approval, DECISIONS 2026-11-28) are rebuilt by `tools/art/make_sprites.sh`
 (`--force` to replace touched-up strips too). It needs the private sheets in `tools/art/samples/` (ignored by git;
 a `.gdignore` there keeps Godot from importing them), then run `godot --headless --import`. The one-row pilot
 `wickling_timid_sample.cfg` is left out: it would write the same timid file names as `wickling.cfg`.
@@ -40,7 +40,7 @@ Ask for one image with every key pose in a grid of equal cells on flat magenta. 
 ## 2. Write the manifest
 
 Copy one from `tools/art/manifests/`: `wickling.cfg` (3 variants, 16 and 24 px), `spitwick.cfg` and `nest.cfg`
-(one shared sheet, non-square frames), `keeper_poses.cfg`, `ashbrood.cfg` (48 px, overlapping poses, the ember kept amber), `amos.cfg` (a person, skin and green recoloured, the cart as a 48 x 32 prop),
+(one shared sheet, non-square frames), `keeper_poses.cfg`, `ashbrood.cfg` (48 px, overlapping poses, the ember kept amber), `clinker.cfg` (32 px, 4 x 6 cells, every strip hand-keyed with `sequence`: a reordered curl, a roll turned half round), `amos.cfg` (a person, skin and green recoloured, the cart as a 48 x 32 prop),
 `wickling_timid_sample.cfg` (one row of four idle frames). A `.cfg` is a Godot ConfigFile:
 
 | Section | Keys |
@@ -49,7 +49,7 @@ Copy one from `tools/art/manifests/`: `wickling.cfg` (3 variants, 16 and 24 px),
 | `[cells]` | `r0c0 = "brave/idle"` (variant/pose; no slash = no variant), or `"skip"`. Several cells with the same pose become one hand-keyed strip of those frames |
 | `[variant.<v>]` | `role` (see below), `allow`, `deny`, `special` (colour groups), `frame_size`, `anchor`, `rim` (`small` #36507a, `elite` #4a6a94, `none` or a hex), `outline` (1 px #141a2e), `eyes` (how many to repair; 0 = off), `eye_threshold` (0-1 brightness), `palette` (`cold`, `all` or a list of hexes), `gain` (brighten before snapping), `fill` (0-1 of the frame), `sway`, `seed`, `keep`, `warm` (`snap`: everything to the palette; `ember`: fire-coloured pixels keep the four ambers, optionally only inside `ember_region`; `drop`: fire-coloured pixels clear), `recolour` (`{"beige": [hexes], "skin": [...], "green": [...]}`: pixels of a colour kind (`green`, `beige`, `skin`, `fire`, `grey`, `lit`, `any`) snap only to the colours given), `recolour_regions` (`{"lit": [x0, y0, x1, y1]}`: a rule only in part of the cell) |
 | `[cell.rXcY]` | `keep` (`all`, or `largest`: drop separate bits such as a fireball), `keep_near` (px), `region` (`[x0, y0, x1, y1]`, fractions of the cell), `role`, `allow`, `deny`, `special`, `palette`, `warm`, `ember_region`, `recolour`, `recolour_regions`, `eyes`, and any variant key |
-| `[pose.<v>.<pose>]` | `rule` (`idle`, `move`, `notice`, `attack`, `hold`, `keys`; `none` = just the key pose), `derive` (`["hurt", "death", "spawn", "notice", "windup"]`; `[]` = none), `anim` (output name), `frames`, `bob`, `lean`, `sway`, `fit` (`variant`, `own` = scale this pose by itself, `clip`), `prop` + `file` (a still prop with its own file name, e.g. `amos_cart`, left out of the frames file) |
+| `[pose.<v>.<pose>]` | `rule` (`idle`, `move`, `notice`, `attack`, `hold`, `keys`; `none` = just the key pose), `sequence` (a hand-keyed strip in any order: `["0", "1", "sleep 1", "2 r180"]`; each item a key frame's index in cell order, optionally another pose's name before it to borrow its frame, and `r180` (turned half round on the same foot line, a rolling ball) or `flip` after it; frames may repeat; implies `keys`), `derive` (`["hurt", "death", "spawn", "notice", "windup"]`; `[]` = none), `anim` (output name), `frames`, `bob`, `lean`, `sway`, `fit` (`variant`, `own` = scale this pose by itself, `clip`), `prop` + `file` (a still prop with its own file name, e.g. `amos_cart`, left out of the frames file) |
 | `[anim.<name>]` | `fps`, `loop`, `timed_by` (a Tuning name): copied into the frames file if it doesn't have them |
 
 Use `base` for the no-variant name in section names (`[pose.base.idle]`). Defaults by kind: creatures get the rim,

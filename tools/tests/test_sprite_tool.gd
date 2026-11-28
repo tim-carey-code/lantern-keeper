@@ -3,7 +3,7 @@ extends Node
 ## code goes through the whole pipeline into a scratch user:// folder (never assets/). Checks the frame sizes, that
 ## every pixel is a palette colour with no semi-transparency, the eye repair, the rim and the outline, frame counts
 ## (and that Art.frames loads them, per-variant sizes included), the dissolve, the content-based layout, the
-## dark grid lines, keep = "largest", and that a hand-drawn or touched-up strip is never overwritten without force.
+## dark grid lines, keep = "largest", a pose's `sequence` (reorder, reuse, borrow, turn), and that a hand-drawn or touched-up strip is never overwritten without force.
 ## Run: godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_sprite_tool.tscn
 
 const Pipeline := preload("res://tools/art/sprite_pipeline.gd")
@@ -34,6 +34,7 @@ func _ready() -> void:
 	_warm_checks()
 	_recolour_checks()
 	_role_checks()
+	_sequence_checks()
 	_wipe(ROOT)
 	Art.clear_frames()
 	print("RESULT fails=%d" % fails)
@@ -461,6 +462,35 @@ func _in_groups(used: Dictionary, groups: Array) -> bool:
 		if not ok:
 			return false
 	return true
+
+## sequence: a hand-keyed strip in any order, frames reused or borrowed from another pose, turned half round
+## (a rolling ball) or mirrored, on the same foot line; a bad item is skipped with a warning (the Clinker uses it).
+func _sequence_checks() -> void:
+	var out := ROOT + "seq/"
+	var rep := _run(out, {"pose.a.move/sequence": ["0", "attack 0", "0 r180", "0 flip", "bogus 7"], "pose.a.move/derive": []})
+	var dir := out + "creatures/sub/"
+	var mv := _load(dir + "sub_a_move.png")
+	var atk := _load(dir + "sub_a_attack.png")
+	check(rep["ok"] and mv != null and mv.get_size() == Vector2i(64, 16) and rep["warnings"].any(func(w): return str(w).contains("names no key frame")),
+		"sequence: 4 frames from 5 items (the bad one skipped, with a warning)")
+	if mv == null or atk == null:
+		return
+	var f0 := mv.get_region(Rect2i(0, 0, 16, 16))
+	var f1 := mv.get_region(Rect2i(16, 0, 16, 16))
+	var f2 := mv.get_region(Rect2i(32, 0, 16, 16))
+	var f3 := mv.get_region(Rect2i(48, 0, 16, 16))
+	check(_same(f1, atk.get_region(Rect2i(16, 0, 16, 16))) and not _same(f0, f1), "sequence: \"attack 0\" borrows the attack pose's key frame (its arm)")
+	var r0 := f0.get_used_rect()
+	var turned := f0.duplicate() as Image
+	turned.flip_x()
+	turned.flip_y()
+	check(f2.get_used_rect().end.y == r0.end.y and f2.get_used_rect().size == r0.size and _opaque(f2) == _opaque(f0) and not _same(f2, f0)
+		and _same(f2.get_region(f2.get_used_rect()), turned.get_region(turned.get_used_rect())),
+		"sequence: r180 turns the frame half round and keeps it on the same foot line")
+	var mirrored := f0.duplicate() as Image
+	mirrored.flip_x()
+	check(f3.get_used_rect().end.y == r0.end.y and _same(f3.get_region(f3.get_used_rect()), mirrored.get_region(mirrored.get_used_rect())),
+		"sequence: flip mirrors it")
 
 func _role_checks() -> void:
 	_role_sheet(ROOT + "role.png")
