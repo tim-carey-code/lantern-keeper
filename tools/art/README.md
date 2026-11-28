@@ -27,21 +27,23 @@ Ask for one image with every key pose in a grid of equal cells on flat magenta. 
 - JPEG is fine: the magenta is keyed with a tolerance.
 - Dark purple grid lines or dark magenta ground shadows: set `key_mode = "hue"`.
 - Rows of different heights: set `layout = "auto"` (cells are found from the magenta gaps).
+- Poses that overlap in x or y (a wing reaching under the next pose): set `layout = "components"`. The biggest
+  shapes in each row are the poses; smaller ones (an ash ring's pieces, flames, motes) join the nearest pose.
 - Concept images stay private and out of the repo (ART_DIRECTION §7, question 2). Keep them in
   `tools/art/samples/` (not committed) or outside the repo.
 
 ## 2. Write the manifest
 
 Copy one from `tools/art/manifests/`: `wickling.cfg` (3 variants, 16 and 24 px), `spitwick.cfg` and `nest.cfg`
-(one shared sheet, non-square frames), `keeper_poses.cfg`, `ashbrood.cfg` (48 px), `amos.cfg` (a person),
+(one shared sheet, non-square frames), `keeper_poses.cfg`, `ashbrood.cfg` (48 px, overlapping poses, the ember kept amber), `amos.cfg` (a person),
 `wickling_timid_sample.cfg` (one row of four idle frames). A `.cfg` is a Godot ConfigFile:
 
 | Section | Keys |
 |---|---|
-| `[sheet]` | `subject`, `kind` (`creature`, `keeper`, `person`, `prop`), `rows`, `cols`, `frame_size` (16, 24, 32, 48 or `Vector2i(16, 32)`), `anchor` (`foot` or `center`), `facing` (`right`), `layout` (`grid` or `auto`), `margin` (px trimmed off each grid cell), `key_mode` (`magenta` or `hue`), plus any variant key as the default |
+| `[sheet]` | `subject`, `kind` (`creature`, `keeper`, `person`, `prop`), `rows`, `cols`, `frame_size` (16, 24, 32, 48 or `Vector2i(16, 32)`), `anchor` (`foot` or `center`), `facing` (`right`), `layout` (`grid`, `auto` or `components`), `margin` (px trimmed off each grid cell), `key_mode` (`magenta` or `hue`), plus any variant key as the default |
 | `[cells]` | `r0c0 = "brave/idle"` (variant/pose; no slash = no variant), or `"skip"`. Several cells with the same pose become one hand-keyed strip of those frames |
-| `[variant.<v>]` | `frame_size`, `anchor`, `rim` (`small` #36507a, `elite` #4a6a94, `none` or a hex), `outline` (1 px #141a2e), `eyes` (how many to repair; 0 = off), `eye_threshold` (0-1 brightness), `palette` (`cold`, `all` or a list of hexes), `gain` (brighten before snapping), `fill` (0-1 of the frame), `sway`, `seed`, `keep` |
-| `[cell.rXcY]` | `keep` (`all`, or `largest`: drop separate bits such as a fireball), `keep_near` (px), `region` (`[x0, y0, x1, y1]`, fractions of the cell), and any variant key |
+| `[variant.<v>]` | `frame_size`, `anchor`, `rim` (`small` #36507a, `elite` #4a6a94, `none` or a hex), `outline` (1 px #141a2e), `eyes` (how many to repair; 0 = off), `eye_threshold` (0-1 brightness), `palette` (`cold`, `all` or a list of hexes), `gain` (brighten before snapping), `fill` (0-1 of the frame), `sway`, `seed`, `keep`, `warm` (`snap`: everything to the palette; `ember`: fire-coloured pixels keep the four ambers, optionally only inside `ember_region`; `drop`: fire-coloured pixels clear) |
+| `[cell.rXcY]` | `keep` (`all`, or `largest`: drop separate bits such as a fireball), `keep_near` (px), `region` (`[x0, y0, x1, y1]`, fractions of the cell), `palette`, `warm`, `ember_region`, `eyes`, and any variant key |
 | `[pose.<v>.<pose>]` | `rule` (`idle`, `move`, `notice`, `attack`, `hold`, `keys`; `none` = just the key pose), `derive` (`["hurt", "death", "spawn", "notice", "windup"]`; `[]` = none), `anim` (output name), `frames`, `bob`, `lean`, `sway`, `fit` (`variant`, `own` = scale this pose by itself, `clip`) |
 | `[anim.<name>]` | `fps`, `loop`, `timed_by` (a Tuning name): copied into the frames file if it doesn't have them |
 

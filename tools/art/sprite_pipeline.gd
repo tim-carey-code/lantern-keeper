@@ -14,6 +14,7 @@ const COLD_HEX := ["#0b0e1a", "#141a2e", "#1d2745", "#28385e", "#36507a", "#4a6a
 const RIM := {"small": "#36507a", "elite": "#4a6a94"}
 const OUTLINE_HEX := "#141a2e"
 const EYE_HEX := "#a3bcd4"
+const FIRE_HEX := ["#fff1c1", "#ffd27a", "#f5a742", "#d9772b"]
 const PREVIEW_BG := "#1d2745"
 const PREVIEW_SCALE := 8
 ## Default playback rates (ART_DIRECTION §2-§3); a manifest's [anim.<name>] section overrides them.
@@ -39,7 +40,7 @@ var _rng := RandomNumberGenerator.new()
 ## Returns the report: ok, errors, written, kept, strips {file: frames}, frames_cfg, preview, lines.
 func run(sheet_path: String, manifest_path: String, opts: Dictionary = {}) -> Dictionary:
 	report = {"ok": false, "errors": [], "warnings": [], "written": [], "kept": [], "strips": {}, "frames_cfg": "",
-		"preview": "", "previews": [], "lines": [], "cells": 0}
+		"preview": "", "previews": [], "lines": [], "cells": 0, "cell_boxes": {}}
 	if not FileAccess.file_exists(manifest_path) or manifest.load(manifest_path) != OK:
 		return _fail("can't read the manifest " + manifest_path)
 	if not FileAccess.file_exists(sheet_path):
@@ -62,11 +63,18 @@ func run(sheet_path: String, manifest_path: String, opts: Dictionary = {}) -> Di
 
 	# 1. Find the cells (an equal grid, or content-based bands), then read each one: key, crop, find the eyes.
 	var regions := {}
+	var cell_imgs := {}
 	var layout := str(_opt("sheet", "layout", "grid"))
 	if layout == "auto":
 		regions = _auto_cells(sheet, rows, cols)
 		if regions.is_empty():
 			return report
+	elif layout == "components":
+		cell_imgs = _component_cells(sheet, rows, cols)
+		if cell_imgs.is_empty():
+			return report
+		for k in cell_imgs:
+			regions[k] = cell_imgs[k]["rect"]
 	else:
 		var mg := int(_opt("sheet", "margin", 0))
 		for r in rows:
@@ -90,11 +98,13 @@ func run(sheet_path: String, manifest_path: String, opts: Dictionary = {}) -> Di
 				pose = spec.get_slice("/", 1).strip_edges()
 			if variant == "base":
 				variant = ""
-			var cell := _key_cell(sheet.get_region(regions[cname]), variant, cname)
+			var src: Image = cell_imgs[cname]["img"] if cell_imgs.has(cname) else sheet.get_region(regions[cname])
+			var cell := _key_cell(src, variant, cname)
 			cell["variant"] = variant
 			cell["pose"] = pose
 			cell["name"] = cname
 			cell["region"] = regions[cname]
+			report["cell_boxes"][cname] = regions[cname]
 			if cell["box"].size.x <= 0:
 				report["warnings"].append("cell %s (%s) is empty after keying: skipped" % [cname, spec])
 				continue
@@ -280,6 +290,173 @@ func _auto_cells(sheet: Image, rows: int, cols: int) -> Dictionary:
 	report["lines"].append("  auto layout: " + ", ".join(out.keys().map(func(k): return "%s %s" % [k, str(out[k])])))
 	return out
 
+## Connected-component cells, for sheets whose cells overlap in x or y (a wing under the next pose). The solid mask
+## is labelled at 1/component_scale size; rows come from clear row bands; in each row the `cols` biggest shapes are
+## the cells (left to right) and every smaller shape (an ash ring, a flame) joins the nearest one. Each cell's image
+## is its shapes alone, everything else painted magenta. Returns {cname: {"rect": Rect2i, "img": Image}}.
+func _component_cells(sheet: Image, rows: int, cols: int) -> Dictionary:
+	var k := maxi(1, int(_opt("sheet", "component_scale", 4)))
+	var w := sheet.get_width()
+	var h := sheet.get_height()
+	var lw := (w + k - 1) / k
+	var lh := (h + k - 1) / k
+	var data := sheet.get_data()
+	var lo := float(_vopt("", "key_lo"))
+	var hi := float(_vopt("", "key_hi"))
+	var hue := str(_vopt("", "key_mode")) == "hue"
+	var low := PackedByteArray()
+	low.resize(lw * lh)
+	for y in h:
+		var ly := (y / k) * lw
+		for x in w:
+			var i := (y * w + x) * 4
+			if key_alpha(data[i] / 255.0, data[i + 1] / 255.0, data[i + 2] / 255.0, lo, hi, hue) > 0.5:
+				low[ly + x / k] = 1
+	# Label (8-connected).
+	var label := PackedInt32Array()
+	label.resize(lw * lh)
+	var area: Array[int] = [0]
+	var boxes: Array[Rect2i] = [Rect2i()]
+	var cy_sum: Array[float] = [0.0]
+	var cx_sum: Array[float] = [0.0]
+	var stack := PackedInt32Array()
+	for start in lw * lh:
+		if low[start] == 0 or label[start] != 0:
+			continue
+		var id := area.size()
+		label[start] = id
+		stack.append(start)
+		var n := 0
+		var bx := Rect2i(start % lw, start / lw, 1, 1)
+		var sx := 0.0
+		var sy := 0.0
+		while not stack.is_empty():
+			var i := stack[stack.size() - 1]
+			stack.resize(stack.size() - 1)
+			var x := i % lw
+			var y := i / lw
+			n += 1
+			sx += x
+			sy += y
+			bx = bx.expand(Vector2i(x + 1, y + 1)).expand(Vector2i(x, y))
+			for dy in [-1, 0, 1]:
+				for dx in [-1, 0, 1]:
+					var nx: int = x + dx
+					var ny: int = y + dy
+					if nx < 0 or ny < 0 or nx >= lw or ny >= lh:
+						continue
+					var j := ny * lw + nx
+					if low[j] == 1 and label[j] == 0:
+						label[j] = id
+						stack.append(j)
+		area.append(n)
+		boxes.append(bx)
+		cx_sum.append(sx / n)
+		cy_sum.append(sy / n)
+	var row_n := PackedInt32Array()
+	row_n.resize(lh)
+	for y in lh:
+		for x in lw:
+			if low[y * lw + x] == 1:
+				row_n[y] += 1
+	var row_bands := _bands(row_n, rows)
+	if row_bands.size() != rows:
+		_fail("components layout: found %d row bands, the manifest says %d" % [row_bands.size(), rows])
+		return {}
+	var min_area := int(_opt("sheet", "component_min_area", 2))
+	var owner := PackedInt32Array()       # component -> cell index (r * 1000 + c), -1 = dropped
+	owner.resize(area.size())
+	owner.fill(-1)
+	var out := {}
+	for r in rows:
+		var want := int(_opt("sheet", "cols_r%d" % r, cols))
+		var comps: Array[int] = []
+		for id in range(1, area.size()):
+			if area[id] >= min_area and cy_sum[id] >= row_bands[r].x and cy_sum[id] < row_bands[r].y:
+				comps.append(id)
+		if comps.size() < want:
+			_fail("components layout: row %d has %d shapes, the manifest says %d" % [r, comps.size(), want])
+			return {}
+		var by_area := comps.duplicate()
+		by_area.sort_custom(func(a, b): return area[a] > area[b])
+		var seeds: Array = by_area.slice(0, want)
+		seeds.sort_custom(func(a, b): return cx_sum[a] < cx_sum[b])
+		for c in want:
+			owner[seeds[c]] = r * 1000 + c
+		# Every other shape joins the seed with the nearest pixel (a multi-source walk over the row band).
+		var near := _nearest_seed(label, lw, lh, Rect2i(0, row_bands[r].x, lw, row_bands[r].y - row_bands[r].x), seeds)
+		for id in comps:
+			if owner[id] >= 0:
+				continue
+			var b: Rect2i = boxes[id]
+			var votes := {}
+			for y in range(b.position.y, b.end.y):
+				for x in range(b.position.x, b.end.x):
+					if label[y * lw + x] == id and near.has(y * lw + x):
+						var s: int = near[y * lw + x]
+						votes[s] = int(votes.get(s, 0)) + 1
+			var best := -1
+			for s in votes:
+				if best < 0 or votes[s] > votes[best]:
+					best = s
+			if best >= 0:
+				owner[id] = r * 1000 + best
+	var pad := int(_opt("sheet", "auto_pad", 4))
+	for r in rows:
+		for c in int(_opt("sheet", "cols_r%d" % r, cols)):
+			var tag := r * 1000 + c
+			var lb := Rect2i()
+			var first := true
+			for id in range(1, area.size()):
+				if owner[id] == tag:
+					lb = boxes[id] if first else lb.merge(boxes[id])
+					first = false
+			var rect := Rect2i(lb.position * k, lb.size * k).grow(pad).intersection(Rect2i(0, 0, w, h))
+			var img := Image.create(rect.size.x, rect.size.y, false, Image.FORMAT_RGBA8)
+			img.fill(Color(1, 0, 1))
+			for y in rect.size.y:
+				var gy := rect.position.y + y
+				for x in rect.size.x:
+					var gx := rect.position.x + x
+					var id := label[(gy / k) * lw + gx / k]
+					if id > 0 and owner[id] == tag:
+						var i := (gy * w + gx) * 4
+						img.set_pixel(x, y, Color8(data[i], data[i + 1], data[i + 2]))
+			out["r%dc%d" % [r, c]] = {"rect": rect, "img": img}
+	report["lines"].append("  components layout: " + ", ".join(out.keys().map(func(key): return "%s %s" % [key, str(out[key]["rect"])])))
+	return out
+
+## For each low-res pixel in `area`, the index (into seeds) of the nearest seed shape (8-neighbour steps).
+static func _nearest_seed(label: PackedInt32Array, lw: int, lh: int, area: Rect2i, seeds: Array) -> Dictionary:
+	var near := {}
+	var queue := PackedInt32Array()
+	var seed_of := {}
+	for s in seeds.size():
+		seed_of[seeds[s]] = s
+	for y in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
+			var i := y * lw + x
+			if seed_of.has(label[i]):
+				near[i] = seed_of[label[i]]
+				queue.append(i)
+	var head := 0
+	while head < queue.size():
+		var i := queue[head]
+		head += 1
+		var x := i % lw
+		var y := i / lw
+		for dy in [-1, 0, 1]:
+			for dx in [-1, 0, 1]:
+				var nx: int = x + dx
+				var ny: int = y + dy
+				if nx < area.position.x or ny < area.position.y or nx >= area.end.x or ny >= area.end.y:
+					continue
+				var j := ny * lw + nx
+				if not near.has(j):
+					near[j] = near[i]
+					queue.append(j)
+	return near
+
 ## Runs of counts >= 2 (start, end) split by clear gaps; then merge across the narrowest gaps down to `want`.
 static func _bands(counts: PackedInt32Array, want: int) -> Array:
 	var bands: Array = []
@@ -390,8 +567,8 @@ func _key_cell(img: Image, variant: String, cname: String = "") -> Dictionary:
 	var box := Rect2i() if bx0 < 0 or by0 < 0 else Rect2i(bx0, by0, bx1 - bx0 + 1, by1 - by0 + 1)
 	var cell := {"w": w, "h": h, "a": a, "pr": pr, "pg": pg, "pb": pb, "box": box,
 		"mass_x": mass_x / mass if mass > 0.0 else w / 2.0, "eyes": []}
-	if box.size.x > 0 and int(_vopt(variant, "eyes")) > 0:
-		cell["eyes"] = _find_eyes(cell, variant)
+	if box.size.x > 0 and int(_copt(cname, variant, "eyes")) > 0:
+		cell["eyes"] = _find_eyes(cell, variant, cname)
 	return cell
 
 ## keep = "largest": clears every solid shape (8-connected) but the biggest, and those within `near` px of its box.
@@ -463,11 +640,11 @@ func _keep_largest(a: PackedFloat32Array, w: int, h: int, near: int) -> PackedFl
 	return a
 
 ## The eyes in the big source: bright, cold (not warm) blobs on the body. Biggest first, up to `eyes` of them.
-func _find_eyes(cell: Dictionary, variant: String) -> Array:
+func _find_eyes(cell: Dictionary, variant: String, cname: String = "") -> Array:
 	var w: int = cell["w"]
 	var box: Rect2i = cell["box"]
-	var thr := float(_vopt(variant, "eye_threshold"))
-	var min_area := int(_vopt(variant, "eye_min_area"))
+	var thr := float(_copt(cname, variant, "eye_threshold"))
+	var min_area := int(_copt(cname, variant, "eye_min_area"))
 	var bright := {}
 	for y in range(box.position.y, box.end.y):
 		for x in range(box.position.x, box.end.x):
@@ -505,7 +682,7 @@ func _find_eyes(cell: Dictionary, variant: String) -> Array:
 		if n >= min_area:
 			blobs.append({"area": n, "c": sum / n + Vector2(0.5, 0.5), "size": Vector2(mx - mn + Vector2i.ONE)})
 	blobs.sort_custom(func(p, q): return p["area"] > q["area"])
-	return blobs.slice(0, int(_vopt(variant, "eyes")))
+	return blobs.slice(0, int(_copt(cname, variant, "eyes")))
 
 # --- Scaling, palette, repairs ---------------------------------------------------------------------------------------
 
@@ -522,8 +699,8 @@ func _load_palette() -> bool:
 			palette_all.append(c)
 	return palette_all.size() >= 8
 
-func _palette_for(variant: String) -> Array[Color]:
-	var p: Variant = _vopt(variant, "palette")
+func _palette_for(variant: String, cname: String = "") -> Array[Color]:
+	var p: Variant = _copt(cname, variant, "palette")
 	var out: Array[Color] = []
 	if p is Array or p is PackedStringArray:
 		for hx in p:
@@ -534,6 +711,10 @@ func _palette_for(variant: String) -> Array[Color]:
 	else:
 		out = palette_all.duplicate()
 	return out
+
+## A fire-coloured pixel: a saturated, not-too-dark orange or amber (bone beige and wood browns are not).
+static func is_fire(c: Color) -> bool:
+	return c.s > 0.5 and c.v > 0.35 and (c.h < 0.17 or c.h > 0.97)
 
 ## Nearest palette colour ("redmean" weighted RGB distance: close to how the eye judges it, and cheap).
 static func snap(c: Color, pal: Array[Color]) -> Color:
@@ -574,7 +755,6 @@ func _build_variant(variant: String, cells: Array, file_base: String) -> Array:
 	var avail := Vector2(size.x - 2 * pad_side, size.y - pad_top - pad_bottom)
 	var fill := clampf(float(_vopt(variant, "fill")), 0.1, 1.0)
 	var s := minf(avail.x / max_w, avail.y / max_h) * fill
-	var pal := _palette_for(variant)
 	# Key frames, in cell order; a pose that has several cells becomes a hand-keyed strip of those frames.
 	var keys := {}        # pose -> Array of {img, eyes, thumb}
 	var order: Array = []
@@ -582,7 +762,7 @@ func _build_variant(variant: String, cells: Array, file_base: String) -> Array:
 		var cs := s
 		if str(_popt(variant, cell["pose"], "fit", "variant")) == "own":
 			cs = minf(avail.x / cell["box"].size.x, avail.y / cell["box"].size.y) * fill
-		var key := _key_frame(cell, variant, size, cs, pad_side, pad_bottom, pal)
+		var key := _key_frame(cell, variant, size, cs, pad_side, pad_bottom, _palette_for(variant, cell["name"]))
 		if not keys.has(cell["pose"]):
 			keys[cell["pose"]] = []
 			order.append(cell["pose"])
@@ -663,6 +843,17 @@ func _key_frame(cell: Dictionary, variant: String, size: Vector2i, s: float, pad
 	var oy := size.y - pad_bottom - th
 	var thr := float(_vopt(variant, "alpha_threshold"))
 	var gain := float(_vopt(variant, "gain"))
+	var cname: String = cell.get("name", "")
+	# warm: "snap" (every pixel to the palette), "ember" (fire-coloured pixels keep the four ambers, optionally only
+	# inside ember_region, fractions of the cell; the rest snaps to the palette) or "drop" (fire-coloured pixels clear).
+	var warm := str(_copt(cname, variant, "warm", "snap"))
+	var ember_rect := Rect2()
+	var er: Variant = _copt(cname, variant, "ember_region", null)
+	if er is Array and er.size() == 4:
+		ember_rect = Rect2(float(er[0]) * cell["w"], float(er[1]) * cell["h"], (float(er[2]) - float(er[0])) * cell["w"], (float(er[3]) - float(er[1])) * cell["h"])
+	var fire: Array[Color] = []
+	for hx in FIRE_HEX:
+		fire.append(Color.html(hx))
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	for ty in th:
 		var sy0 := box.position.y + int(floor(ty / s))
@@ -691,7 +882,14 @@ func _key_frame(cell: Dictionary, variant: String, size: Vector2i, s: float, pad
 			var py := oy + ty
 			if px < 0 or py < 0 or px >= size.x or py >= size.y:
 				continue
-			img.set_pixel(px, py, snap(Color(sr / sa * gain, sg / sa * gain, sb / sa * gain), pal))
+			var col := Color(sr / sa * gain, sg / sa * gain, sb / sa * gain)
+			if warm != "snap" and is_fire(col):
+				if warm == "drop":
+					continue
+				if warm == "ember" and (ember_rect.size.x <= 0.0 or ember_rect.has_point(Vector2((sx0 + sx1) * 0.5, (sy0 + sy1) * 0.5))):
+					img.set_pixel(px, py, snap(col, fire))
+					continue
+			img.set_pixel(px, py, snap(col, pal))
 	# The rim: top and the light side, on body pixels darker than the rim colour (wings and shells stay).
 	var rim := str(_vopt(variant, "rim"))
 	var facing := 1 if str(_vopt(variant, "facing")) != "left" else -1
@@ -707,7 +905,7 @@ func _key_frame(cell: Dictionary, variant: String, size: Vector2i, s: float, pad
 					img.set_pixel(x, y, rc)
 	# The eyes: found in the big source, painted back at the scaled spot, at least 1 px, the pair kept apart.
 	var eyes: Array[Vector2i] = []
-	if int(_vopt(variant, "eyes")) > 0 and not cell["eyes"].is_empty():
+	if not cell["eyes"].is_empty():
 		var max_e := int(_vopt(variant, "eye_size_max"))
 		var spots: Array = []
 		for e in cell["eyes"]:

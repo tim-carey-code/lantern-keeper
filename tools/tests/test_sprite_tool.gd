@@ -30,6 +30,8 @@ func _ready() -> void:
 	_grid_checks()
 	_owner_art_checks()
 	_auto_checks()
+	_component_checks()
+	_warm_checks()
 	_wipe(ROOT)
 	Art.clear_frames()
 	print("RESULT fails=%d" % fails)
@@ -269,6 +271,91 @@ func _auto_checks() -> void:
 	m.save(ROOT + "auto.cfg")
 	var rep3 := Pipeline.new().run(ROOT + "auto.png", ROOT + "auto.cfg", {"out_root": ROOT + "auto_bad/", "preview_dir": ROOT + "previews/"})
 	check(not rep3["ok"] and str(rep3["errors"]).contains("row bands"), "auto layout says so when the rows don't match the manifest")
+
+## layout = "components": poses whose boxes overlap in x (a wing under the next pose), plus a loose fragment.
+func _component_checks() -> void:
+	var img := Image.create(240, 140, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 0, 1))
+	img.fill_rect(Rect2i(10, 60, 100, 60), BODY)      # A: low and wide, reaching under B
+	img.fill_rect(Rect2i(100, 10, 60, 40), BODY)      # B: high, overlapping A's columns 100-110
+	img.fill_rect(Rect2i(172, 26, 8, 8), BODY)        # a fragment of B's effect (an ash-ring piece)
+	img.save_png(ROOT + "comp.png")
+	var m := ConfigFile.new()
+	m.set_value("sheet", "subject", "comp")
+	m.set_value("sheet", "kind", "creature")
+	m.set_value("sheet", "rows", 1)
+	m.set_value("sheet", "cols", 2)
+	m.set_value("sheet", "frame_size", 16)
+	m.set_value("sheet", "eyes", 0)
+	m.set_value("cells", "r0c0", "idle")
+	m.set_value("cells", "r0c1", "recover")
+	m.set_value("pose.base.idle", "derive", [])
+	m.set_value("sheet", "layout", "auto")
+	m.save(ROOT + "comp.cfg")
+	var bad := Pipeline.new().run(ROOT + "comp.png", ROOT + "comp.cfg", {"out_root": ROOT + "comp_auto/", "preview_dir": ROOT + "previews/"})
+	var ab: Rect2i = bad["cell_boxes"].get("r0c0", Rect2i())
+	check(not bad["ok"] or (ab.position.y <= 10 and ab.end.y >= 120), "column bands can't split poses that overlap in x (auto layout lumps A and B into one cell %s)" % str(ab))
+	m.set_value("sheet", "layout", "components")
+	m.save(ROOT + "comp.cfg")
+	var rep := Pipeline.new().run(ROOT + "comp.png", ROOT + "comp.cfg", {"out_root": ROOT + "comp_out/", "preview_dir": ROOT + "previews/"})
+	var a: Rect2i = rep["cell_boxes"].get("r0c0", Rect2i())
+	var b: Rect2i = rep["cell_boxes"].get("r0c1", Rect2i())
+	check(rep["ok"] and rep["cells"] == 2 and a.position.x <= 10 and a.end.y >= 120 and a.end.x <= 116 and b.position.y <= 10 and b.end.y <= 56 and b.end.x >= 180,
+		"components layout: each pose is its own shape (A %s, B %s), the loose fragment joins the nearest pose (B)" % [str(a), str(b)])
+	var fa := _load(ROOT + "comp_out/creatures/comp/comp_idle.png")
+	var fb := _load(ROOT + "comp_out/creatures/comp/comp_recover.png")
+	var a0 := fa.get_region(Rect2i(0, 0, 16, 16)) if fa else null
+	check(a0 != null and fb != null and _top_row(a0) >= 6 and _width(a0) >= 13, "the masked cell holds only its own pose: A stays low and wide (none of B above it)")
+
+## warm = "ember": fire-coloured pixels keep the ambers, bone beige and the rest snap cold; "snap" makes all cold.
+func _warm_checks() -> void:
+	var img := Image.create(240, 120, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 0, 1))
+	for c in 2:
+		var ox := c * 120
+		img.fill_rect(Rect2i(ox + 20, 20, 80, 90), BODY)
+		img.fill_rect(Rect2i(ox + 30, 26, 40, 24), Color8(222, 206, 172))   # a bone-beige skull
+		img.fill_rect(Rect2i(ox + 40, 80, 30, 20), Color8(245, 150, 45))    # the ember
+	img.save_png(ROOT + "warm.png")
+	var m := ConfigFile.new()
+	m.set_value("sheet", "subject", "warm")
+	m.set_value("sheet", "kind", "creature")
+	m.set_value("sheet", "rows", 1)
+	m.set_value("sheet", "cols", 2)
+	m.set_value("sheet", "frame_size", 16)
+	m.set_value("sheet", "eyes", 0)
+	m.set_value("sheet", "palette", "cold")
+	m.set_value("cells", "r0c0", "idle")
+	m.set_value("cells", "r0c1", "recover")
+	m.set_value("cell.r0c0", "warm", "ember")
+	m.set_value("pose.base.idle", "derive", [])
+	m.save(ROOT + "warm.cfg")
+	var rep := Pipeline.new().run(ROOT + "warm.png", ROOT + "warm.cfg", {"out_root": ROOT + "warm_out/", "preview_dir": ROOT + "previews/"})
+	var ember := _load(ROOT + "warm_out/creatures/warm/warm_idle.png")
+	var cold := _load(ROOT + "warm_out/creatures/warm/warm_recover.png")
+	var warm_px := 0
+	var cream := 0
+	var pale := 0
+	for y in 16:
+		for x in 16:
+			var c := ember.get_pixel(x, y)
+			if c.a < 0.5:
+				continue
+			var hx := "#" + c.to_html(false)
+			if Pipeline.FIRE_HEX.has(hx):
+				warm_px += 1
+			if hx == "#fff1c1":
+				cream += 1
+			if hx == "#a3bcd4" or hx == "#6d8fb3":
+				pale += 1
+	var all_cold := true
+	for y in cold.get_height():
+		for x in cold.get_width():
+			var c := cold.get_pixel(x, y)
+			if c.a > 0.5 and not Pipeline.COLD_HEX.has("#" + c.to_html(false)):
+				all_cold = false
+	check(rep["ok"] and warm_px > 0 and cream == 0 and pale > 0, "warm = ember keeps the ember amber (%d px) and snaps the bone-beige skull to the pale cold blues (%d px), not cream" % [warm_px, pale])
+	check(all_cold, "without it (palette cold) the same ember turns cold: a foe never glows amber")
 
 # --- Helpers -------------------------------------------------------------------------------------------------------
 
