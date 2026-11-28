@@ -2,7 +2,8 @@ class_name Landmark
 extends Node2D
 ## Something the light reveals that tells a piece of the valley's story.
 ## Interact to read it. Some landmarks unlock a lantern type (the pumphouse); some are upgrades
-## you take (a keeper's satchel: carry more; a lamp glass: a better hand lamp).
+## you take (a keeper's satchel: carry more scrap; a lamp glass: the hand lamp reaches 12 px further and holds
+## 0.1 more charge, M1b).
 
 const REVEAL_BELOW := 0.35
 
@@ -50,9 +51,9 @@ func activate() -> void:
 	if upgrade != "" and Progress.take_upgrade(id, upgrade):
 		Sfx.play("unlock", -6.0)
 		if upgrade == "carry":
-			body += "\n\nYou can carry %d of each now." % Inventory.carry_limit
+			body += "\n\nYou can carry %d scrap now." % Inventory.carry_limit   # DRAFT (M1b), was "%d of each"
 		else:
-			body += "\n\nYour hand lamp reaches further, dims more slowly and wards for longer."
+			body += "\n\nYour hand lamp reaches further and holds more charge."   # DRAFT (M1b; STORY §15)
 	Progress.note_opened.emit(title, body)
 	queue_redraw()
 

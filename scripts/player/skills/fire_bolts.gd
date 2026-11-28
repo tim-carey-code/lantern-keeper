@@ -229,19 +229,19 @@ func _lampfire_hit(f: Foe, at: Vector2, dir: Vector2) -> void:
 	var k := _keeper()
 	if f:
 		hits += 1
-		f.hurt(Tuning.kl_lampfire_dmg, false, "lampfire")
+		f.hurt(Tuning.kl_lampfire_dmg * Progress.dmg_mult(), false, "lampfire")
 		if k and not (f is WickNest):
-			k.lamp_charge = minf(1.0, k.lamp_charge + Tuning.kl_lampfire_charge)
+			k.lamp_charge = minf(Progress.charge_max(), k.lamp_charge + Tuning.kl_lampfire_charge)
 	for o in area(at, Tuning.kl_lampfire_splash):
 		if o != f:
-			o.hurt(Tuning.kl_lampfire_splash_dmg, false, "splash")
+			o.hurt(Tuning.kl_lampfire_splash_dmg * Progress.dmg_mult(), false, "splash")
 	FireFx.impact(at, dir, Tuning.kl_lampfire_splash)
 	Sfx.play("ui_tick", -22.0, 0.25)
 
 ## Lance: full damage, wears shells fully, freezes what it hits for a moment.
 func _lance_hit(f: Foe, at: Vector2, dir: Vector2) -> void:
 	hits += 1
-	f.hurt(Tuning.kl_lance_dmg, false, "lance")
+	f.hurt(Tuning.kl_lance_dmg * Progress.dmg_mult(), false, "lance")
 	if Tuning.kl_lance_dmg >= Tuning.kl_hitstop_big and is_instance_valid(f) and not f._dead:
 		f.hit_stop(Tuning.kl_hitstop)
 	FireFx.impact(at, dir, 14.0, false)
@@ -254,7 +254,7 @@ func _lance_hit(f: Foe, at: Vector2, dir: Vector2) -> void:
 func _globe_burst(at: Vector2) -> int:
 	var n := 0
 	for f in area(at, Tuning.kl_fireglobe_radius):
-		f.hurt(Tuning.kl_fireglobe_dmg, false, "fireglobe")
+		f.hurt(Tuning.kl_fireglobe_dmg * Progress.dmg_mult(), false, "fireglobe")
 		if Tuning.kl_fireglobe_dmg >= Tuning.kl_hitstop_big and is_instance_valid(f) and not f._dead:
 			f.hit_stop(Tuning.kl_hitstop)
 		n += 1

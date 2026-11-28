@@ -2,44 +2,30 @@ extends Node
 ## Autoload "Tuning": live placeholder numbers from DESIGN §3.
 ## The debug panel (F1 / gamepad Select) edits many of these while the game runs.
 
-# Post Lamp
-var lantern_max_fuel := 100.0
-var lantern_burn_per_sec := 0.5         # 100 fuel lasts ~3.3 minutes (was 5; owner: "a little too slow")
-var lantern_max_radius := 224.0         # px at full tank
-var lantern_min_radius_frac := 0.4      # radius just before it goes cold
+# Post Lamp. M1b (no more tending): lamps never burn, dim or need fuel; they shine at full radius while lit.
+var lantern_max_radius := 224.0         # px
 var post_lamp_cost_scrap := 5
-var pickup_refund := 0.5                # share of build cost returned on pick-up
+var pickup_refund := 0.5                # share of build cost returned on pick-up (as built; owner redesigning lanterns)
+var kl_snuff_sec := 8.0                 # s a lamp stays snuffed after the Ashbrood's dive; then it relights itself
 
-# Hooded Lamp (unlocked at the glazier's workshop): wind-proof, smaller light
-var hooded_cost_scrap := 5
-var hooded_cost_glass := 2
+# Hooded Lamp (unlocked at the glazier's workshop): a smaller light (its gust-proof job comes in M6)
+var hooded_cost_scrap := 7              # was 5 scrap + 2 glass (M1b: glass is cut; GAME_PLAN §6)
 var hooded_radius := 180.0
 
-# Mirror Post (unlocked at the signal station): no fuel, throws a beam when lit by another light
-var mirror_cost_scrap := 4
-var mirror_cost_glass := 3
+# Mirror Post (unlocked at the signal station): throws a beam when lit by another light
+var mirror_cost_scrap := 8              # was 4 scrap + 3 glass (M1b: glass is cut; GAME_PLAN §6)
 var mirror_beam_length := 352.0         # px (11 tiles)
 var mirror_beam_width := 48.0           # px
 var mirror_catch := 0.9                 # must stand within this share of a lantern's light radius
 var mirror_glow_radius := 40.0
 
-# The Windward Ridge: constant west wind on top of the gusts
-var ridge_burn_mult := 1.6              # exposed lanterns on the Ridge
-var ridge_radius_mult := 0.85
+# The Windward Ridge's gusts (inert from M1b until M6: kl_wind_enabled)
 var ridge_calm_min := 12.0              # gusts come much more often on the Ridge
 var ridge_calm_max := 22.0
 
-# Reservoir Lamp (unlocked at the pumphouse)
+# Reservoir Lamp (unlocked at the pumphouse): a wide dim light (feeding other lamps is cut, M1b)
 var reservoir_cost_scrap := 8
-var reservoir_max_fuel := 200.0
-var reservoir_burn_per_sec := 0.3
 var reservoir_radius := 200.0
-var reservoir_min_radius_frac := 0.6
-var reservoir_feed_per_sec := 0.75      # fuel/s to each other lantern in its light; must beat the Post Lamp burn (0.5)
-
-# Resources
-var fuel_per_unit := 10.0               # lantern fuel per carried fuel unit
-var gather_interval := 0.25             # s of holding per unit gathered
 
 # Fog
 var fog_creep_per_sec := 0.05           # how fast unlit tiles fog back in
@@ -47,27 +33,23 @@ var fog_clear_per_sec := 0.8            # how fast light pushes fog out
 var fog_slow_min := 0.6                 # walk speed multiplier in full fog
 var marsh_creep_mult := 1.8             # the Reedmarsh fogs back faster
 
-# Wind gusts (the only weather in v1)
+# Wind gusts. M1b: inert until M6, when gusts come back on the Ridge only (GAME_PLAN §6). Off, no gust ever starts.
+var kl_wind_enabled := false
 var wind_calm_min := 30.0
 var wind_calm_max := 55.0
 var wind_warning_sec := 5.0
 var wind_gust_sec := 10.0
-var wind_burn_mult := 3.0               # exposed lanterns during a gust (was 2; owner: gusts too weak)
-var wind_radius_mult := 0.7
 var wind_creep_mult := 1.5
 
-# Hand lamp (dims in the dark, never goes out)
+# Hand lamp (never goes out; its light follows its charge)
 # Upgrades found in the valley: a keeper's satchel and a lamp glass in each region (placeholders)
-var carry_base := 30                       # carried of each resource before any satchel
-var carry_upgrade_step := 10               # each satchel: carry this many more of everything
+var carry_base := 30                       # scrap carried before any satchel (satchels become bag slots in M3)
+var carry_upgrade_step := 10               # each satchel: carry this many more
 var lamp_upgrade_radius := 12.0            # each lamp glass: hand lamp light reaches this much further (px)
-var lamp_upgrade_dim_mult := 0.75          # ...and dims this much slower in the dark (x per glass)
-var lamp_upgrade_ward_mult := 0.85         # ...and the ward costs this much charge (x per glass)
+var lamp_upgrade_charge := 0.1             # ...and holds this much more charge (M1b, GAME_PLAN §5: max 1.0 + 0.1 a glass)
 var hand_lamp_max_radius := 104.0
 var hand_lamp_ember_radius := 44.0
-var hand_lamp_drain_per_sec := 1.0 / 45.0   # full -> ember in 45 s of darkness
-var hand_lamp_recharge_per_sec := 0.5       # free top-up while in lantern light
-var hand_lamp_charge_per_fuel := 0.5        # auto-burns 1 carried fuel when low
+var hand_lamp_recharge_per_sec := 0.5       # charge/s in lantern light out of a fight
 
 # PROTOTYPE: Wicklings, the flare and warmth (branch proto/wicklings)
 var wick_enabled := true
@@ -77,29 +59,20 @@ var wick_max := 7
 var wick_hp := 3.0
 var wick_speed := 65.0              # keeper walks at 160
 var wick_sense := 380.0             # px: how far they notice lanterns / the keeper
-var wick_rim := 0.12                # light level where they stop and drain (rim of the light)
 var wick_core := 0.55               # light level that burns them
 var wick_light_burn := 2.0          # hp/s while in a lantern's bright core
 var wick_beam_burn := 3.5           # hp/s inside a Mirror Post beam (3 hp -> under a second)
-var wick_drain_per_sec := 5.0       # lantern fuel/s drained (100-fuel tank: ~20 s)
-# Warding glow (hold F / RB / RT): the hand lamp swells into a bright circle that burns
-# and pushes back Wicklings. Powered by the hand lamp's charge, never by carried fuel.
-var ward_radius := 110.0            # px
-var ward_dps := 4.5                 # Wickling hp per second (3 hp -> about 0.7 s)
-var ward_push := 140.0              # px/s pushed outward
-var ward_drain_per_sec := 0.45      # lamp charge per second: a full lamp gives about 2 s of ward (was 0.25; owner: combat too easy)
-var ward_walk_mult := 0.6           # you move slower while warding
-var ward_min_charge := 0.05         # below this the lamp is too dim to ward
-var ember_fuel := 1                 # a burned Wickling leaves an ember worth this much fuel
-var ember_life := 30.0              # seconds before an ember fades
+var ember_life := 30.0              # seconds before a scrap drop fades
 var wick_scrap_chance := 0.35       # chance a burned Wickling also drops 1 scrap
 var warmth_max := 100.0
 var warmth_drain_per_sec := 30.0    # while a Wickling touches the keeper
 var kl_warmth_regen := 20.0         # in lantern light when nothing hunts (GAME_PLAN §5)
-var faint_drop := 0.5               # share of carried resources dropped on fainting
+# The faint rule (M1b, GAME_PLAN §12): nothing carried is lost; wick waits where you fell.
+var kl_faint_warmth := 0.6          # share of max warmth you wake with
+var kl_faint_skip_radius := 320.0   # px: a light this close to an unbeaten fight is skipped as a place to wake
+var kl_lamp_low_charge := 0.05      # the hand lamp counts as "an ember" at or below this charge (HUD chip, tip)
 
-# WayLamps (PROTOTYPE): kindle one and its whole region is held
-var waylamp_fuel_need := 15              # carried fuel to feed it
+# WayLamps: lit by touch (M1b); the Hollow's wakes the Ashbrood, the others are hold fights until M5-M6
 var waylamp_kindle_sec := 15.0           # how long it must be kept clear of the dark
 var waylamp_radius := 420.0
 var waylamp_swarm := 4                   # bold Wicklings drawn to a kindling WayLamp
@@ -107,8 +80,7 @@ var waylamp_clear_radius := 160.0        # px: no building this close, so no lan
 var waylamp_sap_per_wick := 1.5          # seconds of kindling undone per second, per Wickling on it
 var travel_hunt_radius := 384.0          # px (12 tiles): a foe hunting the keeper this close blocks WayLamp fast travel
 
-# Light repels Wicklings; only a dying lantern can be drained (PROTOTYPE)
-var dying_frac := 0.25                   # under this share of its tank a lantern is "dying"
+# Light repels Wicklings (M1b: nothing is drained)
 var wick_repel_speed := 160.0            # px/s a Wickling is pushed out of healthy light
 
 # Keeper's Light (PROTOTYPE): the keeper's light as a weapon. Lamp charge is the stamina.
@@ -166,7 +138,7 @@ var kl_clinker_wake_radius := 224.0     # px from its post: it sleeps until you 
 var kl_clinker_leash := 480.0           # px from its post: past this it goes home
 var kl_clinker_stop_range := 65.0
 var kl_clinker_roll_cooldown := 3.5
-var kl_clinker_wick := 20               # was 15: 36 hp of shell and body, a roll; about 6 s of beam (balance pass)
+var kl_clinker_wick := 28               # was 20 (M1b): Lv 4 x1.75 = 49, so a pure beeline goes into the Ashbrood at L4 (test_leveling)
 var kl_nest_hp := 12.0
 var kl_nest_core_dps := 2.0
 var kl_nest_wick := 5                   # was 8: 12 nests made a third of the Hollow's wick (balance pass)
@@ -185,7 +157,7 @@ var kl_ashbrood_dive_period := 6.0
 var kl_ashbrood_dive_tell := 1.0        # was 0.7 (readability: §4.3 row 11)
 var kl_ashbrood_dive_warmth := 25.0
 var kl_ashbrood_sit_sec := 4.0
-var kl_ashbrood_wick := 32              # base (Lv 7: x2.5 = 80); was 50 flat, 40 before the balance pass. Its kill is the Hollow's last level
+var kl_ashbrood_wick := 32              # base (M1b: Lv 5, x2 = 64); was 50 flat, 40 before the balance pass. Its kill is the Hollow's last level
 var kl_ashbrood_puff_charge := 0.1
 var kl_ashbrood_wave_count := 3
 var kl_ashbrood_dive_dist := 200.0
@@ -204,12 +176,15 @@ var kl_spill_charge := 0.03             # ...and each thing the burst hits gives
 var kl_linger_duration := 2.0
 var kl_linger_dps := 2.0
 var kl_catch_damage := 2.0
-# Wick and levels (balance pass 2026-11-27, DESIGN §9). Wick to go from level L to L+1 is
-# round(kl_wick_base * L ^ kl_wick_exp): 6, 14, 24, 34, 45, 56, 68, 81, 93... (was flat: 15, then +10 a level).
+# Wick and levels (DESIGN §9). Wick to go from level L to L+1 is round(kl_wick_base * L ^ kl_wick_exp).
 # Level-gap pass (owner, 2026-11-27): every foe has a level, and its wick scales with it (DESIGN §9).
-# Level 2 after the first pack or two, level 3 before the Clinker, level 7 into the Ashbrood, level 8 on its kill.
-var kl_wick_base := 6.0
-var kl_wick_exp := 1.25
+# M1b (GAME_PLAN §9): level 2 at the crook; the Hollow's last level on the Ashbrood kill: L5 on a beeline,
+# L6 for an explorer (test_leveling).
+# Foe scaling (M1b, GAME_PLAN §4.6): foes +12% health and shell a level over 1; the keeper +10% damage a level over 1.
+var kl_foe_hp_per_level := 0.12
+var kl_dmg_per_level := 0.1
+var kl_wick_base := 7.0                 # was 6 (M1b, GAME_PLAN §9)
+var kl_wick_exp := 1.65                 # was 1.25: 7, 22, 43, 69, 100, 135, 174, 216, 263, 313, 366
 var kl_level_cap := 12                  # v1 cap (PLAN §5.1): never more level-ups than upgrades to pick
 var kl_wick_kindle := 10                # kindling a WayLamp (was 30: the Hollow's last level now comes on the Ashbrood kill)
 var kl_wickling_wick := 1               # 3 hp, half a second of beam
@@ -225,8 +200,8 @@ var kl_xp_bonus := 0.1                  # per level the foe is above the keeper
 var kl_xp_bonus_max := 0.3
 var kl_xp_level_growth := 0.25          # higher-level foes are worth more: +25% base wick per level over 1
 var kl_clinker_level := 4
-var kl_ashbrood_level := 7
-var kl_ashbrood_add_level := 5          # its phase-1 Wicklings: two below it, so standing in phase 1 is no farm
+var kl_ashbrood_level := 5              # was 7 (M1b, GAME_PLAN §8.2: Hollow foes 1-4, the Ashbrood 5)
+var kl_ashbrood_add_level := 4          # was 5: its phase-1 Wicklings, one below it (GAME_PLAN §16)
 var kl_waylamp_swarm_level := 6         # Wicklings drawn to a kindling WayLamp (no guardian)
 # Foe levels for packs and nests are in the HOLLOW_PACKS / HOLLOW_NESTS tables in scripts/main/main.gd.
 var kl_wick_drop_radius := 28.0

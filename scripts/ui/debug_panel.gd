@@ -3,22 +3,14 @@ extends CanvasLayer
 ## gamepad (D-pad up/down picks a slider, left/right changes it).
 
 const ROWS := [
-	["lantern_burn_per_sec", "Burn rate (fuel/s)", 0.05, 5.0, 0.05],
 	["lantern_max_radius", "Lantern radius (px)", 64.0, 512.0, 8.0],
-	["lantern_min_radius_frac", "Radius when nearly empty", 0.1, 1.0, 0.05],
-	["fuel_per_unit", "Lantern fuel per carried fuel", 1.0, 50.0, 1.0],
-	["gather_interval", "Gather time per unit (s)", 0.05, 2.0, 0.05],
 	["fog_creep_per_sec", "Fog creep (/s)", 0.0, 0.5, 0.01],
 	["fog_clear_per_sec", "Fog clear (/s)", 0.1, 3.0, 0.05],
 	["fog_slow_min", "Walk speed in full fog", 0.2, 1.0, 0.05],
 	["hand_lamp_max_radius", "Hand lamp radius (px)", 48.0, 256.0, 4.0],
-	["hand_lamp_drain_per_sec", "Hand lamp drain (/s)", 0.0, 0.2, 0.005],
 	["marsh_creep_mult", "Marsh fog creep x", 1.0, 4.0, 0.1],
-	["reservoir_feed_per_sec", "Reservoir feed (fuel/s)", 0.0, 3.0, 0.1],
-	["wind_burn_mult", "Gust burn x (exposed)", 1.0, 5.0, 0.25],
 	["wick_spawn_sec", "Wickling spawn every (s)", 4.0, 60.0, 1.0],
 	["wick_speed", "Wickling speed", 20.0, 160.0, 5.0],
-	["wick_drain_per_sec", "Wickling drain (fuel/s)", 0.0, 15.0, 0.5],
 	["warmth_drain_per_sec", "Warmth loss on touch (/s)", 0.0, 100.0, 5.0],
 	# M1a: fire in the Hollow (GAME_PLAN §4.1, §5, §15)
 	["kl_lampfire_dmg", "Lampfire damage (the hit)", 0.0, 10.0, 0.25],
@@ -158,6 +150,13 @@ const ROWS := [
 	["kl_xp_level_growth", "Wick: + per foe level", 0.0, 1.0, 0.05],
 	["kl_clinker_level", "Clinker level", 1.0, 20.0, 1.0],
 	["kl_ashbrood_level", "Ashbrood level", 1.0, 20.0, 1.0],
+	# M1b: no more tending (GAME_PLAN §4.6, §6, §12)
+	["kl_foe_hp_per_level", "Foe health and shell + a level", 0.0, 0.5, 0.01],
+	["kl_dmg_per_level", "Keeper damage + a level", 0.0, 0.5, 0.01],
+	["kl_snuff_sec", "Ashbrood dive snuffs a lamp (s)", 0.0, 30.0, 0.5],
+	["kl_faint_warmth", "Wake from a faint with warmth x", 0.1, 1.0, 0.05],
+	["kl_faint_skip_radius", "Faint: skip lights this near a fight (px)", 0.0, 800.0, 16.0],
+	["lamp_upgrade_charge", "Lamp glass: + max charge", 0.0, 0.5, 0.05],
 	["kl_ashbrood_add_level", "Ashbrood adds level", 1.0, 20.0, 1.0],
 	["warmth_max", "Warmth (health)", 20.0, 300.0, 5.0],
 	["kl_timid_share", "Share of timid Wicklings", 0.0, 1.0, 0.05],

@@ -9,8 +9,9 @@ signal goal_changed(id: String, text: String)
 signal entry_added(title: String)
 signal tip_shown(text: String)
 
+## M1b (no more tending): the opening is lighting the hut's old lamp by touch, then the north path's; the old
+## first goal, "Take fuel from the woodpile" (gather_fuel), is cut.
 const GOALS := [
-	{"id": "gather_fuel", "text": "Take fuel from the woodpile", "target": "woodpile"},
 	{"id": "relight_first", "text": "Relight the old lantern by the hut", "target": "start_lantern", "entry": 1},
 	{"id": "read_ledger", "text": "Read the ledger by the hut", "target": "ledger", "entry": 2},
 	# The first 10 minutes (onboarding, owner 2026-11-27): the north path's cold lamp, Oswin's crook, the first nest.
@@ -47,7 +48,9 @@ const ENTRIES := {
 	7: ["The coat", "Oswin's coat, caught in the rocks. Something came up out of the water and drank the great lamp. I hope Oswin found somewhere warm."],
 	8: ["The station", "Oswin turned the last mirror toward the lake. That is where Oswin went."],
 	# WayLamps (prototype; text approved by the owner 2026-11-27, STORY.md section 11).
-	13: ["The first WayLamp", "I held the WayLamp until it took. Now the Hollow keeps its own lamps."],
+	# Entry 13: DRAFT (M1b; STORY §15), a proposed rewrite of the APPROVED "I held the WayLamp until it took. Now the
+	# Hollow keeps its own lamps." (the WayLamp is won from the Ashbrood now, and lamps need no keeping).
+	13: ["The first WayLamp", "The Ashbrood is gone. I took the last ember back from its bowl, and the WayLamp caught. The Hollow is kept."],
 	14: ["The marsh WayLamp", "The old keepers left dry wicks for whoever came next. The marsh is held again."],
 	15: ["The ridge WayLamp", "The ridge is held. Nothing comes up the steps now, and only the lake is left."],
 }
@@ -55,9 +58,9 @@ const ENTRIES := {
 const TITLE_CARD := ["The valley had keepers once.", "Then the lamps went out, one by one.", "Now there is a letter, and you."]
 const LETTER := "To whoever reads this,\n\nThe lamps in the valley are going out. I cannot keep them alone any more.\n\nThere is a hut at the bottom of the Hollow, with an old lantern by the door. Light that first. Then follow my marks. I left them where the light will find them.\n\nStay in the light. The dark is not empty.\n\nIf you came, thank you.\n\n- Oswin, the last keeper"
 
+## M1b: cold_lantern, low_lantern, dying_lantern and glass are cut (nothing burns down; no fuel or glass).
+## waylamp_seen and faint are DRAFT rewrites (STORY §15).
 const TIPS := {
-	"cold_lantern": "A cold lantern keeps its frame. A little fuel will wake it.",
-	"low_lantern": "Lanterns burn down. Top them up before they go cold.",
 	"fog_edge": "Fog comes back where light fades. Light holds the ground.",
 	"gust": "Wind is coming. Rock on the windward side shelters a flame.",
 	"wickling_seen": "Something small moves in the dark. It is drawn to your lights.",
@@ -71,13 +74,11 @@ const TIPS := {
 	"build_here": "Plant a Post Lamp beside it. Then hold.",
 	"lamp_empty": "Your lamp is down to an ember. Rest in a lantern's light to fill it.",
 	"warmth_low": "You are getting cold. Stand in a lantern's light.",
-	"faint": "You woke by the nearest light. What you dropped waits where you fell.",
-	"glass": "Glass. The keepers on the ridge made lamps from it.",
+	"faint": "You woke by the nearest light. Your unspent wick waits where you fell.",
 	"mirror_placed": "A mirror needs light. Stand it inside a burning lantern's glow.",
 	"mirror_lit": "Interact to turn the beam. Beams pass from mirror to mirror.",
 	# WayLamps (prototype; text approved 2026-11-27, STORY.md section 11)
-	"waylamp_seen": "A WayLamp. Feed it fuel, then hold it until it takes.",
-	"dying_lantern": "A lantern below a quarter is dying. Wicklings can drain it, so keep it fed.",
+	"waylamp_seen": "A WayLamp. Touch your flame to it. Something will come for the light.",
 	"kindle_attack": "Wicklings have come for the WayLamp. Ward them off until it takes.",
 	# M1a (DRAFT, STORY.md §14.3): once Lance is learned and the Beam is off the bar (a level-2 keeper, or a version 4
 	# save migrated past level 2), say where the Beam went. The level-2 Lance toast says it too, and marks this seen.
@@ -197,8 +198,6 @@ func _lanterns(main: Node) -> Array:
 func _is_done(id: String, main: Node) -> bool:
 	var read := Progress.notes_read
 	match id:
-		"gather_fuel":
-			return Inventory.get_count("fuel") >= 1 or done.has("relight_first")
 		"relight_first":
 			for l in _lanterns(main):
 				if l.global_position.distance_to(main.start_lantern_pos) < 8.0 and l.is_lit():
@@ -250,11 +249,6 @@ func _is_done(id: String, main: Node) -> bool:
 func _check_tips(main: Node) -> void:
 	var player = main.player
 	for l in _lanterns(main):
-		if l.needs_fuel() and not l.is_lit():
-			if done.has("gather_fuel"):
-				tip("cold_lantern")
-		elif l.needs_fuel() and l.fuel_frac() < Tuning.dying_frac and not l.is_held():
-			tip("dying_lantern")   # PROTOTYPE: replaces low_lantern, which fires at the same point
 		if l.kind == "mirror":
 			tip("mirror_placed")
 			if l.is_lit():
@@ -287,14 +281,12 @@ func _check_tips(main: Node) -> void:
 			tip("nest")
 			if Progress.is_unlocked("post") and Inventory.get_count("scrap") >= Tuning.post_lamp_cost_scrap:
 				tip("build_here")
-	if player.lamp_charge <= Tuning.ward_min_charge:
+	if player.lamp_charge <= Tuning.kl_lamp_low_charge:
 		tip("lamp_empty")
 	if player.warmth < Tuning.warmth_max * 0.35:
 		tip("warmth_low")
 	if player.faints > 0:
 		tip("faint")
-	if Inventory.get_count("glass") > 0:
-		tip("glass")
 	if Progress.knows("lance") and Progress.slot_of("beam") == "":
 		tip("beam_off_bar")
 

@@ -96,7 +96,7 @@ func _draw_bars() -> void:
 	var x := r.position.x + 22.0
 	# Warmth (health) on top, charge below, each with its icon.
 	var warm: float = clampf(player.warmth / Tuning.warmth_max, 0.0, 1.0)
-	var charge: float = clampf(player.lamp_charge, 0.0, 1.0)
+	var charge: float = clampf(player.lamp_charge / Progress.charge_max(), 0.0, 1.0)
 	draw_texture_rect(UiStyle.icon("icon_warmth"), Rect2(r.position.x, r.position.y - 2.0, 16, 16), false)
 	draw_texture_rect(UiStyle.icon("icon_lamp"), Rect2(r.position.x, r.position.y + 14.0, 16, 16), false)
 	draw_rect(Rect2(x, r.position.y, w, 10), Color(0.043, 0.055, 0.1, 0.92))
@@ -107,7 +107,7 @@ func _draw_bars() -> void:
 	for slot in ["skill_2", "skill_3", "skill_4"]:
 		var s: Skill = player.combat.slot_skill(slot)
 		if s and s.cost() > 0.0 and not s.held():
-			var tx := x + w * clampf(s.cost(), 0.0, 1.0)
+			var tx := x + w * clampf(s.cost() / Progress.charge_max(), 0.0, 1.0)
 			draw_rect(Rect2(tx - 1.0, r.position.y + 13.0, 2.0, 16.0), Color(UiStyle.CREAM, 0.85 if charge >= s.cost() else 0.45))
 
 func _draw_slot(rect: Rect2, st: Dictionary, slot: String) -> void:

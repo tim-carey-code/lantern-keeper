@@ -81,14 +81,14 @@ func _boss_oil_every_way(p: Node, spawner: Node) -> void:
 	boss.process_mode = Node.PROCESS_MODE_DISABLED
 	boss.position = at + Vector2(120, 0)
 	spawner.add_child(boss)
-	boss.hp_max = Tuning.kl_ashbrood_hp; boss.hp = Tuning.kl_ashbrood_hp; boss.shell = 0.0
+	boss.hp_max = boss.phase_hp(); boss.hp = boss.phase_hp(); boss.shell = 0.0   # M1b: a phase grows with its level
 	oils = _oil_count()
-	boss.hurt(Tuning.kl_ashbrood_hp * 2.0, false, "lance")
+	boss.hurt(boss.phase_hp() * 2.0, false, "lance")
 	await get_tree().process_frame
 	check(boss.phase == 2 and _oil_count() == oils + 1, "one hit through a whole Ashbrood phase still drops that phase's oil")
 	boss.end_phase_pause()   # it rises out of the bowl first (readability step); its process is off here
 	boss.shell = 0.0
-	boss.hurt(Tuning.kl_ashbrood_hp * 0.6, false, "lance")
+	boss.hurt(boss.phase_hp() * 0.6, false, "lance")
 	await get_tree().process_frame
 	check(_oil_count() == oils + 2, "and the next phase drops its own")
 	boss.queue_free()
@@ -110,7 +110,7 @@ func _run_checks() -> void:
 	check(p.flasks == 3, "starts with three oil flasks")
 	# The regen table is measured in the same lit spot, with Hunt switched both ways.
 	var lantern: Lantern = main.get_node("Lanterns").get_child(0)
-	lantern.fuel = Tuning.lantern_max_fuel
+	lantern.light_by_touch()   # the hut's old lamp, lit by touch (M1b)
 	p.global_position = lantern.global_position
 	var spawner = main.get_node("FogLayer/Wicklings")
 	var nearby_hunter := Wickling.new()
@@ -166,15 +166,15 @@ func _run_checks() -> void:
 	boss.process_mode = Node.PROCESS_MODE_DISABLED
 	boss.position = p.global_position + Vector2(540, 0)
 	spawner.add_child(boss)
-	boss.hp_max = Tuning.kl_ashbrood_hp; boss.hp = Tuning.kl_ashbrood_hp; boss.shell = 0.0
-	boss.hurt(Tuning.kl_ashbrood_hp * 0.51, false, "lance")
+	boss.hp_max = boss.phase_hp(); boss.hp = boss.phase_hp(); boss.shell = 0.0   # M1b: a phase grows with its level
+	boss.hurt(boss.phase_hp() * 0.51, false, "lance")
 	await get_tree().process_frame
 	check(_oil_count() == oils + 3, "Ashbrood phase 1 drops oil below half health")
-	boss.hurt(Tuning.kl_ashbrood_hp, false, "lance")
+	boss.hurt(boss.phase_hp(), false, "lance")
 	check(boss.phase == 2, "Ashbrood reaches its second phase")
 	boss.end_phase_pause()
 	boss.shell = 0.0
-	boss.hurt(Tuning.kl_ashbrood_hp * 0.51, false, "lance")
+	boss.hurt(boss.phase_hp() * 0.51, false, "lance")
 	await get_tree().process_frame
 	check(_oil_count() == oils + 4, "Ashbrood phase 2 drops oil below half health")
 	boss.queue_free()

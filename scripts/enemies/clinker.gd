@@ -35,6 +35,29 @@ func _exit_tree() -> void:
 	if _tell:
 		_tell.finish()
 
+## The faint rule: back to the start of its (one) phase: full health, shell regrown, asleep on its post, its oil
+## armed again.
+func reset_for_faint() -> void:
+	if _dead or is_queued_for_deletion():
+		return
+	hp = Tuning.kl_clinker_hp * level_mult()
+	hp_max = hp
+	shell = Tuning.kl_clinker_shell * level_mult()
+	shell_max = shell
+	_oil_step_given = false
+	_ignite_t = 0.0
+	_linger_t = 0.0
+	if _tell:
+		_tell.finish()
+		_tell = null
+	_rolling_t = 0.0
+	_dizzy_t = 0.0
+	_wake_t = 0.0
+	_cooldown = 1.0
+	awake = false
+	if home != Vector2.ZERO:
+		global_position = home
+
 ## The roll's wind-up in progress (tests and captures), or null.
 func tell() -> Telegraph.Tell:
 	return _tell

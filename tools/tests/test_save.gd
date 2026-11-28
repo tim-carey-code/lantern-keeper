@@ -1,5 +1,7 @@
 extends Node
-## Save/load round trip. Run:
+## Save/load round trip (version 6, M1b: no fuel or glass), and older files: a version 5 file (the owner's save
+## is v5) migrates to v6 with fuel, glass and tending dropped cleanly and progress, level, the bar and flasks
+## kept; a version 4 file migrates through v5. Every old file here is test-only, written next to the test save. Run:
 ##   godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_save.tscn
 
 var main: Node
@@ -10,6 +12,7 @@ var lamp_pos := Vector2.ZERO
 var keeper_pos := Vector2.ZERO
 var res_pos := Vector2.ZERO
 var seen_before := 0
+var piles_before := 0
 
 func check(ok: bool, what: String) -> void:
 	print(("PASS " if ok else "FAIL ") + what)
@@ -40,6 +43,7 @@ func _ready() -> void:
 
 ## Test-only files next to the test save (never the owner's slots or settings).
 const V4_PATH := "user://test_save_v4.json"
+const V5_PATH := "user://test_save_v5.json"
 const BAD_BAR_PATH := "user://test_save_bad_bar.json"
 
 func _read_json(path: String) -> Dictionary:
@@ -65,19 +69,25 @@ func _load_file(path: String, data: Dictionary) -> bool:
 ## A version 4 save *file* (the shape before M1a: no bar, no Lance flag, no flasks) loads and migrates, at level 2
 ## and at level 1; a saved bar with things it may not hold falls back to the default bar slot by slot.
 func _old_and_bad_files() -> void:
-	var v5 := _read_json(SaveGame.path)
-	check(int(v5.get("version", 0)) == SaveGame.VERSION, "the test save is version %d" % SaveGame.VERSION)
-	var v4: Dictionary = v5.duplicate(true)
+	var v6 := _read_json(SaveGame.path)
+	check(int(v6.get("version", 0)) == SaveGame.VERSION and SaveGame.VERSION == 6, "the test save is version 6 (%d)" % SaveGame.VERSION)
+	var text := FileAccess.get_file_as_string(SaveGame.path)
+	check(not text.contains("fuel") and not text.contains("glass") and not text.contains("regrow"), "a version 6 save has no fuel, glass or regrowth in it")
+	var v5 := _v5_from(v6)
+	_v5_file(v5)
+	var v4: Dictionary = _v5_from(v6)
 	v4["version"] = 4
 	v4["progress"].erase("bar")
 	v4["progress"].erase("lance_given")
 	v4["player"].erase("flasks")
 	v4["progress"]["level"] = 2
+	v4["progress"]["wick"] = 7
 	v4["player"]["warmth"] = 55.0
 	check(_load_file(V4_PATH, v4), "a version 4 save file loads")
 	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "lance", "skill_4": ""} and Progress.lance_given, "a level 2 v4 file gets the default bar with Lance on LB (%s)" % str(Progress.bar))
 	check(main.player.flasks == Tuning.kl_flask_max and absf(main.player.warmth - 55.0) < 0.5, "with full flasks, and its keeper as saved (flasks %d, warmth %.0f)" % [main.player.flasks, main.player.warmth])
 	check(Progress.level == 2 and Progress.wick == 7 and Inventory.get_count("scrap") == 7 and Progress.notes_read.has("ledger") and Progress.has_combat_upgrade("long_throw"), "and its world state: level, wick, inventory, notes, upgrades")
+	check(Inventory.counts.keys() == ["scrap"], "a v4 file goes on through v5 to v6: no fuel or glass (%s)" % str(Inventory.counts))
 	check(not FileAccess.file_exists(V4_PATH), "the v4 test file is cleaned up")
 	v4["progress"]["level"] = 1
 	v4["progress"]["wick"] = 0
@@ -85,8 +95,8 @@ func _old_and_bad_files() -> void:
 	check(Progress.level == 1 and Progress.bar == Progress.default_bar() and not Progress.lance_given and not Progress.knows("lance"), "level 1: the default bar with the Beam on LB, and no Lance (%s)" % str(Progress.bar))
 	check(main.player.flasks == Tuning.kl_flask_max, "and full flasks")
 	_beam_hint_after_migration(v4)
-	# A v5 file whose bar holds what it may not.
-	var bad: Dictionary = v5.duplicate(true)
+	# A v6 file whose bar holds what it may not.
+	var bad: Dictionary = v6.duplicate(true)
 	bad["progress"]["level"] = 1
 	bad["progress"]["lance_given"] = false
 	bad["progress"]["bar"] = {"skill_1": "fireglobe", "skill_2": "hearth_ring", "skill_3": "lance", "skill_4": "no_such_skill"}
@@ -100,11 +110,79 @@ func _old_and_bad_files() -> void:
 	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "beam", "skill_4": "hearth_ring"}, "a skill twice keeps only the first (the later slot takes its default); a self-cast on slot 4 stays (%s)" % str(Progress.bar))
 	bad["progress"].erase("bar")
 	_load_file(BAD_BAR_PATH, bad)
-	check(Progress.bar == Progress.default_bar(), "a v5 file with no bar gets the default one")
+	check(Progress.bar == Progress.default_bar(), "a v6 file with no bar gets the default one")
 	check(not FileAccess.file_exists(BAD_BAR_PATH), "the bad-bar test file is cleaned up")
 	# Put the round-trip state back for the pause-menu checks that follow.
 	Progress.reset()
 	SaveGame.load_into(main)
+
+## A version 5 file as M1a wrote it, built from this world's v6 save: fuel and glass carried, fuel fed to a WayLamp,
+## every lantern with a tank, fuel spots, peat, glass shards and the woodpile, untaken fuel and glass caches, a
+## dropped fuel pile, an empty scrap pile, a keeper at level 7 of the old curve with a bar and 2 flasks.
+func _v5_from(v6: Dictionary) -> Dictionary:
+	var v5: Dictionary = v6.duplicate(true)
+	v5["version"] = 5
+	v5["inventory"] = {"fuel": 12, "scrap": 7, "glass": 3}
+	v5["progress"]["waylamp_fuel"] = {"hollow": 9}
+	var lamps := []
+	for l in v6["lanterns"]:
+		var old: Dictionary = (l as Dictionary).duplicate()
+		old.erase("cold")
+		old["fuel"] = 0.0 if bool(l.get("cold", false)) else 77.0
+		lamps.append(old)
+	var c: Vector2 = main.start + Vector2(160, 160)
+	lamps.append({"kind": "post", "x": c.x, "y": c.y, "fuel": 0.0, "dir": 0})   # a planted lamp that had burned out
+	v5["lanterns"] = lamps
+	var piles := []
+	for r in v6["resources"]:
+		var old: Dictionary = (r as Dictionary).duplicate()
+		old["max"] = int(r["amount"])
+		old["regrow"] = 75.0
+		old["always"] = false
+		piles.append(old)
+	piles.append({"kind": "fuel", "label": "", "x": 300.0, "y": 300.0, "amount": 5, "max": 8, "regrow": 60.0, "always": false})
+	piles.append({"kind": "fuel", "label": "Peat", "x": 320.0, "y": 300.0, "amount": 5, "max": 9, "regrow": 45.0, "always": false})
+	piles.append({"kind": "glass", "label": "", "x": 340.0, "y": 300.0, "amount": 3, "max": 4, "regrow": 120.0, "always": false})
+	piles.append({"kind": "fuel", "label": "", "x": 360.0, "y": 300.0, "amount": 3, "max": 5, "regrow": 10.0, "always": true})   # the woodpile
+	piles.append({"kind": "fuel", "label": "Old cache", "x": 380.0, "y": 300.0, "amount": 10, "max": 10, "regrow": 1.0e9, "always": false})
+	piles.append({"kind": "glass", "label": "Old cache", "x": 400.0, "y": 300.0, "amount": 6, "max": 6, "regrow": 1.0e9, "always": false})
+	piles.append({"kind": "fuel", "label": "Dropped fuel", "x": 420.0, "y": 300.0, "amount": 4, "max": 4, "regrow": 1.0e9, "always": false})
+	piles.append({"kind": "scrap", "label": "Dropped scrap", "x": 440.0, "y": 300.0, "amount": 3, "max": 3, "regrow": 1.0e9, "always": false})
+	piles.append({"kind": "scrap", "label": "", "x": 460.0, "y": 300.0, "amount": 0, "max": 6, "regrow": 75.0, "always": false})
+	v5["resources"] = piles
+	v5["progress"]["level"] = 7
+	v5["progress"]["wick"] = 30
+	v5["progress"]["lance_given"] = true
+	v5["progress"]["bar"] = {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "beam", "skill_4": "hearth_ring"}
+	v5["player"]["flasks"] = 2
+	v5["player"]["lamp_charge"] = 1.0
+	return v5
+
+## The v5 -> v6 migration through a real file (test-only, next to the test save; never the owner's slots).
+func _v5_file(v5: Dictionary) -> void:
+	check(_load_file(V5_PATH, v5), "a version 5 save file loads (the owner's current save is v5)")
+	check(not FileAccess.file_exists(V5_PATH), "the v5 test file is cleaned up")
+	check(Progress.level == 7 and Progress.wick == 30 and Progress.lance_given, "it keeps the level and wick (L%d, %d)" % [Progress.level, Progress.wick])
+	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "beam", "skill_4": "hearth_ring"}, "and the action bar as it was (%s)" % str(Progress.bar))
+	check(main.player.flasks == 2, "and the flasks (%d)" % main.player.flasks)
+	check(Progress.notes_read.has("ledger") and Progress.has_combat_upgrade("long_throw") and Progress.cleared.has("nest_hollow_1") and Progress.is_unlocked("reservoir"), "and progress: notes, upgrades, cleared fights, unlocks")
+	check(Inventory.counts == {"scrap": 7}, "fuel and glass leave the inventory; scrap stays (%s)" % str(Inventory.counts))
+	check(not ("waylamp_fuel" in Progress), "nothing remembers fuel fed to a WayLamp")
+	var lamps := get_tree().get_nodes_in_group("lantern")
+	var res := lamps.filter(func(x): return x.position == lamp_pos)
+	check(lamps.size() == 4 and res.size() == 1 and res[0].kind == "reservoir" and res[0].is_lit(), "every lantern comes back, lit (%d)" % lamps.size())
+	var hut := lamps.filter(func(x): return x.position.distance_to(main.start_lantern_pos) < 8.0)
+	var way := lamps.filter(func(x): return x.position.distance_to(main.waypost_lantern_pos) < 8.0)
+	check(hut.size() == 1 and hut[0].old and hut[0].is_lit(), "a fuelled old lamp comes back lit")
+	check(way.size() == 1 and way[0].old and way[0].can_light_by_touch(), "an empty old lamp comes back cold, to be lit by touch")
+	var burned := lamps.filter(func(x): return x.position.distance_to(main.start + Vector2(160, 160)) < 20.0)
+	check(burned.size() == 1 and burned[0].is_lit() and not burned[0].old, "a planted lamp that had burned out comes back lit (lamps never burn now)")
+	var piles := get_tree().get_nodes_in_group("resource")
+	check(piles.all(func(r): return r.kind == "scrap" and r.amount > 0), "only scrap piles with something in them come back")
+	var caches := piles.filter(func(r): return r.label == "Old cache" and r.position.y == 300.0)
+	check(caches.size() == 2 and caches.any(func(r): return r.amount == 10) and caches.any(func(r): return r.amount == 6), "untaken fuel and glass caches become scrap caches (%d)" % caches.size())
+	check(piles.filter(func(r): return r.position.y == 300.0).size() == 3, "fuel spots, peat, glass, the woodpile, dropped fuel and empty piles are gone; dropped scrap stays")
+	check(main.player.lamp_charge <= Progress.charge_max() + 0.0001, "the hand lamp's charge is within its max")
 
 ## The owner's case (playtest 2026-11-27): a version 4 save at level 7 migrates with Lance on LB, and nothing said
 ## where the Beam went. The first check of the world afterwards shows a one-time hint, with the Skills button.
@@ -150,9 +228,15 @@ func _process(_delta: float) -> void:
 		2:
 			check(not main.loaded_save, "a fresh start has no save to load")
 			var v4 := {"version": 4, "progress": {"level": 2}, "player": {"warmth": 73.0}}
-			var v5: Dictionary = SaveGame.migrate_data(v4)
-			check(v5.version == 5 and v5.progress.bar.skill_3 == "lance" and v5.progress.lance_given, "version 4 saves migrate to v5 with Lance on LB at level 2")
-			check(v5.player.flasks == Tuning.kl_flask_max and v5.player.warmth == 73.0, "migration fills flasks and preserves the old keeper state")
+			var v6: Dictionary = SaveGame.migrate_data(v4)
+			check(v6.version == 6 and v6.progress.bar.skill_3 == "lance" and v6.progress.lance_given, "version 4 saves migrate (through v5) to v6 with Lance on LB at level 2")
+			check(v6.player.flasks == Tuning.kl_flask_max and v6.player.warmth == 73.0, "migration fills flasks and preserves the old keeper state")
+			var v5 := {"version": 5, "inventory": {"fuel": 3, "scrap": 4, "glass": 1}, "progress": {"level": 6, "waylamp_fuel": {"marsh": 2}},
+				"lanterns": [{"kind": "post", "x": 1.0, "y": 2.0, "fuel": 0.0, "dir": 0}, {"kind": "mirror", "x": 5.0, "y": 6.0, "fuel": 1.0, "dir": 3}],
+				"resources": [{"kind": "fuel", "label": "", "x": 0.0, "y": 0.0, "amount": 4, "max": 8, "regrow": 60.0, "always": false}], "player": {"flasks": 1}}
+			var m: Dictionary = SaveGame.migrate_data(v5)
+			check(m.version == 6 and m.inventory == {"scrap": 4} and not m.progress.has("waylamp_fuel") and m.progress.level == 6 and m.player.flasks == 1, "a v5 save migrates to v6: fuel and glass dropped, progress kept")
+			check(m.lanterns.size() == 2 and m.lanterns.all(func(l): return not l.has("fuel")) and m.lanterns[0].cold and m.lanterns[1].dir == 3 and m.resources.is_empty(), "lanterns lose their tanks (an empty one is marked cold); fuel spots go")
 		120:
 			# Change everything a save should keep.
 			var fog: FogGrid = main.fog
@@ -160,9 +244,10 @@ func _process(_delta: float) -> void:
 			var l := Lantern.new()
 			l.kind = "reservoir"
 			l.position = lamp_pos
-			l.fuel = 77.0
 			main.get_node("Lanterns").add_child(l)
-			Inventory.counts["fuel"] = 12
+			for old in get_tree().get_nodes_in_group("lantern"):
+				if old.global_position.distance_to(main.start_lantern_pos) < 8.0:
+					old.light_by_touch()   # the hut's old lamp lit; the north path's stays cold
 			Inventory.counts["scrap"] = 7
 			Progress.unlock("reservoir")
 			Progress.selected = "reservoir"
@@ -181,12 +266,15 @@ func _process(_delta: float) -> void:
 			var r: ResourceNode = main.get_node("Resources").get_child(5)
 			res_pos = r.position
 			r.amount = 1
-			main.drop_pile("scrap", main.start + Vector2(40, 40), 3)
+			var taken: ResourceNode = main.get_node("Resources").get_child(6)
+			taken.amount = 0   # an emptied pile stays gone
+			taken.remove_from_group("resource")
 			keeper_pos = main.start + Vector2(64, 32)
 			main.player.global_position = keeper_pos
 			main.player.warmth = 42.0
 			main.player.lamp_charge = 0.5
 			seen_before = fog.remembered.count(1)
+			piles_before = get_tree().get_nodes_in_group("resource").size()
 			check(SaveGame.save(main), "saving writes the file")
 			check(SaveGame.has_save(), "the save file exists")
 		122:
@@ -197,15 +285,18 @@ func _process(_delta: float) -> void:
 		124:
 			_new_main()   # loads the save synchronously in _ready
 			check(absf(main.player.warmth - 42.0) < 0.5 and absf(main.player.lamp_charge - 0.5) < 0.01, "warmth and hand lamp come back")
-			check(main.player.flasks == 2 and Progress.bar.skill_3 == "lance", "the v5 action bar and flask count come back")
+			check(main.player.flasks == 2 and Progress.bar.skill_3 == "lance", "the action bar and flask count come back")
 		128:
 			check(main.loaded_save, "starting the game loads the save")
 			var lamps := get_tree().get_nodes_in_group("lantern")
 			var found = lamps.filter(func(x): return x.position == lamp_pos)
 			check(lamps.size() == 3 and found.size() == 1, "lanterns come back: the two old lamps and the built one (%d)" % lamps.size())
 			if found.size() == 1:
-				check(found[0].kind == "reservoir" and absf(found[0].fuel - 77.0) < 2.0, "with their type and fuel (%.1f)" % found[0].fuel)
-			check(Inventory.get_count("fuel") == 12 and Inventory.get_count("scrap") == 7, "inventory comes back")
+				check(found[0].kind == "reservoir" and found[0].is_lit(), "with their type, lit")
+			var hut := lamps.filter(func(x): return x.position.distance_to(main.start_lantern_pos) < 8.0)
+			var way := lamps.filter(func(x): return x.position.distance_to(main.waypost_lantern_pos) < 8.0)
+			check(hut.size() == 1 and hut[0].old and hut[0].is_lit() and way.size() == 1 and way[0].old and not way[0].is_lit(), "the old lamps come back: the lit one lit, the cold one cold")
+			check(Inventory.counts == {"scrap": 7}, "inventory comes back (%s)" % str(Inventory.counts))
 			check(Progress.is_unlocked("reservoir") and Progress.selected == "reservoir", "unlocks and selected lantern come back")
 			check(Progress.wick == 7 and Progress.level == 2 and Progress.cleared.has("nest_hollow_1"), "wick/level/cleared come back (%d/%d/%s)" % [Progress.wick, Progress.level, str(Progress.cleared)])
 			check(Progress.has_combat_upgrade("long_throw"), "chosen combat upgrades come back")
@@ -213,9 +304,8 @@ func _process(_delta: float) -> void:
 			check(wick_drops.size() == 1 and wick_drops[0].amount == 4, "dropped wick comes back (%d)" % wick_drops.size())
 			check(Progress.notes_read.has("ledger"), "notes read come back")
 			var rs := get_tree().get_nodes_in_group("resource").filter(func(x): return x.position == res_pos)
-			check(rs.size() == 1 and rs[0].amount == 1, "resource amounts come back")
-			var piles := get_tree().get_nodes_in_group("resource").filter(func(x): return x.label == "Dropped scrap")
-			check(piles.size() == 1 and piles[0].amount == 3, "dropped piles come back")
+			check(rs.size() == 1 and rs[0].amount == 1, "what is left in a scrap pile comes back")
+			check(get_tree().get_nodes_in_group("resource").size() == piles_before, "and a taken pile stays gone (%d piles)" % piles_before)
 			check(main.player.global_position.distance_to(keeper_pos) < 2.0, "the keeper is where they were")
 			check(main.fog.remembered.count(1) >= seen_before, "the map of what you've seen comes back")
 			check(Progress.regions_seen.has(FogGrid.R_HOLLOW), "found regions come back")

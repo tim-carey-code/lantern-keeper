@@ -1,27 +1,37 @@
 class_name Lantern
 extends Node2D
-## A lantern of any type. Burns fuel; radius shrinks with fuel; goes cold when
-## empty (keeps its frame, relights with fuel only). Wind hits exposed ones.
+## A lantern of any type (M1b, GAME_PLAN §6: no more tending). Lamps never burn down, never dim and need no fuel.
+## A lantern is lit unless:
+##   - it is an old cold lamp (`old` and `cold`: the hut lamp and the north path's lamp) that the keeper has not
+##     lit yet by touch (A / E), or
+##   - something snuffed it for a while (`snuff()`: the Ashbrood's dive, Tuning.kl_snuff_sec); it relights itself.
+## Kinds:
 ##   post:      the basic lamp.
-##   reservoir: big tank, wide dim light, slowly tops up other lanterns in its light.
-##   hooded:    smaller light, but wind never touches it.
-##   mirror:    burns no fuel. When it sits in another lantern's light (or in another
-##              mirror's beam) it throws a long, narrow beam in one of 8 directions.
-##              Interact to turn it. Beams are blocked by rock.
+##   reservoir: a wide dim light (its new job, forcing things up out of water, comes in M5).
+##   hooded:    a smaller light (its new job, the only lamp a gust can't snuff, comes in M6).
+##   mirror:    when it sits in another lantern's light (or in another mirror's beam) it throws a long, narrow
+##              beam in one of 8 directions. Interact to turn it. Beams are blocked by rock.
+##
+## Everything a lit lantern DOES to the world is in the "Effects" section below, and only there: its light radius,
+## the bright core that burns small foes and nests, whether small dark is kept out (timid) or burns after a while
+## (brave), and where it refills the keeper. Fog clearing follows the light radius. Foes (through LightSense), the keeper and
+## the fog read these methods; they don't know about kinds. New lantern mechanics go in that section.
 
 const NAMES := {"post": "Post Lamp", "reservoir": "Reservoir Lamp", "hooded": "Hooded Lamp", "mirror": "Mirror Post"}
 const DIRS := [Vector2(1, 0), Vector2(1, 1), Vector2(0, 1), Vector2(-1, 1), Vector2(-1, 0), Vector2(-1, -1), Vector2(0, -1), Vector2(1, -1)]
-const PREVAILING := Vector2i.RIGHT   # the Ridge wind blows from the west
 ## Lamp box height above the tile centre, so the light glows from the lamp, not the base.
 const LAMP_Y := -34.0
 ## The Post Lamp is a shepherd's crook: its lamp hangs to the right of the post.
 const CROOK_LAMP := Vector2(9, -19)
 
 var kind := "post"
-var fuel := -1.0          # -1 = start with a full tank
+var old := false          # one of the valley's old lamps (placed by the world, not built): can't be picked up
+var cold := false         # an old lamp not yet lit by touch (only old lamps start cold)
+var snuff_t := 0.0        # > 0: snuffed (the Ashbrood's dive); it relights by itself when this runs out
 var mirror_dir := 0       # mirror only: index into DIRS
 var catching := false     # mirror only: set each fog tick by FogGrid
 var smother_t := 0.0      # mirror only: seconds of smothering left (a Wickling keeps topping it up)
+var threatened := 0.0     # > 0: the Ashbrood is winding up a dive at this lamp (it flickers)
 var light: PointLight2D
 var beam_light: PointLight2D
 
@@ -35,31 +45,23 @@ static func cost(k: String) -> int:
 			return Tuning.mirror_cost_scrap
 	return Tuning.post_lamp_cost_scrap
 
-static func glass_cost(k: String) -> int:
-	match k:
-		"hooded":
-			return Tuning.hooded_cost_glass
-		"mirror":
-			return Tuning.mirror_cost_glass
-	return 0
-
 static func cost_text(k: String) -> String:
-	var g := glass_cost(k)
-	return "%d scrap" % cost(k) + (" + %d glass" % g if g > 0 else "")
+	return "%d scrap" % cost(k)
 
 static func display(k: String) -> String:
 	return NAMES.get(k, "???")
 
+## DRAFT (M1b): the lantern list's line for each kind (STORY §15).
 static func blurb(k: String) -> String:
 	match k:
 		"post":
-			return "Burns fuel. Light shrinks as it runs low."
+			return "A steady light. Its bright core burns small foes and nests."
 		"reservoir":
-			return "Big tank, wide dim light. Slowly refuels other lanterns in its light."
+			return "A wide, dim light with no core."
 		"hooded":
-			return "Smaller light, but wind never touches it."
+			return "A smaller light behind a hood."
 		"mirror":
-			return "No fuel. Place it in another lantern's light and it throws a long beam. [E / A] turns it."
+			return "Place it in another lantern's light and it throws a long beam. [E / A] turns it."
 	return ""
 
 func _enter_tree() -> void:
@@ -73,9 +75,9 @@ func _ready() -> void:
 	add_to_group("lantern")
 	if kind == "mirror":
 		add_to_group("mirror")
+	if not old:
+		cold = false   # only the valley's old lamps can start cold
 	z_index = 20
-	if fuel < 0.0:
-		fuel = max_fuel()
 	light = PointLight2D.new()
 	light.texture = LightTex.radial()
 	light.color = Color(0.9, 0.86, 0.62) if kind == "reservoir" else Color(1.0, 0.78, 0.45)
@@ -93,16 +95,45 @@ func _ready() -> void:
 		beam_light.enabled = false
 		add_child(beam_light)
 
-# --- Stats -------------------------------------------------------------------
+# --- State -----------------------------------------------------------------------
 
-func max_fuel() -> float:
-	match kind:
-		"reservoir":
-			return Tuning.reservoir_max_fuel
-		"mirror":
-			return 1.0
-	return Tuning.lantern_max_fuel
+## Lit = shining (or, for a mirror, catching light).
+func is_lit() -> bool:
+	if kind == "mirror":
+		return catching
+	return not cold and snuff_t <= 0.0
 
+func is_snuffed() -> bool:
+	return snuff_t > 0.0
+
+## An old cold lamp the keeper can light by touch.
+func can_light_by_touch() -> bool:
+	return old and cold
+
+## The keeper's touch lights an old cold lamp (A / E). True if it lit.
+func light_by_touch() -> bool:
+	if not can_light_by_touch():
+		return false
+	cold = false
+	LightSense.bump()
+	queue_redraw()
+	return true
+
+## Snuffed for a while (the Ashbrood's dive); it relights itself.
+func snuff(seconds: float) -> void:
+	if kind == "mirror":
+		return
+	snuff_t = maxf(snuff_t, seconds)
+	LightSense.bump()
+	queue_redraw()
+
+## Planted lamps can be picked up; the valley's old lamps can't.
+func can_pick_up() -> bool:
+	return not old
+
+# --- Effects (everything a lit lantern does; the one place to change or add lantern mechanics) ---------------
+
+## Full light radius while lit, by kind.
 func base_radius() -> float:
 	match kind:
 		"reservoir":
@@ -113,119 +144,37 @@ func base_radius() -> float:
 			return Tuning.mirror_glow_radius
 	return Tuning.lantern_max_radius
 
-func min_frac() -> float:
-	return Tuning.reservoir_min_radius_frac if kind == "reservoir" else Tuning.lantern_min_radius_frac
+## How far its light reaches now (0 when not lit). Lamps never dim (M1b).
+func get_light_radius() -> float:
+	return base_radius() if is_lit() else 0.0
 
-func base_burn() -> float:
-	match kind:
-		"reservoir":
-			return Tuning.reservoir_burn_per_sec
-		"mirror":
-			return 0.0
-	return Tuning.lantern_burn_per_sec
+## The bright core's share of the light (from the centre): small foes burn there, and only a core burns a nest.
+## 0 = no core. Mirrors have none (their beam burns instead).
+func core_frac() -> float:
+	return 0.0 if kind == "mirror" else 1.0 - Tuning.wick_core
 
-func needs_fuel() -> bool:
+## Damage a second its bright core does to a foe standing in it (0 = the core ignores it). Elites, the Clinker
+## and the Ashbrood don't care about lanterns at all (owner, 2026-11-27).
+func core_dps_for(foe: Node) -> float:
+	if core_frac() <= 0.0:
+		return 0.0
+	if (foe is Wickling and foe.elite) or foe is Clinker or foe is Ashbrood:
+		return 0.0
+	var dps := Tuning.kl_nest_core_dps if foe is WickNest else Tuning.wick_light_burn
+	if Progress.has_combat_upgrade("hot_core"):
+		dps *= Tuning.kl_hot_core_mult
+	return dps
+
+## Small dark is kept out of this light: timid Wicklings stay out, brave ones burn after a while
+## (Tuning.kl_light_tolerance). Every lit lamp does this; mirrors' glows don't (their beams burn instead).
+func repels_small_dark() -> bool:
 	return kind != "mirror"
 
-## Lit = burning (or, for a mirror, catching light).
-func is_lit() -> bool:
-	return catching if kind == "mirror" else fuel > 0.0
+## The keeper refills here (charge and, out of a fight, warmth; GAME_PLAN §5): within this share of the radius.
+func refill_frac() -> float:
+	return 0.85
 
-func fuel_frac() -> float:
-	if kind == "mirror":
-		return 1.0
-	return clampf(fuel / max_fuel(), 0.0, 1.0)
-
-## Held by its region's WayLamp: it never burns down (PROTOTYPE).
-func is_held() -> bool:
-	if not needs_fuel():
-		return false
-	var fog := _fog()
-	return fog != null and Progress.is_settled(fog.region_at(global_position))
-
-## Under a quarter of its tank and not held: healthy light no longer protects it,
-## and Wicklings can drain it (PROTOTYPE).
-func is_dying() -> bool:
-	return needs_fuel() and is_lit() and not is_held() and fuel_frac() < Tuning.dying_frac
-
-# --- Wind --------------------------------------------------------------------
-
-# Cached lookups (performance): every foe asks every lantern for its light radius each frame.
-var _fog_ref: FogGrid
-var _wind_ref: Wind
-var _shelter_tile := Vector2i(-999999, -999999)
-var _shelter := {}               # wind direction -> sheltered (rock doesn't change after the map is made)
-var _seg_pos := Vector2.INF       # beam_segment cache key: position, direction and beam length
-var _seg_dir := -1
-var _seg_len := -1.0
-var _seg: Array = []
-
-func _fog() -> FogGrid:
-	if _fog_ref == null or not is_instance_valid(_fog_ref):
-		_fog_ref = get_tree().get_first_node_in_group("fog_grid") as FogGrid
-	return _fog_ref
-
-func _wind() -> Wind:
-	if _wind_ref == null or not is_instance_valid(_wind_ref):
-		_wind_ref = get_tree().get_first_node_in_group("wind") as Wind
-	return _wind_ref
-
-## Sheltered if rock (or the map edge) is 1-2 tiles upwind.
-func is_sheltered_from(dir: Vector2i) -> bool:
-	var fog := _fog()
-	if fog == null:
-		return false
-	var t := fog.tile_of(global_position)
-	if t != _shelter_tile:
-		_shelter_tile = t
-		_shelter.clear()
-	var cached = _shelter.get(dir)
-	if cached != null:
-		return cached
-	var out := false
-	for k in range(1, 3):
-		var u := t - dir * k
-		if not fog.in_bounds(u) or fog.solid[u.y * fog.cols + u.x] == 1:
-			out = true
-			break
-	_shelter[dir] = out
-	return out
-
-func wind_proof() -> bool:
-	return kind == "hooded" or kind == "mirror"
-
-func in_gust() -> bool:
-	if wind_proof():
-		return false
-	var w := _wind()
-	return w != null and w.is_gusting() and not is_sheltered_from(w.direction)
-
-## The Windward Ridge has a constant west wind on top of the gusts.
-func in_ridge_wind() -> bool:
-	if wind_proof():
-		return false
-	var fog := _fog()
-	return fog != null and fog.region_at(global_position) == FogGrid.R_RIDGE and not is_sheltered_from(PREVAILING)
-
-func burn_rate() -> float:
-	if is_held():
-		return 0.0
-	var f := 1.0
-	if in_ridge_wind():
-		f *= Tuning.ridge_burn_mult
-	if in_gust():
-		f *= Tuning.wind_burn_mult
-	return base_burn() * f
-
-func get_light_radius() -> float:
-	if not is_lit():
-		return 0.0
-	var r := base_radius() * (lerpf(min_frac(), 1.0, fuel_frac()) if needs_fuel() else 1.0)
-	if in_ridge_wind():
-		r *= Tuning.ridge_radius_mult
-	if in_gust():
-		r *= Tuning.wind_radius_mult
-	return r
+## Fog: every lit light clears fog out to get_light_radius() (FogGrid reads the group "light_source").
 
 # --- Mirror beam ----------------------------------------------------------------
 
@@ -242,6 +191,17 @@ func is_smothered() -> bool:
 
 func smother() -> void:
 	smother_t = 0.25
+
+var _fog_ref: FogGrid
+var _seg_pos := Vector2.INF       # beam_segment cache key: position, direction and beam length
+var _seg_dir := -1
+var _seg_len := -1.0
+var _seg: Array = []
+
+func _fog() -> FogGrid:
+	if _fog_ref == null or not is_instance_valid(_fog_ref):
+		_fog_ref = get_tree().get_first_node_in_group("fog_grid") as FogGrid
+	return _fog_ref
 
 ## The beam segment [from, to], clipped at the first rock tile. Empty if not catching.
 func beam_segment() -> Array:
@@ -279,32 +239,20 @@ func beam_level_at(p: Vector2) -> float:
 		return 0.0
 	return 1.0 - off / (Tuning.mirror_beam_width * 0.5) * 0.4
 
-# --- Fuel --------------------------------------------------------------------
-
-func refuel(amount: float) -> float:
-	if not needs_fuel():
-		return 0.0
-	var before := fuel
-	fuel = minf(fuel + amount, max_fuel())
-	LightSense.bump()
-	return fuel - before
-
-var threatened := 0.0            # > 0: the Ashbrood is winding up a dive at this lamp (it flickers)
+# --- Frame -----------------------------------------------------------------------
 
 func _process(delta: float) -> void:
 	smother_t = maxf(0.0, smother_t - delta)
 	threatened = maxf(0.0, threatened - delta)
-	if fuel > 0.0 and needs_fuel():
-		fuel = maxf(0.0, fuel - burn_rate() * delta)
-	if kind == "reservoir" and fuel > 0.0:
-		_feed(delta)
+	if snuff_t > 0.0:
+		snuff_t = maxf(0.0, snuff_t - delta)
+		if snuff_t <= 0.0:
+			LightSense.bump()   # it relights: the foes' snapshot must see it at once
 	var r := get_light_radius()
 	light.enabled = r > 0.0
 	if r > 0.0:
 		light.texture_scale = LightTex.scale_for(r)
-		var flicker := 0.15 if (in_gust() or in_ridge_wind()) else 0.06
-		if is_dying():
-			flicker = 0.35   # a dying lantern sputters
+		var flicker := 0.06
 		if threatened > 0.0:
 			flicker = 0.45   # a dive is coming for it
 		var base := 0.6 if kind == "reservoir" else 0.85
@@ -319,32 +267,17 @@ func _process(delta: float) -> void:
 
 var _look := -1
 
-## Redraw only when what is drawn changes (performance): the fuel bar moves a pixel, it lights or goes
-## cold, it is held or dying, a mirror turns. Wind marks and smother wisps animate, so they redraw every frame.
+## Redraw only when what is drawn changes (performance): it lights or goes out, a mirror turns. Smother wisps and a
+## snuffed lamp's smoke animate, so they redraw every frame.
 func _redraw_if_changed() -> void:
-	var windy := in_gust() or in_ridge_wind()
-	if windy or is_smothered():
+	if is_smothered() or is_snuffed():
 		_look = -1
 		queue_redraw()
 		return
-	var look := int(fuel_frac() * 24.0) | (int(is_lit()) << 5) | (int(is_held()) << 6) | (int(is_dying()) << 7) | (mirror_dir << 8)
+	var look := int(is_lit()) | (mirror_dir << 2)
 	if look != _look:
 		_look = look
 		queue_redraw()
-
-## Reservoir: share fuel with other fuel-burning lanterns inside its light, lit or cold.
-func _feed(delta: float) -> void:
-	var r := get_light_radius()
-	for l in get_tree().get_nodes_in_group("lantern"):
-		if l == self or l.kind == "reservoir" or not l.needs_fuel():
-			continue
-		if l.global_position.distance_to(global_position) > r:
-			continue
-		var give := minf(minf(Tuning.reservoir_feed_per_sec * delta, l.max_fuel() - l.fuel), fuel)
-		if give <= 0.0:
-			continue
-		l.fuel += give
-		fuel -= give
 
 func _draw() -> void:
 	var lit := is_lit()
@@ -371,22 +304,12 @@ func _draw() -> void:
 		draw_line(c, c + d * 18.0, Color(1.0, 0.92, 0.7, 0.9 if lit else 0.45), 2.0)
 		draw_circle(c + d * 18.0, 2.5, Color(1.0, 0.92, 0.7, 0.9 if lit else 0.45))
 		return
-	if in_gust() or in_ridge_wind():
-		# A little wind mark: this lantern is exposed and burning faster.
-		var wt := fmod(Time.get_ticks_msec() * 0.002, 1.0)
-		var wx := -18.0 + wt * 10.0
-		draw_line(Vector2(wx, -58), Vector2(wx + 10, -58), Color(0.75, 0.84, 0.92, 0.9), 2.0)
-		draw_line(Vector2(wx + 4, -53), Vector2(wx + 16, -53), Color(0.75, 0.84, 0.92, 0.7), 2.0)
-	if is_held():
-		# Held by the WayLamp: a small gold diamond instead of a fuel bar.
-		draw_colored_polygon(PackedVector2Array([Vector2(0, 17), Vector2(4, 21), Vector2(0, 25), Vector2(-4, 21)]), Color(1.0, 0.82, 0.48, 0.9))
-		return
-	var bar := Color(1.0, 0.7, 0.3)
-	if is_dying():
-		bar = Color(1.0, 0.35, 0.25)   # dying: the dark can reach it now
-	elif (in_gust() or in_ridge_wind()) and int(Time.get_ticks_msec() / 250) % 2 == 0:
-		bar = Color(1.0, 0.35, 0.25)   # flashing: burning fast in the wind
-	draw_rect(Rect2(-12, 19, 24, 4), Color(0, 0, 0, 0.7))
-	draw_rect(Rect2(-12, 19, 24 * fuel_frac(), 4), bar)
-	# The quarter mark: below it, the lantern is dying.
-	draw_rect(Rect2(-12 + 24 * Tuning.dying_frac, 18, 1, 6), Color(0.95, 0.95, 0.88, 0.8))
+	if is_snuffed():
+		# Snuffed: a thin curl of smoke, and a small ring that fills as it comes back.
+		var lamp := CROOK_LAMP if kind == "post" else Vector2(0, LAMP_Y)
+		var tt := Time.get_ticks_msec() * 0.003
+		for i in 3:
+			var k := fmod(tt + i * 0.33, 1.0)
+			draw_circle(lamp + Vector2(sin(tt * 3.0 + i) * 3.0, -k * 18.0), 2.0 + k * 2.0, Color(0.55, 0.6, 0.68, 0.5 * (1.0 - k)))
+		var back := 1.0 - snuff_t / maxf(Tuning.kl_snuff_sec, 0.01)
+		draw_arc(lamp, 9.0, -PI / 2.0, -PI / 2.0 + TAU * back, 20, Color(1.0, 0.82, 0.48, 0.7), 2.0)

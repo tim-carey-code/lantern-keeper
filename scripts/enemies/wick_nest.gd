@@ -1,6 +1,7 @@
 class_name WickNest
 extends Foe
-## Fixed Hollow lure. Its cold glows show through fog. Only the bright core of a built lantern burns it.
+## Fixed Hollow lure. Its slow cold blue glow shows through fog (M1b: unlike a pack's eyes or an elite's ring).
+## Only the bright core of a built lantern burns it.
 ## Readability step (ART_DIRECTION §4.3 row 6): for the last kl_nest_hatch_tell seconds before a hatch its ring
 ## fills, its pods swell, cold glows show where the hatchlings will rise (Telegraph SPAWN) and its wind-up sound
 ## plays. Hatchlings fade in for kl_hatch_fade and can't touch you meanwhile.
@@ -31,6 +32,17 @@ func time_to_hatch() -> float:
 
 func set_time_to_hatch(t: float) -> void:
 	_hatch_t = t
+
+## The faint rule: a half-burned nest is whole again, and its next hatch waits for you to come back.
+func reset_for_faint() -> void:
+	if Progress.cleared.has(foe_id):
+		return
+	hp = Tuning.kl_nest_hp * level_mult()
+	hp_max = hp
+	_hatch_t = Tuning.kl_nest_hatch_sec
+	if _tell:
+		_tell.finish()
+		_tell = null
 
 func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 	if source != "core":
@@ -80,6 +92,10 @@ func body_radius() -> float:
 
 func _draw() -> void:
 	var p := 0.6 + 0.4 * sin(_pulse * 2.1)
+	# Its lure through the fog (GAME_PLAN §7, M1b): a slow, cold blue glow, unlike a pack's pale eyes.
+	var slow := 0.5 + 0.5 * sin(_pulse * 0.9)
+	draw_circle(Vector2.ZERO, 30.0 + slow * 8.0, Color(0.29, 0.48, 0.72, 0.07 + 0.07 * slow))
+	draw_circle(Vector2.ZERO, 20.0 + slow * 4.0, Color(0.43, 0.62, 0.86, 0.08 + 0.08 * slow))
 	var k := _tell.progress() if _tell else 0.0
 	var swell := 1.0 + 0.12 * k + 0.04 * sin(_pulse * 18.0) * k   # pods bulge before a hatch
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(swell, swell))

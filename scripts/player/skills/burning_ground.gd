@@ -45,7 +45,7 @@ func _physics_process(delta: float) -> void:
 	for a in get_overlapping_areas():
 		var f := a.get_parent() as Foe
 		if f and not f._dead and not f.is_queued_for_deletion():
-			f.hurt(dps * delta, false, "ground")
+			f.hurt(dps * Progress.dmg_mult() * delta, false, "ground")
 
 ## Foes it is burning now (for tests).
 func burning() -> Array:

@@ -44,7 +44,7 @@ func controls_text() -> String:
 		["Lampfire (hold, aim with the %s)" % ("right stick" if pad else "mouse"), key("skill_1")],
 		["Skill slots 2, 3, 4", "%s, %s, %s" % [key("skill_2"), key("skill_3"), key("skill_4")]],
 		["Dash", key("dash") + ("" if pad else " / Shift")], ["Drink lamp oil", key("flask")],
-		["Use: read, refuel, rest, travel", key("interact")], ["Gather, pick up a lamp (hold)", key("interact")],
+		["Use: read, light, take, rest, travel", key("interact")], ["Pick up a lamp (hold)", key("interact")],   # DRAFT (M1b)
 		["Plant the selected lamp", key("place_lantern")], ["Next lamp kind (hold: the list)", key("build_menu")],
 		["Skills", key("skills")], ["Map", key("map")], ["Journal", key("journal")], ["Pause", key("pause")]]
 	var lines: Array[String] = []

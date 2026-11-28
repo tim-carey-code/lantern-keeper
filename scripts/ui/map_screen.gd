@@ -24,7 +24,7 @@ func _ready() -> void:
 	bg.size = Vector2(1280, 720)
 	root.add_child(bg)
 	var title := Label.new()
-	title.text = "Map   (M / D-pad up to close)      amber = lit lantern   yellow = low fuel   red = cold   white = you"
+	title.text = "Map   (M / D-pad up to close)      amber = lit lantern   red = unlit   white = you"
 	title.position = Vector2(24, 16)
 	root.add_child(title)
 	map_rect = TextureRect.new()
@@ -120,9 +120,7 @@ func render() -> void:
 			if l.kind == "mirror":
 				c = Color(0.9, 0.95, 1.0) if l.is_lit() else Color(0.45, 0.55, 0.7)
 			elif not l.is_lit():
-				c = Color(0.95, 0.3, 0.25)
-			elif l.fuel_frac() < 0.25:
-				c = Color(1.0, 0.95, 0.4)
+				c = Color(0.95, 0.3, 0.25)   # an old lamp not yet lit, or a snuffed one
 			img.set_pixel(t.x, t.y, c)
 	for w in get_tree().get_nodes_in_group("waylamp"):
 		var wt := fog.tile_of(w.global_position)

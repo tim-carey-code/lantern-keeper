@@ -1,8 +1,9 @@
 extends CanvasLayer
 ## HUD (owner-approved mockup, 2026-11-26):
-##   top left   one panel: fuel / scrap / glass with icons, hand-lamp and warmth meters
+##   top left   one panel: scrap with its icon, the level and wick, the selected lamp kind
 ##   top centre the current goal in a banner
-##   top right  status chips, only while something needs you (wind, cold lanterns, cold keeper)
+##   top right  status chips, only while something needs you (hunted, cold keeper, an ember lamp, a smothered
+##              mirror, a WayLamp kindling). M1b: no fuel or glass counts, no cold or low lantern chips, no wind chip.
 ##   bottom     the action bar with warmth and charge above it (M1a, action_bar.gd); a quiet key reminder
 ##              that fades after a minute; tips and toasts in panels above the bar
 ## What you can do with the thing in front of you is shown over it (see world_prompt.gd).
@@ -13,6 +14,9 @@ const LANCE_TOAST := "Lance takes %s. %s is in your Skills list (%s)."
 const LANCE_TOAST_PLAIN := "Lance takes %s."
 const REST_TOAST := "You rest by the WayLamp. Your flasks and warmth are full."
 const HUNTED_CHIP := "Something hunts you: light won't warm you"
+## DRAFT (M1b; STORY §15): the tip line when a region becomes held. Was (APPROVED, STORY §11): "The WayLamp took.
+## Its lanterns won't burn down now, and nothing comes here."
+const HELD_TIP := "The WayLamp took. Nothing comes here now, and you can rest by it."
 const LEVEL_UP_SCRIPT := preload("res://scripts/ui/level_up.gd")
 
 var banner: Label
@@ -21,7 +25,6 @@ var tip: Label
 var goal_panel: PanelContainer
 var goal_label: Label
 var counts := {}          # kind -> Label
-var glass_row: Control
 var action_bar: ActionBar
 var wick_bar: ProgressBar
 var wick_level: Label
@@ -85,7 +88,7 @@ func _build_resource_panel() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
 	col.add_child(row)
-	for kind in ["fuel", "scrap", "glass"]:
+	for kind in ["scrap"]:   # M1b: scrap is the one material
 		var item := HBoxContainer.new()
 		item.add_theme_constant_override("separation", 4)
 		item.add_child(UiStyle.icon_rect("icon_" + kind))
@@ -94,8 +97,6 @@ func _build_resource_panel() -> void:
 		item.add_child(l)
 		counts[kind] = l
 		row.add_child(item)
-		if kind == "glass":
-			glass_row = item
 	# Warmth and lamp charge moved to the action bar (M1a, GAME_PLAN §14).
 	# Level and wick (balance pass): "Lv 3", a bar toward the next level, and the count.
 	wick_row = HBoxContainer.new()
@@ -196,7 +197,7 @@ func _connect_events() -> void:
 		banner.text = "%s is held" % n
 		_banner_t = 5.0
 		# On the tip line (queued), so the goal's "Done:" toast that comes with it doesn't replace it.
-		_tips.push_front("The WayLamp took. Its lanterns won't burn down now, and nothing comes here."))
+		_tips.push_front(HELD_TIP))
 	Progress.landmark_spotted.connect(func(title: String) -> void:
 		_show_toast("Something catches the light: %s" % title, 4.0))
 	Progress.lantern_unlocked.connect(func(k: String) -> void:
@@ -238,33 +239,14 @@ func _fade(c: CanvasItem, t: float) -> void:
 ## What needs the keeper right now: [[icon, text, color], ...]. Public for tests.
 func status_items() -> Array:
 	var out := []
-	# Wind only matters when it reaches your lanterns: say how many it is hitting.
-	var wind := get_tree().get_first_node_in_group("wind") as Wind
-	if wind and wind.state != Wind.State.CALM:
-		var hit := 0
-		for l in get_tree().get_nodes_in_group("lantern"):
-			if l.is_lit() and l.needs_fuel() and not l.is_held() and not l.wind_proof() and not l.is_sheltered_from(wind.direction):
-				hit += 1
-		if hit > 0:
-			var what := "Gust" if wind.state == Wind.State.GUST else "Wind rising"
-			out.append(["icon_wind", "%s: %d lantern%s exposed" % [what, hit, "" if hit == 1 else "s"], UiStyle.WARN if wind.state == Wind.State.GUST else UiStyle.PALE])
 	var smothered := 0
 	for m in get_tree().get_nodes_in_group("mirror"):
 		if m.is_smothered():
 			smothered += 1
 	if smothered > 0:
 		out.append(["icon_cold", "%d mirror%s smothered" % [smothered, "" if smothered == 1 else "s"], UiStyle.WARN])
-	var markers = get_tree().get_first_node_in_group("lantern_markers")
-	if markers:
-		var need: Array = markers.needs_attention()
-		var cold := need.filter(func(l): return not l.is_lit()).size()
-		var low := need.size() - cold
-		if cold > 0:
-			out.append(["icon_cold", "%d lantern%s gone cold" % [cold, "" if cold == 1 else "s"], UiStyle.WARN])
-		if low > 0:
-			out.append(["icon_fuel", "%d lantern%s dying (under a quarter)" % [low, "" if low == 1 else "s"], UiStyle.WARN])
 	for w in get_tree().get_nodes_in_group("waylamp"):
-		if w.kindling:
+		if w.kindling and not w.guardian_fight:   # a hold fight (the guardian's own bar says the rest)
 			out.append(["icon_goal", "Kindling: %ds. Keep the dark off it" % ceili(w.seconds_left()), UiStyle.GOLD])
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
@@ -272,7 +254,7 @@ func status_items() -> Array:
 			out.append(["icon_cold", HUNTED_CHIP, UiStyle.WARN])
 		if player.warmth < Tuning.warmth_max * 0.35:
 			out.append(["icon_warmth", "You're getting cold", UiStyle.WARN])
-		if player.lamp_charge <= Tuning.ward_min_charge:
+		if player.lamp_charge <= Tuning.kl_lamp_low_charge:
 			out.append(["icon_lamp", "Hand lamp is an ember", UiStyle.PALE])
 	return out
 
@@ -316,7 +298,6 @@ func _process(delta: float) -> void:
 		var n := Inventory.get_count(kind)
 		counts[kind].text = str(n)
 		counts[kind].add_theme_color_override("font_color", UiStyle.GOLD if n >= Inventory.carry_limit else UiStyle.CREAM)
-	glass_row.visible = Inventory.get_count("glass") > 0 or Progress.regions_seen.has(FogGrid.R_RIDGE)
 	var sel := Progress.selected
 	building.text = "%s   [%s] switch" % [Lantern.display(sel), InputHint.key("build_menu")]
 	building_pic.texture = Art.placeholder({"post": "post_lamp_lit.png", "reservoir": "reservoir_lamp_lit.png", "hooded": "hooded_lamp_lit.png", "mirror": "mirror_post_lit.png"}.get(sel, "post_lamp_lit.png"))

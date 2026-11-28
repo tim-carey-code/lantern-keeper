@@ -85,9 +85,11 @@ func _run() -> void:
 	player = main.player
 	spawner = main.get_node("FogLayer/Wicklings")
 	main.get_node("Wind").force(Wind.State.CALM, Vector2i.RIGHT, 9999.0)
-	Tuning.lantern_burn_per_sec = 0.0
 	for l in get_tree().get_nodes_in_group("lantern"):
-		l.fuel = 0.0   # every lamp cold: no light to hide in, nothing for a dive to aim at
+		if l.old:
+			l.cold = true   # every lamp dark: no light to hide in, nothing for a dive to aim at
+		else:
+			l.snuff(9999.0)
 	LightSense.bump()
 	clear_foes()
 	spot = main.start + Vector2(-480, 0)
@@ -200,7 +202,7 @@ func _adds_and_phase_checks() -> void:
 		w.queue_free()
 	# The phase change: a rise out of the bowl; no attacks, no damage.
 	b.shell = 0.0
-	b.hurt(Tuning.kl_ashbrood_hp + 1.0, false, "lance")
+	b.hurt(b.hp + 1.0, false, "lance")   # (M1b: a phase's health grows with its level)
 	check(b.phase == 2 and b.in_phase_pause(), "breaking phase one starts the rise out of the bowl (the boss bar shows phase 2)")
 	var hp_now := b.hp
 	b.hurt(50.0, false, "lance")
@@ -221,7 +223,6 @@ func _one_dive(lamp_at: Vector2, keeper_off: Vector2, dashing: bool) -> Dictiona
 	lamp.kind = "post"
 	lamp.position = lamp_at
 	main.get_node("Lanterns").add_child(lamp)
-	lamp.fuel = Tuning.lantern_max_fuel
 	var b := _new_boss(spot + Vector2(-260, -60))
 	b.phase = 2
 	await wait(0.05)
@@ -243,7 +244,7 @@ func _one_dive(lamp_at: Vector2, keeper_off: Vector2, dashing: bool) -> Dictiona
 	await wait(Tuning.kl_ashbrood_dive_travel * 0.5)
 	out["flying"] = b.is_flying() and b.global_position.distance_to(start) > 5.0 and b.global_position.distance_to(land) > 5.0
 	await wait(Tuning.kl_ashbrood_dive_travel * 0.5 + 0.1)
-	out["landed"] = b.global_position.distance_to(land) < 1.0 and lamp.fuel <= 0.0 and b.is_sitting()
+	out["landed"] = b.global_position.distance_to(land) < 1.0 and lamp.is_snuffed() and not lamp.is_lit() and b.is_sitting()   # M1b: the dive snuffs the lamp
 	out["lost"] = Tuning.warmth_max - player.warmth
 	b.queue_free()
 	lamp.queue_free()

@@ -1,7 +1,10 @@
 extends Node
-## Leveling balance (2026-11-27): counts all the wick in the Hollow from the placed packs, nests, the Clinker,
-## the Ashbrood and kindling, walks two full clears (a beeline along the main route of the first 10 minutes to
-## the Clinker, and an explorer who takes the nearest thing first), and checks the level curve against the targets in DESIGN §9. Each kill pays its wick
+## Leveling balance (M1b, GAME_PLAN §9): counts all the wick in the Hollow from the placed packs, nests, the
+## Clinker, the Ashbrood and kindling, and walks two routes: a pure beeline (only the main route of the first 10
+## minutes: the north path, the crook, nest A, what wakes on the road to the Clinker, then the Ashbrood) and an
+## explorer who clears the whole Hollow, nearest thing first. The curve is base 7, exponent 1.65, cap 12; Hollow
+## foes are Lv 1-4, the Clinker 4, the Ashbrood 5. Level 2 comes at the crook on both routes, and the Hollow's last
+## level comes on the Ashbrood kill: L5 on the beeline, L6 for the explorer. Each kill pays its wick
 ## scaled by the foe's level and the level gap (Progress.kill_wick). It also prints the old flat curve and old
 ## wick values on the same map, and a time-to-kill table from tuning.gd. A farming keeper who camps the hut row
 ## and the south (endless hatchlings, packs re-fought after faints) must stall around level 4, slower than going
@@ -30,6 +33,9 @@ var _run_i := 0
 var _offers: Array[int] = []
 var _step := 0
 var _sim_wick := 0              # wick toward the next level at the end of the last simulate()
+var _beeline_rest: Array = []   # what the beeline leaves (the side content)
+## GAME_PLAN §9: the level each route reaches before the Ashbrood, and on its kill (the Hollow's last level).
+const INTO_BOSS := {"beeline": 4, "explorer": 5}
 
 func check(ok: bool, label: String) -> void:
 	print(("PASS " if ok else "FAIL ") + label)
@@ -125,7 +131,8 @@ func _build_routes() -> void:
 	on_path += nests.filter(func(e): return path.has(e.pos))
 	on_path.sort_custom(func(a, b): return _along(a.pos, path) < _along(b.pos, path))
 	var rest := packs.filter(func(e): return not on_path.has(e)) + nests.filter(func(e): return not on_path.has(e))
-	routes["beeline"] = on_path + [clinker] + _nearest_first(rest, clinker.pos) + finale
+	routes["beeline"] = on_path + [clinker] + finale   # M1b: a pure beeline; the side content is the explorer's
+	_beeline_rest = rest
 	# Explorer: always the nearest thing it can fight; nests open up after the Post Lamp find (its guard).
 	var route := []
 	var todo := packs.duplicate() + [clinker]   # the guard is a pack: taking it opens the nests
@@ -296,13 +303,20 @@ func _measure() -> void:
 		print("    old curve: L%d after pack 2, L%d before the Clinker (stop %d), L%d at the end (L%d with nest hatches and Ashbrood adds)" % [lv_old[p2], lv_old[ci - 1] if ci > 0 else 1, ci + 1, lv_old[-1], lv_old_adds[-1]])
 		print("    new curve: L%d after pack 1, L%d after pack 2, L%d before the Clinker, L%d before the Ashbrood, L%d at the end" % [lv_new[p1], lv_new[p2], lv_new[ci - 1] if ci > 0 else 1, before_boss, lv_new[-1]])
 		var level_ups: int = lv_new[-1] - 1
-		check(level_ups >= 6 and level_ups <= 8, "%s: a full Hollow clear gives 6-8 level-ups (%d, ending at L%d)" % [name, level_ups, lv_new[-1]])
+		var want: int = INTO_BOSS[name]
+		check(lv_new[-1] == want + 1, "%s: the Hollow ends at level %d (L%d, %d level-ups)" % [name, want + 1, lv_new[-1], level_ups])
 		# Onboarding (2026-11-27): the first three fights are the lone Wickling, the pack of 3 and the Post Lamp's
 		# guard (or the guard second, for the explorer). Level 2 comes with the find, not before it (PLAN_ONBOARDING).
-		check(lv_new[p3] >= 2 and lv_new[p1] <= 1, "%s: level 2 comes with the first three fights, at the Post Lamp find (L%d after the first, L%d after the third)" % [name, lv_new[p1], lv_new[p3]])
-		check(ci > 0 and lv_new[ci - 1] >= 3, "%s: level 3 before the Clinker" % name)
-		check(before_boss == 7, "%s: level 7 into the Ashbrood (L%d)" % [name, before_boss])
-		check(lv_new[ai] == 8 and lv_new[ai] > before_boss, "%s: the Ashbrood kill gives the Hollow's last level, L8 (L%d)" % [name, lv_new[ai]])
+		var gi := -1
+		for i in route.size():
+			if route[i].get("guard", false):
+				gi = i
+		var crook_fights := route.slice(0, gi + 1).filter(func(e): return e.kind == "pack").size()
+		check(gi >= 0 and lv_new[gi] <= 2 and lv_new[p3] == 2 and lv_new[p1] <= 1 and crook_fights <= 3, "%s: level 2 at the crook: with the first three fights, the crook's guard among them (L%d after the first, L%d after the third)" % [name, lv_new[p1], lv_new[p3]])
+		if name == "beeline":   # (the explorer takes the Clinker 5th, nearest first, before most of the Hollow)
+			check(ci > 0 and lv_new[ci - 1] >= 3, "%s: level 3 before the Clinker (L%d)" % [name, lv_new[ci - 1] if ci > 0 else 0])
+		check(before_boss == want, "%s: level %d into the Ashbrood (L%d)" % [name, want, before_boss])
+		check(lv_new[ai] == want + 1 and lv_new[ai] > before_boss, "%s: the Ashbrood kill gives the Hollow's last level, L%d (L%d)" % [name, want + 1, lv_new[ai]])
 		var adds_only: Dictionary = route[ai].duplicate()
 		adds_only.units = route[ai].units.slice(0, route[ai].units.size() - 1)
 		var lv_adds := simulate(route.slice(0, ai) + [adds_only], "new", "units")
@@ -378,7 +392,7 @@ func _farm_check() -> void:
 	for l in reached:
 		levels.append("L%d at %d min" % [l, reached[l]])
 	print("--- Farming the hut row and the south (%d packs, nests Lv %d, %.0f hatchlings/min, packs again every %d min): %s; L%d after %d min; wick/min: first %.1f, last 10 min %.2f" % [farm_packs.size(), nest_lv, hatch_per_min, FARM_FAINT_MIN, ", ".join(levels), lv, FARM_MINUTES, per_min[0], last10])
-	var fwd: Array = routes["beeline"]
+	var fwd: Array = routes["beeline"]   # forward: the pure beeline to the Ashbrood kill
 	var ai := _first_index(fwd, "ashbrood")
 	var fwd_part := fwd.slice(0, ai + 1)
 	var fwd_lv := simulate(fwd_part, "new", "units")

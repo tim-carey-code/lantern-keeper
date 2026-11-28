@@ -1,6 +1,6 @@
 class_name FloatText
 extends Node2D
-## A short "+1 fuel" style label that rises and fades. Unaffected by the scene darkness
+## A short "+1 scrap" style label that rises and fades. Unaffected by the scene darkness
 ## when spawned on the fog layer.
 
 const FONT := preload("res://assets/fonts/ark_pixel_10px_proportional_latin.ttf")

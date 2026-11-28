@@ -16,6 +16,12 @@ extends Node
 ## tell_puff_reduce (at commit, "reduce flashes" on), tell_adds (the call, with the bold swarm's cold rim), tell_dive,
 ## tell_dive_arrow (a dive at an off-screen lamp: the edge arrow), tell_spit, tell_lane, tell_reach (a Wickling
 ## reaching, another draining: the frost edge), tell_hatch, keeper_dash, keeper_cast, keeper_drink, keeper_hurt.
+## M1b views (no more tending): m1b_opening (the hut's cold old lamp, its lure and "Light it"), m1b_opening_lit (the
+## same, lit by touch), m1b_faint (the faint note), m1b_wake (awake by a lamp, the wick waiting where you fell),
+## m1b_lures (a pack's eyes, an elite's ring and a nest's glow through the fog), m1b_ember (the Ashbrood over the
+## WayLamp's last ember), m1b_kindle (the kill: the ember rises into the lamp as it lights; look at frames 45-75).
+## (M1b: the old "cold" and "readme_ward" views stage what is gone: a dark lamp stands in for a cold one, and
+## the ward is not drawn.)
 
 var main: Node
 var frame := 0
@@ -37,17 +43,21 @@ func _ready() -> void:
 		end_frame = 110
 	elif view == "m1a_lampfire":
 		end_frame = 48   # the stream has landed, and one bolt is still in flight
+	elif view == "m1b_kindle":
+		end_frame = 80
 	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
 	SaveGame.delete_save()
 	main = load("res://scenes/main/main.tscn").instantiate()
 	add_child(main)
 
-func _lantern(p: Vector2, kind: String = "post", fuel: float = -1.0) -> Lantern:
+## A planted lantern; dark = snuffed for the whole shot (M1b: lamps never burn down).
+func _lantern(p: Vector2, kind: String = "post", dark: bool = false) -> Lantern:
 	var l := Lantern.new()
 	l.kind = kind
-	l.fuel = fuel
 	l.position = main.fog.tile_center(main.fog.tile_of(p))
 	main.get_node("Lanterns").add_child(l)
+	if dark:
+		l.snuff(9999.0)
 	return l
 
 func _process(_delta: float) -> void:
@@ -64,8 +74,8 @@ func _process(_delta: float) -> void:
 				_lantern(main.fog.tile_center(Vector2i(194, 136)), "reservoir")
 				_lantern(main.fog.tile_center(Vector2i(176, 144)))
 			"cold":
-				_lantern(s + Vector2(-160, 64), "post", 0.0)
-				_lantern(s + Vector2(200, 120), "post", 10.0)
+				_lantern(s + Vector2(-160, 64), "post", true)
+				_lantern(s + Vector2(200, 120), "post")
 				main.player.position = s + Vector2(-40, 60)
 			"edge":
 				main.player.position = main.fog.tile_center(Vector2i(16, 136))
@@ -79,7 +89,6 @@ func _process(_delta: float) -> void:
 					w.state = Wickling.State.SEEK_LANTERN
 				var c = sp.spawn_at(s + Vector2(170, -60))
 				main.player.position = s + Vector2(110, -20)
-				Inventory.counts["fuel"] = 5
 			"drops":
 				main.player.position = s + Vector2(0, 260)
 				var sp2 = main.get_node("FogLayer/Wicklings")
@@ -110,7 +119,6 @@ func _process(_delta: float) -> void:
 					main.player.position = wl.global_position + Vector2(-50, 70)
 				else:
 					main.player.position = wl.global_position + Vector2(46, 44)
-					Progress.waylamp_fuel["hollow"] = Tuning.waylamp_fuel_need
 					wl.start_kindling()
 					wl.kindle_t = Tuning.waylamp_kindle_sec * 0.45
 					var k := 0
@@ -132,6 +140,8 @@ func _process(_delta: float) -> void:
 				_loop_setup()
 			"m1a_bar", "m1a_lampfire", "m1a_fireglobe_marker", "m1a_fireglobe_ground", "m1a_skills":
 				_m1a_setup()
+			"m1b_opening", "m1b_opening_lit", "m1b_faint", "m1b_wake", "m1b_lures", "m1b_ember", "m1b_kindle":
+				_m1b_setup()
 			"tell_puff", "tell_puff_reduce", "tell_adds", "tell_dive", "tell_dive_arrow", "tell_spit", "tell_lane", "tell_reach", "tell_hatch", \
 					"keeper_dash", "keeper_cast", "keeper_drink", "keeper_hurt":
 				_tell_setup()
@@ -164,8 +174,6 @@ func _process(_delta: float) -> void:
 		Progress.settle(FogGrid.R_HOLLOW, "The Hollow")   # after the Hollow's own banner
 		for i in 30:
 			main.fog.step(0.1)
-	if frame >= 30 and view in ["wick", "waylamp_kindle"]:
-		main.player.update_ward(1.0 / 30.0, true)
 	if view == "kl_level" and frame == 3:
 		Progress.level = 6
 		Progress.wick = 0
@@ -201,7 +209,6 @@ func _process(_delta: float) -> void:
 		o._next()
 	if view == "journal" and frame == 30:
 		Story.player_name = "Tess"
-		Inventory.counts["fuel"] = 2
 		Story.update(main)
 		for id in ["ledger", "stone_way"]:
 			for m in get_tree().get_nodes_in_group("landmark"):
@@ -215,7 +222,6 @@ func _process(_delta: float) -> void:
 		for k in ["reservoir", "hooded"]:
 			Progress.unlock(k)
 		Inventory.counts["scrap"] = 6
-		Inventory.counts["glass"] = 1
 		Progress.selected = "reservoir"
 		main.get_node("BuildMenu").open()
 	if view == "start_nohud" and frame == 3:
@@ -233,12 +239,10 @@ func _process(_delta: float) -> void:
 		hud.toast.visible = false
 		hud.tip.visible = false
 		main.get_node("FogLayer/WorldPrompt").visible = false
-	if view == "readme_ward" and frame >= 30:
-		main.player.update_ward(1.0 / 30.0, true)
 	if view == "readme_map" and frame == 6:
 		main.get_node("MapScreen").toggle()
 	if view == "readme_relight" and frame == 30:
-		main.player.refuel(main.get_node("Lanterns").get_child(0))
+		main.get_node("Lanterns").get_child(0).light_by_touch()
 	if (view.begins_with("tell_") or view.begins_with("keeper_")) and frame >= 3:
 		var hud = main.get_node("HUD")
 		hud.banner.visible = false
@@ -247,6 +251,8 @@ func _process(_delta: float) -> void:
 		main.get_node("FogLayer/WorldPrompt").visible = false
 		main.player.warmth = Tuning.warmth_max if view != "keeper_drink" else 45.0
 		_tell_frame()
+	if view.begins_with("m1b_"):
+		_m1b_frame()
 	if frame >= end_frame:
 		get_tree().quit()
 
@@ -263,9 +269,8 @@ func _onboard_setup() -> void:
 		return
 	for l in get_tree().get_nodes_in_group("lantern"):
 		if l.global_position.distance_to(main.start_lantern_pos) < 8.0 or (view != "onboard_north" and l.global_position.distance_to(main.waypost_lantern_pos) < 8.0):
-			l.fuel = l.max_fuel()
+			l.light_by_touch()
 	Progress.notes_read["ledger"] = true
-	Inventory.counts["fuel"] = 2
 	match view:
 		"onboard_north":
 			main.player.position = s + Vector2(0, -6) * T
@@ -344,27 +349,24 @@ func _readme_setup() -> void:
 		Story.pointer_mode = "off"
 	match view:
 		"readme_hollow":
-			old.fuel = Tuning.lantern_max_fuel
+			old.light_by_touch()
 			_lantern(s + Vector2(-250, 150))
 			_lantern(s + Vector2(230, 230))
 			_lantern(s + Vector2(-20, 300))
-			Inventory.counts["fuel"] = 12
 			Inventory.counts["scrap"] = 7
 			Progress.notes_read["ledger"] = true
 			Story.note_built("post")
-			Inventory.counts["fuel"] = 12
 			main.player.position = s + Vector2(70, 120)
 			for p in [s + Vector2(-560, 260), s + Vector2(540, 60), s + Vector2(330, 540)]:
 				sp.spawn_at(p)
 			Story.update(main)
 		"readme_ward":
-			old.fuel = Tuning.lantern_max_fuel
+			old.light_by_touch()
 			_lantern(s + Vector2(-240, 90))
 			main.player.position = s + Vector2(60, 230)
 			for off in [Vector2(80, -30), Vector2(-70, 40), Vector2(60, 75), Vector2(-20, -85)]:
 				var w = sp.spawn_at(main.player.position + off)
 				w.state = Wickling.State.CHASE
-			Inventory.counts["fuel"] = 4
 			Inventory.counts["scrap"] = 3
 			_goals_done_until("build_post")
 		"readme_marsh":
@@ -372,9 +374,8 @@ func _readme_setup() -> void:
 				_lantern(f.tile_center(t))
 			_lantern(f.tile_center(Vector2i(194, 136)), "reservoir")
 			Progress.unlock("reservoir")
-			old.fuel = Tuning.lantern_max_fuel
+			old.light_by_touch()
 			main.player.position = f.tile_center(Vector2i(178, 136))
-			Inventory.counts["fuel"] = 9
 			Inventory.counts["scrap"] = 4
 			_goals_done_until("climb_north")   # the pump is awake, so the Reservoir Lamp is unlocked
 		"readme_ridge":
@@ -389,9 +390,8 @@ func _readme_setup() -> void:
 			Progress.unlock("reservoir")
 			Progress.unlock("hooded")
 			Progress.unlock("mirror")
-			Inventory.counts["glass"] = 3
 			Inventory.counts["scrap"] = 6
-			old.fuel = Tuning.lantern_max_fuel
+			old.light_by_touch()
 			_goals_done_until("descend")
 		"readme_map":
 			for i in f.remembered.size():
@@ -400,24 +400,23 @@ func _readme_setup() -> void:
 					f.remembered[i] = 1
 					f.density[i] = minf(f.density[i], 0.7)
 			f.mark_all_dirty()   # the fog's sparse update must see tiles written directly
-			old.fuel = Tuning.lantern_max_fuel
+			old.light_by_touch()
 			for t in [Vector2i(72, 132), Vector2i(88, 136), Vector2i(104, 134), Vector2i(120, 136), Vector2i(140, 136), Vector2i(160, 136), Vector2i(184, 136), Vector2i(48, 104), Vector2i(60, 60)]:
 				_lantern(f.tile_center(t))
 			_lantern(f.tile_center(Vector2i(194, 136)), "reservoir")
-			_lantern(f.tile_center(Vector2i(172, 152)), "post", 12.0)
-			_lantern(f.tile_center(Vector2i(80, 52)), "post", 0.0)
+			_lantern(f.tile_center(Vector2i(172, 152)), "post")
+			_lantern(f.tile_center(Vector2i(80, 52)), "post", true)
 			for r in [FogGrid.R_HOLLOW, FogGrid.R_MARSH, FogGrid.R_RIDGE]:
 				Progress.reveal_region(r, FogGrid.REGION_NAMES[r])
 			main.player.position = f.tile_center(Vector2i(120, 136))
 		"readme_lanterns":
-			old.fuel = Tuning.lantern_max_fuel
+			old.light_by_touch()
 			_lantern(s + Vector2(-140, 90))
 			_lantern(s + Vector2(60, 150))
 			main.player.position = s + Vector2(-20, 30)
 			_goals_done_until("build_post")
 		"readme_relight":
 			main.player.position = old.global_position + Vector2(-34, 44)
-			Inventory.counts["fuel"] = 10
 
 
 func _m1a_setup() -> void:
@@ -441,6 +440,85 @@ func _m1a_setup() -> void:
 			var w = main.get_node("FogLayer/Wicklings").spawn_at(target + Vector2(24, 0))
 			w.stun(8.0)
 
+
+# --- M1b views (no more tending) ----------------------------------------------------------------------------------
+
+var _m1b_lamp: Lantern
+var _m1b_wl: WayLamp
+
+func _m1b_setup() -> void:
+	var s: Vector2 = main.start
+	var f: FogGrid = main.fog
+	var T := FogGrid.TILE
+	var hut: Lantern = get_tree().get_nodes_in_group("lantern").filter(func(l): return l.global_position.distance_to(main.start_lantern_pos) < 8.0)[0]
+	match view:
+		"m1b_opening", "m1b_opening_lit":
+			main.player.position = hut.global_position + Vector2(-30, 26)
+			Story.update(main)
+		"m1b_faint", "m1b_wake":
+			hut.light_by_touch()
+			Progress.notes_read["ledger"] = true
+			_goals_done_until("relight_waypost")
+			Progress.wick = 5
+			main.player.position = hut.global_position + Vector2(300, -40)
+			main.player.warmth = 2.0
+		"m1b_lures":
+			main.player.position = f.tile_center(Vector2i(50, 112))
+			main.player.lamp_charge = 0.0
+			for k in Story.TIPS:
+				Story.tips_seen[k] = true
+			_goals_done_until("build_post")
+		"m1b_ember", "m1b_kindle":
+			for k in Story.TIPS:
+				Story.tips_seen[k] = true
+			for w in get_tree().get_nodes_in_group("waylamp"):
+				if w.id == "hollow":
+					_m1b_wl = w
+			Progress.notes_read["waylamp_hollow"] = true
+			hut.light_by_touch()
+			_goals_done_until("kindle_hollow")
+			main.player.position = _m1b_wl.global_position + Vector2(90, 120)
+			_m1b_wl.touch()
+
+func _m1b_frame() -> void:
+	var hud = main.get_node("HUD")
+	if frame >= 3:
+		hud.banner.visible = false
+		hud.toast.visible = false
+		hud.tip.visible = view in ["m1b_wake"]
+	match view:
+		"m1b_opening_lit":
+			if frame == 20:
+				main.player.begin_interact()   # one touch lights it
+		"m1b_faint":
+			if frame == 25:
+				main.player.chill(10.0)   # the cold takes them: the faint note
+		"m1b_wake":
+			if frame == 10:
+				main.player.chill(10.0)
+			if frame == 12:
+				main.get_node("NoteReader").close()
+		"m1b_ember":
+			if _m1b_wl == null:
+				return
+			var b: Ashbrood = _m1b_wl.guardian()
+			if b:
+				b._puff_t = 99.0   # no puff in the shot: the ember is the subject
+				b._wave_t = 99.0
+		"m1b_kindle":
+			if _m1b_wl == null:
+				return
+			var b: Ashbrood = _m1b_wl.guardian()
+			if b:
+				b._puff_t = 99.0
+				b._wave_t = 99.0
+			if frame == 40 and b:
+				b.end_phase_pause()
+				b.shell = 0.0
+				b.hurt(b.hp + 1.0, false, "lance")
+				b.end_phase_pause()
+				b.shell = 0.0
+				b.hurt(b.hp + 1.0, false, "lance")
 
 # --- Readability views (telegraphs, the keeper's feedback) -------------------------------------------------------
 

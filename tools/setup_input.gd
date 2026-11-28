@@ -35,7 +35,7 @@ func _init() -> void:
 		"move_up": [key(KEY_W), key(KEY_UP), pad_axis(JOY_AXIS_LEFT_Y, -1.0)],
 		"move_down": [key(KEY_S), key(KEY_DOWN), pad_axis(JOY_AXIS_LEFT_Y, 1.0)],
 		# Gamepad face buttons use positional names: A = bottom, B = right, X = left, Y = top.
-		"interact": [key(KEY_E), pad_button(JOY_BUTTON_A)],          # read, refuel, travel, rest; hold: gather or pick up a lamp
+		"interact": [key(KEY_E), pad_button(JOY_BUTTON_A)],          # read, light, take scrap, travel, rest; hold: pick up a lamp (M1b)
 		"place_lantern": [key(KEY_C), pad_button(JOY_BUTTON_X)],     # plant a lamp; next to a mirror, turn it left
 		"cancel": [pad_button(JOY_BUTTON_B)],                         # closes menus (Esc closes them too, as pause)
 		"flask": [key(KEY_R), pad_button(JOY_BUTTON_B)],              # drink lamp oil; read after the menu guard

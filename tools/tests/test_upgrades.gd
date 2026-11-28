@@ -1,6 +1,7 @@
 extends Node
-## Upgrades found in the valley: a keeper's satchel (carry more) and a lamp glass (a better hand
-## lamp) in each region. Run:
+## Upgrades found in the valley: a keeper's satchel (carry more scrap; bag slots in M3) and a lamp glass in each
+## region. M1b: a lamp glass makes the hand lamp reach 12 px further and hold 0.1 more charge (GAME_PLAN §5; its
+## old "dims slower" and "wards longer" went with the dimming and the ward). Run:
 ##   godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_upgrades.tscn
 
 const IDS := {
@@ -15,8 +16,6 @@ var fails := 0
 var fog: FogGrid
 var player: Node
 var radius_before := 0.0
-var drain_before := 0.0
-var ward_before := 0.0
 
 func check(ok: bool, what: String) -> void:
 	print(("PASS " if ok else "FAIL ") + what)
@@ -84,33 +83,44 @@ func _process(_delta: float) -> void:
 				check(fog.region_at(m.global_position) == IDS[id][0] and m.upgrade == IDS[id][1], "%s lies in its region (%s)" % [id, str(t)])
 				check(reach.has(t) and int(reach[t]) >= 20, "%s can be walked to, off the beaten path (%s tiles from the hut)" % [id, str(reach.get(t, -1))])
 				check(near >= 6.0, "%s isn't crowded by other landmarks (%.1f tiles)" % [id, near])
-			# Carry: a satchel lets you carry 10 more of everything, once.
-			check(Inventory.carry_limit == Tuning.carry_base, "you start able to carry %d of each" % Tuning.carry_base)
+			# Carry: a satchel lets you carry 10 more scrap, once.
+			check(Inventory.carry_limit == Tuning.carry_base, "you start able to carry %d scrap" % Tuning.carry_base)
 			var wp = main.get_node("FogLayer/WorldPrompt")
 			InputHint.pad = false
 			check(wp.lines_for(_find("satchel_hollow"))[0][1] == "Take", "an upgrade's prompt says 'Take'")
 			_find("satchel_hollow").activate()
 			check(get_tree().paused, "taking one opens its note (and pauses)")
+			check(main.get_node("NoteReader").body_label.text.contains("You can carry %d scrap now." % Inventory.carry_limit), "its note says how much scrap you can carry now")
 			main.get_node("NoteReader").close()
-			check(Inventory.carry_limit == Tuning.carry_base + Tuning.carry_upgrade_step, "a keeper's satchel: carry %d of each" % Inventory.carry_limit)
-			Inventory.counts["fuel"] = 0
-			check(Inventory.add("fuel", 100) == Inventory.carry_limit, "gathering now stops at the new limit")
+			check(Inventory.carry_limit == Tuning.carry_base + Tuning.carry_upgrade_step, "a keeper's satchel: carry %d scrap" % Inventory.carry_limit)
+			Inventory.counts["scrap"] = 0
+			check(Inventory.add("scrap", 100) == Inventory.carry_limit, "taking scrap now stops at the new limit")
+			Inventory.counts["scrap"] = 0
 			_take("satchel_hollow")
 			check(Inventory.carry_limit == Tuning.carry_base + Tuning.carry_upgrade_step, "reading it again gives nothing more")
 			check(wp.lines_for(_find("satchel_hollow"))[0][1] == "Look again" and _find("satchel_hollow").is_taken(), "and its prompt says 'Look again'")
-			# Lamp: a lamp glass makes the hand lamp reach further, dim slower and ward longer.
+			# Lamp: a lamp glass makes the hand lamp reach further and hold more charge (M1b).
+			check(is_equal_approx(Progress.charge_max(), 1.0), "lamp charge runs to 1.0 at first")
 			player.lamp_charge = 1.0
 			radius_before = player.get_light_radius()
-			drain_before = Progress.lamp_drain_per_sec()
-			ward_before = Progress.ward_drain_per_sec()
-			_take("lampglass_hollow")
+			_find("lampglass_hollow").activate()
+			check(main.get_node("NoteReader").body_label.text.contains("Your hand lamp reaches further and holds more charge."), "its note says what it does (no dimming or ward)")
+			main.get_node("NoteReader").close()
+			check(is_equal_approx(Progress.charge_max(), 1.0 + Tuning.lamp_upgrade_charge), "a lamp glass: +%.1f max charge (%.1f)" % [Tuning.lamp_upgrade_charge, Progress.charge_max()])
+			player.lamp_charge = Progress.charge_max()
+			check(is_equal_approx(player.get_light_radius(), radius_before + Tuning.lamp_upgrade_radius), "and the hand lamp reaches further at full charge (%.0f -> %.0f px)" % [radius_before, player.get_light_radius()])
 			player.lamp_charge = 1.0
-			check(is_equal_approx(player.get_light_radius(), radius_before + Tuning.lamp_upgrade_radius), "a lamp glass: the hand lamp reaches further (%.0f -> %.0f px)" % [radius_before, player.get_light_radius()])
-			check(Progress.lamp_drain_per_sec() < drain_before and Progress.ward_drain_per_sec() < ward_before, "it dims more slowly in the dark and the ward costs less")
+			player.drink()
+			check(is_equal_approx(player.lamp_charge, minf(Progress.charge_max(), 1.0 + Tuning.kl_flask_charge)), "charge can fill past 1.0 now, up to the new max (%.2f)" % player.lamp_charge)
+			player.lamp_charge = Progress.charge_max()
+			player.update_hand_lamp(1.0)
+			check(player.lamp_charge <= Progress.charge_max() + 0.0001, "and never past it")
 			# Everything found, then save.
 			for id in ["satchel_marsh", "satchel_ridge", "lampglass_marsh", "lampglass_ridge"]:
 				_take(id)
 			check(Inventory.carry_limit == Tuning.carry_base + 3 * Tuning.carry_upgrade_step and Progress.upgrade_level("lamp") == 3, "all three satchels and glasses found (carry %d, lamp level %d)" % [Inventory.carry_limit, Progress.upgrade_level("lamp")])
+			check(is_equal_approx(Progress.charge_max(), 1.0 + 3.0 * Tuning.lamp_upgrade_charge), "three glasses: max charge %.1f" % Progress.charge_max())
+			player.lamp_charge = Progress.charge_max()
 			check(SaveGame.save(main), "save with every upgrade")
 			Progress.upgrades = {}
 			Progress.apply_upgrades()
@@ -123,9 +133,10 @@ func _process(_delta: float) -> void:
 			check(Progress.upgrade_level("carry") == 3 and Progress.upgrade_level("lamp") == 3, "upgrades come back after loading")
 			check(Inventory.carry_limit == Tuning.carry_base + 3 * Tuning.carry_upgrade_step, "and so does the carry limit (%d)" % Inventory.carry_limit)
 			check(_find("satchel_ridge").is_taken() and _find("satchel_ridge").is_read(), "taken upgrades stay taken")
+			check(is_equal_approx(main.player.lamp_charge, Progress.charge_max()) and main.player.lamp_charge > 1.0, "a charge above 1.0 is kept by the save (%.2f)" % main.player.lamp_charge)
 			# A new game starts over.
 			Progress.reset()
-			check(Inventory.carry_limit == Tuning.carry_base and Progress.upgrade_level("lamp") == 0, "a new game starts with no upgrades")
+			check(Inventory.carry_limit == Tuning.carry_base and Progress.upgrade_level("lamp") == 0 and is_equal_approx(Progress.charge_max(), 1.0), "a new game starts with no upgrades")
 			SaveGame.delete_save()
 			Art._ph.clear()
 			print("RESULT fails=%d" % fails)

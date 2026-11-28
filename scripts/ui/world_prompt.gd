@@ -1,6 +1,7 @@
 extends Node2D
 ## Prompts drawn over the thing in front of the keeper (instead of HUD text):
-##   "[A] Read", "[A] Refuel  62%", "[A] Turn", "[A] Hold to gather  3 left", plus "[B] Pick up".
+##   "[A] Read", "[A] Light it", "[A] Take  6 scrap", "[A] Turn right", "[A] Hold: pick up" (M1b: no refuelling or
+##   gathering). The M1b prompt lines are DRAFT (STORY §15).
 ## After a build that couldn't happen: why, under the keeper, for a moment.
 ## Lives on the fog layer so it stays readable in the dark.
 
@@ -19,7 +20,6 @@ func _process(_delta: float) -> void:
 
 ## The lines shown over the current target: [[button, text], ...]. Public for tests.
 func lines_for(t: Node) -> Array:
-	var player = _player()
 	if t is WayLamp:
 		if not Progress.notes_read.has("waylamp_" + t.id):
 			return [[InputHint.key("interact"), "Look closer"]]
@@ -29,8 +29,10 @@ func lines_for(t: Node) -> Array:
 			var why: String = menu.block_reason() if menu else ""
 			return [["", why] if why != "" else [InputHint.key("interact"), "Rest or travel"], ["", "WayLamp: this region is held"]]
 		if t.kindling:
+			if t.guardian_fight:
+				return [["", "Something broods over its last ember"]]
 			return [["", "Kindling %ds: keep the dark off it" % ceili(t.seconds_left())]]
-		return [[InputHint.key("interact"), "Feed fuel  %d / %d" % [t.fuel_units(), t.needs()]]]
+		return [[InputHint.key("interact"), "Light it"]]
 	if t is Landmark and t.upgrade != "":
 		return [[InputHint.key("interact"), "Look again" if t.is_taken() else "Take"]]
 	if t is Landmark:
@@ -42,20 +44,20 @@ func lines_for(t: Node) -> Array:
 			out.push_front(["", state])
 		return out
 	if t is Lantern:
-		var state := "%d%%" % roundi(t.fuel_frac() * 100.0) if t.is_lit() else "cold"
-		var extra := ""
-		if t.wind_proof():
-			extra = "  wind-proof"
-		elif t.in_ridge_wind() or t.in_gust():
-			extra = "  in the wind"
-		var out := [[InputHint.key("interact"), "Refuel  " + state + extra], [InputHint.key("interact"), "Hold: pick up"]]
+		if t.can_light_by_touch():
+			return [[InputHint.key("interact"), "Light it"]]
+		var out := []
+		if t.is_snuffed():
+			out.append(["", "Snuffed: it will relight"])
+		var player = _player()
 		var r = player.nearest_resource() if player else null
 		if r:
-			out.append([InputHint.key("interact"), "Hold to gather %s  %d left" % [r.kind, r.amount]])
+			out.append([InputHint.key("interact"), "Take  %d scrap" % r.amount])   # a tap takes the pile beside it
+		elif t.can_pick_up():
+			out.append([InputHint.key("interact"), "Hold: pick up"])
 		return out
 	if t is ResourceNode:
-		var verb := "Gathering..." if player.is_gathering() else "Hold to gather"
-		return [[InputHint.key("interact"), "%s  %d left" % [verb, t.amount]]]
+		return [[InputHint.key("interact"), "Take  %d scrap" % t.amount]]
 	return []
 
 func _draw() -> void:

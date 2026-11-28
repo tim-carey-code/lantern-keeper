@@ -239,7 +239,8 @@ func _setup() -> void:
 				var l := Lantern.new()
 				l.kind = kinds[placed % kinds.size()]
 				l.mirror_dir = placed % 8
-				l.fuel = -1.0 if placed % 4 != 0 else 8.0   # a few dying lanterns give Wicklings prey
+				if placed % 4 == 0:
+					l.snuff(9999.0)   # M1b: a few dark (snuffed) lamps, as the Ashbrood leaves them (nothing dies any more)
 				l.position = fog.tile_center(t)
 				main.get_node("Lanterns").add_child(l)
 				placed += 1

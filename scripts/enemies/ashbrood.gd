@@ -11,6 +11,10 @@ extends Foe
 ##     kl_ashbrood_dive_travel, not a jump;
 ##   - it sits for kl_ashbrood_sit_sec after a dive, slumped with its eyes dim (the open window);
 ##   - between phases it rises out of the bowl for kl_ashbrood_phase_pause: no attacks, no damage.
+## M1b: it is Lv kl_ashbrood_level (5) and each phase's health and shell grow with it (Foe.level_mult). Its dive
+## snuffs the lamp it lands on for kl_snuff_sec; the lamp relights itself. After a faint it starts its current
+## phase again (restart_phase). It broods over the WayLamp's last ember (DECISIONS 2026-11-27): the WayLamp
+## draws the ember, and takes it back when the Ashbrood dies.
 
 var waylamp: WayLamp
 var phase := 1
@@ -178,12 +182,12 @@ func _process_dive(delta: float, player: Node2D) -> void:
 		_dive.radius = Tuning.kl_ashbrood_hit_radius
 		Telegraph.arm(_dive, get_tree())
 
-## The dive lands: the lamp under it is emptied, and the landing circle chills a keeper who isn't dashing.
+## The dive lands: the lamp under it is snuffed for a while, and the landing circle chills a keeper who isn't
+## dashing.
 func _land(player: Node2D) -> void:
 	global_position = _dive.center
 	if is_instance_valid(_target_lamp):
-		_target_lamp.fuel = 0.0
-		LightSense.bump()
+		_target_lamp.snuff(Tuning.kl_snuff_sec)
 	if _dive.contains(player.global_position) and not player.combat.is_dashing():
 		player.chill(Tuning.kl_ashbrood_dive_warmth)
 	Telegraph.play_slot("ashbrood_dive", "impact")
@@ -208,12 +212,48 @@ func _nearest_lit_lamp() -> Lantern:
 func body_radius() -> float:
 	return 32.0
 
+## Health and shell at the start of a phase, grown by its level.
+func phase_hp() -> float:
+	return Tuning.kl_ashbrood_hp * level_mult()
+
+func phase_shell() -> float:
+	return Tuning.kl_ashbrood_shell * level_mult()
+
+## The faint rule (GAME_PLAN §12): back to the start of the phase it reached, shell regrown, its timers and
+## wind-ups reset, its oil step armed again (the phase's oil drops again on each try), back over its bowl.
+## Its adds are cleared by the keeper's faint (summoned foes go).
+func restart_phase() -> void:
+	if _dead or is_queued_for_deletion():
+		return
+	hp = phase_hp()
+	hp_max = hp
+	shell = phase_shell()
+	shell_max = shell
+	_since_beam = 0.0
+	_oil_step_given = false
+	_ignite_t = 0.0
+	_linger_t = 0.0
+	for t in [_puff, _adds, _dive]:
+		if t:
+			t.finish()
+	_puff = null
+	_adds = null
+	_dive = null
+	_fly_t = 0.0
+	_sit_t = 0.0
+	_phase_t = 0.0
+	_puff_t = 2.0 if phase == 1 else 99.0
+	_wave_t = 3.0
+	_dive_t = 2.0
+	if waylamp:
+		global_position = waylamp.global_position
+
 func _die() -> void:
 	if phase == 1:
 		phase = 2
-		hp = Tuning.kl_ashbrood_hp
+		hp = phase_hp()
 		hp_max = hp
-		shell = Tuning.kl_ashbrood_shell
+		shell = phase_shell()
 		shell_max = shell
 		_since_beam = 0.0
 		_oil_step_given = false   # the next phase drops its own oil at its half
@@ -232,6 +272,7 @@ func _die() -> void:
 			hud._show_toast("The Ashbrood leaves the bowl.", 3.0)
 		return
 	if waylamp:
+		waylamp.take_back_ember()   # the ember rises into the lamp as it lights (DECISIONS 2026-11-27)
 		Progress.settle(waylamp.region_id, FogGrid.REGION_NAMES[waylamp.region_id])
 	super._die()
 

@@ -1,5 +1,7 @@
 extends Node
-## Headless checks for the core loop (M1 + M2) and the Reedmarsh (M3). Run:
+## Headless checks for the core loop and the Reedmarsh. M1b (no more tending): lamps never burn or dim, the old
+## lamps are lit by touch, scrap is the one material and comes in one-off piles, the woodpile is scenery, the
+## lantern markers and chips are gone (only the cold-frame lure on unlit old lamps), and wind is inert. Run:
 ##   godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_core.tscn
 ## Exit code 0 = all passed. Runs as a scene so the autoloads are available.
 
@@ -9,14 +11,12 @@ var fails := 0
 var fog: FogGrid
 var player: Node
 var lamp: Lantern
-var woodpile: ResourceNode
 var scrap_pile: ResourceNode
 var built: Lantern
 var start := Vector2.ZERO
-var lamp_density_cold := 0.0
+var lamp_density_out := 0.0
 var wind: Wind
 var reservoir: Lantern
-var fed: Lantern
 
 func check(ok: bool, what: String) -> void:
 	print(("PASS " if ok else "FAIL ") + what)
@@ -46,144 +46,143 @@ func _process(_delta: float) -> void:
 			fog = main.fog
 			player = main.player
 			start = main.start
-			lamp = main.get_node("Lanterns").get_child(0)
 			wind = main.get_node("Wind")
-			wind.force(Wind.State.CALM, Vector2i.RIGHT, 9999.0)   # no random gusts during tests
+			for l in get_tree().get_nodes_in_group("lantern"):
+				if l.global_position.distance_to(main.start_lantern_pos) < 8.0:
+					lamp = l
 			for r in get_tree().get_nodes_in_group("resource"):
-				if r.always_regrow:
-					woodpile = r
-				elif r.kind == "scrap" and r.global_position.distance_to(start) < 100.0:
+				if r.global_position.distance_to(start) < 100.0:
 					scrap_pile = r
-			check(lamp != null and not lamp.is_lit(), "the old lantern by the hut starts cold (relighting it is the first goal)")
+			check(lamp != null and lamp.old and not lamp.is_lit() and lamp.can_light_by_touch(), "the old lantern by the hut starts cold, to be lit by touch (the first goal)")
 			check(not Progress.is_unlocked("post"), "the Post Lamp starts locked until the Hollow find")
-			Progress.unlock("post")  # the remaining legacy core checks cover the build loop
-			lamp.fuel = Tuning.lantern_max_fuel   # relight it for the rest of these checks
-			check(woodpile != null and scrap_pile != null, "hut woodpile and starter scrap exist")
+			Progress.unlock("post")  # the remaining core checks cover the build loop
+			check(scrap_pile != null and scrap_pile.amount == 6, "a little scrap beside the hut (one-off)")
 			var res := get_tree().get_nodes_in_group("resource")
-			check(res.size() >= 40, "resources scattered in the Hollow (%d)" % res.size())
-			check(res.all(func(r): return not r.is_revealed()), "all resources start hidden in fog")
-			check(Inventory.get_count("fuel") == 0 and Inventory.get_count("scrap") == 0, "keeper starts with nothing")
+			check(res.size() >= 40, "scrap piles scattered in the valley (%d)" % res.size())
+			check(res.all(func(r): return r.kind == "scrap"), "every pile is scrap: no fuel spots, peat or glass (M1b)")
+			check(res.all(func(r): return not r.is_revealed()), "all piles start hidden in fog")
+			check(main.get_node("Terrain/Woodpile") != null and not res.any(func(r): return r.global_position.distance_to(start + main.WOODPILE_OFFSET) < 20.0), "the woodpile by the hut is scenery, not something to gather")
+			check(Inventory.counts.keys() == ["scrap"] and Inventory.get_count("scrap") == 0, "the keeper carries only scrap, and starts with none")
 			check(fog.is_solid_at(Vector2(8, 8)) and not fog.is_solid_at(start), "rock rings the Hollow, start is open")
 			check(player.place_block_reason(Vector2(16, 16)) == "rock", "cannot build on rock")
+			# Lit by touch: walk up to the old lamp and press A / E once.
+			player.position = lamp.global_position + Vector2(12, 0)
+			check(main.get_node("FogLayer/WorldPrompt").lines_for(lamp) == [[InputHint.key("interact"), "Light it"]], "the old lamp's prompt says Light it")
+			player.begin_interact()
+			check(lamp.is_lit() and not lamp.cold, "one touch lights the old lamp (no fuel)")
+			player.position = start
 		120:
 			check(fog.density_at(lamp.global_position) < 0.1, "light clears fog at the lantern")
 			check(fog.density_at(lamp.global_position + Vector2(400, 0)) > 0.9, "fog stays outside the radius")
-			check(woodpile.is_revealed() and scrap_pile.is_revealed(), "light reveals nearby resources")
-			check(lamp.fuel < Tuning.lantern_max_fuel, "lantern burns fuel")
+			check(scrap_pile.is_revealed(), "light reveals nearby scrap")
+			check(lamp.is_lit() and is_equal_approx(lamp.get_light_radius(), Tuning.lantern_max_radius), "a lit lamp shines at full radius and never dims (%.0f px)" % lamp.get_light_radius())
 			check(player.place_block_reason(start + Vector2(0, 96)).begins_with("needs"), "cannot build without scrap")
 			player.position = scrap_pile.global_position + Vector2(12, 0)
+			check(main.get_node("FogLayer/WorldPrompt").lines_for(scrap_pile) == [[InputHint.key("interact"), "Take  6 scrap"]], "a pile's prompt says Take and how much")
 			Input.action_press("interact")
-		240:
+		122:
 			Input.action_release("interact")
-			check(Inventory.get_count("scrap") == 6 and scrap_pile.amount == 0, "holding interact gathers scrap (%d)" % Inventory.get_count("scrap"))
+		124:
+			check(Inventory.get_count("scrap") == 6, "one press takes the whole pile (%d)" % Inventory.get_count("scrap"))
+			check(not is_instance_valid(scrap_pile) or scrap_pile.is_queued_for_deletion() or not scrap_pile.is_in_group("resource"), "and the pile is gone for good (one-off)")
 			player.position = start + Vector2(0, 96)
-		242:
+		126:
 			built = player.try_place()
 			check(built != null, "can build a Post Lamp on lit ground")
 			check(Inventory.get_count("scrap") == 1, "building costs %d scrap" % Tuning.post_lamp_cost_scrap)
 			check(player.place_block_reason(player.place_pos()) != "", "cannot build twice in one spot")
+			check(built.is_lit() and not built.old and built.can_pick_up(), "a planted lamp is lit at once and can be picked up")
 			player.position = built.global_position
-		244:
+		128:
 			player.pick_up_nearest()
-		248:
+		132:
 			check(get_tree().get_nodes_in_group("lantern").size() == 2, "pick up removes the lantern (the hut's and the north path's old lamps stay)")
-			check(Inventory.get_count("scrap") == 3, "pick up refunds half the scrap")
-			check(Inventory.get_count("fuel") >= 9, "pick up returns the tank's fuel (%d)" % Inventory.get_count("fuel"))
+			check(Inventory.get_count("scrap") == 3, "pick up refunds half the scrap (as built)")
+			player.position = lamp.global_position + Vector2(6, 0)
+			player.pick_up_nearest()
+		134:
+			check(is_instance_valid(lamp) and lamp.is_inside_tree() and lamp.is_in_group("lantern"), "the valley's old lamps can't be picked up")
 			# Hand lamp (M1a, GAME_PLAN §5): out in the dark, an empty lamp refills slowly by itself (kl_charge_regen).
-			# The old dimming in the dark and the top-up from carried fuel are gone: the regen table replaces them.
-			Inventory.counts["fuel"] = 0
 			player.position = start + Vector2(-420, 0)
 			player.lamp_charge = 0.0
-		320:
+		206:
 			var want: float = Tuning.kl_charge_regen * 72.0 / 60.0
 			check(absf(player.lamp_charge - want) < 0.02, "in the dark an empty hand lamp refills slowly by itself (%.3f, want %.3f)" % [player.lamp_charge, want])
 			check(player.get_light_radius() >= Tuning.hand_lamp_ember_radius and player.get_light_radius() < Progress.lamp_max_radius(), "hand lamp never goes out (ember)")
-			Inventory.add("fuel", 5)
-		330:
-			check(Inventory.get_count("fuel") == 5 and player.lamp_charge > 0.0, "carried fuel no longer tops the hand lamp up (M1a)")
-			# Soft-lock scenario: every lantern cold, nothing carried, woodpile empty.
-			lamp.fuel = 0.0
-			Inventory.counts["fuel"] = 0
-			woodpile.amount = 0
-			woodpile.regrow_sec = 0.5
+			# A snuffed lamp (the Ashbrood's dive): dark for a while, then it relights by itself. Fog creeps back meanwhile.
 			Tuning.fog_creep_per_sec = 0.5
-			player.position = woodpile.global_position + Vector2(12, 0)
-		400:
-			check(not lamp.is_lit(), "unfuelled lantern goes cold")
-			var markers = main.get_node("FogLayer/LanternMarkers")
-			check(markers.needs_attention().has(lamp), "a cold lantern is marked so you can find it to refuel")
-			check(str(main.get_node("HUD").status_items()).contains("1 lantern gone cold"), "the HUD shows a chip for a cold lantern")
-			check(woodpile.amount >= 1, "hut woodpile regrows: no soft-lock")
-			Input.action_press("interact")
-		460:
-			Input.action_release("interact")
-			check(Inventory.get_count("fuel") >= 1, "gathered fuel from the woodpile")
-			lamp_density_cold = fog.density_at(lamp.global_position)
-			check(lamp_density_cold > 0.15, "fog creeps back over a cold lantern (%.2f)" % lamp_density_cold)
+			lamp.snuff(2.0)
+			check(not lamp.is_lit() and lamp.get_light_radius() == 0.0 and lamp.is_snuffed(), "a snuffed lamp goes dark")
+		300:
+			lamp_density_out = fog.density_at(lamp.global_position)
+			check(lamp_density_out > 0.15, "fog creeps back over a dark lamp (%.2f)" % lamp_density_out)
 			var t := fog.tile_of(lamp.global_position)
 			check(fog.remembered[t.y * fog.cols + t.x] == 1, "faded tile stays remembered")
 			Tuning.fog_creep_per_sec = 0.05
-			player.position = lamp.global_position + Vector2(12, 0)
-			Input.action_press("interact")
-		462:
-			Input.action_release("interact")
-		465:
-			check(lamp.is_lit(), "carried fuel relights a cold lantern")
-			Inventory.counts["fuel"] = 0
-			check(Inventory.add("fuel", 100) == Inventory.carry_limit, "carry limit caps gathering")
+		340:
+			check(lamp.is_lit() and not lamp.is_snuffed(), "a snuffed lamp relights by itself (kl_snuff_sec)")
+			# The cold-frame lure: only for old lamps not yet lit. The north path's waits until the ledger is read.
+			var markers = main.get_node("FogLayer/LanternMarkers")
+			var waypost: Lantern = get_tree().get_nodes_in_group("lantern").filter(func(l): return l.global_position.distance_to(main.waypost_lantern_pos) < 8.0)[0]
+			check(not markers.unlit_old_lamps().has(lamp), "a lit old lamp has no lure")
+			check(not markers.unlit_old_lamps().has(waypost), "the north path's lamp waits its turn (ledger unread)")
+			Story.done["read_ledger"] = true
+			check(markers.unlit_old_lamps() == [waypost], "then its cold frame shows through the fog")
+			Story.done.erase("read_ledger")
+			var chips := str(main.get_node("HUD").status_items()).to_lower()
+			check(not chips.contains("lantern") and not chips.contains("fuel") and not chips.contains("gust"), "no lantern, fuel or wind chips on the HUD (%s)" % chips)
 			_m3_checks()
-		500:
+		400:
 			var streaks = main.get_node("FogLayer/WindStreaks")
 			check(streaks.active_count() == 0, "no wind streaks when calm")
-		530:
+			check(wind.state == Wind.State.CALM, "wind is inert: no gust starts by itself (until M6)")
+		430:
 			check(_landmark("stone_way")._spotted, "a landmark is announced when the light first finds it")
 			check(main.get_node("HUD").toast.text.contains("Carved stone") or _landmark("stone_way").glow.enabled, "unread landmark glows")
-			check(fed.fuel > 10.0, "Reservoir Lamp tops up a lantern in its light (%.2f)" % fed.fuel)
-			check(reservoir.fuel < Tuning.reservoir_max_fuel - Tuning.reservoir_burn_per_sec * 1.0, "Reservoir spends its own tank feeding others")
-			_wind_checks()
-		540:
-			check(main.get_node("FogLayer/WindStreaks").active_count() > 40, "wind streaks blow across the screen in a gust")
+			check(reservoir.is_lit() and is_equal_approx(reservoir.get_light_radius(), Tuning.reservoir_radius) and not ("fuel" in reservoir), "a Reservoir Lamp is a wide light with no tank (feeding is cut)")
+			wind.force(Wind.State.GUST, Vector2i.RIGHT)   # a gust can still be forced (M6 brings them back on the Ridge)
+		440:
+			check(main.get_node("FogLayer/WindStreaks").active_count() > 40, "a forced gust still draws its streaks (for M6)")
+			check(lamp.is_lit() and is_equal_approx(lamp.get_light_radius(), Tuning.lantern_max_radius), "wind no longer touches a lamp")
 			wind.force(Wind.State.CALM)
 			_interaction_setup()
-		541:
+		441:
 			Progress._input_block_until = 0   # a note closed earlier blocks input for 200 ms of real time; headless runs faster
-			Input.action_press("interact")   # tap refuels the lantern; holding then gathers
-		580:
+			Input.action_press("interact")   # a tap takes the pile beside the lantern
+		480:
 			Input.action_release("interact")
-			check(Inventory.get_count("scrap") > scrap_before, "holding interact beside a lantern gathers the resource (%d -> %d)" % [scrap_before, Inventory.get_count("scrap")])
-			check(hint_lantern.fuel > 50.0, "and the tap still refuelled the lantern (%.0f)" % hint_lantern.fuel)
-		581:
+			check(Inventory.get_count("scrap") > scrap_before, "a tap beside a lit lantern takes the scrap pile (%d -> %d)" % [scrap_before, Inventory.get_count("scrap")])
+			check(is_instance_valid(hint_lantern) and hint_lantern.is_inside_tree(), "and holding on doesn't pick the lantern up while a pile was in reach")
+		481:
 			Art._ph.clear()   # release cached textures so exit is clean
 			print("RESULT fails=%d" % fails)
 			get_tree().quit(1 if fails else 0)
 
 
-# --- Interaction: lanterns beside resources, quiet building -----------------------
+# --- Interaction: lanterns beside scrap, quiet building -----------------------
 
 var scrap_before := 0
 var hint_lantern: Lantern
 
 func _interaction_setup() -> void:
-	# A scrap pile with a lantern right beside it (as an old save could have): the lantern is
-	# nearer, so a tap refuels it, but holding the button must still gather.
+	# A scrap pile with a lantern right beside it: the lantern is nearer, but a tap still takes the pile.
 	var pile: ResourceNode = null
 	for r in get_tree().get_nodes_in_group("resource"):
-		if r.kind == "scrap" and r.can_gather():
+		if r.amount > 0 and r.label == "" and (pile == null or r.global_position.distance_to(start) < pile.global_position.distance_to(start)):
 			pile = r
-			break
+	if pile:
+		fog.clear_burst(pile.global_position, 96.0, 1.0)   # the light finds it
 	check(pile != null, "found a scrap pile for the interaction checks")
-	check(player.place_block_reason(pile.global_position) == "on a resource", "you can't build right on top of a resource")
+	check(player.place_block_reason(pile.global_position) == "on a resource", "you can't build right on top of a pile")
 	hint_lantern = Lantern.new()
-	hint_lantern.fuel = 50.0
 	hint_lantern.position = pile.global_position + Vector2(24, 0)
 	main.get_node("Lanterns").add_child(hint_lantern)
 	player.global_position = pile.global_position + Vector2(30, 8)
-	Inventory.counts["fuel"] = 5
 	Inventory.counts["scrap"] = 0
 	scrap_before = 0
 	check(player.nearest_target() == hint_lantern and player.nearest_resource() == pile, "the lantern is the nearest thing, the pile is still in reach")
 	var lines: Array = main.get_node("FogLayer/WorldPrompt").lines_for(hint_lantern)
-	check(lines.any(func(l): return String(l[1]).begins_with("Hold to gather")), "the lantern's prompt also offers 'Hold to gather'")
+	check(lines.any(func(l): return String(l[1]).begins_with("Take")), "the lantern's prompt offers to take the pile")
 	# Building stays quiet until a build fails.
 	check(player.build_hint_t <= 0.0, "no build outline or text by default")
 	player.try_place()
@@ -270,8 +269,9 @@ func _m3_checks() -> void:
 	check(_landmark("rack") != null and _landmark("rack").scenery and _landmark("letter") == null, "the rack is just scenery and the door letter is gone (less to read at the start)")
 	check(pump != null and _connected(fog.tile_of(start), fog.tile_of(pump.global_position)), "walkable path from the hut to the pumphouse")
 	_map_size_checks()
-	var peat := get_tree().get_nodes_in_group("resource").filter(func(r): return r.label == "Peat")
-	check(peat.size() >= 15, "peat in the marsh (%d)" % peat.size())
+	var caches := get_tree().get_nodes_in_group("resource").filter(func(r): return r.label == "Old cache")
+	check(caches.size() == main.CACHES.size() and caches.all(func(r): return r.kind == "scrap"), "every old cache holds scrap (the fuel and glass caches too) (%d)" % caches.size())
+	check(Lantern.cost("hooded") == Tuning.hooded_cost_scrap and Lantern.cost("mirror") == Tuning.mirror_cost_scrap and Lantern.cost_text("mirror") == "%d scrap" % Tuning.mirror_cost_scrap, "lamp costs fold into scrap (Hooded %d, Mirror %d)" % [Tuning.hooded_cost_scrap, Tuning.mirror_cost_scrap])
 	# Reading a landmark.
 	var reader = main.get_node("NoteReader")
 	_landmark("ledger").activate()
@@ -286,27 +286,11 @@ func _m3_checks() -> void:
 	Inventory.counts["scrap"] = 0
 	check(player.place_block_reason(start + Vector2(0, 96)) == "needs %d scrap" % Tuning.reservoir_cost_scrap, "Reservoir costs %d scrap" % Tuning.reservoir_cost_scrap)
 	Progress.selected = "post"
-	# Reservoir feeding.
+	# A Reservoir Lamp: a wide dim light, nothing to feed.
 	reservoir = Lantern.new()
 	reservoir.kind = "reservoir"
 	reservoir.position = fog.tile_center(fog.tile_of(start + Vector2(0, 200)))
 	main.get_node("Lanterns").add_child(reservoir)
-	fed = Lantern.new()
-	fed.position = reservoir.position + Vector2(64, 0)
-	fed.fuel = 10.0
-	main.get_node("Lanterns").add_child(fed)
-	# Hand refuelling fills a Reservoir's whole tank, not just a Post Lamp's worth.
-	var had_fuel := Inventory.get_count("fuel")
-	var empty_res := Lantern.new()
-	empty_res.kind = "reservoir"
-	empty_res.fuel = 0.0
-	empty_res.position = fog.tile_center(fog.tile_of(start + Vector2(-220, 280)))
-	main.get_node("Lanterns").add_child(empty_res)
-	Inventory.counts["fuel"] = 30
-	var units: int = player.refuel(empty_res)
-	check(units == ceili(Tuning.reservoir_max_fuel / Tuning.fuel_per_unit) and is_equal_approx(empty_res.fuel, empty_res.max_fuel()), "hand refuelling fills a Reservoir's whole tank (%d units, %.0f fuel)" % [units, empty_res.fuel])
-	empty_res.queue_free()
-	Inventory.counts["fuel"] = had_fuel
 	# Walk the keeper to the carved stone so its tile gets lit (checked at frame 530).
 	player.position = _landmark("stone_way").global_position + Vector2(0, 20)
 	# Map screen.
@@ -315,21 +299,3 @@ func _m3_checks() -> void:
 	map.render()
 	check(map.is_open() and map.img != null and map.img.get_width() == fog.cols, "map screen opens and draws the valley")
 	map.toggle()
-
-func _wind_checks() -> void:
-	# A Hollow tile with rock right next to it on the west.
-	var t := _find_tile(func(q): return fog.terrain_of(q) == FogGrid.T_GROUND and fog.region[fog.idx(q)] == FogGrid.R_HOLLOW and fog.terrain_of(q + Vector2i.LEFT) == FogGrid.T_ROCK)
-	var sheltered := Lantern.new()
-	sheltered.position = fog.tile_center(t)
-	main.get_node("Lanterns").add_child(sheltered)
-	var exposed := Lantern.new()
-	exposed.position = start + Vector2(0, -160)
-	main.get_node("Lanterns").add_child(exposed)
-	wind.force(Wind.State.GUST, Vector2i.RIGHT)   # blowing from the west
-	check(exposed.in_gust() and is_equal_approx(exposed.burn_rate(), Tuning.lantern_burn_per_sec * Tuning.wind_burn_mult), "gust doubles burn on an exposed lantern")
-	check(exposed.get_light_radius() < Tuning.lantern_max_radius, "gust shrinks an exposed lantern's light")
-	check(not sheltered.in_gust() and is_equal_approx(sheltered.burn_rate(), Tuning.lantern_burn_per_sec), "rock upwind shelters a lantern")
-	check(wind.status_text().contains("west"), "HUD names the wind direction")
-	var hud = main.get_node("HUD")
-	check(str(hud.status_items()).contains("Gust:") and str(hud.status_items()).contains("exposed"), "a gust shows a chip only for lanterns it actually hits")
-	check(exposed.in_gust() and wind.is_gusting(), "gust stays on for the streak check")
