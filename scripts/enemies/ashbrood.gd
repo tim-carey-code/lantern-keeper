@@ -513,7 +513,8 @@ func _die() -> void:
 		_since_beam = 0.0
 		_oil_step_given = false   # the next phase drops its own oil at its half
 		_puff_t = 99.0
-		_dive_t = 2.0
+		_dive_t = 1.0   # it dives soon after it rises
+		_idle_t = 0.0
 		_ember_t = 0.0
 		_finish_all()
 		_puff = null
