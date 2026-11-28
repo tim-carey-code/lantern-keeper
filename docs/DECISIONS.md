@@ -42,6 +42,7 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 - **Art direction for every monster and NPC, and better telegraphs and animations** (owner: "we need to plan out a whole art design concept and everything for all the monsters and NPC's and all of that, and telegraph/animate some of their attacks better as with my abilities"). Draft in docs/ART_DIRECTION.md.
 - **Concept images come first, before anything goes in the game** (owner: "concept images first before anything in the game for sure"). AI-generated images are concept references unless the owner says otherwise.
 - **AI sprite drawing is to be explored** (owner: "Can we get GPT or a space on hugging face that can draw our NPC sprites and monster sprites?"). Options and licences are being researched.
+- **Sprite workflow: OpenAI drafts, the owner remakes them in Pixelorama** (owner: "Lets try the OpenAI then i remake in pixelorama? that will be best bet"). AI output is reference only; what goes in the game is the owner's redraw. Brief: docs/research/AI_SPRITES.md.
 - **Order of work: a readability step, then M1b, then M2** (owner: "lets do readability first followed by m1b and then M2").
 
 ## 2026-11-27 (the game plan approved)
