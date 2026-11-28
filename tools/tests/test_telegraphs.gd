@@ -26,6 +26,15 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	strip_real_input()
 	Story.skip_opening = true
+	# M1c: this test predates the light states and lamp slots (test_light_states, test_combos and test_core's slot
+	# checks cover those). The light rule and the slot limit are off here, so its sums stay as they were.
+	Tuning.kl_dark_dmg_mult = 1.0
+	Tuning.kl_lit_dmg_mult = 1.0
+	Tuning.kl_lit_shell_mult = 1.0
+	Tuning.kl_dark_shell_floor = 0.0
+	Tuning.kl_ashbrood_needs_light = false
+	Tuning.kl_lamp_slots_base = 6
+	Tuning.kl_lamp_replant_cd = 0.0
 	SaveGame.path = "user://test_ignore_save.json"   # never read or write the player's real save
 	SaveGame.delete_save()
 	Settings.path = "user://test_ignore_settings.cfg"
@@ -244,7 +253,8 @@ func _one_dive(lamp_at: Vector2, keeper_off: Vector2, dashing: bool) -> Dictiona
 	await wait(Tuning.kl_ashbrood_dive_travel * 0.5)
 	out["flying"] = b.is_flying() and b.global_position.distance_to(start) > 5.0 and b.global_position.distance_to(land) > 5.0
 	await wait(Tuning.kl_ashbrood_dive_travel * 0.5 + 0.1)
-	out["landed"] = b.global_position.distance_to(land) < 1.0 and lamp.is_snuffed() and not lamp.is_lit() and b.is_sitting()   # M1b: the dive snuffs the lamp
+	# M1c: it smothers the lamp while it sits (still lit: the punish window); the lamp goes out when the sit ends.
+	out["landed"] = b.global_position.distance_to(land) < 1.0 and lamp.smother_by == b and lamp.is_lit() and b.is_sitting()
 	out["lost"] = Tuning.warmth_max - player.warmth
 	b.queue_free()
 	lamp.queue_free()
@@ -255,7 +265,7 @@ func _dive_checks() -> void:
 	var near: Dictionary = await _one_dive(spot + Vector2(60, 0), Vector2(r - 3.0, 0), false)
 	check(near["radius_ok"], "the dive shows one landing circle at the lamp, the same %.0f px it hits with" % r)
 	check(near["flying"], "the dive is a visible flight, not a jump")
-	check(near["landed"], "it lands on the lamp, empties it and sits")
+	check(near["landed"], "it lands on the lamp and sits on it, smothering it (still lit: hit it now)")
 	check(near["lost"] >= Tuning.kl_ashbrood_dive_warmth - 0.1, "3 px inside the landing circle: it chills you")
 	var edge: Dictionary = await _one_dive(spot + Vector2(60, 0), Vector2(r + 3.0, 0), false)
 	check(edge["lost"] < 0.1, "3 px outside it: nothing")

@@ -32,6 +32,15 @@ func _ready() -> void:
 	strip_real_input()
 	Tuning.wick_enabled = false   # only the foes this test makes
 	Story.skip_opening = true
+	# M1c: this test predates the light states and lamp slots (test_light_states, test_combos and test_core's slot
+	# checks cover those). The light rule and the slot limit are off here, so its sums stay as they were.
+	Tuning.kl_dark_dmg_mult = 1.0
+	Tuning.kl_lit_dmg_mult = 1.0
+	Tuning.kl_lit_shell_mult = 1.0
+	Tuning.kl_dark_shell_floor = 0.0
+	Tuning.kl_ashbrood_needs_light = false
+	Tuning.kl_lamp_slots_base = 6
+	Tuning.kl_lamp_replant_cd = 0.0
 	Settings.path = "user://test_skills_settings.cfg"   # never the owner's settings
 	Settings.use_defaults()
 	InputHint.pad = false
@@ -121,7 +130,9 @@ func _bar() -> void:
 	check(c.slot_skill("skill_1").id == "lampfire" and c.slot_skill("skill_2").id == "fireglobe" and c.slot_skill("skill_3").id == "beam" and c.slot_skill("skill_4") == null, "RT Lampfire, RB Fireglobe, LB the Beam, Y empty")
 	check(not Progress.knows("lance"), "no Lance at level 1")
 	check(Progress.bind("skill_1", "fireglobe") != "" and Progress.bind("skill_2", "lampfire") != "", "slot 1 is always Lampfire, and Lampfire stays there")
-	check(Progress.bind("skill_4", "fireglobe") != "" and Progress.bind("skill_2", "hearth_ring") != "", "Y takes self-cast skills only; an aimed slot refuses Hearth ring")
+	check(Progress.bind("skill_4", "fireglobe") == "" and Progress.bind("skill_2", "hearth_ring") != "", "Y takes any skill (M1c: an aimed one fires at the lock); an aimed slot refuses Hearth ring")
+	Progress.bind("skill_2", "fireglobe")   # back to the default bar
+	Progress.bind("skill_4", "")
 	check(Progress.bind("skill_3", "lance") != "", "Lance can't go on the bar before it is learned")
 	check(Progress.bind("skill_4", "hearth_ring") == "" and c.slot_skill("skill_4").id == "hearth_ring", "Hearth ring goes on slot 4")
 	check(Progress.bind("skill_2", "beam") == "" and Progress.bar["skill_3"] == "" and Progress.bar["skill_2"] == "beam", "binding a skill moves it: the Beam to slot 2 leaves slot 3 empty")

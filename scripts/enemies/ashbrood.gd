@@ -451,7 +451,7 @@ func _nearest_lit_lamp() -> Lantern:
 	var best_d := INF
 	var home := waylamp.global_position if waylamp else global_position
 	for lamp in get_tree().get_nodes_in_group("lantern"):
-		if not lamp.is_lit() or lamp.kind == "mirror" or lamp.global_position.distance_to(home) > ARENA:
+		if not lamp.is_lit() or lamp.kind == "mirror" or (waylamp and lamp.global_position.distance_to(home) > ARENA):
 			continue
 		var d := global_position.distance_to(lamp.global_position)
 		if d < best_d:

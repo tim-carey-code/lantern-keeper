@@ -38,6 +38,15 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS   # keep counting frames when a note pauses the world
 	strip_real_input()
 	Story.skip_opening = true
+	# M1c: this test predates the light states and lamp slots (test_light_states, test_combos and test_core's slot
+	# checks cover those). The light rule and the slot limit are off here, so its sums stay as they were.
+	Tuning.kl_dark_dmg_mult = 1.0
+	Tuning.kl_lit_dmg_mult = 1.0
+	Tuning.kl_lit_shell_mult = 1.0
+	Tuning.kl_dark_shell_floor = 0.0
+	Tuning.kl_ashbrood_needs_light = false
+	Tuning.kl_lamp_slots_base = 6
+	Tuning.kl_lamp_replant_cd = 0.0
 	SaveGame.path = "user://test_waylamps_save.json"   # never read or write the player's real save
 	SaveGame.delete_save()
 	Tuning.waylamp_kindle_sec = 3.0   # keep the test short

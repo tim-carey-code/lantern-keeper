@@ -20,8 +20,14 @@ func unlit_old_lamps() -> Array:
 			continue
 		if not Story.done.has("read_ledger") and _is_waypost(l):
 			continue
+		if not Progress.notes_read.has("waylamp_hollow") and _is_rim(l):
+			continue   # M1c: the bowl's rim lamp waits until the Hollow's WayLamp has been read
 		out.append(l)
 	return out
+
+func _is_rim(l: Node) -> bool:
+	var main := get_tree().get_first_node_in_group("main")
+	return main != null and "rim_lamp_pos" in main and l.global_position.distance_to(main.rim_lamp_pos) < 8.0
 
 func _is_waypost(l: Node) -> bool:
 	var main := get_tree().get_first_node_in_group("main")
