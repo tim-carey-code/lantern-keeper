@@ -42,6 +42,7 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_upgrades.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_leveling.tscn   # the curve: L2 at the crook; the Ashbrood kill gives L5 (beeline) or L6 (explorer)
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_telegraphs.tscn # foe wind-ups, the fairness rules, the keeper's feedback, the art swap hook
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_sprite_tool.tscn # the sprite pipeline (tools/art/README.md) on a synthetic sheet
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_hollow.tscn # prototype branch only
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_onboarding.tscn # prototype: the first 10 minutes' main route
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_prototype_loop.tscn # prototype: the loop route, one-way Ridge, WayLamp fast travel
@@ -89,6 +90,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --audio-driver Dummy --fixed-fps 60
   (see the header of `tools/capture/capture.gd`; views: start, marsh, cold, map; the loop: loop_waylamp, loop_marsh_climb, loop_ridge_entry, loop_travel; readability: tell_puff, tell_puff_reduce, tell_adds, tell_dive, tell_dive_arrow, tell_spit, tell_lane, tell_reach, tell_hatch, keeper_dash, keeper_cast, keeper_drink, keeper_hurt; M1b: m1b_opening, m1b_opening_lit, m1b_faint, m1b_wake, m1b_lures, m1b_ember, m1b_kindle). Write frames under `~/.cache/openclaw/project-scratch/`, never in the repo.
 - README images: `tools/capture/readme_shots.sh` renders the staged `readme_*` views into `docs/screenshots/` (look at each one before committing).
 - Art: 16x16 sprites drawn at 2x, palette in `source/palette/`. Kenney sheets are recoloured from `source/vendor/`; placeholders come from `tools/art/make_placeholders.py`.
+  Key-pose sheets become strips with `tools/art/sprite_from_sheet.gd` (`tools/art/README.md`). Its output is the owner's to approve: don't commit generated PNGs to `assets/`, and keep concept images out of the repo.
 
 ## Storage, git, licensing
 - Never put project files, builds or scratch under `/tmp`. Use `~/.cache/openclaw/project-scratch/` for throwaway files and set `TMPDIR` there.

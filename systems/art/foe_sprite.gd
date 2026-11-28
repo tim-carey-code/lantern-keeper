@@ -26,10 +26,8 @@ static func attach(owner: Node2D, subj: String, variant: String = "") -> FoeSpri
 	s.name = "Art"
 	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	s.scale = Vector2(Art.SCALE, Art.SCALE)
-	var size: Vector2i = sf.get_meta("frame_size", Vector2i(16, 16))
 	s.centered = true
-	if str(sf.get_meta("anchor", "foot")) == "foot":
-		s.offset = Vector2(0, -size.y / 2.0)
+	s._anchor_to("idle")
 	owner.add_child(s)
 	s.play_anim("idle")
 	return s
@@ -56,6 +54,7 @@ func play_anim(anim: String, seconds: float = 0.0) -> void:
 	if name == _anim and is_playing():
 		return
 	_anim = name
+	_anchor_to(name)
 	var t := seconds
 	if t <= 0.0 and sprite_frames.has_meta("timed_by_" + name):
 		var v = Tuning.get(str(sprite_frames.get_meta("timed_by_" + name)))
@@ -64,6 +63,12 @@ func play_anim(anim: String, seconds: float = 0.0) -> void:
 	var n := sprite_frames.get_frame_count(name)
 	speed_scale = (n / maxf(fps, 0.01)) / t if t > 0.0 and not sprite_frames.get_animation_loop(name) else 1.0
 	play(name)
+
+## Each strip can have its own frame size (a 24x24 elite strip next to a 16x16 fallback): with the foot anchor the
+## bottom-centre stays on the owner's origin, so a bigger frame grows upward, never into the ground.
+func _anchor_to(anim: String) -> void:
+	var size: Vector2i = sprite_frames.get_meta("frame_size_" + anim, sprite_frames.get_meta("frame_size", Vector2i(16, 16)))
+	offset = Vector2(0, -size.y / 2.0) if str(sprite_frames.get_meta("anchor", "foot")) == "foot" else Vector2.ZERO
 
 func current() -> String:
 	return _anim
