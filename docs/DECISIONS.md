@@ -37,6 +37,16 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 
 ---
 
+## 2026-11-27 (the lanterns addendum approved)
+- **docs/replan/PLAN_LANTERNS.md is approved as recommended** (owner: "1-6 yes to all"):
+  1. three light states: dark x0.7 with no shell breaks, dim x1.0, lit x1.3 with shells wearing x1.5;
+  2. the Ashbrood can only be hurt in lamp light, with the rim lamp, the ember flare, smothering during its sit, and its puff snuffing lamps;
+  3. target lock: R3 toggles, a flick switches, holding the stick steers, the lock moves on after a kill; a sticky click and middle mouse on keyboard and mouse; free aim stays the default;
+  4. a warm amber lock marker (cold stays "a foe's attack");
+  5. Y may take aimed skills (it fires at the lock, else the best foe within 30 degrees, else straight);
+  6. parts 3 and 4 as placed: lamp slots by level (2 to 5, up to 6 with gear) replace the 3-lamp limit, with an 8 s replant; lamp jobs and their loot lines in M3; claim posts as a reward; tides from the Lakeshore on.
+- The addendum's §7 supersede list is approved with it. **Next:** M1c after M1b (§8).
+
 ## 2026-11-27 (lanterns at the centre; target lock)
 - **Without tending, lanterns felt useless** (owner: "with this new system i feel like the lanterns are useless and therefore making the game useless lol"). M1b keeps lamps as they are (no 3-lamp limit, no new lamp rules) while their role is redesigned.
 - **Lanterns become the centre of combat and of the build** (owner: "yes that direction feels right"):
