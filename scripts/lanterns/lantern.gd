@@ -34,6 +34,12 @@ var smother_t := 0.0      # mirror only: seconds of smothering left (a Wickling 
 var threatened := 0.0     # > 0: the Ashbrood is winding up a dive at this lamp (it flickers)
 var light: PointLight2D
 var beam_light: PointLight2D
+# M1c combos (PLAN_LANTERNS §3): a lamp's flame flares (a Fireglobe), feeds (the Beam) and gulps (catch, chain).
+var flare_t := 0.0        # > 0: flaring (its light x kl_flare_light_mult, settling back over kl_flare_time)
+var flare_cd := 0.0       # > 0: it can't flare again yet (a small ember on the post shows it)
+var feed_t := 0.0         # > 0: the Beam is feeding it (light x kl_feed_light_mult, core x kl_feed_core_mult)
+var gulp_t := 0.0         # > 0: its flame just took a bolt or a chain (the flame swells)
+var smother_by: Node = null   # the Ashbrood sitting on it (M1c: it stays lit during the sit, then goes out)
 
 static func cost(k: String) -> int:
 	match k:
@@ -131,6 +137,74 @@ func snuff(seconds: float) -> void:
 func can_pick_up() -> bool:
 	return not old
 
+# --- Flames and combos (M1c) -------------------------------------------------------------------------------
+
+## A flame the keeper's fire combos with: a lit lamp that isn't a mirror (planted, or a lit old lamp). WayLamps
+## are not Lanterns, so they never combo.
+func has_flame() -> bool:
+	return kind != "mirror" and is_lit()
+
+## Where its flame is in the world (the lamp head: the crook's lamp on a Post Lamp).
+func flame_pos() -> Vector2:
+	match kind:
+		"post":
+			return global_position + CROOK_LAMP
+		"reservoir":
+			return global_position + Vector2(0, -44)
+	return global_position + Vector2(0, LAMP_Y)
+
+## The nearest flame within `reach` of a point, or null. Every lit lamp in the group "lantern".
+static func flame_near(p: Vector2, reach: float, exclude: Array = []) -> Lantern:
+	LightSense.refresh(Engine.get_main_loop() as SceneTree)
+	var best: Lantern = null
+	var best_d := reach
+	for l in LightSense.nodes:
+		if not is_instance_valid(l) or l in exclude or not l.has_flame():
+			continue
+		var d: float = l.flame_pos().distance_to(p)
+		if d <= best_d:
+			best_d = d
+			best = l
+	return best
+
+func can_flare() -> bool:
+	return has_flame() and flare_cd <= 0.0
+
+## A Fireglobe on its flame: it flares (light x kl_flare_light_mult, settling back over kl_flare_time). False on
+## cooldown (the globe bursts as normal).
+func flare() -> bool:
+	if not can_flare():
+		return false
+	flare_t = Tuning.kl_flare_time
+	flare_cd = Tuning.kl_flare_lamp_cd
+	gulp_t = 0.3
+	LightSense.bump()
+	return true
+
+func is_flaring() -> bool:
+	return flare_t > 0.0
+
+## The Beam touching its flame (called every frame it touches).
+func feed() -> void:
+	if has_flame():
+		feed_t = 0.1
+
+func is_fed() -> bool:
+	return feed_t > 0.0
+
+## A bolt caught at its flame, or a chain arced through it: the flame swells for a moment.
+func gulp() -> void:
+	gulp_t = 0.25
+
+## How much its light is grown now (a flare settling back, the Beam feeding it).
+func light_mult() -> float:
+	var m := 1.0
+	if flare_t > 0.0:
+		m = maxf(m, 1.0 + (Tuning.kl_flare_light_mult - 1.0) * clampf(flare_t / maxf(Tuning.kl_flare_time, 0.01), 0.0, 1.0))
+	if feed_t > 0.0:
+		m = maxf(m, Tuning.kl_feed_light_mult)
+	return m
+
 # --- Effects (everything a lit lantern does; the one place to change or add lantern mechanics) ---------------
 
 ## Full light radius while lit, by kind.
@@ -146,7 +220,7 @@ func base_radius() -> float:
 
 ## How far its light reaches now (0 when not lit). Lamps never dim (M1b).
 func get_light_radius() -> float:
-	return base_radius() if is_lit() else 0.0
+	return base_radius() * light_mult() if is_lit() else 0.0
 
 ## The bright core's share of the light (from the centre): small foes burn there, and only a core burns a nest.
 ## 0 = no core. Mirrors have none (their beam burns instead).
@@ -163,6 +237,8 @@ func core_dps_for(foe: Node) -> float:
 	var dps := Tuning.kl_nest_core_dps if foe is WickNest else Tuning.wick_light_burn
 	if Progress.has_combat_upgrade("hot_core"):
 		dps *= Tuning.kl_hot_core_mult
+	if feed_t > 0.0:
+		dps *= Tuning.kl_feed_core_mult
 	return dps
 
 ## Small dark is kept out of this light: timid Wicklings stay out, brave ones burn after a while
@@ -244,6 +320,10 @@ func beam_level_at(p: Vector2) -> float:
 func _process(delta: float) -> void:
 	smother_t = maxf(0.0, smother_t - delta)
 	threatened = maxf(0.0, threatened - delta)
+	flare_t = maxf(0.0, flare_t - delta)
+	flare_cd = maxf(0.0, flare_cd - delta)
+	feed_t = maxf(0.0, feed_t - delta)
+	gulp_t = maxf(0.0, gulp_t - delta)
 	if snuff_t > 0.0:
 		snuff_t = maxf(0.0, snuff_t - delta)
 		if snuff_t <= 0.0:
@@ -270,7 +350,7 @@ var _look := -1
 ## Redraw only when what is drawn changes (performance): it lights or goes out, a mirror turns. Smother wisps and a
 ## snuffed lamp's smoke animate, so they redraw every frame.
 func _redraw_if_changed() -> void:
-	if is_smothered() or is_snuffed():
+	if is_smothered() or is_snuffed() or flare_t > 0.0 or flare_cd > 0.0 or feed_t > 0.0 or gulp_t > 0.0 or (smother_by != null and is_instance_valid(smother_by)):
 		_look = -1
 		queue_redraw()
 		return
@@ -304,6 +384,25 @@ func _draw() -> void:
 		draw_line(c, c + d * 18.0, Color(1.0, 0.92, 0.7, 0.9 if lit else 0.45), 2.0)
 		draw_circle(c + d * 18.0, 2.5, Color(1.0, 0.92, 0.7, 0.9 if lit else 0.45))
 		return
+	if lit and kind != "mirror":
+		var fl := CROOK_LAMP if kind == "post" else Vector2(0, -44 if kind == "reservoir" else LAMP_Y)
+		# The combos' looks (warm only): the flame leaps on a flare, stretches while the Beam feeds it, swells on a gulp.
+		if flare_t > 0.0:
+			var k := clampf(flare_t / maxf(Tuning.kl_flare_time, 0.01), 0.0, 1.0)
+			draw_circle(fl, 8.0 + 10.0 * k, Color(1.0, 0.7, 0.3, 0.35 * k))
+			draw_colored_polygon(PackedVector2Array([fl + Vector2(-5, 3), fl + Vector2(0, -12 - 10 * k), fl + Vector2(5, 3)]), Color(1.0, 0.82, 0.45, 0.9))
+		if feed_t > 0.0:
+			draw_colored_polygon(PackedVector2Array([fl + Vector2(-4, 3), fl + Vector2(0, -16), fl + Vector2(4, 3)]), Color(1.0, 0.9, 0.6, 0.85))
+		if gulp_t > 0.0:
+			draw_circle(fl, 6.0 + 20.0 * gulp_t, Color(1.0, 0.85, 0.5, 0.6 * gulp_t / 0.25))
+		if flare_cd > 0.0:
+			# A small ember on the post shows the flare cooldown.
+			draw_circle(Vector2(0, 2), 2.5, Color(1.0, 0.55, 0.2, 0.5 + 0.4 * flare_cd / maxf(Tuning.kl_flare_lamp_cd, 0.01)))
+		if smother_by != null and is_instance_valid(smother_by):
+			# Smothered by the Ashbrood's sit: dark wings over a flame that still burns (hit it now).
+			var tt := Time.get_ticks_msec() * 0.005
+			for i in 3:
+				draw_circle(fl + Vector2(sin(tt + i * 2.1) * 7.0, cos(tt * 1.3 + i) * 4.0 - 4.0), 5.0, Color(0.03, 0.035, 0.06, 0.55))
 	if is_snuffed():
 		# Snuffed: a thin curl of smoke, and a small ring that fills as it comes back.
 		var lamp := CROOK_LAMP if kind == "post" else Vector2(0, LAMP_Y)

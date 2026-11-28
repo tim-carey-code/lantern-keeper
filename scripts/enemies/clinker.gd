@@ -109,8 +109,12 @@ func _process(delta: float) -> void:
 		_rolling_t -= delta
 		if not _roll_hit and p.global_position.distance_to(global_position) < Tuning.kl_clinker_hit_range and not p.combat.is_dashing():
 			_roll_hit = true
-			p.chill(Tuning.kl_clinker_hit_warmth)
-			p.set("velocity", p.get("velocity") + _roll_dir * Tuning.kl_clinker_roll_speed * 0.18)
+			p.chill(hit_warmth())
+			# M1c: the roll throws the keeper out of its lane (forward and to the side they stood on).
+			var side := _roll_dir.orthogonal()
+			if side.dot(p.global_position - global_position) < 0.0:
+				side = -side
+			p.knockback(_roll_dir * 0.5 + side, Tuning.kl_clinker_knock)
 		if _rolling_t <= 0.0:
 			_dizzy_t = Tuning.kl_clinker_recover   # recover: dizzy, open to hits
 	else:
@@ -146,6 +150,10 @@ func _process(delta: float) -> void:
 
 func body_radius() -> float:
 	return 25.0
+
+## Its roll's hit: the Hollow's hardest single hit (M1c damage fix), grown by its level.
+func hit_warmth() -> float:
+	return Tuning.kl_clinker_hit_warmth * dmg_level_mult()
 
 func _draw() -> void:
 	var curl := 0.0          # 0 resting, 1 curled into a ball

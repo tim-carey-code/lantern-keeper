@@ -78,8 +78,7 @@ func bind_reason(slot: String, id: String) -> String:
 		return "Lampfire stays on slot 1."
 	if not knows(id):
 		return "Not learned yet."
-	if slot == "skill_4" and not SELF_CAST.has(id):
-		return "This slot takes skills that need no aim."
+	# M1c (PLAN_LANTERNS §6.6): slot 4 (Y) takes any skill; an aimed one fires at the lock or auto-targets.
 	if slot != "skill_4" and SELF_CAST.has(id):
 		return "This one needs no aim: it goes on slot 4."
 	return ""
@@ -222,6 +221,16 @@ func lamp_max_radius() -> float:
 ## The most lamp charge the keeper can hold: 1.0, +lamp_upgrade_charge per lamp glass (M1b, GAME_PLAN §5).
 func charge_max() -> float:
 	return 1.0 + Tuning.lamp_upgrade_charge * upgrade_level("lamp")
+
+## Lamp slots by level (M1c, PLAN_LANTERNS §5; owner 2026-11-28): 2 at the start, 3 at level 4, 4 at 8, 5 at 12.
+## No gear adds slots yet (M3); never more than kl_lamp_slots_max.
+func lamp_slots(lv: int = -1) -> int:
+	var l := level if lv < 0 else lv
+	var n := Tuning.kl_lamp_slots_base
+	for at in [Tuning.kl_lamp_slot_level_a, Tuning.kl_lamp_slot_level_b, Tuning.kl_lamp_slot_level_c]:
+		if l >= at:
+			n += 1
+	return clampi(n, 0, Tuning.kl_lamp_slots_max)
 
 ## The keeper's fire grows with their level: +kl_dmg_per_level a level over 1 (M1b, GAME_PLAN §4.6).
 func dmg_mult() -> float:

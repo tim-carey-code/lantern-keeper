@@ -239,6 +239,8 @@ func _arrive(w: WayLamp) -> void:
 	var main := _main()
 	var keeper: CharacterBody2D = main.player
 	keeper.global_position = arrive_pos(w)
+	if keeper.get("combat") and keeper.combat.lock.has_target():
+		keeper.combat.lock.release("travel")
 	keeper.velocity = Vector2.ZERO
 	keeper.reset_physics_interpolation()
 	var cam: Camera2D = keeper.get_node_or_null("Camera2D")

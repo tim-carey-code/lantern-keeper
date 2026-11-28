@@ -17,6 +17,11 @@ func target_pos() -> Variant:
 	var main := _main()
 	if main == null or not Story.pointer_on() or Story.current == "":
 		return null
+	# M1c (owner, M1b playtest: the WayLamp's ember "was right above the yellow quest arrow"): no pointer while
+	# the Ashbrood fights; the fight is the goal, and the ember is the only amber over the bowl.
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.guardian_awake():
+			return null
 	var key := Story.goal_target(Story.current)
 	match key:
 		"":

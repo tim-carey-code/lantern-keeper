@@ -4,6 +4,8 @@ extends CanvasLayer
 
 const FONT := preload("res://assets/fonts/ark_pixel_10px_proportional_latin.ttf")
 var holder: Control
+## DRAFT (M1c; PLAN_LANTERNS §2.1, STORY §16).
+const DARK_HINT := "It shrugs off fire in the dark. Bring a lamp."
 
 func _ready() -> void:
 	layer = 5
@@ -33,6 +35,9 @@ func _draw_bar() -> void:
 	var hint := "crack its shell with Lance or Lampfire" if b.shell > 0.0 else "burn it now, before the shell grows back"
 	if b.phase == 2:
 		hint = "it dives at your lanterns: hit it while it sits" if b.shell <= 0.0 else "crack its shell with Lance, then hit it while it sits"
+	# M1c (DRAFT, STORY §16): it is hurt only when lit.
+	if b.dark_hint() or (b.phase == 1 and not b.is_exposed()):
+		hint = DARK_HINT
 	var title := "%s   phase %d / 2: %s" % [b.foe_name, b.phase, hint]
 	holder.draw_string(FONT, Vector2(x + 2, y - 10), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0, 0, 0, 0.8))
 	holder.draw_string(FONT, Vector2(x, y - 12), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UiStyle.GOLD)
@@ -40,3 +45,12 @@ func _draw_bar() -> void:
 	holder.draw_rect(Rect2(x, y + 8, w * clampf(b.hp / b.hp_max, 0.0, 1.0), 12), Color(0.85, 0.28, 0.22))
 	if b.shell_max > 0.0:
 		holder.draw_rect(Rect2(x, y, w * clampf(b.shell / b.shell_max, 0.0, 1.0), 6), Color(0.7, 0.82, 0.95))
+	# M1c: a warm bar under it while it is lit (your fire lands), and a small warm bracket when it is locked.
+	if b.is_exposed():
+		holder.draw_rect(Rect2(x, y + 22, w, 2), Color(LockOn.MARKER, 0.8))
+	if LockOn.current and LockOn.current.has_target() and LockOn.current.target == b:
+		for sx in [x - 8.0, x + w + 8.0]:
+			var d := 1.0 if sx < x else -1.0
+			holder.draw_line(Vector2(sx, y - 4), Vector2(sx, y + 24), LockOn.MARKER, 2.0)
+			holder.draw_line(Vector2(sx, y - 4), Vector2(sx + d * 6.0, y - 4), LockOn.MARKER, 2.0)
+			holder.draw_line(Vector2(sx, y + 24), Vector2(sx + d * 6.0, y + 24), LockOn.MARKER, 2.0)

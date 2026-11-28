@@ -13,7 +13,9 @@ extends Node2D
 ## Which regions are held lives in Progress (saved). Nothing is fed: M1b cut fuel.
 
 const LAMP_Y := -60.0   # the lamp cage, above the tile centre
-const EMBER_BOWL := Vector2(0, -47)   # where the last ember lies, at the bottom of the cold bowl (the lamp cage)
+## Where the last ember lies: in the bowl at the Ashbrood's feet, on the sprite's own small bowl ember, so there is
+## one ember (M1c; owner, M1b playtest: the ember in the cage "was right above the yellow quest arrow"). Ashbrood.EMBER_AT.
+const EMBER_BOWL := Vector2(4, 12)
 const EMBER_RISE_SEC := 1.4           # the ember rises into the lamp as it lights (take_back_ember)
 
 ## DRAFT (M1b; STORY §15): the lines under each WayLamp's note. The approved footer said "Feed it 15 fuel." etc.

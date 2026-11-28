@@ -16,6 +16,8 @@ extends Node2D
 ## One node on the fog layer draws every marker and arrow, above the fog and the foes (rule 6). Tells live in a
 ## static list, so foes work (and tests run) without the node; the node only draws.
 ## Colours: foe markers use the cold threat colour #a3bcd4, never amber (ART_DIRECTION §1.4 rule 1).
+## M1c: the same node draws the keeper's target-lock marker (LockOn.marker): warm #ffd27a corner brackets, a shape
+## no foe tell uses, drawn by the telegraph rules (above fog, full size from the first frame, never flashing).
 
 enum { CIRCLE, LANE, AIM, SPAWN, REACH }
 
@@ -40,6 +42,11 @@ const SOUND_SLOTS := {
 	"ashbrood_dive_windup": ["ui_open", -8.0, 0.55],
 	"ashbrood_dive_impact": ["pickup_lantern", -6.0, 0.5],
 	"ashbrood_phase_windup": ["unlock", -6.0, 0.7],
+	# M1c: the Ashbrood's ash bolts and wing sweep; a foe stepping into lamp light (exposed).
+	"ashbrood_bolt_windup": ["ui_open", -12.0, 0.8],
+	"ashbrood_bolt_release": ["ui_close", -12.0, 0.9],
+	"ashbrood_sweep_windup": ["note_open", -10.0, 0.7],
+	"foe_exposed": ["ui_tick", -22.0, 1.7],
 }
 
 static var inst: Telegraph
@@ -262,13 +269,16 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_prune()
-	if not active.is_empty() or _drawn:
+	var lock_on := LockOn.current != null and not LockOn.current.marker().is_empty()
+	if not active.is_empty() or _drawn or lock_on:
 		queue_redraw()
 
 var _drawn := false
 
 func _draw() -> void:
-	_drawn = not active.is_empty()
+	var lm := LockOn.current.marker() if LockOn.current else {}
+	_drawn = not active.is_empty() or not lm.is_empty()
+	LockOn.draw_marker(self, lm)
 	if active.is_empty():
 		return
 	var reduce := Settings.reduce_flashes

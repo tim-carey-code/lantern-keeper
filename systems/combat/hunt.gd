@@ -25,5 +25,13 @@ static func hunter(tree: SceneTree, at: Vector2) -> Node:
 			return f
 	return null
 
+## True when this foe is hunting the keeper (the rule above, without the radius). The lock picks these first.
+static func is_hunting(f: Node) -> bool:
+	if f == null or not is_instance_valid(f) or f.is_queued_for_deletion() or f._dead or f is WickNest:
+		return false
+	if f is Ashbrood or (f is Clinker and f.awake) or f is Spitwick:
+		return true
+	return f is Wickling and (f.state == Wickling.State.CHASE or f.waiting_for_keeper)
+
 static func is_hunted(tree: SceneTree, at: Vector2) -> bool:
 	return hunter(tree, at) != null
