@@ -33,6 +33,7 @@ func _ready() -> void:
 	_component_checks()
 	_warm_checks()
 	_recolour_checks()
+	_role_checks()
 	_wipe(ROOT)
 	Art.clear_frames()
 	print("RESULT fails=%d" % fails)
@@ -364,7 +365,7 @@ func _recolour_checks() -> void:
 	var img := Image.create(240, 120, false, Image.FORMAT_RGBA8)
 	img.fill(Color(1, 0, 1))
 	img.fill_rect(Rect2i(40, 10, 40, 100), Color8(40, 30, 40))
-	img.fill_rect(Rect2i(44, 14, 32, 24), Color8(214, 168, 132))     # a face
+	img.fill_rect(Rect2i(44, 14, 32, 24), Color8(226, 164, 134))     # a face
 	img.fill_rect(Rect2i(44, 60, 32, 24), Color8(70, 110, 88))       # a green bottle
 	img.fill_rect(Rect2i(130, 40, 100, 60), Color8(90, 60, 40))      # the cart (a wide prop)
 	img.save_png(ROOT + "rc.png")
@@ -413,6 +414,73 @@ func _recolour_checks() -> void:
 	cfg.load(dir + "rc.frames.cfg")
 	check(cart != null and cart.get_size() == Vector2i(48, 32) and not FileAccess.file_exists(dir + "rc_cart_cart.png") and not cfg.has_section("cart") and not cfg.has_section("variant.cart") and cfg.has_section("idle"),
 		"a prop: its own file (rc_cart.png, 48x32), left out of the frames file")
+
+## Palette roles (ART_DIRECTION §1.4): the colours each kind of subject may use.
+func _role_sheet(path: String) -> void:
+	var img := Image.create(120, 120, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 0, 1))
+	img.fill_rect(Rect2i(10, 10, 100, 100), Color8(150, 150, 150))     # a neutral grey body (snaps to stone if allowed)
+	img.fill_rect(Rect2i(20, 15, 40, 30), Color8(231, 199, 145))       # a bone-beige skull
+	img.fill_rect(Rect2i(60, 50, 40, 30), Color8(79, 110, 74))         # marsh green
+	img.fill_rect(Rect2i(20, 75, 30, 25), Color8(106, 58, 74))         # plum
+	img.save_png(path)
+
+func _role_run(kind: String, extra: Dictionary) -> Dictionary:
+	var m := ConfigFile.new()
+	m.set_value("sheet", "subject", "role_" + kind)
+	m.set_value("sheet", "kind", kind)
+	m.set_value("sheet", "rows", 1)
+	m.set_value("sheet", "cols", 1)
+	m.set_value("sheet", "frame_size", 32)
+	m.set_value("sheet", "eyes", 0)
+	m.set_value("sheet", "rim", "none")
+	m.set_value("cells", "r0c0", "recover")
+	for k in extra:
+		m.set_value("sheet", k, extra[k])
+	m.save(ROOT + "role.cfg")
+	var rep := Pipeline.new().run(ROOT + "role.png", ROOT + "role.cfg", {"out_root": ROOT + "role_out/", "preview_dir": ROOT + "previews/"})
+	var folder: String = {"creature": "creatures/role_creature/", "person": "people/role_person/", "keeper": "keeper/", "prop": "props/role_prop/"}[kind]
+	var file := ("keeper" if kind == "keeper" else "role_" + kind) + "_recover.png"
+	var used := {}
+	var img := _load(ROOT + "role_out/" + folder + file)
+	if img:
+		for y in img.get_height():
+			for x in img.get_width():
+				var c := img.get_pixel(x, y)
+				if c.a > 0.5:
+					used["#" + c.to_html(false)] = true
+	rep["used"] = used
+	return rep
+
+func _in_groups(used: Dictionary, groups: Array) -> bool:
+	for hx in used:
+		var ok := false
+		for g in groups:
+			if Pipeline.GROUPS[g].has(hx):
+				ok = true
+		if not ok:
+			return false
+	return true
+
+func _role_checks() -> void:
+	_role_sheet(ROOT + "role.png")
+	var pal := Image.load_from_file(ProjectSettings.globalize_path(Pipeline.PALETTE_PATH))
+	check(pal.get_width() == 23 and Pipeline.PALETTE_PATH.ends_with("lantern-keeper-23.png"), "the tool uses the 23-colour palette")
+	var cr := _role_run("creature", {"allow": ["skin", "amber", "greens"]})
+	check(cr["ok"] and _in_groups(cr["used"], ["darks", "blues", "cold"]) and cr["warnings"].any(func(w): return str(w).contains("be allowed")),
+		"a creature uses only the darks, blues and #a3bcd4; allowing it skin, amber or greens is refused (%s)" % str(cr["used"].keys()))
+	var sp := _role_run("creature", {"special": ["bone", "stone"], "recolour": {"beige": ["#d8d2c4"]}})
+	check(sp["used"].has("#d8d2c4") and not sp["used"].has("#9a958c") and _in_groups(sp["used"], ["darks", "blues", "cold", "bone"]),
+		"special bone and stone: the beige skull becomes bone through recolour, but the grey body never snaps to stone")
+	var pe := _role_run("person", {})
+	check(not pe["used"].has("#4f6e4a") and not pe["used"].has("#2f4a3a") and not pe["used"].has("#7d9a5e") and pe["used"].has("#6a3a4a") and pe["used"].has("#9a958c"),
+		"a person: no marsh greens by default; plum, stone and the rest are fine (%s)" % str(pe["used"].keys()))
+	var pg := _role_run("person", {"allow": ["greens"]})
+	check(pg["used"].has("#4f6e4a"), "a person may use the greens when the manifest allows them")
+	var kp := _role_run("keeper", {})
+	check(kp["ok"] and _in_groups(kp["used"], ["darks", "blues", "amber", "wood", "skin"]), "the keeper: darks, blues, amber, wood and skin only (%s)" % str(kp["used"].keys()))
+	var pr := _role_run("prop", {})
+	check(pr["used"].has("#4f6e4a") and pr["used"].has("#6a3a4a"), "a prop may use every colour")
 
 # --- Helpers -------------------------------------------------------------------------------------------------------
 

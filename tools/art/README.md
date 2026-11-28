@@ -42,14 +42,26 @@ Copy one from `tools/art/manifests/`: `wickling.cfg` (3 variants, 16 and 24 px),
 |---|---|
 | `[sheet]` | `subject`, `kind` (`creature`, `keeper`, `person`, `prop`), `rows`, `cols`, `frame_size` (16, 24, 32, 48 or `Vector2i(16, 32)`), `anchor` (`foot` or `center`), `facing` (`right`), `layout` (`grid`, `auto` or `components`), `margin` (px trimmed off each grid cell), `key_mode` (`magenta` or `hue`), plus any variant key as the default |
 | `[cells]` | `r0c0 = "brave/idle"` (variant/pose; no slash = no variant), or `"skip"`. Several cells with the same pose become one hand-keyed strip of those frames |
-| `[variant.<v>]` | `frame_size`, `anchor`, `rim` (`small` #36507a, `elite` #4a6a94, `none` or a hex), `outline` (1 px #141a2e), `eyes` (how many to repair; 0 = off), `eye_threshold` (0-1 brightness), `palette` (`cold`, `all` or a list of hexes), `gain` (brighten before snapping), `fill` (0-1 of the frame), `sway`, `seed`, `keep`, `warm` (`snap`: everything to the palette; `ember`: fire-coloured pixels keep the four ambers, optionally only inside `ember_region`; `drop`: fire-coloured pixels clear), `recolour` (`{"skin": [hexes], "green": [hexes], "fire": [hexes]}`: skin tones, green glass or fire colours snap only to the colours given) |
-| `[cell.rXcY]` | `keep` (`all`, or `largest`: drop separate bits such as a fireball), `keep_near` (px), `region` (`[x0, y0, x1, y1]`, fractions of the cell), `palette`, `warm`, `ember_region`, `eyes`, and any variant key |
+| `[variant.<v>]` | `role` (see below), `allow`, `deny`, `special` (colour groups), `frame_size`, `anchor`, `rim` (`small` #36507a, `elite` #4a6a94, `none` or a hex), `outline` (1 px #141a2e), `eyes` (how many to repair; 0 = off), `eye_threshold` (0-1 brightness), `palette` (`cold`, `all` or a list of hexes), `gain` (brighten before snapping), `fill` (0-1 of the frame), `sway`, `seed`, `keep`, `warm` (`snap`: everything to the palette; `ember`: fire-coloured pixels keep the four ambers, optionally only inside `ember_region`; `drop`: fire-coloured pixels clear), `recolour` (`{"beige": [hexes], "skin": [...], "green": [...]}`: pixels of a colour kind (`green`, `beige`, `skin`, `fire`, `grey`, `lit`, `any`) snap only to the colours given), `recolour_regions` (`{"lit": [x0, y0, x1, y1]}`: a rule only in part of the cell) |
+| `[cell.rXcY]` | `keep` (`all`, or `largest`: drop separate bits such as a fireball), `keep_near` (px), `region` (`[x0, y0, x1, y1]`, fractions of the cell), `role`, `allow`, `deny`, `special`, `palette`, `warm`, `ember_region`, `recolour`, `recolour_regions`, `eyes`, and any variant key |
 | `[pose.<v>.<pose>]` | `rule` (`idle`, `move`, `notice`, `attack`, `hold`, `keys`; `none` = just the key pose), `derive` (`["hurt", "death", "spawn", "notice", "windup"]`; `[]` = none), `anim` (output name), `frames`, `bob`, `lean`, `sway`, `fit` (`variant`, `own` = scale this pose by itself, `clip`), `prop` + `file` (a still prop with its own file name, e.g. `amos_cart`, left out of the frames file) |
 | `[anim.<name>]` | `fps`, `loop`, `timed_by` (a Tuning name): copied into the frames file if it doesn't have them |
 
 Use `base` for the no-variant name in section names (`[pose.base.idle]`). Defaults by kind: creatures get the rim,
-2 eyes, the 8 cold colours and a wisp sway; the keeper, people and props get the outline, the full palette and no
-eye repair. Animation names follow ART_DIRECTION §6.2 (`idle`, `move`, `notice`, `windup`, `attack`, `recover`,
+2 eyes and a wisp sway; the keeper, people and props get the outline and no eye repair.
+
+**Palette roles** (the 23 colours, ART_DIRECTION §1.4). `role` defaults to the kind; each role may use these groups:
+
+| Role | Groups |
+|---|---|
+| `creature` | darks, blues, cold (`#a3bcd4`). Never skin, greens or amber: `allow` can't add them; the Ashbrood's ember comes in only through `warm = "ember"` |
+| `person` | everything but the marsh greens (`allow = ["greens"]` to use them) |
+| `keeper` | darks, blues, amber, wood, skin |
+| `prop` | everything |
+
+Groups: `darks`, `blues`, `cold`, `amber`, `wood`, `skin`, `bone`, `stone`, `greens`, `plum`. `allow` adds groups for plain
+snapping, `deny` removes them, and `special` adds groups usable only through `recolour` (the Ashbrood's bone skull
+and stone bowl, never its ashen body). All three can be set per cell, variant or sheet. Animation names follow ART_DIRECTION §6.2 (`idle`, `move`, `notice`, `windup`, `attack`, `recover`,
 `hurt`, `death`, `spawn`; `windup_puff` and so on for a second attack).
 
 ## 3. What the tool does
@@ -82,7 +94,7 @@ the source pose beside it: one sheet `<manifest>_preview.png` plus one `<manifes
 
 1. Open the strip as a spritesheet (Pixelorama asks how to import a PNG), with horizontal frames = the frame
    count from the summary, 1 vertical frame. (Menu names are from memory, not checked here.)
-2. Fix the key frames first: eyes, rim and silhouette. The palette is `source/palette/lantern-keeper-14.gpl`.
+2. Fix the key frames first: eyes, rim and silhouette. The palette is `source/palette/lantern-keeper-23.gpl`.
 3. Export the same file name, frames left to right, no padding. Keep the `.pxo` in `source/art/<same path>/`.
 4. Run the game: the new strip shows (no import step beyond Godot's own). Re-running the tool keeps your version.
 

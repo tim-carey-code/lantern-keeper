@@ -572,10 +572,10 @@ timed_by = "kl_spit_tell"  ; the loader stretches the animation to this tuning v
 
 `tools/art/sprite_from_sheet.gd` turns one key-pose sheet (a grid on flat magenta, e.g. a generated concept sheet) into strips in the layout above, so the owner touches up key frames instead of drawing every frame. How-to and options: `tools/art/README.md`; example manifests in `tools/art/manifests/`; tested by `test_sprite_tool`.
 
-- It keys, crops and scales each pose (one scale and baseline per variant), snaps to the 14 colours, makes alpha hard, and repairs what 16 px loses: the eyes (`#a3bcd4`), the rim (§1.3) or the outline.
+- It keys, crops and scales each pose (one scale and baseline per variant), snaps to the palette, makes alpha hard, and repairs what 16 px loses: the eyes (`#a3bcd4`), the rim (§1.3) or the outline.
 - It makes the cheap frames from a key pose: idle bob and sway, move bob, hurt flash, notice flare, death dissolve (eyes last), spawn, wind-up hold, attack lean. Each rule can be turned off per pose.
-- Foes stay cold: a creature snaps to the 8 cold colours. Per cell, `warm = "ember"` keeps fire-coloured pixels amber (the Ashbrood's last ember, owner 2026-11-27); everything else, like the phase-rise flames and the bone skull, snaps cold.
-- Colours outside the 14 are mapped on purpose: `recolour` sends skin tones to `#d9772b` / `#9c4a22` and green glass to the flask ambers (Amos's sheet). *Owner question:* a skin colour may deserve a palette slot (see the tool's report).
+- Foes stay cold. Per cell, `warm = "ember"` keeps fire-coloured pixels amber (the Ashbrood's last ember, owner 2026-11-27); the phase-rise flames snap to the blues.
+- It uses the 23 colours by role (§1.4): creatures only the darks, blues and `#a3bcd4`; people all but the greens; the keeper the darks, blues, amber, wood and skin; props all. A manifest can allow, deny or reserve groups for recolour rules (the Ashbrood's bone skull and stone bowl; Amos's skin and grey hair; green glass to amber).
 - A strip the owner drew or touched up is never overwritten (only with `--force`). Generated strips are not committed until the owner approves them.
 - *Uncertain:* tuned on six generated sample sheets; other sheets may need `eye_threshold`, `gain` or `keep` set per variant. Keeper sheets are drawn facing right only (see the README, "The keeper").
 

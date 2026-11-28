@@ -9,7 +9,30 @@ extends RefCounted
 ## props). Then the auto frames (idle bob, move bob, hurt flash, notice flare, death dissolve, spawn, wind-up hold,
 ## attack lean). A strip the owner has drawn or touched up is never overwritten unless `force` is set.
 
-const PALETTE_PATH := "res://source/palette/lantern-keeper-14.png"
+const PALETTE_PATH := "res://source/palette/lantern-keeper-23.png"
+## The palette's colour groups (ART_DIRECTION §1.4) ...
+const GROUPS := {
+	"darks": ["#0b0e1a", "#141a2e", "#1d2745"],
+	"blues": ["#28385e", "#36507a", "#4a6a94", "#6d8fb3"],
+	"cold": ["#a3bcd4"],
+	"amber": ["#fff1c1", "#ffd27a", "#f5a742", "#d9772b"],
+	"wood": ["#9c4a22", "#5a2a1c"],
+	"skin": ["#f2c6a0", "#d49a72", "#a86a4a"],
+	"bone": ["#d8d2c4"],
+	"stone": ["#9a958c"],
+	"greens": ["#2f4a3a", "#4f6e4a", "#7d9a5e"],
+	"plum": ["#6a3a4a"],
+}
+## ... and the groups each role may use. A manifest's `allow` adds groups, `deny` removes them. A creature can never
+## be allowed skin, greens or amber (foes stay cold; the Ashbrood's ember comes in through warm = "ember" alone).
+const ROLES := {
+	"creature": ["darks", "blues", "cold"],
+	"keeper": ["darks", "blues", "amber", "wood", "skin"],
+	"person": ["darks", "blues", "cold", "amber", "wood", "skin", "bone", "stone", "plum"],
+	"prop": ["darks", "blues", "cold", "amber", "wood", "skin", "bone", "stone", "greens", "plum"],
+}
+const CREATURE_NEVER := ["skin", "greens", "amber"]
+const ROLE_OF_KIND := {"creature": "creature", "keeper": "keeper", "person": "person", "prop": "prop"}
 const COLD_HEX := ["#0b0e1a", "#141a2e", "#1d2745", "#28385e", "#36507a", "#4a6a94", "#6d8fb3", "#a3bcd4"]
 const RIM := {"small": "#36507a", "elite": "#4a6a94"}
 const OUTLINE_HEX := "#141a2e"
@@ -195,7 +218,10 @@ func _vopt(variant: String, key: String) -> Variant:
 		"eye_threshold": return 0.62
 		"eye_min_area": return 4
 		"eye_size_max": return 2
-		"palette": return "cold" if creature else "all"
+		"role": return ROLE_OF_KIND.get(_kind, "prop")
+		"allow": return []
+		"special": return []
+		"deny": return []
 		"flash": return "#a3bcd4" if creature else "#fff1c1"
 		"sway": return creature
 		"alpha_threshold": return 0.5
@@ -699,33 +725,96 @@ func _load_palette() -> bool:
 			palette_all.append(c)
 	return palette_all.size() >= 8
 
+## The colours a cell may use: its role's groups, plus `allow`, minus `deny` (each may be set per cell, variant or
+## sheet). An explicit `palette` (a list of hexes, "cold" or "all") replaces the role, still minus what the role
+## forbids for creatures.
 func _palette_for(variant: String, cname: String = "") -> Array[Color]:
-	var p: Variant = _copt(cname, variant, "palette")
-	var out: Array[Color] = []
+	var role := str(_copt(cname, variant, "role"))
+	if not ROLES.has(role):
+		_warn_once("unknown role '%s': used prop" % role)
+		role = "prop"
+	var hexes: Array = []
+	var p: Variant = _copt(cname, variant, "palette", null)
 	if p is Array or p is PackedStringArray:
 		for hx in p:
-			out.append(Color.html(str(hx)))
-	elif str(p) == "cold":
-		for hx in COLD_HEX:
-			out.append(Color.html(hx))
+			hexes.append(str(hx).to_lower())
+	elif p != null and str(p) == "cold":
+		hexes = COLD_HEX.duplicate()
+	elif p != null and str(p) == "all":
+		for c in palette_all:
+			hexes.append("#" + c.to_html(false))
 	else:
-		out = palette_all.duplicate()
+		var groups: Array = ROLES[role].duplicate()
+		for g in _copt(cname, variant, "allow"):
+			if not GROUPS.has(str(g)):
+				_warn_once("unknown colour group '%s' in allow" % str(g))
+			elif role == "creature" and CREATURE_NEVER.has(str(g)):
+				_warn_once("a creature can't be allowed %s (ART_DIRECTION §1.4): ignored" % str(g))
+			elif not groups.has(str(g)):
+				groups.append(str(g))
+		for g in _copt(cname, variant, "deny"):
+			groups.erase(str(g))
+		for g in groups:
+			hexes.append_array(GROUPS[g])
+	if role == "creature":
+		for g in CREATURE_NEVER:
+			for hx in GROUPS[g]:
+				hexes.erase(hx)
+	var out: Array[Color] = []
+	for c in palette_all:
+		if hexes.has("#" + c.to_html(false)):
+			out.append(c)
+	if out.is_empty():
+		_warn_once("cell %s: no palette colours left, used the role's darks" % cname)
+		for hx in GROUPS["darks"]:
+			out.append(Color.html(hx))
 	return out
+
+## `special` groups: colours a cell may use only through its recolour rules (the Ashbrood's bone skull and stone
+## bowl), never by plain snapping. A creature still can't have skin, greens or amber.
+func _special_for(variant: String, cname: String) -> Array[Color]:
+	var out: Array[Color] = []
+	var role := str(_copt(cname, variant, "role"))
+	for g in _copt(cname, variant, "special"):
+		if not GROUPS.has(str(g)) or (role == "creature" and CREATURE_NEVER.has(str(g))):
+			_warn_once("special '%s' is not allowed here: ignored" % str(g))
+			continue
+		for hx in GROUPS[str(g)]:
+			out.append(Color.html(hx))
+	return out
+
+func _warn_once(msg: String) -> void:
+	if not report["warnings"].has(msg):
+		report["warnings"].append(msg)
 
 ## A fire-coloured pixel: a saturated, not-too-dark orange or amber (bone beige and wood browns are not).
 static func is_fire(c: Color) -> bool:
 	return c.s > 0.5 and c.v > 0.35 and (c.h < 0.17 or c.h > 0.97)
 
-## The kind of colour, for recolour: "green" (glass, leaves), "skin" (a muted orange-pink: faces and hands), "fire"
-## (a saturated orange or amber), or "" for the rest. Green first; skin before fire.
-static func colour_class(c: Color) -> String:
+## The kinds a colour belongs to, for recolour, most specific first: "green" (glass, leaves), "beige" (bone, grey
+## hair: pale and only a little warm), "skin" (a light, muted orange-pink: faces and hands), "fire" (a saturated
+## orange or amber), "grey" (near-neutral), "lit" (any not-dark, not-fire colour: for a region such as a bowl),
+## "any". recolour uses the first kind it has a rule for.
+static func colour_classes(c: Color) -> Array:
+	var out := []
+	var warm_h := c.h <= 0.17 or c.h >= 0.97
 	if c.v >= 0.2 and c.s >= 0.25 and c.h >= 0.17 and c.h <= 0.45:
-		return "green"
-	if c.v >= 0.35 and c.s >= 0.15 and c.s <= 0.62 and (c.h >= 0.0 and c.h <= 0.12 or c.h >= 0.97):
-		return "skin"
-	if is_fire(c):
-		return "fire"
-	return ""
+		out.append("green")
+	# Beige: pale and a little yellow (a skull, 29-61 degrees), or pale warm grey at any warm hue (grey hair).
+	if c.v >= 0.55 and not is_fire(c) and ((c.s >= 0.08 and c.s <= 0.5 and c.h >= 0.08 and c.h <= 0.17) or (c.s >= 0.05 and c.s <= 0.25 and warm_h)):
+		out.append("beige")
+	# Skin: a light, muted orange-pink (0-25 degrees); not the darker, stronger browns of coats and hats.
+	if c.v >= 0.58 and c.s >= 0.15 and c.s <= 0.55 and (c.h <= 0.07 or c.h >= 0.97):
+		out.append("skin")
+	var fire := is_fire(c) and warm_h
+	if fire:
+		out.append("fire")
+	if c.s <= 0.15 and c.v >= 0.3 and c.v <= 0.85:
+		out.append("grey")
+	if c.v >= 0.45 and c.s <= 0.5 and not fire:
+		out.append("lit")
+	out.append("any")
+	return out
 
 ## Nearest palette colour ("redmean" weighted RGB distance: close to how the eye judges it, and cheap).
 static func snap(c: Color, pal: Array[Color]) -> Color:
@@ -869,16 +958,30 @@ func _key_frame(cell: Dictionary, variant: String, size: Vector2i, s: float, pad
 	for hx in FIRE_HEX:
 		fire.append(Color.html(hx))
 	# recolour = {"skin": [hexes], "green": [hexes], "fire": [hexes]}: pixels of that kind snap to those colours only
-	# (skin tones and green glass are not in the 14 colours).
+	# (green glass to amber, say). Only colours the cell's role allows are used.
 	var recolour := {}
+	var rc_ok: Array[Color] = pal.duplicate()
+	rc_ok.append_array(_special_for(variant, cname))
 	var rc_opt: Variant = _copt(cname, variant, "recolour", null)
 	if rc_opt is Dictionary:
 		for k in rc_opt:
 			var list: Array[Color] = []
 			for hx in rc_opt[k]:
-				list.append(Color.html(str(hx)))
+				var c := Color.html(str(hx))
+				if rc_ok.has(c):
+					list.append(c)
+				else:
+					_warn_once("recolour %s: %s is not allowed for this role here: skipped" % [str(k), str(hx)])
 			if not list.is_empty():
 				recolour[str(k)] = list
+	# recolour_regions = {"lit": [x0, y0, x1, y1]}: that rule only inside the region (fractions of the cell).
+	var rc_rects := {}
+	var rr: Variant = _copt(cname, variant, "recolour_regions", null)
+	if rr is Dictionary:
+		for k in rr:
+			var r: Array = rr[k]
+			if r.size() == 4:
+				rc_rects[str(k)] = Rect2(float(r[0]) * cell["w"], float(r[1]) * cell["h"], (float(r[2]) - float(r[0])) * cell["w"], (float(r[3]) - float(r[1])) * cell["h"])
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	for ty in th:
 		var sy0 := box.position.y + int(floor(ty / s))
@@ -908,10 +1011,16 @@ func _key_frame(cell: Dictionary, variant: String, size: Vector2i, s: float, pad
 			if px < 0 or py < 0 or px >= size.x or py >= size.y:
 				continue
 			var col := Color(sr / sa * gain, sg / sa * gain, sb / sa * gain)
-			var cls := colour_class(col) if not recolour.is_empty() else ""
-			if cls != "" and recolour.has(cls):
-				img.set_pixel(px, py, snap(col, recolour[cls]))
-				continue
+			if not recolour.is_empty():
+				var hit := ""
+				var at := Vector2((sx0 + sx1) * 0.5, (sy0 + sy1) * 0.5)
+				for k in colour_classes(col):
+					if recolour.has(k) and (not rc_rects.has(k) or rc_rects[k].has_point(at)):
+						hit = k
+						break
+				if hit != "":
+					img.set_pixel(px, py, snap(col, recolour[hit]))
+					continue
 			if warm != "snap" and is_fire(col):
 				if warm == "drop":
 					continue
