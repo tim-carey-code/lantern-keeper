@@ -603,13 +603,14 @@ func _swap_checks() -> void:
 	clear_foes()
 	await wait(0.05)
 	await _owner_art_checks()
+	await _clinker_art_checks()
 	# The fallback, tested explicitly: with no strips anywhere (an empty art root), nothing loads and every foe
 	# draws its code shape. (The committed owner art is checked above.)
 	var real_roots := Art.sprite_roots
 	DirAccess.make_dir_recursive_absolute("user://test_art_empty")
 	Art.sprite_roots = PackedStringArray(["user://test_art_empty/"])
 	Art.clear_frames()
-	check(Art.frames("wickling") == null and Art.frames("spitwick") == null and Art.frames("keeper") == null and Art.frames("nest") == null and Art.frames("ashbrood") == null,
+	check(Art.frames("wickling") == null and Art.frames("spitwick") == null and Art.frames("keeper") == null and Art.frames("nest") == null and Art.frames("ashbrood") == null and Art.frames("clinker") == null,
 		"fallback: with no strips there are no frames for any subject")
 	var w: Wickling = spawner.spawn_at(spot + Vector2(300, 0))
 	var s: Spitwick = add_foe(Spitwick.new(), spot + Vector2(300, 60))
@@ -618,7 +619,11 @@ func _swap_checks() -> void:
 	var b: Ashbrood = add_foe(Ashbrood.new(), spot + Vector2(400, 0))
 	b._puff_t = 99.0
 	b._wave_t = 99.0
+	var c: Clinker = add_foe(Clinker.new(), spot + Vector2(-500, 0))
+	c.foe_id = "test_clinker_fallback"
 	await wait(0.05)
+	check(c._art == null and c.get_node_or_null("Art") == null, "the Clinker with no strips draws its code shape (the fallback)")
+	c.queue_free()
 	check(w._art == null and s._art == null and n._art == null and b._art == null and w.get_node_or_null("Art") == null and b.get_node_or_null("Art") == null,
 		"so they draw their code shapes (the fallback)")
 	w.queue_free()
@@ -726,6 +731,7 @@ func _owner_art_checks() -> void:
 		["nest", "", [["idle", 1, 32], ["windup", 1, 32], ["attack", 1, 32], ["death", 1, 32]]],
 		["keeper", "", [["idle", 4, 32], ["move", 4, 32], ["thrust", 1, 32], ["lob", 1, 32], ["dash", 1, 32], ["drink", 1, 32], ["hurt", 1, 32], ["kindle", 1, 32]]],
 		["ashbrood", "", [["idle", 4, 48], ["windup_puff", 1, 48], ["attack_puff", 1, 48], ["windup_dive", 1, 48], ["attack_dive", 1, 48], ["recover", 1, 48], ["phase_rise", 1, 48], ["death", 1, 48]]],
+		["clinker", "", [["sleep", 2, 32], ["wake", 4, 32], ["idle", 4, 32], ["move", 4, 32], ["windup", 5, 32], ["roll", 4, 32], ["recover", 4, 32], ["hurt", 2, 32], ["crack", 4, 32], ["death", 6, 32]]],
 		["amos", "", [["idle", 4, 32], ["move", 4, 32], ["talk", 2, 32], ["wave", 1, 32], ["push", 1, 32], ["give", 1, 32], ["laugh", 1, 32]]],
 	]
 	for row in want:
@@ -805,6 +811,63 @@ func _owner_art_checks() -> void:
 	for f in [e, s, n, b]:
 		if is_instance_valid(f):
 			f.queue_free()
+	reset_keeper(spot)
+	await wait(0.05)
+
+## The Clinker's strips in the game (sheet 2026-11-28, pending the owner's approval): asleep on its post, waking,
+## the curl stretched to the roll's tell, the roll (mirrored when it rolls left), dizzy, the shell crack, death.
+func _clinker_art_checks() -> void:
+	Art.clear_frames()
+	var post := spot + Vector2(300, 0)
+	reset_keeper(spot)
+	var c: Clinker = add_foe(Clinker.new(), post)
+	c.foe_id = "test_clinker_art"
+	await wait(0.1)
+	var a: FoeSprite = c._art
+	check(a != null and a.showing() and a.show_behind_parent and a.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST and a.current() == "sleep",
+		"the Clinker shows its owner sprite, asleep on its post (sleep strip), behind its own overlays")
+	if a == null:
+		c.queue_free()
+		return
+	check(a.offset == Vector2(0, -16) and a.position.y == Clinker.ART_FOOT, "its 32 x 32 frame stands on its foot (offset -16, at the code body's bottom)")
+	# Come close: it wakes (the uncurl, stretched to kl_clinker_wake_time).
+	reset_keeper(post + Vector2(-150, 0))
+	await wait(0.1)
+	check(c.is_waking() and a.current() == "wake" and absf(a.speed_scale - (4.0 / 8.0) / Tuning.kl_clinker_wake_time) < 0.01,
+		"waking: the uncurl strip, stretched to kl_clinker_wake_time")
+	var t := 0.0
+	while c.tell() == null and t < 3.0:
+		await wait(0.05)
+		t += 0.05
+	check(c.tell() != null and a.current() == "windup" and absf(a.speed_scale - (5.0 / 8.0) / c.tell().duration) < 0.01 and a.flip_h,
+		"the roll's wind-up: the curl strip (5 frames) stretched to the tell, facing the keeper on its left (mirrored)")
+	t = 0.0
+	while not c.is_rolling() and t < 2.0:
+		await wait(0.02)
+		t += 0.02
+	check(c.is_rolling() and a.current() == "roll" and a.sprite_frames.get_animation_loop("roll") and a.flip_h, "rolling: the roll strip, looped, mirrored (rolling left)")
+	t = 0.0
+	while not c.is_dizzy() and t < 2.0:
+		await wait(0.02)
+		t += 0.02
+	await wait(0.03)
+	check(c.is_dizzy() and a.current() == "recover" and absf(a.speed_scale - (4.0 / 8.0) / Tuning.kl_clinker_recover) < 0.01,
+		"after the roll: the dizzy strip, stretched to kl_clinker_recover")
+	c.shell = 0.01
+	c.hurt(5.0, false, "lance")
+	await wait(0.02)
+	check(a.current() == "crack" and a.holding(), "its shell breaking plays the crack strip")
+	var at := c.global_position
+	c.hurt(9999.0, false, "lance")
+	await wait(0.02)
+	var rem: Node = null
+	for n in spawner.get_children():
+		if n.has_meta("remnant") and n is AnimatedSprite2D:
+			rem = n
+	check(rem != null and (rem as AnimatedSprite2D).animation == "death" and (rem as AnimatedSprite2D).sprite_frames.get_frame_count("death") == 6
+		and (rem as Node2D).global_position.distance_to(at) < 40.0, "its kill plays the 6-frame death (cracks, rubble, smoke) where it fell")
+	if is_instance_valid(c):
+		c.queue_free()
 	reset_keeper(spot)
 	await wait(0.05)
 

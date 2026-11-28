@@ -556,7 +556,7 @@ timed_by = "kl_spit_tell"  ; the loader stretches the animation to this tuning v
 
 ### 6.4 Swapping placeholders without code changes
 
-**Update (readability step):** built for the Wickling family, the Spitwick and the keeper's poses (`Art.frames`, `FoeSprite`; DESIGN §17). **Update (sprites step):** the nest and the Ashbrood are wired too, Amos's strips load (placed in M4), and the approved strips are committed (DECISIONS 2026-11-27, "the sprites approved").
+**Update (readability step):** built for the Wickling family, the Spitwick and the keeper's poses (`Art.frames`, `FoeSprite`; DESIGN §17). **Update (sprites step):** the nest and the Ashbrood are wired too, Amos's strips load (placed in M4), and the approved strips are committed (DECISIONS 2026-11-27, "the sprites approved"). **Update (Clinker art, 2026-11-28):** the Clinker is wired too (`sleep`, `wake`, `idle`, `move`, `windup`, `roll`, `recover`, `hurt`, `crack`, `death`), from the owner's Gemini sheet, on `proto/kl-clinker-art`, waiting for the owner's approval (DECISIONS 2026-11-28, "the Clinker sheet").
 
 1. Every foe keeps its code-drawn `_draw()` shape as the placeholder.
 2. If `Art.frames(subject)` finds no PNG for the current animation, the `FoeSprite` hides and the `_draw()` shape shows. If it finds one, the sprite shows and `_draw()` draws only the overlays.
