@@ -10,9 +10,9 @@ extends CanvasLayer
 
 const KEY_HINT_SECS := 60.0
 # M1a texts (DRAFT, docs/replan/M1A_BUILD_NOTES.md).
-const LANCE_TOAST := "Lance takes %s. %s is in your Skills list (%s)."
+const LANCE_TOAST := "Lance takes %s. %s is in your pack, on the Skills tab (%s)."
 const LANCE_TOAST_PLAIN := "Lance takes %s."
-const REST_TOAST := "You rest by the WayLamp. Your flasks and warmth are full."
+const REST_TOAST := "You rest by the WayLamp. Your flasks and warmth are full, and your picks can be changed here (%s)."
 const HUNTED_CHIP := "Something hunts you: light won't warm you"
 ## DRAFT (M1b; STORY §15): the tip line when a region becomes held. Was (APPROVED, STORY §11): "The WayLamp took.
 ## Its lanterns won't burn down now, and nothing comes here."
@@ -104,7 +104,7 @@ func _build_resource_panel() -> void:
 	wick_row.add_theme_constant_override("separation", 8)
 	col.add_child(wick_row)
 	wick_level = UiStyle.label(20, UiStyle.GOLD)
-	wick_level.custom_minimum_size = Vector2(52, 0)
+	wick_level.custom_minimum_size = Vector2(52, 0)   # "Lv 12 +2" grows it
 	wick_row.add_child(wick_level)
 	wick_bar = ProgressBar.new()
 	wick_bar.custom_minimum_size = Vector2(120, 14)
@@ -231,7 +231,7 @@ func _on_skill_learned(id: String) -> void:
 	Sfx.play_ui("unlock", -8.0)
 
 func show_rest() -> void:
-	_show_toast(REST_TOAST, 4.0)
+	_show_toast(REST_TOAST % InputHint.key("pack"), 5.0)
 
 func _show_toast(text: String, secs: float) -> void:
 	toast.text = text
@@ -360,7 +360,10 @@ func _update_wick() -> void:
 		wick_bar.value = float(Progress.wick) / float(maxi(1, Progress.wick_needed()))
 		wick_count.text = "%d/%d" % [Progress.wick, Progress.wick_needed()]
 	wick_bar.tooltip_text = "Wick: %s" % wick_count.text
-	# Only a real level-up flashes (not loading a save); this runs once the choice closes.
+	# M2: unspent skill points show as a gold mark on the level ("Lv 3 +1"; the pack's Skills tab has it too).
+	if Progress.skill_points() > 0:
+		wick_level.text = "Lv %d +%d" % [Progress.level, Progress.skill_points()]
+	# Only a real level-up flashes (not loading a save).
 	if _level_flash_pending:
 		_level_flash_pending = false
 		wick_row.modulate = Color(2.0, 1.7, 1.0)

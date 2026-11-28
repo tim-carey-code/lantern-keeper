@@ -9,18 +9,25 @@ var b := Vector2.ZERO
 var ground_a := Vector2.ZERO   # the lamps' feet: the seam burns on the ground between them
 var ground_b := Vector2.ZERO
 var age := 0.0
+var life := -1.0               # s it burns (-1: kl_chain_burn_time); M2 Lance "Burning line" sets its own
+var dps := -1.0                # (-1: kl_chain_burn_dps)
+var arc := true                # the bright arc between two flames (a chain); a Burning line has none
 var _seed := 0.0
 
 func _ready() -> void:
 	z_index = 12
 	_seed = randf() * 10.0
+	if life < 0.0:
+		life = Tuning.kl_chain_burn_time
+	if dps < 0.0:
+		dps = Tuning.kl_chain_burn_dps
 	var mat := CanvasItemMaterial.new()
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	material = mat
 
 func _physics_process(delta: float) -> void:
 	age += delta
-	if age >= Tuning.kl_chain_burn_time:
+	if age >= life:
 		queue_free()
 		return
 	for f in get_tree().get_nodes_in_group("foe"):
@@ -28,17 +35,17 @@ func _physics_process(delta: float) -> void:
 			continue
 		var q := Geometry2D.get_closest_point_to_segment(f.global_position, ground_a, ground_b)
 		if q.distance_to(f.global_position) <= Tuning.kl_chain_width * 0.5 + f.body_radius():
-			f.hurt(Tuning.kl_chain_burn_dps * Progress.dmg_mult() * delta, false, "ground")
+			f.hurt(dps * Progress.dmg_mult() * delta, false, "ground")
 
 func _process(_delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	var life := maxf(Tuning.kl_chain_burn_time, 0.01)
-	var k := clampf(age / life, 0.0, 1.0)
+	var life_s := maxf(life, 0.01)
+	var k := clampf(age / life_s, 0.0, 1.0)
 	var fm := maxf(Settings.flash_mult(), 0.6)
 	# The arc: bright for its first 0.25 s, jagged, warm.
-	if age < 0.25:
+	if arc and age < 0.25:
 		var pts := PackedVector2Array()
 		var n := 10
 		var d := (b - a)

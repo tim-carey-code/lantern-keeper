@@ -10,6 +10,7 @@ var count := 4
 var spitwicks := 0
 var elites := 0                 # shelled Wicklings in the pack
 var level := 1                  # foe level of every member (HOLLOW_PACKS in main.gd; wick scales with the level gap)
+var affixes: Array[String] = [] # M2: its elite's affixes (from kl_affix_min_level; main.gd HOLLOW_AFFIXES)
 var wake_radius := -1.0         # px; below 0: Tuning.kl_pack_wake_radius (the first route packs wake closer)
 var guard := false              # the small guard on the Post Lamp find (wakes at Tuning.kl_post_guard_wake_radius)
 var awake := false
@@ -56,6 +57,8 @@ func _process(delta: float) -> void:
 				_:
 					var w := Wickling.new()
 					w.elite = slot_kind(i) == "elite"
+					if w.elite and level >= Tuning.kl_affix_min_level:
+						w.affixes = affixes.duplicate()
 					foe = w
 			foe.pack_id = id
 			foe.pack_slot = i

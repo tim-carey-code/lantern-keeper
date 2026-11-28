@@ -54,6 +54,7 @@ func _ready() -> void:
 const V4_PATH := "user://test_save_v4.json"
 const V5_PATH := "user://test_save_v5.json"
 const V6_PATH := "user://test_save_v6.json"
+const V7_PATH := "user://test_save_v7.json"
 const BAD_BAR_PATH := "user://test_save_bad_bar.json"
 
 func _read_json(path: String) -> Dictionary:
@@ -79,8 +80,11 @@ func _load_file(path: String, data: Dictionary) -> bool:
 ## A version 4 save *file* (the shape before M1a: no bar, no Lance flag, no flasks) loads and migrates, at level 2
 ## and at level 1; a saved bar with things it may not hold falls back to the default bar slot by slot.
 func _old_and_bad_files() -> void:
-	var v6 := _read_json(SaveGame.path)
-	check(int(v6.get("version", 0)) == SaveGame.VERSION and SaveGame.VERSION == 7, "the test save is version 7 (%d)" % SaveGame.VERSION)
+	var v8 := _read_json(SaveGame.path)
+	check(int(v8.get("version", 0)) == SaveGame.VERSION and SaveGame.VERSION == 8, "the test save is version 8 (%d)" % SaveGame.VERSION)
+	check(v8.progress.has("picks") and v8.progress.has("lines") and v8.progress.has("respec_at") and not v8.progress.has("combat_upgrades"), "M2: it saves picks, carried lines and the respec spot, no cards")
+	_v7_file(v8)
+	var v6 := _as_v7(v8)   # the older files below are built from a version 7 shape (cards, not picks)
 	var text := FileAccess.get_file_as_string(SaveGame.path)
 	check(not text.contains("fuel") and not text.contains("glass") and not text.contains("regrow"), "a version 6 save has no fuel, glass or regrowth in it")
 	var v5 := _v5_from(v6)
@@ -97,7 +101,7 @@ func _old_and_bad_files() -> void:
 	check(_load_file(V4_PATH, v4), "a version 4 save file loads")
 	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "lance", "skill_4": ""} and Progress.lance_given, "a level 2 v4 file gets the default bar with Lance on LB (%s)" % str(Progress.bar))
 	check(main.player.flasks == Tuning.kl_flask_max and absf(main.player.warmth - 55.0) < 0.5, "with full flasks, and its keeper as saved (flasks %d, warmth %.0f)" % [main.player.flasks, main.player.warmth])
-	check(Progress.level == 2 and Progress.wick == 7 and Inventory.get_count("scrap") == 7 and Progress.notes_read.has("ledger") and Progress.has_combat_upgrade("long_throw"), "and its world state: level, wick, inventory, notes, upgrades")
+	check(Progress.level == 2 and Progress.wick == 7 and Inventory.get_count("scrap") == 7 and Progress.notes_read.has("ledger") and Progress.has_pick("long_throw"), "and its world state: level, wick, inventory, notes, upgrades")
 	check(Inventory.counts.keys() == ["scrap"], "a v4 file goes on through v5 to v6: no fuel or glass (%s)" % str(Inventory.counts))
 	check(not FileAccess.file_exists(V4_PATH), "the v4 test file is cleaned up")
 	v4["progress"]["level"] = 1
@@ -126,6 +130,47 @@ func _old_and_bad_files() -> void:
 	# Put the round-trip state back for the pause-menu checks that follow.
 	Progress.reset()
 	SaveGame.load_into(main)
+
+## A version 8 save in the version 7 shape: cards (combat_upgrades) instead of picks.
+func _as_v7(v8: Dictionary) -> Dictionary:
+	var v7: Dictionary = v8.duplicate(true)
+	v7["version"] = 7
+	var p: Dictionary = v7["progress"]
+	p["combat_upgrades"] = (p.get("picks", []) as Array) + (p.get("lines", []) as Array)
+	p.erase("picks")
+	p.erase("lines")
+	p.erase("respec_at")
+	return v7
+
+## M2: a version 7 file (the owner's save is v7) migrates to v8 (GAME_PLAN §4.3). Its level gives the points (one a level
+## over 1); each card becomes its pick if that tier is open and free, the first card of two in one tier wins, and the
+## rest stay as unspent points; Kindled kills, Hot core and Lee are carried as lines (gear lines in M3).
+func _v7_file(v8: Dictionary) -> void:
+	var v7 := _as_v7(v8)
+	v7["progress"]["level"] = 7
+	v7["progress"]["lance_given"] = true
+	v7["progress"]["combat_upgrades"] = ["lingering_burn", "catching", "steady_hand", "long_throw", "heavy_flare", "kindled_kills", "hot_core", "spill", "tight_focus", "deep_tank"]
+	var cleared: Dictionary = v7["progress"].get("cleared", {})
+	cleared.erase("ashbrood_hollow")
+	v7["progress"]["cleared"] = cleared
+	v7["progress"]["settled"] = []
+	check(_load_file(V7_PATH, v7), "a version 7 save file with ten cards loads")
+	var want := ["lingering_burn", "steady_hand", "tight_focus", "heavy_ring", "spill"]
+	check(Progress.pick_list() == want, "its cards become picks where their tier is open and free (%s)" % str(Progress.pick_list()))
+	check(not Progress.has_pick("catching") and not Progress.has_pick("long_throw") and not Progress.has_pick("deep_tank"), "Catching waits for tier 3 (no Ashbrood kill yet); Long throw and Deep tank shared a tier with an earlier card")
+	check(Progress.points_total() == 6 and Progress.skill_points() == 1, "a level-7 keeper has 6 points: 5 in picks, 1 to spend (%d)" % Progress.skill_points())
+	check(Progress.lines == ["kindled_kills", "hot_core"], "Kindled kills and Hot core are carried as lines (%s)" % str(Progress.lines))
+	check(not FileAccess.file_exists(V7_PATH), "the v7 test file is cleaned up")
+	v7["progress"]["cleared"]["ashbrood_hollow"] = true
+	check(_load_file(V7_PATH, v7), "the same save past the Ashbrood loads")
+	check(Progress.has_pick("catching") and Progress.skill_points() == 0, "and Catching takes tier 3 (%s)" % str(Progress.pick_list()))
+	var low: Dictionary = v7.duplicate(true)
+	low["progress"]["level"] = 2
+	low["progress"]["cleared"].erase("ashbrood_hollow")
+	low["progress"]["combat_upgrades"] = ["long_throw", "second_step"]
+	check(_load_file(V7_PATH, low), "a level-2 v7 save with two cards (one from a later level-up) loads")
+	check(Progress.pick_list() == ["long_throw"] and Progress.skill_points() == 0, "it keeps one pick for its one point (%s)" % str(Progress.pick_list()))
+	Progress.reset()
 
 ## A version 5 file as M1a wrote it, built from this world's v6 save: fuel and glass carried, fuel fed to a WayLamp,
 ## every lantern with a tank, fuel spots, peat, glass shards and the woodpile, untaken fuel and glass caches, a
@@ -208,7 +253,7 @@ func _v5_file(v5: Dictionary) -> void:
 	check(Progress.level == 7 and Progress.wick == 30 and Progress.lance_given, "it keeps the level and wick (L%d, %d)" % [Progress.level, Progress.wick])
 	check(Progress.bar == {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "beam", "skill_4": "hearth_ring"}, "and the action bar as it was (%s)" % str(Progress.bar))
 	check(main.player.flasks == 2, "and the flasks (%d)" % main.player.flasks)
-	check(Progress.notes_read.has("ledger") and Progress.has_combat_upgrade("long_throw") and Progress.cleared.has("nest_hollow_1") and Progress.is_unlocked("reservoir"), "and progress: notes, upgrades, cleared fights, unlocks")
+	check(Progress.notes_read.has("ledger") and Progress.has_pick("long_throw") and Progress.cleared.has("nest_hollow_1") and Progress.is_unlocked("reservoir"), "and progress: notes, upgrades, cleared fights, unlocks")
 	check(Inventory.counts == {"scrap": 7}, "fuel and glass leave the inventory; scrap stays (%s)" % str(Inventory.counts))
 	check(not ("waylamp_fuel" in Progress), "nothing remembers fuel fed to a WayLamp")
 	var lamps := get_tree().get_nodes_in_group("lantern")
@@ -241,11 +286,11 @@ func _beam_hint_after_migration(v4_base: Dictionary) -> void:
 	Story.tip_shown.connect(catch)
 	for pad in [true, false]:
 		InputHint.pad = pad
-		var want := "The Beam is in your Skills list (%s)." % InputHint.key("skills")
+		var want := "The Beam is in your pack, on the Skills tab (%s)." % InputHint.key("skills")
 		check(Story.tip_text("beam_off_bar") == want, "the hint names the Skills button for the device in use (%s)" % Story.tip_text("beam_off_bar"))
 	InputHint.pad = true
 	Story.update(main)
-	var hint := "The Beam is in your Skills list (D-pad down)."
+	var hint := "The Beam is in your pack, on the Skills tab (D-pad down)."
 	check(shown.count(hint) == 1, "after the migration, the first check shows the Beam hint once (%s)" % str(shown))
 	Story.update(main)
 	check(shown.count(hint) == 1 and Story.to_dict()["tips"].has("beam_off_bar"), "never again, and it is saved as seen")
@@ -272,15 +317,17 @@ func _process(_delta: float) -> void:
 			check(not main.loaded_save, "a fresh start has no save to load")
 			var v4 := {"version": 4, "progress": {"level": 2}, "player": {"warmth": 73.0}}
 			var v6: Dictionary = SaveGame.migrate_data(v4)
-			check(v6.version == 7 and v6.progress.bar.skill_3 == "lance" and v6.progress.lance_given, "version 4 saves migrate (through v5 and v6) to v7 with Lance on LB at level 2")
+			check(v6.version == 8 and v6.progress.bar.skill_3 == "lance" and v6.progress.lance_given, "version 4 saves migrate (through v5, v6 and v7) to v8 with Lance on LB at level 2")
 			check(v6.player.flasks == Tuning.kl_flask_max and v6.player.warmth == 73.0, "migration fills flasks and preserves the old keeper state")
 			var v5 := {"version": 5, "inventory": {"fuel": 3, "scrap": 4, "glass": 1}, "progress": {"level": 6, "waylamp_fuel": {"marsh": 2}},
 				"lanterns": [{"kind": "post", "x": 1.0, "y": 2.0, "fuel": 0.0, "dir": 0}, {"kind": "mirror", "x": 5.0, "y": 6.0, "fuel": 1.0, "dir": 3}],
 				"resources": [{"kind": "fuel", "label": "", "x": 0.0, "y": 0.0, "amount": 4, "max": 8, "regrow": 60.0, "always": false}], "player": {"flasks": 1}}
 			var m: Dictionary = SaveGame.migrate_data(v5)
-			check(m.version == 7 and m.inventory == {"scrap": 4} and not m.progress.has("waylamp_fuel") and m.progress.level == 6 and m.player.flasks == 1, "a v5 save migrates to v7: fuel and glass dropped, progress kept")
+			check(m.version == 8 and m.inventory == {"scrap": 4} and not m.progress.has("waylamp_fuel") and m.progress.level == 6 and m.player.flasks == 1, "a v5 save migrates to v8: fuel and glass dropped, progress kept")
 			var m6: Dictionary = SaveGame.migrate_data({"version": 6, "lanterns": [{"kind": "post", "x": 1.0, "y": 2.0, "cold": true, "dir": 0}], "progress": {"level": 3}})
-			check(m6.version == 7 and m6.lanterns.size() == 1 and m6.lanterns[0].cold and m6.progress.level == 3, "a v6 save migrates to v7 with nothing in it changed (M1c)")
+			check(m6.version == 8 and m6.lanterns.size() == 1 and m6.lanterns[0].cold and m6.progress.level == 3, "a v6 save migrates to v8 with its lamps unchanged (M1c)")
+			var m7: Dictionary = SaveGame.migrate_data({"version": 7, "progress": {"level": 4, "combat_upgrades": ["heavy_flare", "lee", "lee", "no_such_card"]}})
+			check(m7.version == 8 and m7.progress.picks == ["heavy_ring"] and m7.progress.lines == ["lee"] and not m7.progress.has("combat_upgrades"), "a v7 save's cards map to picks and lines (Heavy flare is Heavy ring; Lee is carried; unknown cards go) (%s)" % str(m7.progress))
 			check(m.lanterns.size() == 2 and m.lanterns.all(func(l): return not l.has("fuel")) and m.lanterns[0].cold and m.lanterns[1].dir == 3 and m.resources.is_empty(), "lanterns lose their tanks (an empty one is marked cold); fuel spots go")
 		120:
 			# Change everything a save should keep.
@@ -302,7 +349,7 @@ func _process(_delta: float) -> void:
 			Progress.lance_given = true
 			main.player.flasks = 2
 			Progress.cleared["nest_hollow_1"] = true
-			Progress.choose_combat_upgrade("long_throw")
+			Progress.set_picks(["long_throw"])
 			var wick_drop := WickDrop.new()
 			wick_drop.amount = 4
 			wick_drop.position = main.start + Vector2(160, 40)
@@ -344,7 +391,7 @@ func _process(_delta: float) -> void:
 			check(Inventory.counts == {"scrap": 7}, "inventory comes back (%s)" % str(Inventory.counts))
 			check(Progress.is_unlocked("reservoir") and Progress.selected == "reservoir", "unlocks and selected lantern come back")
 			check(Progress.wick == 7 and Progress.level == 2 and Progress.cleared.has("nest_hollow_1"), "wick/level/cleared come back (%d/%d/%s)" % [Progress.wick, Progress.level, str(Progress.cleared)])
-			check(Progress.has_combat_upgrade("long_throw"), "chosen combat upgrades come back")
+			check(Progress.has_pick("long_throw") and Progress.skill_points() == 0, "picks come back (M2)")
 			var wick_drops := get_tree().get_nodes_in_group("wick_drop")
 			check(wick_drops.size() == 1 and wick_drops[0].amount == 4, "dropped wick comes back (%d)" % wick_drops.size())
 			check(Progress.notes_read.has("ledger"), "notes read come back")

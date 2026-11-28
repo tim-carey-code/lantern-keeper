@@ -64,8 +64,11 @@ func _ready() -> void:
 	wick_value = Tuning.kl_elite_wick if elite else Tuning.kl_wickling_wick
 	if elite:
 		shell = Tuning.kl_elite_shell
+		if affixes.has("thick"):
+			shell *= Tuning.kl_affix_thick   # Thick shell (M2 affix)
 		shell_max = shell
 		knock_weight = 0.5
+	lightless = affixes.has("lightless")
 	rng.randomize()
 	_t = rng.randf() * 10.0
 	_pick_wander()
@@ -121,6 +124,7 @@ func _process(delta: float) -> void:
 		return
 	_notice_t = maxf(0.0, _notice_t - delta)
 	_chill_cd = maxf(0.0, _chill_cd - delta)
+	_tick_lightless(delta)
 	if _fade_t > 0.0:
 		_fade_t = maxf(0.0, _fade_t - delta)
 		modulate.a = 1.0 - _fade_t / maxf(_fade_max, 0.001)
@@ -131,7 +135,7 @@ func _process(delta: float) -> void:
 		if is_queued_for_deletion():
 			return
 	var player := _player()
-	var speed := (Tuning.kl_elite_speed if elite else Tuning.wick_speed) * (1.25 if bold else 1.0)
+	var speed := (Tuning.kl_elite_speed if elite else Tuning.wick_speed) * (1.25 if bold else 1.0) * speed_mult()
 	var goal := global_position
 	# A bold Wickling goes back to normal once its WayLamp is no longer kindling.
 	if bold and (target == null or not is_instance_valid(target) or not (target is WayLamp) or not target.kindling):
@@ -271,8 +275,45 @@ func _touch(player: Node2D, delta: float) -> void:
 
 ## Warmth one touch tick takes (before the swarm cap): elites harder, "Lee" softer, grown by its level.
 func touch_chill() -> float:
-	var lee := Tuning.kl_lee_mult if Progress.has_combat_upgrade("lee") else 1.0
-	return Tuning.kl_wick_chill_hit * (Tuning.kl_elite_chill_mult if elite else 1.0) * lee * dmg_level_mult()
+	var lee := Tuning.kl_lee_mult if Progress.has_line("lee") else 1.0
+	var biting := Tuning.kl_affix_biting if affixes.has("biting") else 1.0   # Biting cold (M2 affix)
+	return Tuning.kl_wick_chill_hit * (Tuning.kl_elite_chill_mult if elite else 1.0) * biting * lee * dmg_level_mult()
+
+# --- Elite affixes (M2, GAME_PLAN §8.1) -------------------------------------------------------------------
+## Lightless: a lamp it comes within kl_lightless_reach of flickers cold for kl_lightless_tell, then is snuffed for
+## kl_lightless_snuff (ART_DIRECTION §4.3, "Planned attacks"). Lamps already out are left alone.
+var _dousing := {}               # lamp instance id -> s of flicker left
+var doused := 0                  # lamps it has snuffed (tests)
+
+func _tick_lightless(delta: float) -> void:
+	if not lightless:
+		return
+	for l in get_tree().get_nodes_in_group("lantern"):
+		if l.kind == "mirror" or not l.is_lit():
+			continue
+		var id: int = l.get_instance_id()
+		var near: bool = l.global_position.distance_to(global_position) <= Tuning.kl_lightless_reach + body_radius()
+		if not near and not _dousing.has(id):
+			continue
+		var left: float = _dousing.get(id, Tuning.kl_lightless_tell) - delta
+		l.threatened = 0.2   # it flickers (the cold flicker the Ashbrood's dive uses)
+		if left <= 0.0:
+			_dousing.erase(id)
+			l.snuff(Tuning.kl_lightless_snuff)
+			LightSense.bump()
+			doused += 1
+		else:
+			_dousing[id] = left
+
+## Bursting: as it dies, cold glows where kl_affix_bursting Wicklings will rise (kl_affix_burst_tell).
+func _on_death() -> void:
+	if not affixes.has("bursting") or get_parent() == null:
+		return
+	var h := BurstHatch.new()
+	h.position = global_position
+	h.level = level
+	h.count = Tuning.kl_affix_bursting
+	get_parent().add_child(h)
 
 ## Out of reach (or no longer hunting): the reach and the drain stop.
 func _let_go() -> void:

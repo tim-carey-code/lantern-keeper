@@ -260,9 +260,11 @@ func tick(delta: float, move_dir: Vector2, held: Dictionary = {}, pressed: Dicti
 	for s in skills.values():
 		s.tick(delta)
 	dash_cd = maxf(0.0, dash_cd - delta)
-	if Progress.has_combat_upgrade("second_step") and dash_cd <= 0.0 and dash_charges == 0:
+	if Progress.has_pick("second_step") and dash_cd <= 0.0 and dash_charges == 0:
 		dash_charges = 2
 	dash_t = maxf(0.0, dash_t - delta)
+	dash_tick()
+	_step_fx = maxf(0.0, _step_fx - delta)
 	cast_t = maxf(0.0, cast_t - delta)
 	_burst_fx = maxf(0.0, _burst_fx - delta)
 	var beam_on_bar := false
@@ -301,13 +303,31 @@ func beam_segment() -> Array:
 	return [from, from + aim * beam_len()]
 
 func beam_len() -> float:
-	return Tuning.kl_long_throw_len if Progress.has_combat_upgrade("long_throw") else Tuning.kl_beam_len
+	return Tuning.kl_long_throw_len if Progress.has_pick("long_throw") else Tuning.kl_beam_len
 
-## Burns everything inside the beam. Returns how many it touched.
-func burn_along_beam(delta: float) -> int:
+## The beams in world space: one, or three with Prism (M2): [[from, to], ...].
+func beam_segments() -> Array:
 	var seg := beam_segment()
 	if seg.is_empty():
+		return []
+	if not Progress.has_pick("prism"):
+		return [seg]
+	var out := [seg]
+	for side in [-1.0, 1.0]:
+		out.append([seg[0], seg[0] + aim.rotated(deg_to_rad(Tuning.kl_prism_spread_deg) * side) * beam_len()])
+	return out
+
+var _sear_target: Object = null   # Searing (M2): the foe the beam has stayed on
+var _sear_t := 0.0
+
+## Burns everything inside the beam. Returns how many it touched.
+## M2 picks: Prism (three thin beams, each x kl_prism_mult), Searing (up to +kl_searing_max on one foe over
+## kl_searing_ramp), Stoking (each second on a foe takes kl_stoking_cut s off Fireglobe's cooldown).
+func burn_along_beam(delta: float) -> int:
+	var segs := beam_segments()
+	if segs.is_empty():
 		return 0
+	var seg: Array = segs[0]
 	var hit := 0
 	# Feed (M1c combo, while the Beam is kept): a flame the Beam touches burns brighter (Lantern.feed).
 	for l in get_tree().get_nodes_in_group("lantern"):
@@ -315,11 +335,36 @@ func burn_along_beam(delta: float) -> int:
 			var fp: Vector2 = l.flame_pos()
 			if Geometry2D.get_closest_point_to_segment(fp, seg[0], seg[1]).distance_to(fp) <= Tuning.kl_beam_half_width + 8.0:
 				l.feed()
+	var each := Tuning.kl_prism_mult if segs.size() > 1 else 1.0
+	var half := Tuning.kl_beam_half_width * (0.6 if segs.size() > 1 else 1.0)
+	var nearest: Object = null
+	var nearest_d := INF
 	for w in get_tree().get_nodes_in_group("foe"):
-		var c: Vector2 = Geometry2D.get_closest_point_to_segment(w.global_position, seg[0], seg[1])
-		if c.distance_to(w.global_position) <= Tuning.kl_beam_half_width + w.body_radius():
-			w.hurt(Tuning.kl_beam_dps * Progress.dmg_mult() * delta, false, "beam")
-			hit += 1
+		var on := 0
+		for sg in segs:
+			var c: Vector2 = Geometry2D.get_closest_point_to_segment(w.global_position, sg[0], sg[1])
+			if c.distance_to(w.global_position) <= half + w.body_radius():
+				on += 1
+		if on == 0:
+			continue
+		var d: float = w.global_position.distance_to(seg[0])
+		if d < nearest_d:
+			nearest_d = d
+			nearest = w
+		var sear := 1.0
+		if Progress.has_pick("searing") and w == _sear_target:
+			sear += Tuning.kl_searing_max * clampf(_sear_t / maxf(Tuning.kl_searing_ramp, 0.01), 0.0, 1.0)
+		w.hurt(Tuning.kl_beam_dps * each * on * sear * Progress.dmg_mult() * delta, false, "beam")
+		hit += 1
+	if nearest != _sear_target:
+		_sear_target = nearest
+		_sear_t = 0.0
+	elif nearest != null:
+		_sear_t += delta
+	if hit > 0 and Progress.has_pick("stoking"):
+		var g: Skill = skills.get("fireglobe")
+		if g:
+			g.cd = maxf(0.0, g.cd - Tuning.kl_stoking_cut * delta)
 	return hit
 
 func is_dashing() -> bool:
@@ -335,9 +380,12 @@ func burst_cooldown() -> float:
 	return skills["hearth_ring"].cooldown()
 
 ## A quick dash. Returns false if it couldn't (cooldown or too little charge).
+## M2 picks: Second step (two dashes), Cinder trail (burning ground on the path), Phase (stuns foes passed through),
+## Flame step (a fire ring at the end), Ember rest (a light at the end that counts as lit), Blink (an instant
+## kl_blink_dist step), Recoil (a dash against the aim throws kl_recoil_count Lampfire bolts along it).
 func dash(move_dir: Vector2) -> bool:
 	var k = keeper()
-	var double_step := Progress.has_combat_upgrade("second_step")
+	var double_step := Progress.has_pick("second_step")
 	if (dash_cd > 0.0 or (double_step and dash_charges <= 0)) or k.lamp_charge < Tuning.kl_dash_cost:
 		return false
 	k.lamp_charge -= Tuning.kl_dash_cost
@@ -350,7 +398,95 @@ func dash(move_dir: Vector2) -> bool:
 	dash_dir = move_dir.normalized() if move_dir.length() > 0.1 else aim
 	dashes += 1
 	dash_from = k.global_position
+	_dash_stunned = {}
+	_dash_ended = false
+	if Progress.has_pick("recoil") and dash_dir.dot(aim) <= Tuning.kl_recoil_dot and FireBolts.inst:
+		var from: Vector2 = k.global_position + Vector2(0, -10)
+		for i in Tuning.kl_recoil_count:
+			var off := (float(i) - float(Tuning.kl_recoil_count - 1) * 0.5) * deg_to_rad(Tuning.kl_recoil_spread_deg)
+			FireBolts.inst.fire_side_bolt(from + aim * 12.0, aim.rotated(off))
+		recoils += 1
+	if Progress.has_pick("blink"):
+		# Blink: the whole step at once, kl_blink_dist, stopping short of rock.
+		var fog := get_tree().get_first_node_in_group("fog_grid") as FogGrid
+		var dist := Tuning.kl_blink_dist
+		var to: Vector2 = k.global_position + dash_dir * dist
+		if fog:
+			while dist > 8.0 and fog.is_solid_at(to):
+				dist -= 8.0
+				to = k.global_position + dash_dir * dist
+		_dash_path(k.global_position, to)
+		k.global_position = to
+		if k.has_method("reset_physics_interpolation"):
+			k.reset_physics_interpolation()
+		_dash_last = to
+		blink_dir = dash_dir
+		dash_dir = Vector2.ZERO   # the step is done; the dash's short guard (nothing chills you) still runs
 	return true
+
+var _dash_stunned := {}
+var _dash_ended := true
+var blink_dir := Vector2.ZERO     # the last Blink's direction (the smear)
+var recoils := 0                  # Recoil volleys (tests)
+var _cinder_at := Vector2.INF
+
+## What a dash does along its path (Phase, Cinder trail) between two points.
+func _dash_path(a: Vector2, b: Vector2) -> void:
+	if Progress.has_pick("phase") and FireBolts.inst:
+		for f in get_tree().get_nodes_in_group("foe"):
+			if f._dead or f.is_queued_for_deletion() or _dash_stunned.has(f.get_instance_id()):
+				continue
+			var q := Geometry2D.get_closest_point_to_segment(f.global_position, a, b)
+			if q.distance_to(f.global_position) <= Tuning.kl_phase_width + f.body_radius():
+				_dash_stunned[f.get_instance_id()] = true
+				f.stun(Tuning.kl_phase_stun)
+	if Progress.has_pick("cinder_trail") and FireBolts.inst:
+		var p := a
+		if _cinder_at == Vector2.INF or _cinder_at.distance_to(a) > Tuning.kl_cinder_radius * 4.0:
+			_cinder_at = a
+			FireBolts.inst._ground(a, Tuning.kl_cinder_radius, Tuning.kl_cinder_time, Tuning.kl_cinder_dps)
+		while _cinder_at.distance_to(b) >= Tuning.kl_cinder_radius * 1.4:
+			_cinder_at = _cinder_at.move_toward(b, Tuning.kl_cinder_radius * 1.4)
+			FireBolts.inst._ground(_cinder_at, Tuning.kl_cinder_radius, Tuning.kl_cinder_time, Tuning.kl_cinder_dps)
+		p = b
+
+## The dash ends (Flame step, Ember rest).
+func _dash_end(at: Vector2) -> void:
+	_dash_ended = true
+	_cinder_at = Vector2.INF
+	if Progress.has_pick("flame_step") and FireBolts.inst:
+		for f in FireBolts.inst.area(at, Tuning.kl_flame_step_radius):
+			f.hurt(Tuning.kl_flame_step_dmg * Progress.dmg_mult(), false, "ring")
+			if is_instance_valid(f) and not f._dead:
+				f.ignite(Tuning.kl_burst_burn_dps * Progress.dmg_mult(), Tuning.kl_burst_burn_time)
+		FireFx.blast(at + Vector2(0, -6), Tuning.kl_flame_step_radius, 0.2)
+		_step_fx = 0.25
+	if Progress.has_pick("ember_rest"):
+		var l := KeeperLight.new()
+		l.kind = "ember_rest"
+		l.radius = Tuning.kl_ember_rest_radius
+		l.life = Tuning.kl_ember_rest_time
+		l.position = at
+		var arena := get_tree().get_first_node_in_group("wickling_spawner")
+		(arena if arena else keeper().get_parent()).add_child(l)
+
+var _step_fx := 0.0
+var _dash_last := Vector2.INF
+
+## Each physics frame while dashing (the keeper calls it): the path so far, and the end.
+func dash_tick() -> void:
+	var k := keeper()
+	if k == null:
+		return
+	if dash_t > 0.0:
+		if _dash_last == Vector2.INF:
+			_dash_last = dash_from
+		_dash_path(_dash_last, k.global_position)
+		_dash_last = k.global_position
+	elif not _dash_ended:
+		_dash_path(_dash_last if _dash_last != Vector2.INF else dash_from, k.global_position)
+		_dash_last = Vector2.INF
+		_dash_end(k.global_position)
 
 ## How fast the keeper moves while dashing (distance spread over the dash time).
 func dash_velocity() -> Vector2:
@@ -360,14 +496,37 @@ func _draw() -> void:
 	var k = keeper()
 	if k == null:
 		return
-	# The beam: a warm core inside a soft glow.
+	# The beam: a warm core inside a soft glow (Prism: three thin ones).
 	if beaming:
 		var from := Vector2(0, -10)
-		var to := from + aim * beam_len()
 		var flick := 0.85 + 0.15 * sin(Time.get_ticks_msec() * 0.03)
-		draw_line(from, to, Color(1.0, 0.85, 0.5, 0.18 * flick), Tuning.kl_beam_half_width * 2.0)
-		draw_line(from, to, Color(1.0, 0.92, 0.7, 0.45 * flick), Tuning.kl_beam_half_width)
-		draw_line(from, to, Color(1.0, 1.0, 0.92, 0.9), 3.0)
+		var dirs := [aim]
+		var w := 1.0
+		if Progress.has_pick("prism"):
+			dirs = [aim, aim.rotated(deg_to_rad(Tuning.kl_prism_spread_deg)), aim.rotated(-deg_to_rad(Tuning.kl_prism_spread_deg))]
+			w = 0.6
+		for d in dirs:
+			var to: Vector2 = from + d * beam_len()
+			draw_line(from, to, Color(1.0, 0.85, 0.5, 0.18 * flick), Tuning.kl_beam_half_width * 2.0 * w)
+			draw_line(from, to, Color(1.0, 0.92, 0.7, 0.45 * flick), Tuning.kl_beam_half_width * w)
+			draw_line(from, to, Color(1.0, 1.0, 0.92, 0.9), 3.0 * w)
+	# Held lance (M2): the lamp gathers a spear of light while the button is held; full when it can fly.
+	var ln = skills.get("lance")
+	if ln and ln.held() and ln.charge_t > 0.0:
+		var k2 := clampf(ln.charge_t / maxf(Tuning.kl_held_lance_time, 0.01), 0.0, 1.0)
+		var c := Color(1.0, 0.95, 0.75, 0.4 + 0.5 * k2) if k2 < 1.0 else Color(1.0, 1.0, 0.9, 0.95)
+		draw_arc(Vector2(0, -10), 16.0, -PI / 2.0, -PI / 2.0 + TAU * k2, 24, c, 2.0)
+		draw_line(Vector2(0, -10) + aim * 14.0, Vector2(0, -10) + aim * (14.0 + 18.0 * k2), c, 3.0)
+	# Rising ring (M2): the second ring rolling out.
+	var hr = skills.get("hearth_ring")
+	if hr and hr.rising_t >= 0.0:
+		var rr: float = hr.rising_radius()
+		var kk := clampf(hr.rising_t / maxf(Tuning.kl_rising_ring_time, 0.01), 0.0, 1.0)
+		draw_arc(to_local(hr.rising_center()) + Vector2(0, -6), rr, 0.0, TAU, 56, Color(1.0, 0.7, 0.35, 0.7 * (1.0 - kk)), 4.0)
+	# Flame step (M2): a ring where the dash ended.
+	if _step_fx > 0.0:
+		var t2 := 1.0 - _step_fx / 0.25
+		draw_arc(Vector2(0, -6), Tuning.kl_flame_step_radius * (0.5 + 0.5 * t2), 0.0, TAU, 40, Color(1.0, 0.7, 0.35, 0.8 * (1.0 - t2)), 4.0)
 	# Hearth ring: a ring of flame flung outwards.
 	if _burst_fx > 0.0:
 		var t := 1.0 - _burst_fx / 0.3

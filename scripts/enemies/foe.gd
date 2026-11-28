@@ -45,6 +45,14 @@ var hurtbox: Area2D
 var _since_beam := 99.0         # seconds since anything that wears a shell last touched it
 var _fading := 0.0
 var _dead := false
+## M2: elite affixes (GAME_PLAN §8.1), shown under its name: "swift", "biting", "bursting", "thick", "lightless".
+var affixes: Array[String] = []
+## Lightless (affix): lamps never light it (only the keeper's hand lamp, dim, can expose it a little).
+var lightless := false
+var _slow_t := 0.0              # > 0: slowed (Fireglobe "Slick")
+var _slow_k := 0.0
+## Lance "Brand" (M2): the last foe a Lance struck; the keeper's next hit on it does kl_brand_mult.
+static var branded: Object = null
 
 func _enter_tree() -> void:
 	add_to_group("foe")
@@ -213,7 +221,7 @@ func update_light_state(delta: float) -> int:
 		return light_state
 	LightSense.refresh(get_tree())
 	var src := extra_light_source()
-	if src == Vector2.INF:
+	if src == Vector2.INF and not lightless:
 		src = LightSense.lit_source(global_position)
 	if src != Vector2.INF:
 		_exposed_t = Tuning.kl_exposed_linger
@@ -314,6 +322,9 @@ static func shell_factor(source: String) -> float:
 			return 0.5
 	return 0.0
 
+## Hits a Lance "Brand" mark adds to (the keeper's hits).
+const BRANDABLE := ["lampfire", "lance", "fireglobe", "ring", "chain"]
+
 ## Sources that come in a steady stream: their damage numbers are summed and shown a few times a second.
 const STEADY := ["beam", "burn", "ground", "core", "light", "linger", "mirror", "chain_burn"]
 
@@ -342,10 +353,12 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 			_beam_flash_cd = 0.16
 	_flash = maxf(_flash, flash)
 	if source == "beam":
-		if Progress.has_combat_upgrade("tight_focus") and shell > 0.0:
+		if Progress.has_pick("tight_focus") and shell > 0.0:
 			amount *= Tuning.kl_focus_shell_mult
-		if Progress.has_combat_upgrade("lingering_burn"):
-			_linger_t = Tuning.kl_linger_duration
+	# Lance "Brand" (M2): the next hit (not steady fire, not splash) on the branded foe does more, once.
+	if branded == self and not (source in STEADY) and source in BRANDABLE:
+		amount *= Tuning.kl_brand_mult
+		branded = null
 	var wear := shell_factor(source)
 	if wear > 0.0:
 		_since_beam = 0.0
@@ -379,6 +392,10 @@ func hurt(amount: float, scare: bool = true, source: String = "") -> void:
 		amount = -shell / (wear * smult)   # what got through the shell goes on to its health
 		shell = 0.0
 		_on_shell_cracked()
+		if source == "lance" and Progress.has_pick("shatter") and FireBolts.inst and is_inside_tree():
+			FireBolts.inst.shatter(global_position, self)   # Lance "Shatter" (M2): the broken shell bursts
+			if _dead:
+				return
 		if amount <= 0.0:
 			return
 	if ruled:
@@ -436,12 +453,37 @@ func _on_shell_cracked() -> void:
 
 ## Thrown back (by the burst): moves over a short moment instead of teleporting.
 func knock(v: Vector2) -> void:
-	var boost := Tuning.kl_heavy_flare_knock_mult if Progress.has_combat_upgrade("heavy_flare") else 1.0
-	_knock_v = v * knock_weight * boost / 0.2
+	_knock_v = v * knock_weight / 0.2
 	_knock_t = 0.2
 
 func stun(seconds: float) -> void:
 	_stun_t = maxf(_stun_t, seconds)
+
+## Slowed by `k` (0.4: 40% slower) for a while (Fireglobe "Slick"). Mid-bosses and guardians aren't slowed.
+func slow(k: float, seconds: float) -> void:
+	if knock_weight < 0.5:
+		return   # the Clinker and the Ashbrood: too heavy
+	_slow_k = maxf(_slow_k if _slow_t > 0.0 else 0.0, clampf(k, 0.0, 0.9))
+	_slow_t = maxf(_slow_t, seconds)
+
+## Its speed now, x (1 unless slowed; Swift elites x kl_affix_swift).
+func speed_mult() -> float:
+	var m := 1.0 - (_slow_k if _slow_t > 0.0 else 0.0)
+	if affixes.has("swift"):
+		m *= Tuning.kl_affix_swift
+	return m
+
+func has_affix(a: String) -> bool:
+	return affixes.has(a)
+
+## The affix line under its name ("Swift · Lightless"), or "".
+func affix_line() -> String:
+	var names := []
+	for a in affixes:
+		names.append(AFFIX_NAMES.get(a, a))
+	return " · ".join(names)
+
+const AFFIX_NAMES := {"swift": "Swift", "biting": "Biting cold", "bursting": "Bursting", "thick": "Thick shell", "lightless": "Lightless"}
 
 ## Timers every foe shares, the throw-back, and the shell growing back. Call first in _process.
 func tick_foe(delta: float) -> void:
@@ -461,6 +503,7 @@ func tick_foe(delta: float) -> void:
 	_impact_t = maxf(0.0, _impact_t - delta)
 	_clink = maxf(0.0, _clink - delta)
 	_stun_t = maxf(0.0, _stun_t - delta)
+	_slow_t = maxf(0.0, _slow_t - delta)
 	_since_beam += delta
 	_num_t -= delta
 	if _num_t <= 0.0:
@@ -533,7 +576,7 @@ func _die() -> void:
 	# (the old global Engine.time_scale freeze would stutter at Lampfire's rate).
 	if keeper and big and keeper.has_method("hit_stop"):
 		keeper.hit_stop(Tuning.kl_hitstop)
-	if keeper and Progress.has_combat_upgrade("kindled_kills"):
+	if keeper and Progress.has_line("kindled_kills"):
 		keeper.lamp_charge = minf(Progress.charge_max(), keeper.lamp_charge + Tuning.kl_kindled_kill_charge)
 	if is_inside_tree():
 		FireFx.kill_burst(global_position, body_radius(), big)
@@ -550,20 +593,26 @@ func _die() -> void:
 		# The wick popup: gold at full value, dim grey when the level gap cut it.
 		var txt := ("+%d wick" % roundi(earned)) if earned >= 0.95 else ("+%.1f wick" % earned)
 		FloatText.spawn(get_parent(), global_position + Vector2(0, -26), txt, Color(0.62, 0.6, 0.56, 0.75) if reduced else Color(1.0, 0.82, 0.4))
-	if Progress.has_combat_upgrade("catching"):
+	if Progress.has_pick("catching"):
+		# Lampfire "Catching" (M2): the kill sets the nearest foe within kl_catching_radius alight.
 		var closest: Foe = null
-		var closest_d := 61.0
+		var closest_d := Tuning.kl_catching_radius + 1.0
 		for other in get_tree().get_nodes_in_group("foe"):
-			if other == self or other.is_queued_for_deletion():
+			if other == self or other.is_queued_for_deletion() or other._dead or other is WickNest:
 				continue
 			var d := global_position.distance_to(other.global_position)
 			if d < closest_d:
 				closest_d = d
 				closest = other
 		if closest:
-			closest.hurt(Tuning.kl_catch_damage, false, "burn")
+			closest.ignite(Tuning.kl_pick_burn_dps * Progress.dmg_mult(), Tuning.kl_pick_burn_time)
+	_on_death()
 	_drop()
 	queue_free()
+
+## For each kind of foe: anything it does as it dies (a Bursting elite's hatchlings).
+func _on_death() -> void:
+	pass
 
 ## Wick this kill pays (level-gap pass, DESIGN §9): base wick grown by the foe's level, times the level-gap factor.
 ## Hatched, called and re-fought foes pay the same way; the gap is what stops farming.

@@ -7,6 +7,8 @@ extends Node
 ## block runs out, the same press drinks exactly once. (If the flask were read above the guard, it would drink.)
 ## Run: godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_input.tscn
 const TEST_B := KEY_F13   # bound only in this test
+class SkillsListIdx:
+	const BEAM := 4          # the Beam's row in the Skills tab (SkillsList.ORDER)
 var main: Node
 var fails := 0
 var _dpad_moves := false
@@ -97,32 +99,11 @@ func _run() -> void:
 	else:
 		check(false, "TravelMenu opens")
 	check(opened == 7, "all seven closeable in-game menus opened and closed through their B route (%d)" % opened)
-	# The level-up cards are the eighth menu: chosen with A rather than cancelled with B.
-	var level_up = main.get_node("HUD").level_up_screen
-	var ups_before: Array[String] = Progress.combat_upgrades.duplicate()
+	# M2: the level-up cards are gone (a skill point, no pause). The pack on a pad: View, the D-pad, A and B.
 	Progress.level_up.emit(2)
-	await get_tree().process_frame
-	await get_tree().process_frame
-	check(level_up.root.visible, "the level-up menu opens")
-	var level_pos: Vector2 = p.global_position
-	map_screen._unhandled_input(_event("map"))
-	build._unhandled_input(_event("lamp_prev"))
-	build._unhandled_input(_event("build_menu"))
-	main.get_node("SkillsList")._unhandled_input(_event("skills"))
-	Input.action_press("move_right")
-	p._physics_process(1.0 / 60.0)
-	Input.action_release("move_right")
-	check(level_up.root.visible and not map_screen.is_open() and p.global_position.distance_to(level_pos) < 0.01, "level-up keeps D-pad map/lamp actions and movement inside the menu")
-	# B while the cards are up: no drink (the menu is open), and the cards stay.
-	_ready_to_drink(p)
-	Input.parse_input_event(_key(TEST_B, true))
 	await _frames(2)
-	Input.parse_input_event(_key(TEST_B, false))
-	await _frames(1)
-	check(level_up.root.visible and p.flasks == 3 and p.drinks == _drinks0, "level-up: B while the cards are up never drinks")
-	# A chooses a card and closes it; B pressed in the same frame must not drink.
-	await _close_and_drink(p, level_up, "Level-up", true)
-	Progress.combat_upgrades = ups_before
+	check(not get_tree().paused and not Tuning.ui_open, "M2: a level-up opens no menu and pauses nothing")
+	await _pack_checks(p)
 	# Aim hold: when the right stick is released while firing, its last aim survives.
 	InputHint.pad = true   # the stand-in B key made the last device the keyboard
 	var c = p.combat
@@ -199,6 +180,72 @@ func _lock_checks(p: Node) -> void:
 				InputMap.action_erase_event(action, e)
 	w.queue_free()
 	await _frames(1)
+
+func _send(action: String, frames := 1) -> void:
+	Input.parse_input_event(_event(action))
+	await _frames(1)
+	var up := _event(action)
+	up.pressed = false
+	Input.parse_input_event(up)
+	await _frames(frames)
+
+## M2 owner checks (ROADMAP M2): at level 2 choose a pick on the pad; swap a skill with View, the D-pad, A and B; the
+## D-pad moves inside the pack and never opens the map or moves the keeper; LB / RB change tabs.
+func _pack_checks(p: Node) -> void:
+	InputHint.pad = true
+	Progress.reset()
+	Progress.add_wick(Progress.wick_needed())
+	get_tree().paused = false
+	Tuning.ui_open = false
+	Progress._input_block_until = 0
+	await _frames(2)
+	var pack: PackScreen = main.get_node("Pack")
+	var tab = main.get_node("SkillsList")
+	var map = main.get_node("MapScreen")
+	var journal = main.get_node("Journal")
+	check(Progress.level == 2 and Progress.skill_points() == 1 and Progress.bar["skill_3"] == "lance", "level 2: a skill point, Lance on LB")
+	var start: Vector2 = p.global_position
+	await _send("pack")
+	check(pack.is_open() and pack.tab == "skills" and tab.is_open() and get_tree().paused, "View opens the pack on its Skills tab and pauses the world")
+	check(tab.area == "tree" and tab.focused_skill() in ["lampfire", "fireglobe", "lance", "dash"] and tab.tier_i == 0, "with a point to spend it opens on a tier-1 pick of a skill on the bar (%s)" % tab.focused_skill())
+	var first: String = tab.focused_pick()
+	await _send("interact")
+	check(first != "" and Progress.has_pick(first) and Progress.skill_points() == 0, "A takes the pick (%s)" % first)
+	await _send("ui_right")
+	await _send("interact")
+	check(Progress.pick_list().size() == 1, "a second pick in that tier is refused (%s)" % tab.info.text)
+	await _send("ui_left")
+	await _send("ui_left")
+	check(tab.area == "list", "D-pad left goes back to the skills")
+	var i0: int = tab.list_i
+	for k in range(i0, SkillsListIdx.BEAM):
+		await _send("ui_down")
+	check(tab.focused_skill() == "beam", "D-pad down reaches the Beam (optional)")
+	await _send("map")
+	await _send("lamp_prev")
+	check(pack.tab == "skills" and not map.is_open() and p.global_position.distance_to(start) < 0.01, "the D-pad's map and lamp actions stay inside the pack; the keeper doesn't move")
+	await _send("interact")
+	check(tab.area == "slots" and tab.slot == "skill_3", "A on a skill: choose its slot (LB first)")
+	await _send("interact")
+	check(Progress.bar["skill_3"] == "beam" and Progress.slot_of("lance") == "", "A puts the Beam on LB, and Lance goes back to the list (%s)" % str(Progress.bar))
+	await _send("interact")
+	await _send("ui_left")
+	check(tab.area == "slots" and tab.slot == "skill_2", "D-pad left picks RB")
+	await _send("cancel")
+	check(tab.is_open() and tab.area == "list" and Progress.bar["skill_2"] == "fireglobe", "B backs out of choosing a slot without changing the bar")
+	await _send("pack_next")
+	check(pack.tab == "journal" and journal.is_open() and not tab.is_open() and get_tree().paused, "RB: the Journal tab (the world stays paused)")
+	await _send("ui_up")
+	check(pack.tab == "journal" and not map.is_open(), "D-pad up scrolls the journal; it never jumps to the map")
+	await _send("pack_next")
+	check(pack.tab == "map" and map.is_open(), "RB again: the Map tab")
+	await _send("pack_prev")
+	await _send("pack_prev")
+	check(pack.tab == "skills" and tab.is_open(), "LB twice: back to Skills")
+	await _close_and_drink(p, tab, "The pack")
+	check(not pack.is_open() and pack.tab == "", "B closed the whole pack")
+	Progress.bind("skill_3", "lance")
+	InputHint.pad = false
 
 func _ready_to_drink(p: Node) -> void:
 	p.flasks = 3; p.flask_lock = 0.0; p.warmth = 20.0

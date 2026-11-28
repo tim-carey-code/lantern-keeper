@@ -108,6 +108,10 @@ func _ready() -> void:
 	skills_list.set_script(load("res://scripts/ui/skills_list.gd"))
 	skills_list.name = "SkillsList"
 	add_child(skills_list)
+	# M2: the keeper's pack (Skills, Journal, Map tabs) over them; added after them so its _input comes first.
+	var pack := PackScreen.new()
+	pack.name = "Pack"
+	add_child(pack)
 	_place_hollow_prototype()
 	_scatter()
 	_build_terrain()
@@ -580,6 +584,7 @@ func _place_hollow_prototype() -> void:
 		pack.spitwicks = int(row[2])
 		pack.elites = int(row[3])
 		pack.level = int(row[4])
+		pack.affixes.assign(HOLLOW_AFFIXES.get(pack.id, []))
 		if row.size() > 5:
 			pack.wake_radius = float(row[5]) * FogGrid.TILE
 		pack.position = _spot_in_region(row[0], FogGrid.R_HOLLOW)
@@ -605,6 +610,12 @@ const HOLLOW_NESTS := [
 ## (3 Wicklings) wake closer than the rest, so nothing wakes at the hut; pack 2 is the first Spitwick and elite,
 ## after nest A, on the road east. The rest are optional side content: no Spitwick or elite within 25 tiles of
 ## the hut, and none wakes from the route. The loop (2026-11-27) moved packs 4, 8, 9, 11, 13 and 15 off the road east.
+## Elite affixes (M2, GAME_PLAN §8.1): one on each level-4 pack's elite in the Hollow (DRAFT, agent's call: four of the
+## five, so each reads on its own; Biting cold waits for the marsh, where elites carry two).
+const HOLLOW_AFFIXES := {
+	"hollow_1": ["swift"], "hollow_3": ["thick"], "hollow_4": ["bursting"], "hollow_6": ["lightless"],
+}
+
 const HOLLOW_PACKS := [
 	# The north: elites.
 	[Vector2i(74, 102), 5, 1, 1, 4], [Vector2i(60, 113), 4, 1, 1, 3], [Vector2i(36, 94), 4, 0, 1, 4],

@@ -208,15 +208,13 @@ func _process(_delta: float) -> void:
 			check(main.get_node("FogLayer/GoalPointer").target_pos() == null, "M1c: the quest arrow hides while the Ashbrood fights")
 			var rim := _old_lamp(main.rim_lamp_pos)
 			check(rim != null and rim.old and rim.global_position.distance_to(hollow.global_position) < Tuning.lantern_max_radius, "M1c: an old lamp on the bowl's rim, its light reaching the bowl")
-			# Kill both phases.
-			brood.end_phase_pause()
-			brood.shell = 0.0
-			brood.hurt(brood.hp + 1.0, false, "lance")
-			brood.end_phase_pause()
-			brood.shell = 0.0
-			brood.hurt(brood.hp + 1.0, false, "lance")
+			# Kill all three phases (M2: phase 3, the last of the brood).
+			for ph in 3:
+				brood.end_phase_pause()
+				brood.shell = 0.0
+				brood.hurt(brood.hp + 1.0, false, "lance")
 		264:
-			check(not is_instance_valid(brood) or brood.is_queued_for_deletion(), "the Ashbrood dies in its second phase")
+			check(not is_instance_valid(brood) or brood.is_queued_for_deletion(), "the Ashbrood dies in its third phase")
 			check(Progress.is_settled(FogGrid.R_HOLLOW) and hollow.is_lit(), "its kill holds the Hollow")
 			check(hollow.ember_rise_t > 0.0 and get_tree().get_nodes_in_group("waylamp_ember").size() == 1, "the WayLamp takes its ember back: it rises into the lamp")
 		300:

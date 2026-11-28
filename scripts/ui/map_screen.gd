@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Map: M / gamepad D-pad up (M1a: LB is a skill slot). Opens only while no other menu is open. Shows lit ground bright, remembered ground dim,
+## Map: the pack's Map tab (M2; PackScreen): M / D-pad up from the world, or View then the tabs. Opens only while no other menu is open. Shows lit ground bright, remembered ground dim,
 ## never-seen as black, lanterns (amber lit, grey cold), the keeper (white),
 ## and the names of regions you have found.
 
@@ -24,8 +24,8 @@ func _ready() -> void:
 	bg.size = Vector2(1280, 720)
 	root.add_child(bg)
 	var title := Label.new()
-	title.text = "Map   (M / D-pad up to close)      amber = lit lantern   red = unlit   white = you"
-	title.position = Vector2(24, 16)
+	title.text = "Map   (B / M to close)      amber = lit lantern   red = unlit   white = you"
+	title.position = Vector2(24, 56)
 	root.add_child(title)
 	map_rect = TextureRect.new()
 	map_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -36,22 +36,40 @@ func _ready() -> void:
 func is_open() -> bool:
 	return root.visible
 
+## Opens it as the pack's Map tab (or closes the pack if it is open).
 func toggle() -> void:
 	if root.visible:
-		Sfx.play("ui_close", -14.0)
-		root.visible = false
-		Tuning.ui_open = false
-		get_tree().paused = false
-		Progress.block_input()
+		close_page(false)
 	elif not Tuning.ui_open:
-		Sfx.play("ui_open", -14.0)
-		root.visible = true
-		Tuning.ui_open = true
-		get_tree().paused = true   # reading or choosing never costs you anything
-		_refresh = 0.0
+		if PackScreen.inst:
+			PackScreen.inst.open("map")
+		else:
+			open_page()
+
+func open_page() -> bool:
+	if root.visible:
+		return true
+	Sfx.play("ui_open", -14.0)
+	root.visible = true
+	Tuning.ui_open = true
+	get_tree().paused = true   # reading or choosing never costs you anything
+	_refresh = 0.0
+	return true
+
+## keep: the pack moves to another tab (the world stays paused).
+func close_page(keep: bool) -> void:
+	if not root.visible:
+		return
+	root.visible = false
+	if keep:
+		return
+	Sfx.play("ui_close", -14.0)
+	Tuning.ui_open = false
+	get_tree().paused = false
+	Progress.block_input()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("map") or (root.visible and (event.is_action_pressed("cancel") or event.is_action_pressed("pause"))):
+	if (event.is_action_pressed("map") and (root.visible or not Tuning.ui_open)) or (root.visible and (event.is_action_pressed("cancel") or event.is_action_pressed("pause"))):
 		toggle()
 		get_viewport().set_input_as_handled()
 

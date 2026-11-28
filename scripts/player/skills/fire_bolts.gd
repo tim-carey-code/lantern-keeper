@@ -38,6 +38,20 @@ class Bolt:
 	var caught := false          # Lampfire: caught at a flame (once a bolt)
 	var no_catch := false        # a catch's side bolts can't catch again
 	var flames: Array = []       # Lance: the flames it has passed (a chain arcs between each new one and the last)
+	# M2 picks (SkillTree): what this bolt carries.
+	var mult := 1.0              # damage x (Twin, Skip, Forked, Comet)
+	var big := false             # Lampfire Comet: double damage and splash
+	var spark := false           # Scatter's sparks and other side bolts: no picks of their own
+	var passes := 0              # Lampfire Needle: foes it passes before it bursts
+	var skips := 0               # Lampfire Skip: jumps left
+	var child := false           # Lance: a fork or a breaking bolt (no forks, returns or breaks of its own)
+	var returning := false       # Lance Returning: on its way back
+	var start := Vector2.ZERO    # where it was fired (Burning line)
+	var charged := false         # Held lance
+	var delay := 0.0             # a globe that waits before it flies (Second globe)
+	var small := false           # a small globe (Second globe, Cluster, Skipping globe): no picks of its own
+	var g_mult := 1.0            # a globe's damage x
+	var g_radius := 0.0          # a globe's radius (0: kl_fireglobe_radius)
 
 var bolts: Array[Bolt] = []
 var hits := 0                    # foes hit so far (tests)
@@ -45,6 +59,7 @@ var catches := 0                 # combos so far (tests): bolts caught, lamps fl
 var flares := 0
 var chains := 0
 var embers := 0
+var beacons := 0                 # Fireglobe Beacon lights left (tests)
 var _query: PhysicsShapeQueryParameters2D
 var _circle: CircleShape2D
 var _glow: Texture2D
@@ -97,22 +112,70 @@ func _launch(kind: int, from: Vector2, dir: Vector2, speed: float, reach: float,
 	b.caught = false
 	b.no_catch = false
 	b.flames = []
+	b.mult = 1.0
+	b.big = false
+	b.spark = false
+	b.passes = 0
+	b.skips = 0
+	b.child = false
+	b.returning = false
+	b.start = from
+	b.charged = false
+	b.delay = 0.0
+	b.small = false
+	b.g_mult = 1.0
+	b.g_radius = 0.0
 	b.trail.clear()
 	b.trail.append(from)
 	b.age = 0.0
 	return b
 
+## A Lampfire bolt from the keeper, with the keeper's Lampfire picks (Needle, Skip). Side bolts use _side_bolt.
 func fire_lampfire(from: Vector2, dir: Vector2) -> Bolt:
-	return _launch(LAMPFIRE, from, dir, Tuning.kl_lampfire_speed, Tuning.kl_lampfire_range, Tuning.kl_lampfire_hit_radius, 1)
+	var b := _launch(LAMPFIRE, from, dir, Tuning.kl_lampfire_speed, Tuning.kl_lampfire_range, Tuning.kl_lampfire_hit_radius, 1)
+	if Progress.has_pick("needle"):
+		b.passes = 1
+	if Progress.has_pick("skip"):
+		b.skips = 1
+	return b
 
-func fire_lance(from: Vector2, dir: Vector2) -> Bolt:
-	return _launch(LANCE, from, dir, Tuning.kl_lance_speed, Tuning.kl_lance_range, Tuning.kl_lance_hit_radius, Tuning.kl_lance_pierce)
+## A Lampfire bolt with no picks of its own (catch splits, Scatter sparks, Skip jumps, Breaking, Sunburst, Recoil).
+func _side_bolt(from: Vector2, dir: Vector2, reach: float, dmg: float) -> Bolt:
+	var b := _launch(LAMPFIRE, from, dir, Tuning.kl_lampfire_speed, reach, Tuning.kl_lampfire_hit_radius, 1)
+	b.dmg = dmg
+	b.no_catch = true
+	b.caught = true
+	b.spark = true
+	return b
 
+## Public for picks outside this file (Sunburst, Recoil): side bolts of a normal hit's damage.
+func fire_side_bolt(from: Vector2, dir: Vector2) -> Bolt:
+	return _side_bolt(from, dir, Tuning.kl_lampfire_range, Tuning.kl_lampfire_dmg)
+
+func fire_lance(from: Vector2, dir: Vector2, charged: bool = false) -> Bolt:
+	var b := _launch(LANCE, from, dir, Tuning.kl_lance_speed, Tuning.kl_lance_range, Tuning.kl_lance_hit_radius, Tuning.kl_lance_pierce)
+	if charged:
+		b.charged = true
+		b.mult = Tuning.kl_held_lance_mult
+		b.pierce = 999
+	return b
+
+## A Fireglobe from the keeper, with the keeper's Fireglobe picks (Second globe follows it).
 func throw_globe(from: Vector2, to: Vector2) -> Bolt:
+	var b := _globe(from, to, Tuning.kl_fireglobe_flight)
+	if Progress.has_pick("second_globe"):
+		var s := _globe(from, to + (to - from).normalized().orthogonal() * 18.0, Tuning.kl_fireglobe_flight)
+		s.small = true
+		s.delay = Tuning.kl_second_globe_delay
+		s.g_mult = Tuning.kl_second_globe_mult
+		s.g_radius = Tuning.kl_fireglobe_radius * Tuning.kl_second_globe_mult
+	return b
+
+func _globe(from: Vector2, to: Vector2, flight: float) -> Bolt:
 	var b := _launch(GLOBE, from, to - from, 0.0, 0.0, 8.0, 0)
 	b.from = from
 	b.to = to
-	b.flight = maxf(0.05, Tuning.kl_fireglobe_flight)
+	b.flight = maxf(0.05, flight)
 	return b
 
 ## How many are in the air (of one kind, or all).
@@ -174,7 +237,9 @@ func _step_bolt(b: Bolt, delta: float) -> void:
 	if step.length() > left:
 		step = b.dir * left
 	if _combo_live:
-		if b.kind == LAMPFIRE and not b.caught and not b.no_catch:
+		# The catch distance (owner, M1c playtest: standing at your own lamp made every bolt catch): a bolt catches only
+		# once it has flown past the keeper's own reach, kl_catch_min_travel.
+		if b.kind == LAMPFIRE and not b.caught and not b.no_catch and b.travelled + step.length() >= Tuning.kl_catch_min_travel:
 			_try_catch(b, step)
 		elif b.kind == LANCE:
 			_try_chain(b, step)
@@ -186,21 +251,27 @@ func _step_bolt(b: Bolt, delta: float) -> void:
 		b.hit_ids[f.get_instance_id()] = true
 		var at: Vector2 = b.pos + b.dir * maxf(0.0, (f.global_position - b.pos).dot(b.dir) - f.body_radius() * 0.5)
 		if b.kind == LAMPFIRE:
-			_lampfire_hit(f, at, b.dir, b.dmg)
+			if b.passes > 0:
+				b.passes -= 1   # Needle: the hit lands, no burst, and it flies on
+				_needle_pass(f, at, b)
+				continue
+			_lampfire_hit(f, at, b.dir, b.dmg, b)
 			_end(b, at)
 			return
-		_lance_hit(f, at, b.dir)
+		_lance_hit(f, at, b.dir, b)
 		b.pierce -= 1
 		if b.pierce <= 0:
+			_lance_end(b, at)
 			_end(b, at)
 			return
 	var next := b.pos + step
 	var fog := _fog()
 	if fog and fog.is_solid_at(next):
 		if b.kind == LAMPFIRE:
-			_lampfire_hit(null, b.pos, b.dir, b.dmg)   # it bursts on the rock, and its splash still lands
+			_lampfire_hit(null, b.pos, b.dir, b.dmg, b)   # it bursts on the rock, and its splash still lands
 		else:
 			FireFx.impact(b.pos, b.dir, 10.0, false)
+			_lance_end(b, b.pos)
 		_end(b, b.pos)
 		return
 	b.pos = next
@@ -209,7 +280,12 @@ func _step_bolt(b: Bolt, delta: float) -> void:
 	if b.trail.size() > TRAIL:
 		b.trail.remove_at(0)
 	if b.travelled >= b.reach - 0.01:
+		if b.kind == LANCE and not b.child and not b.returning and Progress.has_pick("returning"):
+			_lance_turn(b)   # Returning: back through the foes, toward the keeper
+			return
 		FireFx.impact(b.pos, b.dir, 6.0, false)   # it fizzles at the end of its reach: no burst
+		if b.kind == LANCE:
+			_lance_end(b, b.pos)
 		_end(b, b.pos)
 
 func _end(b: Bolt, _at: Vector2) -> void:
@@ -217,15 +293,22 @@ func _end(b: Bolt, _at: Vector2) -> void:
 	b.trail.clear()
 
 func _step_globe(b: Bolt) -> void:
+	if b.delay > 0.0:
+		b.delay -= get_physics_process_delta_time()
+		b.age = 0.0
+		return
 	var k := clampf(b.age / b.flight, 0.0, 1.0)
 	b.pos = b.from.lerp(b.to, k) + Vector2(0, -sin(k * PI) * Tuning.kl_fireglobe_arc)
 	b.trail.append(b.pos)
 	if b.trail.size() > TRAIL:
 		b.trail.remove_at(0)
 	if k >= 1.0:
-		_globe_burst(b.to)
 		b.alive = false
 		b.trail.clear()
+		if b.small:
+			_small_burst(b.to, b.g_mult, b.g_radius)
+		else:
+			_globe_burst(b.to, (b.to - b.from).normalized() if b.to != b.from else Vector2.RIGHT)
 
 # --- Hits ----------------------------------------------------------------------------------------------
 
@@ -254,23 +337,78 @@ func area(center: Vector2, radius: float) -> Array:
 
 ## Lampfire: 2 on the foe it hits (half of it wears a shell), 1 to everything else within 40 px (never a shell),
 ## a light pop that clears fog, and charge back for the keeper.
-func _lampfire_hit(f: Foe, at: Vector2, dir: Vector2, dmg: float = -1.0) -> void:
+## M2 picks: Lingering burn (the foe burns), Scatter (sparks), Skip (it jumps on), Comet (big: x2 and twice the splash).
+func _lampfire_hit(f: Foe, at: Vector2, dir: Vector2, dmg: float = -1.0, b: Bolt = null) -> void:
 	var k := _keeper()
+	var m := b.mult if b else 1.0
+	var splash := Tuning.kl_lampfire_splash
+	if b and b.big:
+		m *= Tuning.kl_comet_mult
+		splash *= Tuning.kl_comet_mult
 	if f:
 		hits += 1
-		f.hurt((Tuning.kl_lampfire_dmg if dmg < 0.0 else dmg) * Progress.dmg_mult(), false, "lampfire")
+		f.hurt((Tuning.kl_lampfire_dmg if dmg < 0.0 else dmg) * m * Progress.dmg_mult(), false, "lampfire")
 		if k and not (f is WickNest):
 			k.lamp_charge = minf(Progress.charge_max(), k.lamp_charge + Tuning.kl_lampfire_charge)
-	for o in area(at, Tuning.kl_lampfire_splash):
+		if Progress.has_pick("lingering_burn") and is_instance_valid(f) and not f._dead:
+			f.ignite(Tuning.kl_pick_burn_dps * Progress.dmg_mult(), Tuning.kl_pick_burn_time)
+	for o in area(at, splash):
 		if o != f:
-			o.hurt(Tuning.kl_lampfire_splash_dmg * Progress.dmg_mult(), false, "splash")
-	FireFx.impact(at, dir, Tuning.kl_lampfire_splash)
+			o.hurt(Tuning.kl_lampfire_splash_dmg * (Tuning.kl_comet_mult if b and b.big else 1.0) * Progress.dmg_mult(), false, "splash")
+	FireFx.impact(at, dir, splash)
 	Sfx.play("ui_tick", -22.0, 0.25)
+	if b == null or b.spark:
+		return
+	if Progress.has_pick("scatter"):
+		for i in Tuning.kl_scatter_count:
+			var a := dir.angle() + PI + (float(i) - float(Tuning.kl_scatter_count - 1) * 0.5) * 1.1
+			var sp := _side_bolt(at, Vector2.from_angle(a), Tuning.kl_scatter_range, Tuning.kl_scatter_dmg)
+			sp.hit_ids = b.hit_ids.duplicate()   # the sparks fly off the foe the bolt hit, not back into it
+	if b.skips > 0 and f:
+		var next := _nearest_foe(at, Tuning.kl_skip_range, b.hit_ids, f)
+		if next:
+			var sb := _side_bolt(at, (next.global_position - at).normalized(), Tuning.kl_skip_range + 20.0, Tuning.kl_lampfire_dmg * Tuning.kl_skip_mult)
+			sb.hit_ids = b.hit_ids.duplicate()
+			sb.mult = m / (Tuning.kl_comet_mult if b.big else 1.0)
+
+## Needle: the first foe takes the hit (no splash, no burst), and the bolt flies on to burst on the next.
+func _needle_pass(f: Foe, at: Vector2, b: Bolt) -> void:
+	hits += 1
+	f.hurt((Tuning.kl_lampfire_dmg if b.dmg < 0.0 else b.dmg) * b.mult * (Tuning.kl_comet_mult if b.big else 1.0) * Progress.dmg_mult(), false, "lampfire")
+	var k := _keeper()
+	if k and not (f is WickNest):
+		k.lamp_charge = minf(Progress.charge_max(), k.lamp_charge + Tuning.kl_lampfire_charge)
+	if Progress.has_pick("lingering_burn") and is_instance_valid(f) and not f._dead:
+		f.ignite(Tuning.kl_pick_burn_dps * Progress.dmg_mult(), Tuning.kl_pick_burn_time)
+	FireFx.impact(at, b.dir, 8.0, false)
+
+## The nearest living foe within `radius` of a point, skipping ones in `skip` (instance ids) and `not_this`.
+func _nearest_foe(at: Vector2, radius: float, skip: Dictionary = {}, not_this: Node = null) -> Foe:
+	var best: Foe = null
+	var best_d := radius
+	for o in area(at, radius):
+		if o == not_this or skip.has(o.get_instance_id()) or o is WickNest:
+			continue
+		var d: float = o.global_position.distance_to(at)
+		if d <= best_d:
+			best_d = d
+			best = o
+	return best
 
 ## Lance: full damage, wears shells fully, freezes what it hits for a moment.
-func _lance_hit(f: Foe, at: Vector2, dir: Vector2) -> void:
+## M2 picks: Brand (marks the foe for +50% on the next hit), Forked (two more at the first hit), Shatter (in Foe.hurt).
+func _lance_hit(f: Foe, at: Vector2, dir: Vector2, b: Bolt = null) -> void:
 	hits += 1
-	f.hurt(Tuning.kl_lance_dmg * Progress.dmg_mult(), false, "lance")
+	var m := b.mult if b else 1.0
+	f.hurt(Tuning.kl_lance_dmg * m * Progress.dmg_mult(), false, "lance")
+	if Progress.has_pick("brand") and is_instance_valid(f) and not f._dead:
+		Foe.branded = f
+	if b and not b.child and Progress.has_pick("forked") and b.hit_ids.size() == 1:
+		for side in [-1.0, 1.0]:
+			var fb := _launch(LANCE, at, dir.rotated(deg_to_rad(Tuning.kl_fork_spread_deg) * side), Tuning.kl_lance_speed, Tuning.kl_fork_range, Tuning.kl_lance_hit_radius, 1)
+			fb.child = true
+			fb.mult = Tuning.kl_fork_mult
+			fb.hit_ids = b.hit_ids.duplicate()
 	if Tuning.kl_lance_dmg >= Tuning.kl_hitstop_big and is_instance_valid(f) and not f._dead:
 		f.hit_stop(Tuning.kl_hitstop)
 	FireFx.impact(at, dir, 14.0, false)
@@ -278,6 +416,48 @@ func _lance_hit(f: Foe, at: Vector2, dir: Vector2) -> void:
 	if k and k.has_method("shake"):
 		k.shake(Tuning.kl_shake_lance_hit)
 	Sfx.play("ui_tick", -14.0, 0.3)
+
+## Returning: at the end of its flight the Lance turns back toward the keeper, through foes again.
+func _lance_turn(b: Bolt) -> void:
+	var k := _keeper()
+	var home: Vector2 = (k.global_position + Vector2(0, -10)) if k else b.start
+	var v := home - b.pos
+	b.returning = true
+	b.dir = v.normalized() if v.length() > 1.0 else -b.dir
+	b.travelled = 0.0
+	b.reach = maxf(40.0, v.length())
+	b.hit_ids.clear()
+	b.pierce = maxi(b.pierce, Tuning.kl_lance_pierce)
+	b.flames = []
+	FireFx.impact(b.pos, -b.dir, 8.0, false)
+
+## The Lance's flight ends (its reach, its last pierce, or rock): Burning line and Breaking.
+func _lance_end(b: Bolt, at: Vector2) -> void:
+	if b.child:
+		return
+	if Progress.has_pick("burning_line") and b.start.distance_to(at) > 8.0:
+		var seam := ChainSeam.new()
+		seam.a = b.start
+		seam.b = at
+		seam.ground_a = b.start + Vector2(0, 10)
+		seam.ground_b = at + Vector2(0, 10)
+		seam.life = Tuning.kl_burning_line_time
+		seam.dps = Tuning.kl_burning_line_dps
+		seam.arc = false
+		get_parent().add_child(seam)
+	if Progress.has_pick("breaking"):
+		for i in Tuning.kl_breaking_count:
+			var off := (float(i) - float(Tuning.kl_breaking_count - 1) * 0.5) * deg_to_rad(Tuning.kl_breaking_spread_deg)
+			var sb := _side_bolt(at, b.dir.rotated(off), Tuning.kl_lampfire_range * 0.6, Tuning.kl_lampfire_dmg)
+			sb.hit_ids = b.hit_ids.duplicate()
+
+## Shatter (Foe.hurt calls it): a shell a Lance broke bursts for kl_shatter_dmg around the foe (not the foe itself).
+func shatter(at: Vector2, from: Foe) -> void:
+	for o in area(at, Tuning.kl_shatter_radius):
+		if o != from:
+			o.hurt(Tuning.kl_shatter_dmg * Progress.dmg_mult(), false, "splash")
+	FireFx.blast(at, Tuning.kl_shatter_radius, 0.15)
+	Sfx.play("ui_tick", -10.0, 0.3, 0.8)
 
 # --- Combos (M1c) ---------------------------------------------------------------------------------------
 
@@ -355,10 +535,8 @@ func _try_catch(b: Bolt, step: Vector2) -> void:
 	for i in n:
 		var side := -1.0 if i % 2 == 0 else 1.0
 		var step_i := float(i / 2 + 1)
-		var sb := _launch(LAMPFIRE, at, b.dir.rotated(deg_to_rad(Tuning.kl_catch_spread_deg) * side * step_i), Tuning.kl_lampfire_speed, Tuning.kl_catch_split_range, Tuning.kl_lampfire_hit_radius, 1)
-		sb.dmg = Tuning.kl_catch_split_dmg
-		sb.no_catch = true
-		sb.caught = true
+		var sb := _side_bolt(at, b.dir.rotated(deg_to_rad(Tuning.kl_catch_spread_deg) * side * step_i), Tuning.kl_catch_split_range, Tuning.kl_catch_split_dmg)
+		sb.spark = false   # the splits keep the keeper's Lampfire picks (Lingering burn, Scatter), not the catch
 	FireFx.impact(at, b.dir, 18.0, false)
 	Sfx.play("ui_tick", -16.0, 0.2, 1.3)
 
@@ -420,15 +598,34 @@ func _rock_between(a: Vector2, c: Vector2) -> bool:
 ## Fireglobe lands: 8 in 90 px (no shells), then burning ground; camera trauma, a ring flash, a big pop.
 ## M1c: on a flame it flares the lamp instead (a lamp on its flare cooldown: the normal burst); in the Ashbrood's
 ## bowl it stirs the ember.
-func _globe_burst(at: Vector2) -> int:
+func _globe_burst(at: Vector2, dir: Vector2 = Vector2.RIGHT) -> int:
 	var lamp := Lantern.flame_near(at, Tuning.kl_flare_reach)
 	if lamp and lamp.can_flare():
 		return _flare_burst(lamp)
+	_globe_picks(at, dir)
 	for w in get_tree().get_nodes_in_group("waylamp"):
 		if w.guardian_awake() and at.distance_to(w.global_position) <= Ashbrood.BOWL_RADIUS:
 			var g = w.guardian()
 			if g and g.stir_ember():
 				embers += 1
+	if Progress.has_pick("fire_line"):
+		# Fire line: the globe lands as a line of small bursts across the aim, instead of one big one.
+		var side := dir.orthogonal()
+		var c := Tuning.kl_fire_line_count
+		var n_line := 0
+		for i in c:
+			var p := at + side * (float(i) - float(c - 1) * 0.5) * Tuning.kl_fire_line_gap
+			n_line += _small_burst(p, Tuning.kl_fire_line_mult, Tuning.kl_fire_line_radius, true)
+		var kk := _keeper()
+		if kk and kk.has_method("shake"):
+			kk.shake(Tuning.kl_shake_globe)
+		return n_line
+	if Progress.has_pick("undertow"):
+		# Undertow: foes near the blast are pulled in before it bursts.
+		for f in area(at, Tuning.kl_fireglobe_radius * Tuning.kl_undertow_reach):
+			var v: Vector2 = at - f.global_position
+			if v.length() > 4.0:
+				f.knock(v.normalized() * minf(Tuning.kl_undertow_pull, v.length()))
 	var n := 0
 	for f in area(at, Tuning.kl_fireglobe_radius):
 		f.hurt(Tuning.kl_fireglobe_dmg * Progress.dmg_mult(), false, "fireglobe")
@@ -436,12 +633,7 @@ func _globe_burst(at: Vector2) -> int:
 			f.hit_stop(Tuning.kl_hitstop)
 		n += 1
 	hits += n
-	var g := BurningGround.new()
-	g.radius = Tuning.kl_fireglobe_radius
-	g.dps = Tuning.kl_fireglobe_burn_dps
-	g.life = Tuning.kl_fireglobe_burn_time
-	g.position = at
-	get_parent().add_child(g)
+	_ground(at, Tuning.kl_fireglobe_radius, Tuning.kl_fireglobe_burn_time)
 	FireFx.blast(at, Tuning.kl_fireglobe_radius, Tuning.kl_fireglobe_pop_clear)
 	var k := _keeper()
 	if k and k.has_method("shake"):
@@ -449,6 +641,54 @@ func _globe_burst(at: Vector2) -> int:
 		if n > 0 and k.has_method("hit_stop"):
 			k.hit_stop(Tuning.kl_hitstop)
 	Sfx.play("relight", -6.0, 0.25)
+	return n
+
+## Burning ground with the keeper's Slick pick.
+func _ground(at: Vector2, radius: float, life: float, dps: float = -1.0) -> BurningGround:
+	var g := BurningGround.new()
+	g.radius = radius
+	g.dps = Tuning.kl_fireglobe_burn_dps if dps < 0.0 else dps
+	g.life = life
+	g.slick = Progress.has_pick("slick")
+	g.position = at
+	get_parent().add_child(g)
+	return g
+
+## Picks that add to a full globe's landing: Skipping globe (a hop on), Cluster (4 small globes), Beacon (light).
+func _globe_picks(at: Vector2, dir: Vector2) -> void:
+	if Progress.has_pick("skipping_globe"):
+		var s := _globe(at, at + dir * Tuning.kl_skip_globe_dist, Tuning.kl_skip_globe_flight)
+		s.small = true
+		s.g_mult = Tuning.kl_skip_globe_mult
+		s.g_radius = Tuning.kl_fireglobe_radius * Tuning.kl_skip_globe_mult
+	if Progress.has_pick("cluster"):
+		for i in Tuning.kl_cluster_count:
+			var a := dir.angle() + TAU * float(i) / float(maxi(1, Tuning.kl_cluster_count)) + PI / 4.0
+			var c := _globe(at, at + Vector2.from_angle(a) * Tuning.kl_cluster_dist, 0.3)
+			c.small = true
+			c.g_mult = Tuning.kl_cluster_dmg / maxf(Tuning.kl_fireglobe_dmg, 0.01)
+			c.g_radius = Tuning.kl_cluster_radius
+	if Progress.has_pick("beacon"):
+		var l := KeeperLight.new()
+		l.kind = "beacon"
+		l.radius = Tuning.kl_beacon_radius
+		l.life = Tuning.kl_beacon_time
+		l.position = at
+		get_parent().add_child(l)
+		beacons += 1
+
+## A small globe's burst (Second globe, Skipping globe, Cluster, Fire line): damage x mult in radius, short ground.
+func _small_burst(at: Vector2, mult: float, radius: float, ground: bool = true) -> int:
+	var r := radius if radius > 0.0 else Tuning.kl_fireglobe_radius
+	var n := 0
+	for f in area(at, r):
+		f.hurt(Tuning.kl_fireglobe_dmg * mult * Progress.dmg_mult(), false, "fireglobe")
+		n += 1
+	hits += n
+	if ground:
+		_ground(at, r, Tuning.kl_fireglobe_burn_time * 0.66)
+	FireFx.blast(at, r, Tuning.kl_fireglobe_pop_clear * 0.5)
+	Sfx.play("relight", -12.0, 0.25, 1.2)
 	return n
 
 ## Flare: the lamp flares (16 in 160 px, no shell wear; burning ground in 140 px; its light x1.5 for 3 s).
@@ -492,14 +732,17 @@ func _draw() -> void:
 			continue
 		match b.kind:
 			LAMPFIRE:
-				if b.caught and not b.no_catch:
+				if b.big:
+					_draw_bolt(b, Color(1.0, 0.78, 0.36), 24.0, 7.0, fm)   # Comet: a big bolt
+				elif b.caught and not b.no_catch:
 					_draw_bolt(b, Color(1.0, 0.82, 0.42), 20.0, 5.5, fm)   # caught: it swells and brightens
 				else:
 					_draw_bolt(b, Color(1.0, 0.72, 0.32), 14.0 if not b.no_catch else 10.0, 4.0 if not b.no_catch else 3.0, fm)
 			LANCE:
 				_draw_bolt(b, Color(1.0, 0.95, 0.75), 11.0, 3.0, fm)
 			GLOBE:
-				_draw_globe(b, fm)
+				if b.delay <= 0.0:
+					_draw_globe(b, fm)
 
 func _draw_bolt(b: Bolt, col: Color, glow: float, core: float, fm: float) -> void:
 	var n := b.trail.size()
@@ -514,7 +757,7 @@ func _draw_bolt(b: Bolt, col: Color, glow: float, core: float, fm: float) -> voi
 func _draw_globe(b: Bolt, fm: float) -> void:
 	var k := clampf(b.age / b.flight, 0.0, 1.0)
 	# The ground marker: where it lands and how wide it burns, closing in as it falls.
-	var r := Tuning.kl_fireglobe_radius
+	var r := b.g_radius if b.g_radius > 0.0 else Tuning.kl_fireglobe_radius
 	draw_arc(b.to, r, 0.0, TAU, 40, Color(1.0, 0.6, 0.25, 0.25 + 0.35 * k), 2.0)
 	draw_arc(b.to, r * (1.0 - 0.75 * k), 0.0, TAU, 32, Color(1.0, 0.8, 0.45, 0.6), 2.0)
 	draw_circle(b.to, 3.0, Color(1.0, 0.85, 0.5, 0.8))

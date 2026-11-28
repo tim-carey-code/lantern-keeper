@@ -121,6 +121,7 @@ func _run() -> void:
 	await _time_to_kill()
 	_panel_rows()
 	await _old_checks()
+	await _m2_rules()
 
 # --- The bar (GAME_PLAN §3, §4.1) ----------------------------------------------------------------------
 
@@ -405,11 +406,10 @@ func _lance() -> void:
 	Progress.add_wick(Progress.wick_needed())
 	check(Progress.level == 2 and Progress.knows("lance"), "level 2 brings Lance")
 	check(Progress.bar["skill_3"] == "lance" and Progress.slot_of("beam") == "", "Lance takes slot 3 (LB); the Beam is off the bar, one press away in the Skills list")
-	check(hud.toast.text.contains("Lance takes") and hud.toast.text.contains("The Beam is in your Skills list (%s)" % InputHint.key("skills")), "a toast says so, with the Skills list's button (%s)" % hud.toast.text)
+	check(hud.toast.text.contains("Lance takes") and hud.toast.text.contains("The Beam is in your pack, on the Skills tab (%s)" % InputHint.key("skills")), "a toast says so, with the Skills tab's button (%s)" % hud.toast.text)
 	check(Story.tips_seen.has("beam_off_bar"), "and the one-time Beam hint is marked seen, so it doesn't repeat the toast")
 	await _frames(2)
-	_close_cards()
-	await _frames(2)
+	check(not get_tree().paused and not Tuning.ui_open, "M2: the level-up doesn't pause the world (no card screen)")
 	Tuning.ui_open = false; get_tree().paused = false; Progress._input_block_until = 0
 	var bolts := FireBolts.inst
 	var ln: LanceSkill = c.skill("lance")
@@ -443,15 +443,6 @@ func _lance() -> void:
 	check(speed_px > Tuning.kl_lance_speed * 0.6, "Lance is fast (about %d px/s)" % int(Tuning.kl_lance_speed))
 	_clear()
 	await _frames(2)
-
-## Closes the level-up cards through the real choice, then takes the chosen upgrades back: the offer is shuffled,
-## and a card such as Catching, Spill, Tight focus or Deep tank would change what later checks measure.
-func _close_cards() -> void:
-	var cards = main.get_node("HUD").level_up_screen
-	var before: Array[String] = Progress.combat_upgrades.duplicate()
-	while cards.root.visible:
-		cards._choose(cards._offer[0].id)
-	Progress.combat_upgrades = before
 
 # --- The Beam and Hearth ring (optional) --------------------------------------------------------------
 
@@ -557,15 +548,30 @@ func _m1c_time_to_kill(lf_dps: float, lf_shell: float, lance_dark: float, lance_
 	var d = load("res://systems/tuning.gd").new()
 	var lit: float = d.kl_lit_dmg_mult
 	var wear: float = d.kl_lit_shell_mult
-	var hp: float = d.kl_ashbrood_hp
-	var phase_lit: float = d.kl_ashbrood_shell / ((lf_shell + lance_lamp) * wear) + hp / ((lf_dps + lance_lamp) * lit)
-	var cycle: float = d.kl_ashbrood_sit_sec + d.kl_ashbrood_dive_period + d.kl_ashbrood_dive_tell + d.kl_ashbrood_dive_travel
+	# M2: three phases (owner M1c playtest; ~2.5-3.5 minutes). Phase 2 alternates a dive (its sit on a lamp is the
+	# window) with a new move (the ash wave or the low pass: no window unless it hangs in a lamp's light); phase 3's
+	# cycle is the return to the bowl (settling over the ember, then a puff: lit by the ember the whole time), a dive and
+	# wave (the sit is lit about half the time with only the rim lamp, which it smothers in turn) and a pass and bolts.
+	var sh: float = d.kl_ashbrood_shell / ((lf_shell + lance_lamp) * wear)
+	var p1: float = sh + d.kl_ashbrood_hp / ((lf_dps + lance_lamp) * lit)
+	var p2: float = sh + d.kl_ashbrood_hp2 / ((lf_dps + lance_lamp) * lit)
+	var p3: float = sh + d.kl_ashbrood_hp3 / ((lf_dps + lance_lamp) * lit)
+	var m3: float = d.kl_ashbrood_p3_mult
+	var cycle: float = d.kl_ashbrood_sit_sec + d.kl_ashbrood_dive_period + d.kl_ashbrood_dive_tell + d.kl_ashbrood_dive_travel \
+		+ 0.5 * (d.kl_ashbrood_wave_tell + d.kl_ashbrood_strafe_tell + d.kl_ashbrood_strafe_travel) + d.kl_ashbrood_recover + 0.2
 	var up2: float = 0.8 * d.kl_ashbrood_sit_sec / cycle
-	var fight: float = phase_lit * brood_scale / 0.35 + phase_lit * brood_scale / up2
-	var fight_l5: float = phase_lit * brood_scale_l5 / 0.35 + phase_lit * brood_scale_l5 / up2
-	print("    M1c Ashbrood (lit only, %.0f hp a phase): phase 1 %.0f s at 35%%, phase 2 %.0f s at %.0f%% (sits %.1f s of each %.1f s dive): %.0f s at L4, %.0f s at L5" % [hp, phase_lit * brood_scale / 0.35, phase_lit * brood_scale / up2, up2 * 100.0, d.kl_ashbrood_sit_sec, cycle, fight, fight_l5])
-	check(fight > 110.0 and fight < 180.0, "M1c: the Ashbrood, hurt only when lit, takes 2-3 minutes at L4 (%.0f s)" % fight)
-	check(fight_l5 > 105.0 and fight_l5 < 180.0, "and about 2 minutes for a L5 explorer (%.0f s)" % fight_l5)
+	var gap: float = d.kl_ashbrood_combo_gap
+	var c_return: float = d.kl_ashbrood_dive_tell * m3 + d.kl_ashbrood_dive_travel + d.kl_ashbrood_brood_sit + d.kl_ashbrood_puff_tell * m3 + 2.0 * gap
+	var c_dive: float = d.kl_ashbrood_dive_tell * m3 + d.kl_ashbrood_dive_travel + d.kl_ashbrood_p3_sit + d.kl_ashbrood_wave_tell * m3 + d.kl_ashbrood_recover * m3 + 2.0 * gap
+	var c_pass: float = d.kl_ashbrood_strafe_tell * m3 + d.kl_ashbrood_strafe_travel + d.kl_ashbrood_recover * m3 + d.kl_ashbrood_bolt_tell * m3 + 2.0 * gap
+	var cycle3: float = c_return + c_dive + c_pass
+	var up3: float = 0.8 * (d.kl_ashbrood_brood_sit + d.kl_ashbrood_puff_tell * m3 + 0.5 * d.kl_ashbrood_p3_sit) / cycle3
+	var pauses: float = 2.0 * d.kl_ashbrood_phase_pause
+	var fight: float = (p1 / 0.35 + p2 / up2 + p3 / up3) * brood_scale + pauses
+	var fight_l5: float = (p1 / 0.35 + p2 / up2 + p3 / up3) * brood_scale_l5 + pauses
+	print("    M2 Ashbrood (lit only; %.0f / %.0f / %.0f hp): phase 1 %.0f s at 35%%, phase 2 %.0f s at %.0f%% (a %.1f s cycle), phase 3 %.0f s at %.0f%% (a %.1f s cycle): %.0f s at L4, %.0f s at L5" % [d.kl_ashbrood_hp, d.kl_ashbrood_hp2, d.kl_ashbrood_hp3, p1 * brood_scale / 0.35, p2 * brood_scale / up2, up2 * 100.0, cycle, p3 * brood_scale / up3, up3 * 100.0, cycle3, fight, fight_l5])
+	check(fight > 150.0 and fight < 210.0, "M2: the Ashbrood's three phases take about 2.5-3.5 minutes at L4 (%.0f s)" % fight)
+	check(fight_l5 > 130.0 and fight_l5 < 210.0, "and a little less for a L5 explorer (%.0f s)" % fight_l5)
 	# The Clinker: dim is the old sum; lit (a lamp by its post) is faster; dark can't break its shell at all.
 	var cl_lit: float = d.kl_clinker_shell / ((lf_shell + lance_dark) * wear) + d.kl_clinker_hp / ((lf_dps + lance_dark) * lit)
 	var cl_dim: float = d.kl_clinker_shell / (lf_shell + lance_dark) + d.kl_clinker_hp / (lf_dps + lance_dark)
@@ -716,12 +722,138 @@ func _old_checks() -> void:
 	check(is_instance_valid(timid_w) and timid_w.healthy_level_at(timid_w.global_position) < 0.05, "a timid Wickling stays out of lantern light")
 	check(not is_instance_valid(brave) or brave.hp < Tuning.wick_hp, "a brave one walks in, but burns after a while")
 	check(is_instance_valid(elite_w) and elite_w.hp == Tuning.kl_elite_hp, "elites don't care about lanterns at all")
-	# The old level-up cards stay in M1a: Kindled kills still pays charge on a kill (from any fire).
-	Progress.combat_upgrades.append("kindled_kills")
+	# M2: Kindled kills is a carried line now (a gear line in M3); a version 7 save that had the card keeps it.
+	Progress.lines.append("kindled_kills")
 	player.lamp_charge = 0.2
 	var k := _w(spot + Vector2(50, 0))
 	k.hurt(99.0, false, "lampfire")
-	check(player.lamp_charge > 0.2 + Tuning.kl_kindled_kill_charge * 0.9, "the old cards still work (Kindled kills: a Lampfire kill gives charge back)")
-	Progress.combat_upgrades.erase("kindled_kills")
+	check(player.lamp_charge > 0.2 + Tuning.kl_kindled_kill_charge * 0.9, "a carried old card still works (Kindled kills: a Lampfire kill gives charge back)")
+	Progress.lines.erase("kindled_kills")
 	_clear()
 	await _frames(2)
+
+# --- M2: skill points, tiers, respec and saving (GAME_PLAN §4.2, §9) ------------------------------------
+
+func _m2_rules() -> void:
+	Tuning.wick_enabled = false
+	for r in get_tree().get_nodes_in_group("note_reader"):
+		r.close()
+	get_tree().paused = false
+	Tuning.ui_open = false
+	Progress._input_block_until = 0
+	await _frames(2)
+	_clear()
+	_reset_keeper()
+	Progress.cleared.erase("ashbrood_hollow")
+	Progress.settled.erase(FogGrid.R_HOLLOW)
+	Progress.level = 1
+	Progress.lance_given = false
+	Progress.bar = Progress.default_bar()
+	Progress.set_picks([])
+	Progress.respec_at = Vector2.INF
+	check(Progress.points_total() == 0 and Progress.skill_points() == 0, "level 1: no skill points")
+	check(Progress.take_pick("lingering_burn") != "" and not Progress.has_pick("lingering_burn"), "no points, no pick (%s)" % Progress.pick_reason("lingering_burn"))
+	Progress.add_wick(Progress.wick_needed())
+	check(Progress.level == 2 and Progress.skill_points() == 1, "a level-up gives one skill point (level %d, %d)" % [Progress.level, Progress.skill_points()])
+	check(not get_tree().paused and not Tuning.ui_open, "and pauses nothing")
+	var lu = main.get_node("HUD").level_up_screen
+	check(lu.last_line.contains("skill point") and lu.last_line.contains(InputHint.key("pack")), "a line on the tip strip says so (%s)" % lu.last_line)
+	check(Progress.tier_reason("lampfire", 0) == "" and Progress.tier_reason("lance", 0) == "", "tier 1 is open for every skill the keeper has (Lance at level 2)")
+	check(Progress.tier_reason("lampfire", 1).contains(str(Tuning.kl_tier2_level)), "tier 2 opens at level %d (%s)" % [Tuning.kl_tier2_level, Progress.tier_reason("lampfire", 1)])
+	check(Progress.tier_reason("lampfire", 2).contains("Ashbrood"), "tier 3 opens when the Ashbrood falls (%s)" % Progress.tier_reason("lampfire", 2))
+	check(Progress.take_pick("twin") != "" and Progress.take_pick("catching") != "", "a closed tier refuses its picks")
+	check(Progress.take_pick("lingering_burn") == "" and Progress.has_pick("lingering_burn") and Progress.skill_points() == 0, "at level 2 a Lampfire pick is taken with the point")
+	Progress.level = 5
+	check(Progress.skill_points() == 3 and Progress.take_pick("scatter") != "", "one pick a tier: Scatter is refused while Lingering burn holds tier 1 (%s)" % Progress.pick_reason("scatter"))
+	check(Progress.take_pick("twin") == "" and Progress.take_pick("skipping_globe") == "" and Progress.take_pick("second_step") == "", "tier 2 at level %d; any skill's tree takes the points" % Tuning.kl_tier2_level)
+	check(Progress.skill_points() == 0 and Progress.points_spent() == 4, "four points, four picks")
+	Progress.cleared["ashbrood_hollow"] = true
+	Progress.level = 6
+	check(Progress.tier_reason("lance", 2) == "" and Progress.take_pick("comet") == "", "the Ashbrood's kill opens tier 3")
+	check(Progress.unlearn("comet") != "" and Progress.reset_picks() != "" and Progress.has_pick("comet"), "away from a WayLamp, picks are kept (%s)" % Progress.unlearn("comet"))
+	# Respec at rest.
+	var hollow: WayLamp = null
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.id == "hollow":
+			hollow = w
+	var lit_before: bool = Progress.settled.has(FogGrid.R_HOLLOW)
+	Progress.settled[FogGrid.R_HOLLOW] = true
+	player.global_position = hollow.global_position + Vector2(0, 40)
+	player.reset_physics_interpolation()
+	await _frames(2)
+	check(player.rest() == "" and Progress.respec_open(), "resting at the lit WayLamp opens respec")
+	check(Progress.take_pick("scatter") == "" and Progress.has_pick("scatter") and not Progress.has_pick("lingering_burn"), "at rest, another pick in a taken tier swaps in for free")
+	var spent := Progress.points_spent()
+	check(Progress.unlearn("twin") == "" and Progress.points_spent() == spent - 1 and Progress.skill_points() == 1, "a pick can be given back for its point")
+	check(Progress.reset_picks() == "" and Progress.points_spent() == 0 and Progress.skill_points() == Progress.level - 1, "or every pick at once (%d points back)" % Progress.skill_points())
+	Progress.take_pick("lingering_burn")
+	Progress.take_pick("comet")
+	# Saving: picks, carried lines and the respec spot.
+	Progress.lines = ["hot_core"]
+	var picks_before := Progress.pick_list()
+	check(SaveGame.save(main), "a save with picks writes")
+	Progress.set_picks([])
+	Progress.lines = []
+	Progress.respec_at = Vector2.INF
+	check(SaveGame.load_into(main), "and loads")
+	check(Progress.pick_list() == picks_before and Progress.lines == ["hot_core"] and Progress.respec_open(), "picks, lines and the open respec come back (%s)" % str(Progress.pick_list()))
+	player.global_position = hollow.global_position + Vector2(Tuning.kl_respec_radius + 80.0, 40)
+	player.reset_physics_interpolation()
+	await _frames(2)
+	check(not Progress.respec_open() and Progress.respec_at == Vector2.INF, "walking away from the WayLamp closes respec (rest again to change picks)")
+	if not lit_before:
+		Progress.settled.erase(FogGrid.R_HOLLOW)
+	# The owner's note (2026-11-28): nothing pushes a skill that is off the bar.
+	await _owner_note()
+	Progress.set_picks([])
+	Progress.lines = []
+	Progress.cleared.erase("ashbrood_hollow")
+
+## "The skills coming up for the Beam after it was already replaced is not great" (owner, M1c playtest): the level-up
+## line names no skill, and the Skills tab opens on a skill on the bar; the Beam and Hearth ring are marked optional.
+func _owner_note() -> void:
+	_reset_keeper()
+	Progress.respec_at = Vector2.INF
+	Progress.set_picks([])
+	Progress.level = 2
+	Progress.lance_given = true
+	Progress.bar = {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "lance", "skill_4": ""}
+	var tab = main.get_node("SkillsList")
+	var lu = main.get_node("HUD").level_up_screen
+	var line := str(lu.last_line)
+	var names_skill := false
+	for id in SkillTree.ORDER:
+		if line.contains(SkillTree.skill_title(id)):
+			names_skill = true
+	check(not names_skill, "the level-up line names no skill (%s)" % line)
+	for i in 40:
+		Progress.level = 2 + (i % 10)
+		Progress.cleared["ashbrood_hollow"] = i % 2 == 0
+		Progress.set_picks(["lingering_burn", "skipping_globe", "burning_line"].slice(0, i % 4))
+		var sug: String = tab.suggested_skill()
+		if sug == "beam" or sug == "hearth_ring":
+			check(false, "the Skills tab suggests %s while it is off the bar" % sug)
+			break
+	check(true, "the Skills tab never points at the Beam or Hearth ring while they are off the bar (40 builds)")
+	Progress.set_picks(["lingering_burn"])
+	Progress.level = 2
+	check(Progress.skill_points() == 0 or tab.suggested_skill() != "beam", "with no points it still opens on a bar skill")
+	Progress.level = 6
+	Progress.set_picks(["lingering_burn", "skipping_globe", "burning_line", "second_step"])
+	check(tab.suggested_skill() in ["lampfire", "fireglobe", "lance", "dash"], "with Lampfire, Fireglobe, Lance and the dash on tier 1 and points left, it opens on one of them (%s)" % tab.suggested_skill())
+	Progress.bar["skill_4"] = "beam"
+	Progress.set_picks(["lingering_burn", "skipping_globe", "burning_line", "second_step", "twin"])
+	Progress.level = 7
+	var on_bar_ok: bool = tab.suggested_skill() != "hearth_ring"
+	check(on_bar_ok, "a skill the player put on the bar (the Beam on Y) may be suggested; one off it never is (%s)" % tab.suggested_skill())
+	for r in get_tree().get_nodes_in_group("note_reader"):
+		r.close()
+	get_tree().paused = false
+	Tuning.ui_open = false
+	check(tab.open() and tab.is_open(), "the pack opens on its Skills tab")
+	var opt_marked: bool = tab.buttons.has("beam") and tab.buttons["beam"].text.contains("optional") and tab.buttons["hearth_ring"].text.contains("optional")
+	check(opt_marked, "the Beam and Hearth ring show as optional")
+	tab.close()
+	Progress.bar = Progress.default_bar()
+	Progress.bar["skill_3"] = "lance"
+	Progress._input_block_until = 0

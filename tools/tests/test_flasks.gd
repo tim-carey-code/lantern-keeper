@@ -211,10 +211,7 @@ func _run_checks() -> void:
 	hunter.queue_free()
 	await get_tree().process_frame
 	p.hunted = false
-	var level_up = main.get_node("HUD").level_up_screen
-	for i in 12:   # the boss kills above can queue more than one level-up
-		if level_up.root.visible:
-			level_up._choose(level_up._offer[0].id)
+	for i in 12:   # M2: level-ups no longer open a screen; let the boss kills above settle
 		await get_tree().process_frame
 	var can_open: bool = travel.open(wl)
 	check(can_open, "the lit WayLamp offers Rest when the area is quiet")

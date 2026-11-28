@@ -6,9 +6,10 @@ extends Node
 ## a snuffed lamp's timer and wind (they come back on their own).
 ## File: user://save.json  (on Linux: ~/.local/share/godot/app_userdata/Lantern Keeper/)
 
-const VERSION := 7   # 3: isolated Keeper's Light prototype progression; 4: the map is 224 x 200 (regions 4x);
+const VERSION := 8   # 3: isolated Keeper's Light prototype progression; 4: the map is 224 x 200 (regions 4x);
                      # 5: M1a, the action bar and lamp-oil flasks; 6: M1b, no more tending (no fuel or glass);
                      # 7: M1c, the old lamp on the Ashbrood's rim is one of the saved lanterns (lit or cold)
+                     # 8: M2, branch picks instead of cards (picks, lines, the respec spot)
 const MIN_VERSION := 4   # older saves are for the small map and start fresh; version 4 is migrated on load (migrate_data)
 const AUTOSAVE_SEC := 60.0
 
@@ -104,7 +105,8 @@ func save(main: Node) -> bool:
 			"settled": Progress.settled.keys(),
 			"wick": Progress.wick, "wick_frac": Progress.wick_frac, "level": Progress.level,
 			"cleared": Progress.cleared.duplicate(),
-			"combat_upgrades": Progress.combat_upgrades.duplicate(),
+			"picks": Progress.pick_list(), "lines": Progress.lines.duplicate(),
+			"respec_at": ([Progress.respec_at.x, Progress.respec_at.y] if Progress.respec_at != Vector2.INF else []),
 			"bar": Progress.bar.duplicate(), "lance_given": Progress.lance_given,
 		},
 		"lanterns": [],
@@ -187,6 +189,27 @@ static func migrate_data(data: Dictionary) -> Dictionary:
 		# Lamp slots come from the level (nothing to save); snuff, flare and smother timers are not saved.
 		data["version"] = 7
 		data["from_v6"] = true   # load_into: a lamp the keeper planted on the new rim lamp's tile is refunded
+	if int(data.get("version", 0)) == 7:
+		# 7 -> 8 (M2, GAME_PLAN §4.3): the cards become picks. Skill points come from the level (one a level over 1),
+		# so a level-7 keeper has 6. Each old card maps to its pick (SkillTree.CARD_TO_PICK: Heavy flare is Heavy ring);
+		# load_into() keeps a mapped pick only if its tier is open (Catching needs the Ashbrood kill) and its tier is
+		# still free (two old Beam cards can share a tier: the first one listed wins); every card that doesn't fit is
+		# an unspent point. Kindled kills, Hot core and Lee are carried as lines until gear exists (M3).
+		var p: Dictionary = data.get("progress", {})
+		var mapped := []
+		var carried := []
+		for raw in p.get("combat_upgrades", []):
+			var id := str(raw)
+			if SkillTree.CARD_TO_PICK.has(id):
+				mapped.append(SkillTree.CARD_TO_PICK[id])
+			elif SkillTree.CARD_LINES.has(id) and not carried.has(id):
+				carried.append(id)
+		p.erase("combat_upgrades")
+		p["picks"] = mapped
+		p["lines"] = carried
+		p["respec_at"] = []
+		data["progress"] = p
+		data["version"] = 8
 	return data
 
 ## A saved action bar, checked slot by slot with Progress.bind_reason() (call it after level and lance_given are
@@ -277,10 +300,17 @@ func load_into(main: Node) -> bool:
 	Progress.cleared = {}
 	for key in p.get("cleared", {}):
 		Progress.cleared[str(key)] = true
-	Progress.combat_upgrades = []
-	for upgrade in p.get("combat_upgrades", []):
-		Progress.combat_upgrades.append(str(upgrade))
-	Progress.lance_given = bool(p.get("lance_given", false))   # before the bar: knows("lance") depends on it
+	Progress.lance_given = bool(p.get("lance_given", false))   # before the bar and picks: knows("lance") depends on it
+	# M2: picks (checked against the tiers and points: level, cleared and settled are loaded above), carried lines,
+	# and where the keeper last rested (respec stays open while they stand by that WayLamp).
+	Progress.lines = []
+	for l in p.get("lines", []):
+		if SkillTree.CARD_LINES.has(str(l)) and not Progress.lines.has(str(l)):
+			Progress.lines.append(str(l))
+	var saved_picks = p.get("picks", [])
+	Progress.set_picks(saved_picks if typeof(saved_picks) == TYPE_ARRAY else [])
+	var ra = p.get("respec_at", [])
+	Progress.respec_at = Vector2(float(ra[0]), float(ra[1])) if typeof(ra) == TYPE_ARRAY and ra.size() == 2 else Vector2.INF
 	var saved_bar = p.get("bar", {})
 	Progress.bar = valid_bar(saved_bar if typeof(saved_bar) == TYPE_DICTIONARY else {})
 	# Lanterns: replace the generated ones.

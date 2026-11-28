@@ -29,6 +29,10 @@ static func reset_fights(tree: SceneTree) -> void:
 		elif f is Wickling:
 			f.state = Wickling.State.FLEE
 			f._flee_t = 3.0
+	for h in tree.get_nodes_in_group("burst_hatch"):
+		h.queue_free()   # a Bursting elite's hatch that hasn't risen yet (M2)
+	for e in tree.get_nodes_in_group("cold_ember"):
+		e.queue_free()   # the Ashbrood's cold embers (M2)
 	LightSense.bump()
 
 ## Takes a foe out at once, with no drops and no wick (a faint undoes the fight, it doesn't win it).

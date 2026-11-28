@@ -308,7 +308,7 @@ func _measure() -> void:
 		curve_old.append("L%d %d (%d)" % [lv + 1, old_need(lv), cum_old])
 	print("--- Old curve, wick to reach (total): " + ", ".join(curve_old))
 	print("--- New curve, wick to reach (total): " + ", ".join(curve_new))
-	var upgrades: int = level_ui.OPTIONS.size()
+	var upgrades: int = SkillTree.all_picks().size()   # M2: the picks (were the 12 cards)
 	for name in routes:
 		var route: Array = routes[name]
 		var lv_new := simulate(route, "new", "units")
@@ -349,9 +349,9 @@ func _measure() -> void:
 		var lv_adds := simulate(route.slice(0, ai) + [adds_only], "new", "units")
 		check(lv_adds[-1] == before_boss, "%s: its adds alone don't cross the line; the kill does (L%d, %d/%d wick after the adds)" % [name, lv_adds[-1], _sim_wick, Progress.wick_for_level(lv_adds[-1])])
 		check(lv_new[-1] == lv_new[ai], "%s: kindling afterwards adds wick but no level (L%d)" % [name, lv_new[-1]])
-		check(level_ups <= upgrades - 2, "%s: no level-up is wasted: every offer still has three cards (%d level-ups, %d upgrades)" % [name, level_ups, upgrades])
+		check(level_ups <= 18, "%s: no level-up is wasted: every point has a tier to go in (%d level-ups, 18 tiers)" % [name, level_ups])
 		check(lv_new[-1] < Tuning.kl_level_cap, "%s: the Hollow stays under the level cap (%d)" % [name, Tuning.kl_level_cap])
-	check(upgrades == 12, "twelve upgrades to choose from (%d)" % upgrades)
+	check(upgrades == 42, "M2: 42 picks in 18 tiers to spend points on (%d)" % upgrades)
 	# Time to kill, from the numbers in tuning.gd.
 	var rows := [
 		["Wickling", Tuning.wick_hp, 0.0], ["Spitwick", Tuning.kl_spitwick_hp, 0.0],
@@ -437,11 +437,6 @@ func _process(_delta: float) -> void:
 		return
 	if frame < 3:
 		return
-	# A level-up screen is up: note how many cards it offers and take the first.
-	if level_ui.root.visible:
-		_offers.append(level_ui.cards.get_child_count())
-		(level_ui.cards.get_child(0) as Button).pressed.emit()
-		return
 	if _run_i < _run.size():
 		for u in _run[_run_i].units:
 			if int(u[1]) <= 0:
@@ -456,14 +451,14 @@ func _process(_delta: float) -> void:
 			_scrap_check()
 			var sim: Array = simulate(_run, "new", "units")
 			check(Progress.level == sim[-1], "the real Progress lands on the same level (L%d)" % Progress.level)
-			check(_offers.size() == Progress.level - 1 and _offers.all(func(n): return n == 3), "every level-up offered three cards (%s)" % str(_offers))
-			check(not Progress.has_combat_upgrade("level_cap") and Progress.combat_upgrades.size() == Progress.level - 1, "every level-up became a real upgrade (%s)" % str(Progress.combat_upgrades))
+			# M2: no card screen; every level-up is a skill point (GAME_PLAN §9), and the world never paused for it.
+			check(Progress.skill_points() == Progress.level - 1 and level_ui.shown >= Progress.level - 1 and not get_tree().paused, "every level-up gave a skill point and a line, with no pause (%d points, %d lines)" % [Progress.skill_points(), level_ui.shown])
 			Progress.reset()
 			Progress.level = 3
 			Progress.wick = 5
 		3:
 			var hud = main.get_node("HUD")
-			check(hud.wick_level.text == "Lv 3" and hud.wick_count.text == "5/%d" % Progress.wick_for_level(3), "the HUD shows the level and the wick to the next (%s %s)" % [hud.wick_level.text, hud.wick_count.text])
+			check(hud.wick_level.text == "Lv 3 +2" and hud.wick_count.text == "5/%d" % Progress.wick_for_level(3), "the HUD shows the level and the wick to the next (%s %s)" % [hud.wick_level.text, hud.wick_count.text])
 			check(hud.wick_level.get_theme_font_size("font_size") == 20 and hud.wick_count.get_theme_font_size("font_size") == 20, "at a readable Ark Pixel size (20)")
 			# Wick per kill, through real foes.
 			Progress.reset()
