@@ -43,7 +43,7 @@ func _init() -> void:
 		"lamp_prev": [pad_button(JOY_BUTTON_DPAD_LEFT)],              # previous lamp kind
 		"pause": [key(KEY_ESCAPE), pad_button(JOY_BUTTON_START)],
 		"map": [key(KEY_M), pad_button(JOY_BUTTON_DPAD_UP)],
-		"skills": [key(KEY_K), pad_button(JOY_BUTTON_DPAD_DOWN)],     # the Skills list
+		"skills": [key(KEY_K), pad_button(JOY_BUTTON_DPAD_DOWN)],     # the pack, on its Skills tab (M2)
 		# The action bar: slot 1 is always Lampfire (hold); 2 and 3 take aimed skills; 4 takes self-cast skills.
 		"skill_1": [mouse(MOUSE_BUTTON_LEFT), pad_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)],
 		"skill_2": [mouse(MOUSE_BUTTON_RIGHT), pad_button(JOY_BUTTON_RIGHT_SHOULDER)],
@@ -55,7 +55,10 @@ func _init() -> void:
 		"aim_up": [pad_axis(JOY_AXIS_RIGHT_Y, -1.0)],
 		"aim_down": [pad_axis(JOY_AXIS_RIGHT_Y, 1.0)],
 		"toggle_fullscreen": [key(KEY_F11)],
-		"journal": [key(KEY_J), pad_button(JOY_BUTTON_BACK)],
+		"journal": [key(KEY_J)],                                     # the pack, on its Journal tab (M2: View opens the pack)
+		"pack": [key(KEY_I), pad_button(JOY_BUTTON_BACK)],           # the keeper's pack (M2, GAME_PLAN §3): View / I
+		"pack_prev": [key(KEY_Q), pad_button(JOY_BUTTON_LEFT_SHOULDER)],    # inside the pack: the tab to the left
+		"pack_next": [key(KEY_TAB), pad_button(JOY_BUTTON_RIGHT_SHOULDER)], # ...and to the right
 		"select_1": [key(KEY_1)],
 		"select_2": [key(KEY_2)],
 		"select_3": [key(KEY_3)],

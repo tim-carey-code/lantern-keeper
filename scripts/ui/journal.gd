@@ -1,9 +1,9 @@
 extends CanvasLayer
-## The keeper's journal: J / gamepad Back (View). Three pages, left/right to switch:
+## The keeper's journal: the pack's Journal tab (M2: J, or View then RB; PackScreen). Three pages, left/right to switch:
 ##   Goals       the current goal and the ones finished
 ##   Story       the keeper's own entries ("story so far"), and Oswin's letter
 ##   Notes       every landmark you have read, in full, to read again
-## Up/down scrolls. J / Back / B / Esc closes.
+## Up/down scrolls. J / B / Esc closes the pack.
 
 const PAGES := ["Goals", "Story so far", "Notes"]
 
@@ -26,23 +26,23 @@ func _ready() -> void:
 	bg.size = Vector2(1280, 720)
 	root.add_child(bg)
 	var frame := Panel.new()
-	frame.position = Vector2(100, 24)
-	frame.size = Vector2(1080, 672)
+	frame.position = Vector2(100, 56)
+	frame.size = Vector2(1080, 648)
 	frame.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.WOOD, UiStyle.NAVY, 2, 0))
 	root.add_child(frame)
 	title = UiStyle.label(40, UiStyle.GOLD)
-	title.position = Vector2(140, 40)
+	title.position = Vector2(140, 66)
 	root.add_child(title)
 	tab_row = HBoxContainer.new()
-	tab_row.position = Vector2(140, 98)
+	tab_row.position = Vector2(140, 116)
 	tab_row.add_theme_constant_override("separation", 10)
 	root.add_child(tab_row)
 	tabs = Label.new()
 	tabs.visible = false
 	root.add_child(tabs)
 	scroll = ScrollContainer.new()
-	scroll.position = Vector2(140, 150)
-	scroll.size = Vector2(1000, 500)
+	scroll.position = Vector2(140, 164)
+	scroll.size = Vector2(1000, 486)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
 	body = UiStyle.label(20, UiStyle.CREAM)
@@ -51,7 +51,7 @@ func _ready() -> void:
 	body.custom_minimum_size = Vector2(980, 0)
 	scroll.add_child(body)
 	var hint := UiStyle.label(20, Color(0.43, 0.56, 0.7))
-	hint.text = "[Left / Right] page    [Up / Down] scroll    [J / Back / B] close"
+	hint.text = "[Left / Right] page    [Up / Down] scroll    [B / J] close"
 	hint.position = Vector2(140, 670)
 	root.add_child(hint)
 	root.visible = false
@@ -59,23 +59,42 @@ func _ready() -> void:
 func is_open() -> bool:
 	return root.visible
 
+## Opens it as the pack's Journal tab (or closes the pack if it is open).
 func toggle() -> void:
 	if root.visible:
-		root.visible = false
-		Tuning.ui_open = false
-		get_tree().paused = false
-		Progress.block_input()
-		Sfx.play("note_close", -12.0)
+		close_page(false)
 	elif not Tuning.ui_open:
-		root.visible = true
-		Tuning.ui_open = true
-		get_tree().paused = true
-		page = 0
-		refresh()
-		Sfx.play("note_open", -10.0)
+		if PackScreen.inst:
+			PackScreen.inst.open("journal")
+		else:
+			open_page()
+
+## The pack shows this tab (PackScreen): the world pauses.
+func open_page() -> bool:
+	if root.visible:
+		return true
+	root.visible = true
+	Tuning.ui_open = true
+	get_tree().paused = true
+	page = 0
+	refresh()
+	Sfx.play("note_open", -10.0)
+	return true
+
+## keep: the pack moves to another tab (the world stays paused).
+func close_page(keep: bool) -> void:
+	if not root.visible:
+		return
+	root.visible = false
+	if keep:
+		return
+	Tuning.ui_open = false
+	get_tree().paused = false
+	Progress.block_input()
+	Sfx.play("note_close", -12.0)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("journal") or (root.visible and (event.is_action_pressed("cancel") or event.is_action_pressed("pause"))):
+	if (event.is_action_pressed("journal") and (root.visible or not Tuning.ui_open)) or (root.visible and (event.is_action_pressed("cancel") or event.is_action_pressed("pause"))):
 		toggle()
 		get_viewport().set_input_as_handled()
 

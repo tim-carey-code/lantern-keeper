@@ -145,6 +145,17 @@ func rest() -> String:
 		return "Can't rest while something hunts you"
 	flasks = flask_max()
 	warmth = Tuning.warmth_max
+	# M2 (GAME_PLAN §4.2): resting opens respec while the keeper stays by this WayLamp (Progress.respec_open). Only a
+	# lit WayLamp within kl_respec_radius opens it (review fix: no fallback to the keeper's own spot).
+	var best := INF
+	var at := Vector2.INF
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		var d: float = w.global_position.distance_to(global_position)
+		if w.is_lit() and d < best:
+			best = d
+			at = w.global_position
+	if at != Vector2.INF and best <= Tuning.kl_respec_radius:
+		Progress.respec_at = at
 	Sfx.play_ui("unlock", -10.0)
 	return ""
 
@@ -156,6 +167,8 @@ func hit_stop(seconds: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	hunted = Hunt.is_hunted(get_tree(), global_position)
+	if Progress.respec_at != Vector2.INF and global_position.distance_to(Progress.respec_at) > Tuning.kl_respec_radius:
+		Progress.respec_at = Vector2.INF   # walked away from the WayLamp: picks are kept again (rest to change them)
 	flask_lock = maxf(0.0, flask_lock - delta)
 	replant_t = maxf(0.0, replant_t - delta)
 	drink_t = maxf(0.0, drink_t - delta)
@@ -199,7 +212,7 @@ func _physics_process(delta: float) -> void:
 	if fog and fog.terrain_at(global_position) == FogGrid.T_MARSH:
 		slow *= 0.85   # wading through the marsh
 	if combat.beaming:
-		slow *= Tuning.kl_steady_hand_walk if Progress.has_combat_upgrade("steady_hand") else Tuning.kl_beam_walk
+		slow *= combat.beam_walk_mult()
 	velocity = combat.dash_velocity() if combat.is_dashing() else dir * speed * slow
 	if _hitstop_t > 0.0 and not combat.is_dashing():
 		velocity = Vector2.ZERO

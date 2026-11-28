@@ -17,7 +17,10 @@ func held() -> bool:
 	return true
 
 func cost() -> float:
-	var mult := Tuning.kl_deep_tank_mult if Progress.has_combat_upgrade("deep_tank") else 1.0
+	var mult := 1.0
+	if Progress.has_pick("deep_tank"):
+		mult = Tuning.kl_deep_tank_mult
+		SkillTree.mark("deep_tank")
 	return Tuning.kl_beam_cost * mult
 
 func short_of_charge() -> bool:

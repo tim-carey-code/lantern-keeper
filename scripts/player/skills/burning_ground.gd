@@ -8,6 +8,7 @@ var radius := 90.0
 var dps := 2.0
 var life := 3.0
 var age := 0.0
+var slick := false             # M2 Fireglobe "Slick": foes standing in it are slowed (kl_slick_slow; not bosses)
 var _flames: Node2D
 var _seed := 0.0
 
@@ -46,6 +47,9 @@ func _physics_process(delta: float) -> void:
 		var f := a.get_parent() as Foe
 		if f and not f._dead and not f.is_queued_for_deletion():
 			f.hurt(dps * Progress.dmg_mult() * delta, false, "ground")
+			if slick and is_instance_valid(f) and not f._dead:
+				f.slow(Tuning.kl_slick_slow, 0.25)
+				SkillTree.mark("slick")
 
 ## Foes it is burning now (for tests).
 func burning() -> Array:

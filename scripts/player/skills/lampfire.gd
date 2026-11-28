@@ -35,6 +35,7 @@ func hold(delta: float, down: bool) -> void:
 		_t = maxf(0.01, Tuning.kl_lampfire_period)
 
 ## Throws one bolt along the (assisted) aim. Public for tests and the bench.
+## M2 picks: Twin (two bolts in a V, each x kl_twin_mult), Comet (every kl_comet_every-th bolt is big).
 func fire() -> void:
 	var bolts := FireBolts.inst
 	if bolts == null:
@@ -42,8 +43,19 @@ func fire() -> void:
 	combat.update_aim(Vector2.ZERO, true)
 	var dir: Vector2 = combat.assisted(combat.aim, Tuning.kl_lampfire_range)
 	var from := muzzle(dir)
-	bolts.fire_lampfire(from, dir)
 	fired += 1
+	var big := Progress.has_pick("comet") and Tuning.kl_comet_every > 0 and fired % Tuning.kl_comet_every == 0
+	if big:
+		SkillTree.mark("comet")
+	if Progress.has_pick("twin"):
+		SkillTree.mark("twin")
+		for side in [-1.0, 1.0]:
+			var b: FireBolts.Bolt = bolts.fire_lampfire(from, dir.rotated(deg_to_rad(Tuning.kl_twin_spread_deg) * side))
+			b.mult = Tuning.kl_twin_mult
+			b.big = big
+	else:
+		var b: FireBolts.Bolt = bolts.fire_lampfire(from, dir)
+		b.big = big
 	FireFx.cast_flare(from, dir)
 	combat.cast_cue("throw", dir)
 	Sfx.play("ui_tick", -24.0, 0.3)

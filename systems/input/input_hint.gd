@@ -8,10 +8,10 @@ signal device_changed(pad: bool)
 var pad := false
 
 const PAD := {"interact": "A", "place_lantern": "X", "cancel": "B", "flask": "B", "dash": "LT", "build_menu": "D-pad right",
-	"lamp_prev": "D-pad left", "map": "D-pad up", "skills": "D-pad down", "journal": "View", "pause": "Start", "debug_toggle": "L3",
+	"lamp_prev": "D-pad left", "map": "D-pad up", "skills": "D-pad down", "journal": "View", "pack": "View", "pack_prev": "LB", "pack_next": "RB", "pause": "Start", "debug_toggle": "L3",
 	"skill_1": "RT", "skill_2": "RB", "skill_3": "LB", "skill_4": "Y", "lock_on": "R3"}
 const KEYS := {"interact": "E", "place_lantern": "C", "cancel": "Esc", "flask": "R", "dash": "Space", "build_menu": "Tab",
-	"lamp_prev": "Tab", "map": "M", "skills": "K", "journal": "J", "pause": "Esc", "debug_toggle": "F1",
+	"lamp_prev": "Tab", "map": "M", "skills": "K", "journal": "J", "pack": "I", "pack_prev": "Q", "pack_next": "Tab", "pause": "Esc", "debug_toggle": "F1",
 	"skill_1": "Left click", "skill_2": "Right click", "skill_3": "Q", "skill_4": "F", "lock_on": "Middle mouse"}
 ## Short labels for the action bar's key caps (Ark Pixel at 20 px; they must fit a 48 px slot).
 const PAD_SHORT := {"skill_1": "RT", "skill_2": "RB", "skill_3": "LB", "skill_4": "Y", "dash": "LT", "flask": "B"}
@@ -53,7 +53,8 @@ func controls_text() -> String:
 		["Lock onto a foe (again: let go)", key("lock_on")],   # DRAFT (M1c)
 		["Use: read, light, take, rest, travel", key("interact")], ["Pick up a lamp (hold)", key("interact")],   # DRAFT (M1b)
 		["Plant the selected lamp", key("place_lantern")], ["Next lamp kind (hold: the list)", key("build_menu")],
-		["Skills", key("skills")], ["Map", key("map")], ["Journal", key("journal")], ["Pause", key("pause")]]
+		["The pack: Skills, Journal, Map", key("pack")], ["Skills tab", key("skills")], ["Map", key("map")],
+		["Journal", key("journal") if not pad else key("pack") + ", then RB"], ["Pause", key("pause")]]
 	var lines: Array[String] = []
 	for r in rows:
 		lines.append("%-34s %s" % [r[0], r[1]])

@@ -82,7 +82,7 @@ const TIPS := {
 	"kindle_attack": "Wicklings have come for the WayLamp. Ward them off until it takes.",
 	# M1a (DRAFT, STORY.md §14.3): once Lance is learned and the Beam is off the bar (a level-2 keeper, or a version 4
 	# save migrated past level 2), say where the Beam went. The level-2 Lance toast says it too, and marks this seen.
-	"beam_off_bar": "The Beam is in your Skills list ([skills]).",
+	"beam_off_bar": "The Beam is in your pack, on the Skills tab ([skills]).",   # M2: the Skills list became the pack's tab
 	# M1c (DRAFT, STORY.md §16): light against dark, and the lock.
 	"dark": "In the dark they shrug off your fire. Bring light to them.",
 	"lock": "[lock] locks onto a foe. Flick [aim] to switch.",

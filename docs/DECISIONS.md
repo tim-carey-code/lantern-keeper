@@ -2,6 +2,34 @@
 
 Owner decisions that override or settle the design docs. Newest first.
 
+## 2026-11-28 (M2 review fixes; owner calls)
+- **The Beam and Hearth ring stay, with their trees** (owner: "they can stay for now"). This settles the keep-or-cut left open since M1a, for now.
+- **The one-time "The Beam is in your pack" hint stays** (owner asked the coordinator's view; recommended: keep it, since it shows at most once; cut it if it bugs him in play).
+- From the independent review (`REVIEW_M2.md`, relayed by the coordinator), fixed before the playtest:
+  - Blink no longer crosses rock or the closed climb stones (it broke the one-way Ridge route). It walks its path and stops before the first blocking tile or body.
+  - Fire line no longer cancels Undertow. Every tier-2 x tier-3 pair is now tested.
+  - Scatter's sparks fly on through the pack (they flew back toward the keeper). The text now says "on through the pack".
+  - Smaller fixes: the Skills tab's layout fits at every level and at rest; the HUD reminder says "View pack"; Lightless no longer re-snuffs a lamp that went out mid-flicker; rest opens respec only at a lit WayLamp; the pack's tabs can be clicked; a Held lance released inside a menu doesn't fire on resume.
+- **Left for the playtest:** Twin's numbers (PLAYTEST "Watch this"). Each Twin bolt does x0.65 of the hit but the full splash, so a pack takes about 1.7x a plain bolt (about 2.7x with Scatter). On one foe it is x1.3.
+
+## 2026-11-28 (M1c playtest; M2 built)
+- **M1c playtest results** (owner, on a pad; PLAYTEST.md): the Ashbrood fights back now, but "phase 2 is still a bit boring and there definitely needs to be more moves"; the **lock-on is great**; standing at your own lamp is too strong (confirmed); everything else looked good. A crash when a boss hit made the keeper faint was hotfixed (d13d5b6), and the owner then fainted on purpose in the Ashbrood fight with no crash.
+- **The Ashbrood gets more moves and a third phase** (owner, above; phase 3 was planned for M2). Built in M2: phase 2 alternates its dive with an **ash wave** or a **low pass** that leaves cold embers (never the same new move twice running) and **calls Wicklings from the dark**; phase 3, **"last of the brood"**, is faster and fights in combos (return to the ember and puff, dive and wave, pass and bolts). Every move has a cold telegraph equal to its hitbox. Health 300 / 300 / 220 a phase, about 3.3 minutes in `test_skills`' sum.
+- **Own-lamp catch: a bolt catches only after it has flown 72 px** (`kl_catch_min_travel`), the review's suggestion (owner confirmed the problem).
+- **Never push a skill the keeper isn't using** (owner, relayed by the coordinator: "the skills coming up for the Beam after it was already replaced is not great"). The level-up line names no skill; the Skills tab opens on a skill on the bar; the Beam and Hearth ring are marked optional; a test checks it (`test_skills`).
+- **Agent's calls in M2, for the owner to confirm (all DRAFT):**
+  1. **Pick designs:** the plan named every pick; the numbers and one-line texts are mine (DESIGN §21.2, STORY §17.1). Notable: Twin's bolts do x0.65 each; Skip jumps once at x0.75; Needle hits the first foe without a burst; Held lance makes Lance a hold-and-release skill (a short press is a normal Lance); Slick and other slows don't touch the Clinker or the Ashbrood; Crackle can't break a shell past the dark's floor; Recoil counts a dash as "backward" when it points more than about 107 degrees from your aim.
+  2. **The Beam and Hearth ring have full trees,** because both are still kept (keep-or-cut is open). If one is cut, its tree goes with it.
+  3. **Tier 3 opens on the Ashbrood kill only,** not at level 6 (the plan says both are the same moment).
+  4. **Respec:** after resting at a lit WayLamp, picks change freely while you stay within 220 px; walking away closes it. A pick swap or a full reset is free.
+  5. **Beacon and Ember rest** are light only: they light foes for the light rule but have no flame, so your own fire can't combo off them.
+  6. **The pack:** View opens it on Skills (I on a keyboard); inside, LB / RB (Q / Tab) change tabs, and K, J, M jump on a keyboard; J no longer has a pad button of its own (the journal is View, then RB). Choosing a slot is A on a skill, then left / right and A (two presses instead of the M1a list's one).
+  7. **Affixes in the Hollow:** Swift, Thick shell, Bursting and Lightless, one on each of the four level-4 elite packs; Biting cold waits for the marsh. Lightless also snuffs lamps it passes (4 s, after a 0.5 s cold flicker), from GAME_PLAN §8.1.
+  8. **Old cards in a v7 save:** each becomes its pick if its tier is open and free (the first of two in one tier wins; Catching needs the Ashbrood kill); the rest are unspent points. Kindled kills, Hot core and Lee are carried as lines until gear (M3); a new game can't get them before then.
+  9. **The Beam hint stays** ("The Beam is in your pack, on the Skills tab"): it says where a replaced skill went, it doesn't push an upgrade. (Owner: keep it; see the review-fixes entry.)
+  10. **Phase 3's no-lamp window:** its cracked wings let the last ember show through, so over the bowl it is always lit. Phase 2 calls are skipped while 3 of its brood are still about.
+  11. **Save version 8.**
+
 ## 2026-11-28 (the Clinker sheet)
 - **The Clinker's sprite comes from the owner's Gemini key-pose sheet** (relayed by the coordinator), made by the sprite tool (`tools/art/manifests/clinker.cfg`, in `tools/art/make_sprites.sh`) and wired into the game on `proto/kl-clinker-art`. **Approved by the owner on 2026-11-28** (from the 4x previews, with the noted touch-ups left as they are: one-pixel dizzy eyes, grainy cracks, the squinting curl frame, a claw-tip speck on two roll frames), and merged into `proto/kl-hollow`. The sheet stays private (`tools/art/samples/`, ignored). Merging the branch means the strips are approved, as for the six samples ([the sprites approved](#2026-11-27-the-sprites-approved)).
 - **Agent's calls, for the owner to confirm:** the frame stays 32x32 (the mid-boss class), with the Clinker filling about 24 px of it so it matches its hit area; the trundle is named `move` (the standard name) rather than `walk`; row 4's first cell (a ball with its face out) is the middle of the curl, so the wind-up has the bible's 5 frames; the roll's full turn uses the sheet's three ball frames, two of them also turned half round (the sheet's third ball repeats its first); the sheet's single flinch makes the hurt strip (a pale flash, then the flinch). No gameplay changed. The sprite tool gained a `sequence` option for this (reorder, reuse, borrow or turn key frames).
@@ -63,7 +91,7 @@ Added 2026-11-27, after the game plan was approved. This index only points to en
 
 **Superseded by the plan** (still in the log as history): level 8 on the Ashbrood kill; Hollow foes up to Lv 6 and the Ashbrood Lv 7; the second cold lamp relit with fuel; onboarding texts that teach the beam and fuel first (rewritten as DRAFT); the cards as a screen; lamp charge topped up by fuel, and the hand lamp using fuel; the beam, burst and dash as the core kit; WayLamps taking 15 fuel; tap-to-refuel and hold-to-gather; the Lakeshore WayLamp reached only by a beam; glass as a resource; the Clinker roaming; a faint dropping half your fuel and scrap; satchels as +10 carry; held regions refilling lamps and dying lamps being drained; the Tab/Y lamp list and keys 1-4; wind burning lamps valley-wide; embers worth fuel; the marsh WayLamp on the south-east island; "no crafting beyond lamps"; playtime 1-2 hours. Each row cites its section in the plan.
 
-**Still open:** the three loop calls (above); pronouns for Amos, Maud, Kit and Ivo (before M4); whether to keep the Beam and Hearth ring (after the M1a playtest); whether the `crook_post` note's wording is approved (STORY §6); "one nest on the main route: decide after playing" (`docs/archive/PLAN_ONBOARDING.md` §8).
+**Still open:** the three loop calls (above); pronouns for Amos, Maud, Kit and Ivo (before M4); the Beam and Hearth ring stay for now (owner 2026-11-28, "they can stay for now"); whether the `crook_post` note's wording is approved (STORY §6); "one nest on the main route: decide after playing" (`docs/archive/PLAN_ONBOARDING.md` §8).
 
 ---
 

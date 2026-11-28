@@ -24,6 +24,11 @@ extends Node
 ## bar and the shell's floor notch; the warm rim and shell cracks), m1c_lock (the warm lock brackets on a foe, with
 ## its warm bar ticks), m1c_ash_bolts (the Ashbrood's phase-1 ash bolts winding up: three cold aim markers, the rim
 ## lamp lit), m1c_pips (the HUD's lamp-slot pips: two lamps planted of three slots, one replant wait).
+## M2 views (builds): m2_skills (the pack's Skills tab on a pad: a level-6 keeper past the Ashbrood with points left, the
+## cursor on Fireglobe's tree), m2_wave (phase 2's ash wave winding up: the cold lane through the keeper), m2_strafe (the
+## low pass winding up, with cold embers from the pass before), m2_phase3 (phase 3: cracked wings, settled over the
+## ember, a puff winding up), m2_skills_rest (review: a level-3 keeper resting at the WayLamp, before the Ashbrood: tier
+## 2 and 3 shut with their reasons, the reset row and a message all inside the frame).
 ## Sprites view: sprites (every owner-art subject side by side, frozen: the three Wicklings, an elite whose shell
 ## broke, the Spitwick, a nest, the Ashbrood in its bowl and out of it, and Amos with his cart, who isn't in the
 ## game until M4).
@@ -153,6 +158,8 @@ func _process(_delta: float) -> void:
 				_m1b_setup()
 			"m1c_dark_lit", "m1c_lock", "m1c_ash_bolts", "m1c_pips":
 				_m1c_setup()
+			"m2_skills", "m2_skills_rest", "m2_wave", "m2_strafe", "m2_phase3":
+				_m2_setup()
 			"tell_puff", "tell_puff_reduce", "tell_adds", "tell_dive", "tell_dive_arrow", "tell_spit", "tell_lane", "tell_reach", "tell_hatch", \
 					"keeper_dash", "keeper_cast", "keeper_drink", "keeper_hurt", "sprites", "clinker_sleep", "clinker_roll", "clinker_dizzy":
 				_tell_setup()
@@ -266,6 +273,8 @@ func _process(_delta: float) -> void:
 		_m1b_frame()
 	if view.begins_with("m1c_"):
 		_m1c_frame()
+	if view.begins_with("m2_"):
+		_m2_frame()
 	if frame >= end_frame:
 		get_tree().quit()
 
@@ -612,6 +621,114 @@ func _m1c_frame() -> void:
 					_m1c_brood._idle_t = 99.0
 		"m1c_pips":
 			main.player.replant_t = Tuning.kl_lamp_replant_cd * 0.4
+
+# --- M2 views ---------------------------------------------------------------------------------------------
+
+var _m2_brood: Ashbrood
+
+func _m2_setup() -> void:
+	for f in get_tree().get_nodes_in_group("foe"):
+		f.queue_free()
+	for p in get_tree().get_nodes_in_group("enemy_pack"):
+		p.queue_free()
+	for k in Story.TIPS:
+		Story.tips_seen[k] = true
+	Story.pointer_mode = "off"
+	if view == "m2_skills_rest":
+		InputHint.pad = true
+		Progress.level = 3
+		Progress.lance_given = true
+		Progress.bar = {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "lance", "skill_4": ""}
+		Progress.set_picks(["lingering_burn"])
+		main.player.position = main.start + Vector2(-20, 60)
+		Progress.respec_at = main.player.position
+		return
+	if view == "m2_skills":
+		InputHint.pad = true
+		Progress.level = 6
+		Progress.lance_given = true
+		Progress.bar = {"skill_1": "lampfire", "skill_2": "fireglobe", "skill_3": "lance", "skill_4": ""}
+		Progress.cleared["ashbrood_hollow"] = true
+		Progress.set_picks(["lingering_burn", "twin", "skipping_globe", "second_step"])
+		main.player.position = main.start + Vector2(-20, 60)
+		return
+	var wl: WayLamp = null
+	for w in get_tree().get_nodes_in_group("waylamp"):
+		if w.id == "hollow":
+			wl = w
+	Progress.notes_read["waylamp_hollow"] = true
+	for l in get_tree().get_nodes_in_group("lantern"):
+		if l.global_position.distance_to(main.rim_lamp_pos) < 8.0:
+			l.light_by_touch()
+	main.player.position = wl.global_position + Vector2(-40, 190)
+	wl.touch()
+	_m2_brood = wl.guardian()
+
+func _m2_frame() -> void:
+	var hud = main.get_node("HUD")
+	if frame >= 3:
+		hud.banner.visible = false
+		hud.toast.visible = false
+		hud.tip.visible = false
+	if view == "m2_skills_rest":
+		Progress.respec_at = main.player.global_position
+		if frame == 10:
+			main.get_node("Pack").open("skills")
+			var tab2 = main.get_node("SkillsList")
+			tab2.area = "tree"
+			tab2.list_i = 0
+			tab2.tier_i = 0
+			tab2.col_i = 1
+			tab2._rebuild()
+			tab2.choose_pick("scatter")
+		return
+	if view == "m2_skills":
+		if frame == 10:
+			main.get_node("Pack").open("skills")
+			var tab = main.get_node("SkillsList")
+			tab.area = "tree"
+			tab.list_i = 1
+			tab.tier_i = 2
+			tab.col_i = 1
+			tab._rebuild()
+		return
+	var b := _m2_brood
+	if b == null or not is_instance_valid(b):
+		return
+	b._puff_t = 99.0
+	b._wave_t = 99.0
+	b._sweep_cd = 99.0
+	b._bolt_t = 99.0
+	b._call_t = 99.0
+	b._idle_t = -99.0
+	if frame == 4:
+		b.phase = 3 if view == "m2_phase3" else 2
+		b.restart_phase()
+		b._dive_t = 99.0
+		b.global_position = b.waylamp.global_position + (Vector2.ZERO if view == "m2_phase3" else Vector2(120, -40))
+	var p = main.player
+	if frame == 10:
+		match view:
+			"m2_wave":
+				b._start_move("wave", p)
+			"m2_strafe":
+				for i in 3:
+					var e := ColdEmber.new()
+					e.position = p.global_position + Vector2(-120 + i * 50, -70 + i * 10)
+					e.age = Tuning.kl_cold_ember_warm + 0.2
+					main.get_node("FogLayer/Wicklings").add_child(e)
+				b._start_move("strafe", p)
+			"m2_phase3":
+				b._move = "return"
+				b._sit_t = 99.0
+				b.update_light_state(0.0)
+	if view == "m2_phase3" and frame == 24:
+		b._sit_t = 0.0
+		b._move = ""
+		b._start_puff()
+	if view in ["m2_wave", "m2_strafe"] and b.wave_tell() == null and b.strafe_tell() == null and frame > 10:
+		b._dive_t = 99.0
+	p.warmth = Tuning.warmth_max
 
 # --- Readability views (telegraphs, the keeper's feedback) -------------------------------------------------------
 

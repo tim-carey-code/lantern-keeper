@@ -76,3 +76,10 @@ func _draw() -> void:
 			# Dimmed when it is too far below the keeper to pay full wick.
 			var col: Color = UiStyle.CREAM if Progress.wick_gap_mult(f.level) >= 1.0 else Color(0.62, 0.6, 0.56)
 			draw_string(FONT, at, label, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, col)
+			# M2: an elite's affixes on a line above its name (GAME_PLAN §14), in the cold tell colour.
+			var aff: String = f.affix_line()
+			if aff != "":
+				var aw := FONT.get_string_size(aff, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE).x
+				var ap := Vector2(f.global_position.x - aw / 2.0, at.y - float(SIZE) - 2.0)
+				draw_string(FONT, ap + Vector2(1, 1), aff, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, Color(0, 0, 0, 0.8))
+				draw_string(FONT, ap, aff, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, Telegraph.COLD)

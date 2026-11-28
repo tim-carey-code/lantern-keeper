@@ -11,6 +11,7 @@ signal wick_changed(current: int, needed: int, level: int)
 signal level_up(level: int)
 signal bar_changed
 signal skill_learned(id: String)
+signal picks_changed
 
 const LANTERN_ORDER := ["post", "reservoir", "hooded", "mirror"]
 ## The action bar (M1a, GAME_PLAN §3): input action -> skill id ("" = empty). Slot 1 is always Lampfire.
@@ -29,7 +30,14 @@ var wick := 0
 var wick_frac := 0.0        # fractions of wick from reduced kills, carried until they make a whole one
 var level := 1
 var cleared := {}           # fixed prototype enemies and packs that stay beaten
-var combat_upgrades: Array[String] = []
+## M2 (GAME_PLAN §4.2): the branch picks. skill id -> [tier 1, tier 2, tier 3] pick ids ("" = none yet).
+var picks := {}
+var _picked := {}           # pick id -> true (the fast check every hit makes)
+## Old card effects that become gear lines in M3 (Kindled kills, Hot core, Lee), kept from a version 7 save.
+var lines: Array[String] = []
+## Where the keeper last rested (a lit WayLamp): picks can be changed freely near it (respec), Vector2.INF if not.
+var respec_at := Vector2.INF
+var respecs := 0            # times picks were reset or swapped at rest (tests)
 var pending_level_ups := 0
 var bar := default_bar()    # the action bar: slot action -> skill id (saved, version 5)
 var lance_given := false    # Lance has taken slot 3 once (at level 2); after that the bar is the player's
@@ -48,7 +56,11 @@ func reset() -> void:
 	wick_frac = 0.0
 	level = 1
 	cleared = {}
-	combat_upgrades = []
+	picks = {}
+	_picked = {}
+	lines = []
+	respec_at = Vector2.INF
+	respecs = 0
 	pending_level_ups = 0
 	bar = default_bar()
 	lance_given = false
@@ -158,20 +170,156 @@ func add_wick(amount: int) -> void:
 	while not at_level_cap() and wick >= wick_needed():
 		wick -= wick_needed()
 		level += 1
-		pending_level_ups += 1
 		_grant_level_skills()
 		level_up.emit(level)
 	if at_level_cap():
 		wick = 0
 	wick_changed.emit(wick, wick_needed(), level)
 
-func choose_combat_upgrade(id: String) -> void:
-	if id != "" and not combat_upgrades.has(id):
-		combat_upgrades.append(id)
-	pending_level_ups = maxi(0, pending_level_ups - 1)
+# --- Skill points and picks (M2, GAME_PLAN §4.2, §9) ---------------------------------------------------
 
-func has_combat_upgrade(id: String) -> bool:
-	return combat_upgrades.has(id)
+## Skill points earned so far: kl_points_per_level for every level over 1.
+func points_total() -> int:
+	return maxi(0, level - 1) * Tuning.kl_points_per_level
+
+func points_spent() -> int:
+	return _picked.size()
+
+## Points not spent yet (the Skills tab's mark).
+func skill_points() -> int:
+	return maxi(0, points_total() - points_spent())
+
+func has_pick(id: String) -> bool:
+	return _picked.has(id)
+
+## An old card's effect carried as a line until gear exists (M3): kindled_kills, hot_core, lee.
+func has_line(id: String) -> bool:
+	return lines.has(id)
+
+## The pick taken in a tier of a skill, or "".
+func pick_in(skill: String, tier: int) -> String:
+	var row: Array = picks.get(skill, [])
+	return str(row[tier]) if tier >= 0 and tier < row.size() else ""
+
+## True once the Ashbrood (the Hollow's guardian) has fallen: tier 3 opens.
+func tier3_open() -> bool:
+	return cleared.has("ashbrood_hollow") or settled.has(FogGrid.R_HOLLOW)
+
+## "" if tier `tier` (0-2) of `skill` is open, else why not (shown in the Skills tab).
+func tier_reason(skill: String, tier: int) -> String:
+	if skill != "dash" and not knows(skill):
+		return "Learn %s first (level %d)." % [SkillTree.skill_title(skill), Tuning.kl_lance_level]
+	match tier:
+		1:
+			if level < Tuning.kl_tier2_level:
+				return "Opens at level %d." % Tuning.kl_tier2_level
+		2:
+			if not tier3_open():
+				return "Opens when the Ashbrood falls."
+	return ""
+
+## Picks can be changed freely here: the keeper rested at a lit WayLamp and is still by it, not hunted.
+func respec_open() -> bool:
+	if respec_at == Vector2.INF:
+		return false
+	var k := get_tree().get_first_node_in_group("player") as Node2D if get_tree() else null
+	if k == null:
+		return false
+	if k.global_position.distance_to(respec_at) > Tuning.kl_respec_radius:
+		return false
+	return not ("hunted" in k and k.hunted)
+
+## "" if `id` can be taken now, else why not.
+func pick_reason(id: String) -> String:
+	var inf := SkillTree.info(id)
+	if inf.is_empty():
+		return "No such pick."
+	if has_pick(id):
+		return "You have it."
+	var why := tier_reason(inf.skill, inf.tier)
+	if why != "":
+		return why
+	var taken := pick_in(inf.skill, inf.tier)
+	if taken != "":
+		return "" if respec_open() else "One pick a tier. Rest at a lit WayLamp to change it."
+	if skill_points() <= 0:
+		return "No skill points. You get one each level."
+	return ""
+
+## Takes a pick (at rest, it replaces the one already in its tier, for free). "" on success, else why not.
+func take_pick(id: String) -> String:
+	var why := pick_reason(id)
+	if why != "":
+		return why
+	var inf := SkillTree.info(id)
+	var row: Array = picks.get(inf.skill, ["", "", ""])
+	var old := str(row[inf.tier])
+	if old != "":
+		_picked.erase(old)
+		respecs += 1
+	row[inf.tier] = id
+	picks[inf.skill] = row
+	_picked[id] = true
+	picks_changed.emit()
+	return ""
+
+## Gives a pick back (only at rest). "" on success, else why not.
+func unlearn(id: String) -> String:
+	if not has_pick(id):
+		return "You don't have it."
+	if not respec_open():
+		return "Rest at a lit WayLamp to change your picks."
+	var inf := SkillTree.info(id)
+	var row: Array = picks.get(inf.skill, ["", "", ""])
+	row[inf.tier] = ""
+	picks[inf.skill] = row
+	_picked.erase(id)
+	respecs += 1
+	picks_changed.emit()
+	return ""
+
+## Every pick back as points (only at rest). "" on success, else why not.
+func reset_picks() -> String:
+	if not respec_open():
+		return "Rest at a lit WayLamp to change your picks."
+	if _picked.is_empty():
+		return "No picks to reset."
+	picks = {}
+	_picked = {}
+	respecs += 1
+	picks_changed.emit()
+	return ""
+
+## Sets picks without the rules (loading a save, tests). Unknown ids, a second pick in a tier, or more picks than
+## points are dropped. Returns the picks kept.
+func set_picks(list: Array) -> Array:
+	picks = {}
+	_picked = {}
+	var kept := []
+	for raw in list:
+		var id := str(raw)
+		var inf := SkillTree.info(id)
+		if inf.is_empty() or _picked.has(id) or _picked.size() >= points_total():
+			continue
+		if tier_reason(inf.skill, inf.tier) != "" or pick_in(inf.skill, inf.tier) != "":
+			continue
+		var row: Array = picks.get(inf.skill, ["", "", ""])
+		row[inf.tier] = id
+		picks[inf.skill] = row
+		_picked[id] = true
+		kept.append(id)
+	picks_changed.emit()
+	return kept
+
+## Every pick taken, in tree order (saves).
+func pick_list() -> Array:
+	var out := []
+	for skill in SkillTree.ORDER:
+		for t in 3:
+			var id := pick_in(skill, t)
+			if id != "":
+				out.append(id)
+	return out
 
 func is_unlocked(kind: String) -> bool:
 	return unlocks.get(kind, false)

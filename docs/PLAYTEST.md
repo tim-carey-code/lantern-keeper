@@ -1,5 +1,60 @@
 # Playtests
 
+## M2: what to try (owner, pad)
+
+**Build:** branch `proto/kl-m2` (builds). Open its worktree in Godot and press F5. **Your save:** a version 7 save loads and becomes **version 8**. Your level becomes skill points (one a level over 1: a level-7 keeper has 6). Each old card becomes its branch pick where its tier is open and free (Heavy flare is now Heavy ring; Catching needs the Ashbrood kill; of two old Beam cards in one tier, the first one you took wins); every card that doesn't fit is an unspent point. Kindled kills, Hot core and Lee stay with you as carried lines until gear (M3). Once saved as version 8, the M1c build can't load it, so **copy your save slot files first** if you want to go back. Keep a save from **before the Ashbrood** for steps 7-9. What was built is DESIGN §21; the new texts are STORY §17 (DRAFT). Sound: Kenney stand-ins for the new Ashbrood moves.
+
+**Play on a gamepad.** Every new number is in the tuning panel (L3): the picks, respec, the catch distance, the affixes and the Ashbrood's new moves and health.
+
+**What to try**
+1. **A level-up.** No screen opens and nothing pauses: a line on the tip strip says you have a skill point, and the HUD's level shows it ("Lv 2 +1").
+2. **Choose a pick on the pad** (owner check). Press **View**: the pack opens on Skills, with the cursor on a tier-1 pick of a skill on your bar. The D-pad moves (up / down; right into the tree, left back), **A** takes a pick, **B** closes. Take one that changes how a skill plays (Twin, Skip, Second step, Cinder trail...) and try it.
+3. **Swap a skill with View, the D-pad, A and B** (owner check): View, D-pad to the Beam, A, left / right to pick a slot, A. B backs out without changing anything. LB / RB move between the Skills, Journal and Map tabs; the D-pad never changes tabs or opens the map.
+4. **Nothing pushes a skill you aren't using** (your note on the Beam): the level-up line names no skill, the Skills tab opens on a skill on your bar, and the Beam and Hearth ring are marked optional.
+5. **Tiers.** Tier 2 opens at level 4. **Tier 3 opens on the Ashbrood kill** (owner check): a line says so, and the third row of every tree lights up.
+6. **Respec at the WayLamp** (owner check). Rest at a lit WayLamp: the toast says your picks can be changed here. Open the pack: a pick in a taken tier now swaps for free, A on a taken pick gives it back, and the last row resets every pick. Walk away and the picks are fixed again.
+7. **The Ashbrood, phase 2** (your note: more moves). Between its dives it now uses a new move each time: an **ash wave** (a cold lane from it through you, then a wall of ash runs it) or a **low pass** (a cold lane past you; it flies it and drops cold embers that chill you if you stand in them, after a short harmless glow). Every so often it **calls two Wicklings from the dark** (cold glows first). Is phase 2 still boring? Are the lanes easy to read and to dash through?
+8. **Phase 3, "last of the brood."** It rises with cracked wings and fights faster, in combos: it **goes back to its ember** (you can hit it there even with no lamp: the ember shows through its wings), then puffs; it **dives at a lamp and sends a wave** from where it lands; it **makes a pass and throws ash bolts**. Does it feel like a climax? The whole fight should take about 2.5-3.5 minutes.
+9. **Faint during the fight on purpose** (each phase): no crash, and the Ashbrood starts its phase again.
+10. **Your own lamp** no longer catches every bolt: stand by a lamp and fire. Bolts catch only once they have flown about 2 tiles (72 px); put the lamp out ahead of you and fire through it.
+11. **An elite shows its affix** (owner check): the four level-4 elite packs in the north each have one, on a line above the name: Swift, Thick shell, Bursting (two Wicklings rise where it dies, after cold glows) and Lightless (lamps don't light it, and a lamp it passes flickers cold and goes out for 4 s).
+12. **Beacon and Ember rest** (Fireglobe and dash tier 3): their light counts as lit, so foes in it take full lit damage.
+
+**Watch this** (from the M2 review): **Twin** throws two bolts at x0.65 each, but each still makes a full splash and gives full charge. Into a pack that is about **1.7x** a plain bolt's damage, and about **2.7x with Scatter**; on one foe it is x1.3. Does Twin feel too strong against packs? If so, the fix is to scale its splash too (`kl_twin_mult` and the splash, in the tuning panel).
+
+**Questions**
+
+| Question | Your answer |
+|---|---|
+| Twin against packs: too strong? | |
+| The picks: which feel good, which are dull, which are broken? | |
+| Are the pick numbers right (Twin x0.65, Comet every 4th, Held lance 0.6 s)? | |
+| Respec at rest: free and unlimited, right? | |
+| The pack on the pad: is choosing a slot (A, then left / right, A) clear? | |
+| Phase 2: still boring? Which new move works, which doesn't? | |
+| Phase 3: a climax? Too hard, too easy, too long? | |
+| Is the ember window in phase 3 (hit it over the bowl) easy to find? | |
+| The catch distance: does catching still feel worth doing? | |
+| Affixes: readable? Lightless snuffing lamps: fun or annoying? | |
+| The DRAFT texts in STORY §17: keep, change or cut? | |
+
+**Your answers to steps 1-12** (pass, or what went wrong)
+
+| Step | Result |
+|---|---|
+| 1. A level-up | |
+| 2. A pick on the pad | |
+| 3. Swap a skill | |
+| 4. Nothing pushes an unused skill | |
+| 5. Tiers | |
+| 6. Respec | |
+| 7. Phase 2 | |
+| 8. Phase 3 | |
+| 9. Faint in the fight | |
+| 10. Your own lamp | |
+| 11. Affixes | |
+| 12. Beacon and Ember rest | |
+
 ## Clinker sprite: what to look at (owner, pad)
 
 **Build:** branch `proto/kl-clinker-art` (the play branch plus the Clinker's sprite from your Gemini sheet). Nothing about play changed: same hit area, timings and damage. Look at the previews first (8x and 4x strips); merge only if you approve them.
@@ -45,41 +100,46 @@
 
 **Questions**
 
-| Question | Your answer |
+| Question | Your answer (owner, 2026-11-28) |
 |---|---|
-| Does the Ashbrood fight back now? Too much, too little? | |
-| Standing at your own lamp makes every bolt catch: too strong? | |
-| Does the Clinker's hit feel scary? Are Wickling swarms fair? | |
-| Do the lamps feel useful now? | |
-| Catch: keep, rework or cut? | |
-| Flare: keep, rework or cut? | |
-| Chain: keep, rework or cut? | |
-| Feed (with the Beam): keep, rework or cut? | |
-| Can you tell a dark foe from a lit one at a glance? | |
-| The dark: fair, or a chore (Spitwicks shoot from the dark)? | |
-| Lamp slots: 2 at the start, 3 at level 4: right? Is 8 s to replant too long or too short? | |
-| Lock or free aim, which do you use? Any accidental R3 clicks? | |
-| The lock marker: warm amber, or cold? | |
-| The ember now: one clear ember? | |
-| The DRAFT texts in STORY §16: keep, change or cut? | |
+| Does the Ashbrood fight back now? Too much, too little? | "It fights back now, but phase 2 is still a bit boring and there definitely needs to be more moves." Built in M2 (new phase 2 moves and phase 3) |
+| Standing at your own lamp makes every bolt catch: too strong? | Yes, too strong. Fixed in M2: a bolt catches only after 72 px of flight |
+| Does the Clinker's hit feel scary? Are Wickling swarms fair? | Looked good |
+| Do the lamps feel useful now? | Looked good |
+| Catch: keep, rework or cut? | Keep (reworked: the catch distance) |
+| Flare: keep, rework or cut? | Looked good |
+| Chain: keep, rework or cut? | Looked good |
+| Feed (with the Beam): keep, rework or cut? | Looked good |
+| Can you tell a dark foe from a lit one at a glance? | Looked good |
+| The dark: fair, or a chore (Spitwicks shoot from the dark)? | Looked good |
+| Lamp slots: 2 at the start, 3 at level 4: right? Is 8 s to replant too long or too short? | Looked good |
+| Lock or free aim, which do you use? Any accidental R3 clicks? | "The lock-on is great." |
+| The lock marker: warm amber, or cold? | Looked good (kept warm) |
+| The ember now: one clear ember? | Looked good |
+| The DRAFT texts in STORY §16: keep, change or cut? | No changes asked |
 
-**Your answers to steps 1-13** (pass, or what went wrong)
+**Your answers to steps 1-13** (owner, 2026-11-28: "everything else looked good")
 
 | Step | Result |
 |---|---|
-| 1. The dark | |
-| 2. Dark or lit at a glance | |
-| 3. Combos | |
-| 4. Lamps useful | |
-| 5. Lamp slots | |
-| 6. The damage fix | |
-| 7. The Ashbrood in the dark | |
-| 8. The Ashbrood fights back | |
-| 9. The rim lamp and the ember | |
-| 10. The lock | |
-| 11. With a lock | |
-| 12. Lock breaks | |
-| 13. Lock or free aim | |
+| 1. The dark | Pass |
+| 2. Dark or lit at a glance | Pass |
+| 3. Combos | Pass; standing at your own lamp was too strong (fixed in M2) |
+| 4. Lamps useful | Pass |
+| 5. Lamp slots | Pass |
+| 6. The damage fix | Pass |
+| 7. The Ashbrood in the dark | Pass |
+| 8. The Ashbrood fights back | **Fights back now, but phase 2 still a bit boring; needs more moves.** Built in M2 |
+| 9. The rim lamp and the ember | Pass |
+| 10. The lock | Pass: "the lock-on is great" |
+| 11. With a lock | Pass |
+| 12. Lock breaks | Pass |
+| 13. Lock or free aim | Lock-on |
+
+**Also from this playtest** (owner, 2026-11-28):
+- **A crash when a boss hit made the keeper faint** (the faint ran inside the Ashbrood's dive landing and cleared it). Hotfixed in d13d5b6 (the faint now runs right after the hit). The owner then **fainted on purpose in the Ashbrood fight after the hotfix, and it no longer crashes**. M2 tests a faint during every boss attack in every phase.
+- "**The skills coming up for the Beam after it was already replaced is not great**": the level-up cards kept offering Beam upgrades after Lance had taken the Beam's slot. In M2 there are no cards; the player chooses where each point goes, and nothing points at a skill that is off the bar (DECISIONS 2026-11-28).
+- The Clinker sprite was approved (merged into the play branch).
 
 ## Sprites: what to look at (owner, pad)
 

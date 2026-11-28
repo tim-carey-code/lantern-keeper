@@ -235,7 +235,7 @@ func core_dps_for(foe: Node) -> float:
 	if (foe is Wickling and foe.elite) or foe is Clinker or foe is Ashbrood:
 		return 0.0
 	var dps := Tuning.kl_nest_core_dps if foe is WickNest else Tuning.wick_light_burn
-	if Progress.has_combat_upgrade("hot_core"):
+	if Progress.has_line("hot_core"):
 		dps *= Tuning.kl_hot_core_mult
 	if feed_t > 0.0:
 		dps *= Tuning.kl_feed_core_mult

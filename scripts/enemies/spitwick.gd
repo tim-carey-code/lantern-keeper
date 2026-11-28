@@ -60,12 +60,12 @@ func _process(delta: float) -> void:
 		_begin_tell(p)
 	elif dist > 0.1:
 		# Ready, but off-screen or too far: it creeps closer first (no shot from where you can't see it).
-		global_position += dir * minf(dist, Tuning.kl_spit_keep_speed * delta)
+		global_position += dir * minf(dist, Tuning.kl_spit_keep_speed * speed_mult() * delta)
 	if _tell == null:
 		if dist < Tuning.kl_spit_keep_min:
-			global_position -= dir * minf(Tuning.kl_spit_keep_min - dist, Tuning.kl_spit_retreat_speed * delta)
+			global_position -= dir * minf(Tuning.kl_spit_keep_min - dist, Tuning.kl_spit_retreat_speed * speed_mult() * delta)
 		elif dist > Tuning.kl_spit_keep_max:
-			global_position += dir * minf(dist - Tuning.kl_spit_keep_max, Tuning.kl_spit_keep_speed * delta)
+			global_position += dir * minf(dist - Tuning.kl_spit_keep_max, Tuning.kl_spit_keep_speed * speed_mult() * delta)
 	if _art:
 		_art.play_anim("windup" if _tell else ("recover" if _recover_t > 0.0 else "idle"), _tell.duration if _tell else 0.0)
 		if absf(v.x) > 2.0:

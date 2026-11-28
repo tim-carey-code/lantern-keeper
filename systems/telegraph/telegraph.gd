@@ -47,6 +47,10 @@ const SOUND_SLOTS := {
 	"ashbrood_bolt_release": ["ui_close", -12.0, 0.9],
 	"ashbrood_sweep_windup": ["note_open", -10.0, 0.7],
 	"foe_exposed": ["ui_tick", -22.0, 1.7],
+	# M2: the Ashbrood's ash wave and low pass (phases 2-3).
+	"ashbrood_wave_windup": ["note_open", -9.0, 0.6],
+	"ashbrood_wave_release": ["note_close", -6.0, 0.45],
+	"ashbrood_strafe_windup": ["ui_open", -9.0, 0.65],
 }
 
 static var inst: Telegraph

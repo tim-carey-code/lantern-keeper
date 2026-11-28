@@ -38,13 +38,8 @@ func _process(_delta: float) -> void:
 			check(Story.goal_target("build_post") == "crook_post", "the goal pointer leads to the Hollow find")
 			Progress.add_wick(Progress.wick_for_level(1))
 		3:
-			check(Progress.level == 2 and Progress.pending_level_ups == 1, "the first level's wick raises the keeper to level 2")
-			check(get_tree().paused and level_ui.root.visible, "level-up choice pauses the world")
-			var choice: Button = level_ui.cards.get_child(0)
-			var chosen_id: String = level_ui._offer[0].id
-			choice.pressed.emit()
-			check(Progress.has_combat_upgrade(chosen_id), "choosing a card keeps the upgrade")
-			check(not get_tree().paused, "choosing an upgrade resumes play")
+			check(Progress.level == 2 and Progress.skill_points() == 1, "the first level's wick raises the keeper to level 2, with a skill point (M2)")
+			check(not get_tree().paused and level_ui.shown >= 1, "a level-up doesn't pause the world: a line says it (M2: no card screen)")
 			var fb = main.get_node("FogLayer/FoeBars")
 			var named := Wickling.new()
 			named.elite = true
@@ -85,27 +80,27 @@ func _process(_delta: float) -> void:
 				check(boss.is_exposed(), "M1c: the rim lamp's light reaches the bowl: it is lit (exposed)")
 				boss.hurt(boss.phase_hp() + boss.phase_shell() + 1.0, false, "beam")
 				check(boss.phase == 2 and boss.hp == boss.phase_hp(), "breaking phase one opens the diving phase")
-				check(boss.level == Tuning.kl_ashbrood_level and is_equal_approx(boss.phase_hp(), Tuning.kl_ashbrood_hp * (1.0 + Tuning.kl_foe_hp_per_level * (Tuning.kl_ashbrood_level - 1))), "a phase's health grows 12%% a level: Lv %d, %.0f a phase (M1b)" % [boss.level, boss.phase_hp()])
+				check(boss.level == Tuning.kl_ashbrood_level and is_equal_approx(boss.phase_hp(), Tuning.kl_ashbrood_hp2 * (1.0 + Tuning.kl_foe_hp_per_level * (Tuning.kl_ashbrood_level - 1))), "a phase's health grows 12%% a level: Lv %d, %.0f a phase (M1b)" % [boss.level, boss.phase_hp()])
 				boss.hurt(boss.phase_hp() + boss.phase_shell() + 1.0, false, "beam")
 				check(boss.in_phase_pause() and boss.hp == boss.phase_hp(), "it rises out of the bowl first, and can't be hurt meanwhile")
 				boss.end_phase_pause()
 				boss.hurt(boss.phase_hp() + boss.phase_shell() + 1.0, false, "beam")
-				check(Progress.is_settled(FogGrid.R_HOLLOW), "beating phase two holds the Hollow")
+				check(boss.phase == 3 and boss.in_phase_pause() and not Progress.is_settled(FogGrid.R_HOLLOW), "M2: breaking phase two brings phase 3, the last of the brood")
+				boss.end_phase_pause()
+				boss.hurt(boss.phase_hp() + boss.phase_shell() + 1.0, false, "beam")
+				check(Progress.is_settled(FogGrid.R_HOLLOW), "beating phase three holds the Hollow")
 		7:
 			# M1b: while the WayLamp takes its ember back (it rises into the lamp), the level-up cards wait.
 			var wl: WayLamp = get_tree().get_nodes_in_group("waylamp").filter(func(w): return w.id == "hollow")[0]
-			check(wl.ember_rise_t > 0.0 and not level_ui.root.visible, "the level-up cards wait while the ember rises into the WayLamp")
+			check(wl.ember_rise_t > 0.0 and not main.get_node("SkillsList").is_open(), "the ember rises into the WayLamp; no level-up screen opens over it (M2)")
 			wl.ember_rise_t = 0.0
-			# A second level-up: the controller must land on the new cards (owner: the pad stopped working).
 			get_tree().paused = false
 			Tuning.ui_open = false
 			for c in get_tree().get_nodes_in_group("note_reader"):
 				c.close()
 			Progress.add_wick(60)
 		9:
-			var focus := get_viewport().gui_get_focus_owner()
-			check(level_ui.root.visible, "a later level-up opens the choice again")
-			check(focus is Button and focus.get_parent() == level_ui.cards and not focus.is_queued_for_deletion(), "and the controller's focus is on one of its new cards")
+			check(Progress.skill_points() >= 2 and not get_tree().paused, "a later level-up adds another point (%d)" % Progress.skill_points())
 		10:
 			check(not Tuning.kl_ambient_spawns, "nothing streams out of the fog: enemies wait in packs and nests")
 			var start: Vector2 = main.start

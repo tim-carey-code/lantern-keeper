@@ -139,9 +139,10 @@ The game starts fullscreen; F11 switches to a window. On Linux, your save is kep
 | Read, light an old lamp or a WayLamp, take scrap, turn a Mirror Post right, rest, travel (tap); pick up a lamp (hold) | E | A (bottom) |
 | Plant the selected lamp; next to a Mirror Post, turn it left | C | X (left) |
 | Next lamp kind (tap) / lamp list (hold) / previous kind; pick 1-4 | Tab; 1-4 | D-pad right / left |
-| Skills list | K | D-pad down |
-| Map | M | D-pad up |
-| Journal (goals, story so far, notes) | J | Back / View |
+| The keeper's pack: Skills (the bar and your branch picks), Journal, Map | I | View |
+| The pack's Skills tab / Map tab (from the world) | K / M | D-pad down / D-pad up |
+| The pack's Journal tab (goals, story so far, notes) | J | View, then RB |
+| In the pack: change tab | Q / Tab | LB / RB |
 | Pause menu (resume, save, new game, save and quit, goal pointer, target lock options, tips, options) | Esc | Start |
 | Close a menu | Esc | B |
 | Tuning panel (for development) | F1 | Left stick click |
@@ -182,6 +183,8 @@ godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_waylamps.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_upgrades.tscn
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_leveling.tscn
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_builds.tscn    # every branch pick
+godot --headless --audio-driver Dummy --fixed-fps 60 --path . res://tools/tests/test_affixes.tscn   # elite affixes
 # A test that fails to parse never quits: wrap runs in `timeout 120`.
 godot --headless --audio-driver Dummy --fixed-fps 60 --path . --quit-after 1800                    # no errors
 python3 tools/check_docs.py                                                                    # the docs still match the code

@@ -674,15 +674,15 @@ Every player-facing text the M1a build added or changed, copied **from the code*
 ### 14.3 Level 2: Lance (`scripts/ui/hud.gd`)
 
 A toast when Lance takes slot 3:
-> Lance takes %s. %s is in your Skills list (%s).
+> Lance takes %s. %s is in your pack, on the Skills tab (%s).
 
 ("Lance takes LB. The Beam is in your Skills list (D-pad down).") If nothing was on slot 3 but the Beam is off the bar, the toast names the Beam anyway; if the Beam is still on the bar: "Lance takes %s." The level-up card screen (§12) is unchanged; it goes in M2.
 Was: "Lance takes %s. %s is in your Skills (%s)." (changed in the M1a fixes, DRAFT, so it matches the hint below).
 
 **The Beam hint** (`systems/story/story.gd`, tip `beam_off_bar`; DRAFT, M1a fixes, from the owner's playtest 2026-11-27: a version 4 save migrated at level 7 put Lance straight on LB, and nothing said where the Beam went). Shown once, on the tip line, the first time the keeper has Lance and the Beam is on no slot, including right after a version 4 save is migrated. [skills] is the Skills list's button for the device in use (K / D-pad down):
-> The Beam is in your Skills list ([skills]).
+> The Beam is in your pack, on the Skills tab ([skills]).
 
-("The Beam is in your Skills list (D-pad down).") When the level-2 toast has already said it, the hint is marked seen and doesn't show. The requested draft had no final full stop; one was added to match the other tips.
+("The Beam is in your pack, on the Skills tab (D-pad down).") M2: was "The Beam is in your Skills list ([skills])." (the Skills list became the pack's Skills tab). When the level-2 toast has already said it, the hint is marked seen and doesn't show. The requested draft had no final full stop; one was added to match the other tips.
 
 ### 14.4 Rest at a lit WayLamp (`scripts/ui/travel_menu.gd`, `scripts/ui/world_prompt.gd`, `scripts/ui/hud.gd`, `scripts/player/player.gd`)
 
@@ -690,7 +690,7 @@ Was: "Lance takes %s. %s is in your Skills (%s)." (changed in the M1a fixes, DRA
 |---|---|
 | Prompt over a lit WayLamp (with the button) | Rest or travel (was "Travel"; §11) |
 | First button in the WayLamp list | Rest: fill your flasks and warmth |
-| Toast after resting | You rest by the WayLamp. Your flasks and warmth are full. |
+| Toast after resting (M2, DRAFT) | You rest by the WayLamp. Your flasks and warmth are full, and your picks can be changed here (%s). ("...(View).") Was: "You rest by the WayLamp. Your flasks and warmth are full." |
 | Rest refused (in code; the list can't open while hunted, so it is rarely seen) | Can't rest while something hunts you |
 
 ### 14.5 Flasks and oil (`scripts/player/player.gd`, `scripts/enemies/ember.gd`)
@@ -899,3 +899,124 @@ The other boss-bar hints (§12) are unchanged. There is no new toast. The rim la
 ### 16.6 No words
 
 The light states, combos, lamp pips, the lock marker, the ash bolts and wing sweep, the smother and the ember's new place are code-drawn and have no text. The ember still has no words of its own (§15.4).
+
+## 17. M2 texts (DRAFT, M2 "Builds", not yet owner-approved)
+
+Every player-facing text M2 added or changed, copied **from the code** on `proto/kl-m2`, word for word. **All of it is DRAFT (M2).** `%s` and `%d` are filled in by the game (a button for the device in use, a level, a count). The pick titles are the plan's (GAME_PLAN §4.2); the one-line bodies are new; the four approved cards (Steady hand, Spill, Hot core, Lee) keep their approved wording where they are picks (Hot core and Lee are carried lines until gear, M3).
+
+### 17.1 The branch picks (`systems/skill_tree.gd`)
+
+| Skill | Tier | Pick | Text (DRAFT) |
+|---|---|---|---|
+| Lampfire | 1 | Lingering burn | A foe your bolt hits burns for 2 s. |
+| Lampfire | 1 | Scatter | Each burst throws 3 sparks on through the pack. (Was "...3 sparks around it.": the M2 review fix makes them fly on.) |
+| Lampfire | 2 | Twin | Two bolts in a V, each a little weaker. |
+| Lampfire | 2 | Skip | A bolt that hits jumps on to one more foe nearby. |
+| Lampfire | 3 | Catching | A kill sets the nearest foe within 60 px alight. |
+| Lampfire | 3 | Needle | A bolt passes the first foe and bursts on the second. |
+| Lampfire | 3 | Comet | Every 4th bolt is big: double damage and splash. |
+| Fireglobe | 1 | Skipping globe | It bounces once, bursting again where it lands. |
+| Fireglobe | 1 | Slick | Its burning ground slows foes. |
+| Fireglobe | 2 | Second globe | A smaller globe follows it down. |
+| Fireglobe | 2 | Fire line | It lands as a line of fire across your aim. |
+| Fireglobe | 3 | Cluster | It bursts into 4 small globes. |
+| Fireglobe | 3 | Beacon | Where it lands stays lit for 6 s, like a tiny lamp. Foes in it are lit. |
+| Fireglobe | 3 | Undertow | The blast pulls foes in before it bursts. |
+| Lance | 1 | Burning line | It leaves 2 s of fire along its path. |
+| Lance | 1 | Brand | Your next hit on the last foe it struck does 50% more. |
+| Lance | 2 | Returning | At the end of its flight it flies back through foes. |
+| Lance | 2 | Forked | It splits in two at the first foe it hits. |
+| Lance | 3 | Breaking | At its end it bursts into 3 Lampfire bolts. |
+| Lance | 3 | Held lance | Hold the button 0.6 s, then let go: double damage, through everything. |
+| Lance | 3 | Shatter | A shell it breaks bursts, hurting everything around. |
+| Dash | 1 | Second step | Dash twice before its cooldown. |
+| Dash | 1 | Cinder trail | Your dash leaves burning ground behind it. |
+| Dash | 2 | Phase | Foes you dash through are stunned for a moment. |
+| Dash | 2 | Flame step | A small ring of fire where your dash ends. |
+| Dash | 3 | Ember rest | Your dash leaves an ember that lights foes around it for 3 s. |
+| Dash | 3 | Blink | Your dash is an instant step, farther. |
+| Dash | 3 | Recoil | Dash away from your aim and you throw 3 Lampfire bolts forward. |
+| The Beam | 1 | Steady hand | You walk at 90% speed while beaming. |
+| The Beam | 1 | Long throw | Your beam reaches 310 px. |
+| The Beam | 2 | Deep tank | Your beam costs 20% less lamp charge. |
+| The Beam | 2 | Tight focus | Your beam wears shells 30% faster. |
+| The Beam | 3 | Prism | Three thin beams instead of one. |
+| The Beam | 3 | Searing | Held on one foe, the beam burns up to 50% hotter. |
+| The Beam | 3 | Stoking | Every second it burns a foe takes 1 s off Fireglobe's cooldown. |
+| Hearth ring | 1 | Heavy ring | It throws foes farther and stuns them. |
+| Hearth ring | 1 | Lasting ring | The ground it sweeps keeps burning for 3 s. |
+| Hearth ring | 2 | Spill | Its cooldown is 2.2 s; each foe it hits gives back 3% lamp charge. |
+| Hearth ring | 2 | Warm ring | Each foe it hits gives you back a little warmth. |
+| Hearth ring | 3 | Sunburst | It also throws 8 Lampfire bolts all around. |
+| Hearth ring | 3 | Crackle | It strips 2 shell from every foe it hits. |
+| Hearth ring | 3 | Rising ring | A second ring rolls out to 220 px. |
+
+Tier 1 opens with the skill (Lance at level 2), tier 2 at level 4, tier 3 when the Ashbrood falls. "Heavy flare" (an old card) is now **Heavy ring**, as the plan names it.
+
+### 17.2 Level-up lines, on the tip strip (`scripts/ui/level_up.gd`; the card screen is gone)
+
+| When | Text (DRAFT) |
+|---|---|
+| Every level-up | Level %d: a skill point. Spend it in your pack (%s), on the Skills tab. ("Level 2: a skill point. Spend it in your pack (View), on the Skills tab.") |
+| At level 4 | Level %d: tier 2 of your skills is open. |
+| The Ashbrood's kill | The Ashbrood is gone: tier 3 of your skills is open. |
+
+The lines never name a skill (owner, 2026-11-28: "the skills coming up for the Beam after it was already replaced is not great"). The HUD's level shows the unspent points: "Lv 3 +1".
+
+### 17.3 The keeper's pack (`scripts/ui/pack_screen.gd`)
+
+| Where | Text (DRAFT) |
+|---|---|
+| Title | The keeper's pack |
+| Tabs | Skills · Journal · Map (the Skills tab shows "+N" while points are unspent) |
+| Hint (pad / keyboard) | LB / RB: tab · Q / Tab: tab |
+| Journal hint (`scripts/ui/journal.gd`) | [Left / Right] page    [Up / Down] scroll    [B / J] close |
+| Map title (`scripts/ui/map_screen.gd`) | Map   (B / M to close)      amber = lit lantern   red = unlit   white = you |
+
+### 17.4 The Skills tab (`scripts/ui/skills_list.gd`)
+
+| Where | Text (DRAFT) |
+|---|---|
+| Title | Skills |
+| Points | Skill points: %d |
+| At rest by a lit WayLamp | Resting by the WayLamp: your picks can be changed for free. |
+| Elsewhere | Picks are kept. Rest at a lit WayLamp to change them. |
+| The reset row (only at rest) | Give back every pick (free while you rest here) |
+| Hunted (the tab is greyed) | Something hunts you. Change skills when it's quiet. |
+| Choosing a slot | Choose a slot for %s. |
+| A on the dash | The dash is always on %s. |
+| A on Lampfire | Lampfire stays on slot 1. |
+| Placed / taken off | %s is on %s. · %s is off the bar. |
+| A taken pick, away from rest | %s: taken. |
+| A pick taken | %s: %s (its title and text) |
+| A pick given back / all reset | %s: given back. · Every pick is back as points. |
+| The Beam and Hearth ring | (optional) after the name; on the tree: (optional: it has a tree only while it is kept) |
+| The dash's tree, under its name | A quick step. Nothing can chill you mid-dash. |
+| Under the tree: the focused pick (review fix: the buttons show titles only) | %s: %s (its title and text), then "(taken)", "(taken: A gives it back)" at rest, or why it can't be taken |
+| Under the tree, on a skill | Right: its picks. (keyboard: Right / D: its picks.) |
+| Under the tree, on the reset row | Give back every pick (free while you rest here). |
+| Hints (pad) | D-pad: move    A: choose    B: back / close · Left / Right: slot    A: put it there    B: back |
+| Hints (keyboard) | Arrows / WASD: move    E or click: choose    K / Esc: close · Left / Right: slot    E: put it there    Esc: back |
+| Why a pick can't be taken (`systems/progress.gd`) | Learn %s first (level %d). · Opens at level %d. · Opens when the Ashbrood falls. · One pick a tier. Rest at a lit WayLamp to change it. · No skill points. You get one each level. · You have it. · Rest at a lit WayLamp to change your picks. · No picks to reset. |
+
+### 17.5 The Ashbrood, phase 3 (`scripts/enemies/ashbrood.gd`, `scripts/ui/boss_bar.gd`)
+
+| When | Text (DRAFT) |
+|---|---|
+| Toast as phase 3 begins | The last of the brood. Its wings crack: the ember shows through. |
+| Boss-bar hint in phase 3 | the last of the brood: hit it over its ember |
+| Boss bar | "phase %d / 3" (was "/ 2") |
+
+### 17.6 Elite affixes, on a line over an elite's name (`scripts/enemies/foe.gd`, `AFFIX_NAMES`)
+
+Swift · Biting cold · Bursting · Thick shell · Lightless (two on one line: "Swift · Lightless").
+
+### 17.7 Changed lines
+
+| Where | Now (DRAFT) | Was |
+|---|---|---|
+| Level 2 toast (§14.3) | Lance takes %s. %s is in your pack, on the Skills tab (%s). | ...is in your Skills list (%s). |
+| The Beam hint (§14.3) | The Beam is in your pack, on the Skills tab ([skills]). | The Beam is in your Skills list ([skills]). |
+| Rest toast (§14.4) | ...and your picks can be changed here (%s). | (ended at "are full.") |
+| HUD key reminder (`scripts/ui/hud.gd`) | View pack · I pack (keys) | View journal |
+| Controls list (`controls_text()`) | The pack: Skills, Journal, Map · Skills tab · Journal: J (pad: View, then RB) | Skills · Journal: View |

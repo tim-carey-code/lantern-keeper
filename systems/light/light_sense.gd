@@ -22,6 +22,8 @@ static var core := PackedFloat32Array()
 ## Every WayLamp and every mirror (their lit state is read live: it can change mid-frame).
 static var waylamps: Array = []
 static var mirrors: Array = []
+## M2: the keeper's own lights that count as lit (Fireglobe Beacon, the dash's Ember rest; KeeperLight).
+static var keeper_lights: Array = []
 ## Performance (M1c review): lit lanterns bucketed in a coarse grid (cells as big as the widest light), so a foe's
 ## light state only looks at the lamps in its own and the neighbouring cells.
 static var _cell := 256.0
@@ -47,6 +49,7 @@ static func refresh(tree: SceneTree) -> void:
 	_grid.clear()
 	waylamps = tree.get_nodes_in_group("waylamp")
 	mirrors = tree.get_nodes_in_group("mirror")
+	keeper_lights = tree.get_nodes_in_group("keeper_light")
 	for l in tree.get_nodes_in_group("lantern"):
 		if l.kind == "mirror":
 			continue
@@ -110,6 +113,9 @@ static func lit_source(p: Vector2) -> Vector2:
 						best = pos[i] + Vector2(0, Lantern.LAMP_Y * 0.5)
 	if best != Vector2.INF:
 		return best
+	for kl in keeper_lights:
+		if is_instance_valid(kl) and kl.is_lit() and kl.global_position.distance_to(p) < kl.radius:
+			return kl.global_position
 	for w in waylamps:
 		if is_instance_valid(w) and w.is_lit():
 			var r: float = w.get_light_radius()
